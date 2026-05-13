@@ -1,10 +1,12 @@
 ---
 phase: 2
 slug: theme-system-i18n
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-13
+reviewed_at: 2026-05-13
+checker_verdict: 6/6 PASS
 inherits_from: .planning/phases/01-scroll-shell-sticky-anchors/01-UI-SPEC.md
 ---
 
@@ -1099,14 +1101,14 @@ debe i18nificar sus strings y nada más en cuanto a layout/CSS estructura.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS (§11 — 7 chapter titles + UI chrome ES/EN paridad locked)
-- [ ] Dimension 2 Visuals: PASS (§4.2 — 7 themes con tokens completos, ch0/ch1 finales, ch2-6 stubs)
-- [ ] Dimension 3 Color: PASS (§4 — 60/30/10 heredado; per-chapter contrast documentado D2-03)
-- [ ] Dimension 4 Typography: PASS (§5 — 7 fonts locked, font-display: swap, bundle target 150-300KB)
-- [ ] Dimension 5 Spacing: PASS (§3 — heredado Phase 1; excepción LangToggle tap target 44×44 declarada)
-- [ ] Dimension 6 Registry Safety: PASS (§16 — sin third-party UI blocks; vue-i18n + fontsource opcional OFL-1.1 verified)
+- [x] Dimension 1 Copywriting: PASS (§11 — 7 chapter titles + UI chrome ES/EN paridad locked)
+- [x] Dimension 2 Visuals: PASS (§4.2 — 7 themes con tokens completos, ch0/ch1 finales, ch2-6 stubs)
+- [x] Dimension 3 Color: PASS (§4 — 60/30/10 heredado; per-chapter contrast documentado D2-03)
+- [x] Dimension 4 Typography: PASS (§5 — 7 fonts locked, font-display: swap, bundle target 150-300KB)
+- [x] Dimension 5 Spacing: PASS (§3 — heredado Phase 1; excepción LangToggle tap target 44×44 declarada)
+- [x] Dimension 6 Registry Safety: PASS (§16 — sin third-party UI blocks; vue-i18n + fontsource opcional OFL-1.1 verified)
 
-**Approval:** pending
+**Approval:** approved 2026-05-13 (gsd-ui-checker — sin recommendations)
 
 ---
 
