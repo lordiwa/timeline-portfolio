@@ -20,6 +20,7 @@
 // (lo que causaría doble-trigger del scroll snap + nuestro scrollToChapter).
 
 import { ref, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 // Single source of truth para los chapters de Phase 1. Copiado de UI-SPEC §7.1.
 const chapters = [
@@ -32,6 +33,7 @@ const chapters = [
   { id: 6, year: 2026, era: 'Phaser' },
 ]
 
+const { t } = useI18n()
 const shellEl = ref(null)
 
 // Inject del scrollState (provisto por App.vue desde Plan 02) y del prm (Plan 03).
@@ -76,7 +78,7 @@ defineExpose({ shellEl })
       :key="ch.id"
       :id="`chapter-${ch.id}`"
       :data-chapter="ch.id"
-      :aria-label="`${ch.era} — ${ch.year}`"
+      :aria-label="t('chapters.' + ch.id + '.title')"
       class="chapter-section"
     >
       <div class="chapter-placeholder">

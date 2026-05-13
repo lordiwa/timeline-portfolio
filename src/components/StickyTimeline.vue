@@ -38,6 +38,7 @@
 // Phase 3 consolida en src/data/chapters.js con metadata expandida (i18n, assets).
 
 import { computed, inject } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 // Single source of Phase 1 chapter data — copiado de UI-SPEC §7.1.
 const chapters = [
@@ -50,6 +51,7 @@ const chapters = [
   { id: 6, year: 2026, era: 'Phaser' },
 ]
 
+const { t } = useI18n()
 const { activeChapter, scrollProgress, scrollToChapter } = inject('scrollState')
 const { prefersReduced } = inject('prm')
 
@@ -72,7 +74,7 @@ function onTickClick(N) {
 <template>
   <nav
     class="sticky-timeline"
-    aria-label="Navegación de capítulos por era"
+    :aria-label="t('ui.timeline.navAria')"
     role="navigation"
   >
     <div class="timeline-track" aria-hidden="true">
@@ -93,7 +95,7 @@ function onTickClick(N) {
         <button
           class="tick-button"
           :data-chapter="ch.id"
-          :aria-label="`Ir a ${ch.era} (${ch.year})`"
+          :aria-label="t('ui.timeline.tickAria', { era: ch.era, year: ch.year })"
           :aria-current="activeChapter === ch.id ? 'true' : undefined"
           @click="onTickClick(ch.id)"
         >

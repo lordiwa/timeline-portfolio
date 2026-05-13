@@ -26,7 +26,9 @@
 //   opacity = 1 al activar PRM, garantizando visibilidad.
 
 import { ref, inject, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const { activeChapter } = inject('scrollState')
 const { prefersReduced } = inject('prm')
 
@@ -80,7 +82,7 @@ watch(prefersReduced, (isPRM) => {
 <template>
   <aside
     class="sticky-avatar"
-    :aria-label="`Avatar de Rafael — chapter ${activeChapter} activo`"
+    :aria-label="t('avatar.ariaTemplate', { chapter: activeChapter })"
     aria-live="polite"
   >
     <div class="avatar-placeholder" aria-hidden="true" :style="{ opacity }">

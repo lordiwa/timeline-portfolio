@@ -26,7 +26,9 @@
 //   directamente desde tests, evitando depender de dispatchEvent.
 
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const isHidden = ref(false)
 let scrollHandler = null
 
@@ -67,7 +69,7 @@ defineExpose({ handleScrollOnce })
     class="skip-link"
     :class="{ hidden: isHidden }"
     @blur="onBlur"
-  >Saltar al contenido / Skip to content</a>
+  >{{ t('ui.skipLink') }}</a>
 </template>
 
 <style scoped>
