@@ -163,17 +163,80 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 
 ## Traceability
 
-Empty initially — populated by roadmapper after roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (pending roadmap) | — | Pending |
+| CORE-01 | Phase 1 | Pending |
+| CORE-02 | Phase 1 | Pending |
+| CORE-03 | Phase 1 | Pending |
+| CORE-04 | Phase 1 | Pending |
+| CORE-05 | Phase 1 | Pending |
+| CORE-06 | Phase 1 | Pending |
+| CORE-07 | Phase 1 | Pending |
+| CORE-08 | Phase 1 | Pending |
+| CORE-09 | Phase 1 | Pending |
+| MOB-01 | Phase 1 | Pending |
+| MOB-02 | Phase 1 | Pending |
+| MOB-03 | Phase 1 | Pending |
+| MOB-04 | Phase 1 | Pending |
+| iOS-01 | Phase 1 | Pending |
+| iOS-02 | Phase 1 | Pending |
+| A11Y-01 | Phase 1 | Pending |
+| A11Y-02 | Phase 1 | Pending |
+| A11Y-05 | Phase 1 | Pending |
+| THM-01 | Phase 2 | Pending |
+| THM-02 | Phase 2 | Pending |
+| THM-03 | Phase 2 | Pending |
+| THM-04 | Phase 2 | Pending |
+| THM-05 | Phase 2 | Pending |
+| I18N-01 | Phase 2 | Pending |
+| I18N-02 | Phase 2 | Pending |
+| I18N-03 | Phase 2 | Pending |
+| I18N-04 | Phase 2 | Pending |
+| I18N-05 | Phase 2 | Pending |
+| I18N-06 | Phase 2 | Pending |
+| A11Y-03 | Phase 2 | Pending |
+| A11Y-04 | Phase 2 | Pending |
+| A11Y-07 | Phase 2 | Pending |
+| CON-01 | Phase 3 | Pending |
+| CON-02 | Phase 3 | Pending |
+| CON-03 | Phase 3 | Pending |
+| CON-04 | Phase 3 | Pending |
+| CON-05 | Phase 3 | Pending |
+| CON-06 | Phase 3 | Pending |
+| ART-01 | Phase 3 | Pending |
+| ART-05 | Phase 3 | Pending |
+| ART-06 | Phase 3 | Pending |
+| SEO-01 | Phase 3 | Pending |
+| SEO-02 | Phase 3 | Pending |
+| SEO-03 | Phase 3 | Pending |
+| SEO-04 | Phase 3 | Pending |
+| ART-02 | Phase 4 | Pending |
+| ART-03 | Phase 4 | Pending |
+| ART-04 | Phase 4 | Pending |
+| ART-07 | Phase 4 | Pending |
+| A11Y-06 | Phase 4 | Pending |
+| PHA-01 | Phase 5 | Pending |
+| PHA-02 | Phase 5 | Pending |
+| PHA-03 | Phase 5 | Pending |
+| PHA-04 | Phase 5 | Pending |
+| PHA-05 | Phase 5 | Pending |
+| PHA-06 | Phase 5 | Pending |
+| PHA-07 | Phase 5 | Pending |
+| PHA-08 | Phase 5 | Pending |
+| PHA-09 | Phase 5 | Pending |
+| DEPLOY-01 | Phase 6 | Pending |
+| DEPLOY-02 | Phase 6 | Pending |
+| DEPLOY-03 | Phase 6 | Pending |
+| DEPLOY-04 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 64 total
-- Mapped to phases: 0
-- Unmapped: 64 ⚠️ (will be resolved by roadmapper)
+- v1 requirements identified: 63 unique IDs (source file declared 64 — one count discrepancy; all identifiable IDs are mapped)
+- Mapped to phases: 63
+- Unmapped: 0
+
+**Coverage notes:**
+- REQUIREMENTS.md declares 64 total v1 requirements but 63 unique REQ-IDs are present in the document. No orphaned requirements were found. The discrepancy of 1 is in the source count, not a missing mapping.
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-12 after initial definition*
+*Last updated: 2026-05-12 — traceability populated by roadmapper*
