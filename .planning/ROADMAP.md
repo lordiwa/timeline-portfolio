@@ -13,7 +13,7 @@ Un portafolio vertical de 7 chapters con dos anclajes sticky (avatar pixel-art t
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio. **Cerrada 2026-05-12 con deferred verification:** 6/7 plans ejecutados, Plan 07 (iOS smoke test) deferido por falta de hardware iOS.
-- [ ] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real
+- [x] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real. **Cerrada 2026-05-13:** 6/6 plans + manual gate firmado por Rafael verdict PASS. Caveats: panel del StickyTimeline (rediseñado vertical-left ese mismo día) usa tokens :root estáticos — opcional override por theme en Phase 3.
 - [ ] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas
 - [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
 - [ ] **Phase 5: Phaser Chapter 6** - Escena espacial explorable en Phaser con parallax, naves y planetas-proyecto
@@ -54,8 +54,8 @@ Plans:
 - [x] 02-02-PLAN.md — Wave 1: Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
 - [x] 02-03-PLAN.md — Wave 2: Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
 - [x] 02-04-PLAN.md — Wave 3: Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
-- [ ] 02-05-PLAN.md — Wave 4: Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
-- [ ] 02-06-PLAN.md — Wave 5: Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
+- [x] 02-05-PLAN.md — Wave 4: Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
+- [x] 02-06-PLAN.md — Wave 5: Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
 
 ### Phase 3: Chapter 3 End-to-End
 **Goal**: El chapter 3 (Web 2.0 + arte digital) es el landing polished que un recruiter ve al abrir el sitio; tiene avatar, bio, proyectos de la era, contacto persistente, metadatos SEO y funciona impecablemente en ES y EN.

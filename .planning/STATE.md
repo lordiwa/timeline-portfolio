@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: "Phase 2 verificada PASS-with-pending-manual — esperando sign-off manual de Rafael (02-MANUAL-CHECKLIST.md)"
-last_updated: "2026-05-13T18:00:00Z"
-last_activity: 2026-05-13
+status: phase-closed
+stopped_at: "Phase 2 CERRADA — Rafael firmó sign-off verdict PASS en 02-MANUAL-CHECKLIST.md §10 (2026-05-13). Listo para Phase 3."
+last_updated: "2026-05-13T20:00:00Z"
+last_activity: 2026-05-13 — Rafael firmó manual checklist verdict PASS; Phase 2 cerrada
 progress:
   total_phases: 6
   completed_phases: 1
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Que un visitante mueva el scroll, vea el sitio transformarse, y entienda en 30 segundos sin leer una sola viñeta de CV que está mirando a alguien que vivió tres décadas de tecnología y cuyas habilidades convergen en algo único.
-**Current focus:** Phase 2 — theme-system-i18n (VERIFICADA, esperando sign-off manual de Rafael)
+**Current focus:** Phase 3 — Chapter 3 End-to-End (Phase 2 cerrada con sign-off PASS de Rafael)
 
 ## Current Position
 
-Phase: 2 (theme-system-i18n) — VERIFICADA PASS-with-pending-manual
+Phase: 2 (theme-system-i18n) — CERRADA con verdict PASS (sign-off Rafael 2026-05-13)
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
-Phase 2 status: 6/6 plans ejecutados. Motor programático completo. **Human gate abierto** — Rafael debe ejecutar `02-MANUAL-CHECKLIST.md` y firmar §10 sign-off antes de declarar Phase 2 100% completa y proceder a Phase 3.
-Last activity: 2026-05-13
+Phase 2 status: 6/6 plans ejecutados. Motor programático completo + sign-off manual de Rafael (`02-MANUAL-CHECKLIST.md` §10 firmado, verdict PASS). Phase 2 100% cerrada.
+Last activity: 2026-05-13 — Rafael firmó manual checklist verdict PASS; Phase 2 cerrada
 
-Progress (Phase 2 isolated): [██████████] 6/6 plans ejecutados — verificación programática completa; manual pending
-Progress (project): Phase 1 ✓ → Phase 2 (motor completo, sign-off pendiente) → Phase 3 (no iniciar hasta sign-off)
+Progress (Phase 2 isolated): [██████████] 6/6 plans ejecutados + manual gate FIRMADO ✅
+Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 (listo para arrancar — `/gsd-discuss-phase 3`)
 
 ## Phase 2 Verification Results (2026-05-13)
 

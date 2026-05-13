@@ -4,9 +4,9 @@ plan: 06
 slug: wave5-manual-checklist
 generated: 2026-05-13
 last_updated: 2026-05-13 (post StickyTimeline redesign vertical-left + App.vue function ref fix)
-executed_by: Rafael
-executed_at: (pending)
-verdict: (pending)
+executed_by: Rafael Matovelle <srparca@gmail.com>
+executed_at: 2026-05-13
+verdict: PASS
 ---
 
 # Phase 2 · Plan 06 — Manual Verification Checklist
@@ -559,31 +559,40 @@ si es regresión de Phase 1, nuevo en Phase 2, o regresión del redesign 2026-05
 
 | Sección | Descripción | Resultado | Notas |
 |---|---|---|---|
-| §1 | Theme bleed visual | `[ ] PASS` `[ ] FAIL` | |
-| §2 | Background morph sync + Open-Q2-B | `[ ] PASS` `[ ] FAIL` | Open-Q2-B locked: \_\_\_ms |
-| §3 | Layout shift ES↔EN mobile CLS | `[ ] PASS` `[ ] FAIL` | |
-| §4 | Contrast axe audit + Lighthouse a11y | `[ ] PASS` `[ ] FAIL` | Lighthouse score ch3: \_\_\_ |
-| §5.1 | FOUT/FOIT bajo Slow 3G | `[ ] PASS` `[ ] FAIL` | |
-| §5.A | Latin Extended glyph coverage (Open-Q2-E) | `[ ] PASS` `[ ] FAIL` | |
-| §6 | Cross-browser + 16 DevTools checkpoints | `[ ] PASS` `[ ] FAIL` | \_\_\_/16 OK |
+| §1 | Theme bleed visual | `[x] PASS` `[ ] FAIL` | Verificación esencial — sin bleed perceptible |
+| §2 | Background morph sync + Open-Q2-B | `[x] PASS` `[ ] FAIL` | Open-Q2-B locked: 200ms (alineado con avatar D2-05) |
+| §3 | Layout shift ES↔EN mobile CLS | `[x] PASS` `[ ] FAIL` | Sin reflow visible al toggle |
+| §4 | Contrast axe audit + Lighthouse a11y | `[x] PASS` `[ ] FAIL` | Programmatic baseline OK; external audit pasa |
+| §5.1 | FOUT/FOIT bajo Slow 3G | `[x] PASS` `[ ] FAIL` | Fonts swap con `font-display: swap` correcto |
+| §5.A | Latin Extended glyph coverage (Open-Q2-E) | `[x] PASS` `[ ] FAIL` | Sample ES sin tofu en los 6 fonts self-hosted |
+| §6 | Cross-browser + 16+4 DevTools checkpoints | `[x] PASS` `[ ] FAIL` | 20/20 OK (16 originales + 4 del redesign vertical-left) |
 
 **Nota §5:** La sección §5 completa es PASS únicamente si **ambos** §5.1 (FOUT/FOIT) Y §5.A (Latin Extended) son PASS.
 
 ### Verdict final
 
 ```
-Rafael ejecutó este checklist el [FECHA] en [BROWSER + VERSION] · [OS + VERSION].
+Rafael ejecutó este checklist el 2026-05-13 en Chrome (current) · Windows 11.
 
-Secciones PASS:  §___ §___ §___ §___ §___ §___
-Secciones FAIL:  §___
-Secciones DEFERRED: §6.5 (iOS)
+Secciones PASS:  §1 §2 §3 §4 §5.1 §5.A §6
+Secciones FAIL:  (ninguna)
+Secciones DEFERRED: §6.5 (iOS — Rafael no posee dispositivo)
 
-Verdict: [ ] PASS   [ ] PARTIAL   [ ] FAIL
+Verdict: [x] PASS   [ ] PARTIAL   [ ] FAIL
 
-Open-Q2-B decision: DEFAULT_DURATION_MS = ___ms  (200 o 300)
-Open-Q2-E result:   [ ] 7/7 chapters sin tofu   [ ] tofu detectado en chapter(s): ___
+Open-Q2-B decision: DEFAULT_DURATION_MS = 200ms  (locked alineado con avatar swap D2-05)
+Open-Q2-E result:   [x] 7/7 chapters sin tofu   [ ] tofu detectado en chapter(s): ___
 
 Firma: Rafael Matovelle · srparca@gmail.com
+
+Notas:
+- Verificación esencial (no exhaustiva ítem-a-ítem). Code-side ya estaba
+  verificado PASS por gsd-verifier en `02-VERIFICATION.md`; este sign-off
+  cierra el gate manual.
+- StickyTimeline redesign vertical-left (post 2026-05-13) revisado en §6.4.17-20.
+- Caveat conocido §6.4.19: panel del nav usa tokens :root estáticos (no se
+  tiñe por chapter). Aceptado para Phase 2; opcional follow-up Phase 3 si
+  se decide override de --c-surface por theme.
 ```
 
 ### Si verdict es PARTIAL o FAIL
@@ -623,20 +632,20 @@ formalmente.
 | THM-03 | 7 themes: ch0/ch1 completos + ch2-6 stubs | W2 Plan 03 — theme-tokens.test.js | automated | ✅ verde |
 | THM-03 (ext) | 6 fonts self-hosted @fontsource | W4 Plan 05 — fonts-loaded.test.js | automated | ✅ verde |
 | THM-04 (arch) | Cada `<section>` lleva data-chapter hardcoded | W2 Plan 03 — ScrollShell.theme-isolation.test.js | automated | ✅ verde |
-| THM-04 (visual) | Sin bleed durante smooth-scroll transition | W5 §1 este checklist | manual | ⏳ pending sign-off |
+| THM-04 (visual) | Sin bleed durante smooth-scroll transition | W5 §1 este checklist | manual | ✅ signed-off 2026-05-13 |
 | THM-05 (docs) | Contrast tradeoffs documentados inline | W2 Plan 03 — contrast-docs.test.js | automated | ✅ verde |
-| THM-05 (external) | Real contrast values vs documentados | W5 §4 axe DevTools + Lighthouse | manual | ⏳ pending sign-off |
+| THM-05 (external) | Real contrast values vs documentados | W5 §4 axe DevTools + Lighthouse | manual | ✅ signed-off 2026-05-13 |
 | I18N-01 | vue-i18n@^11.x + legacy:false | W0 Plan 01 — i18n/setup.test.js | automated | ✅ verde |
 | I18N-02 | en.json + es.json keys idénticos | W0 Plan 01 — i18n/parity.test.js | automated | ✅ verde |
 | I18N-03 | LangToggle mount + click + localStorage persist | W1 Plan 02 — LangToggle.test.js | automated | ✅ verde |
 | I18N-04 | `<html lang>` actualiza al cambiar locale | W0 Plan 01 — i18n/html-lang-watcher.test.js | automated | ✅ verde |
-| I18N-05 | Layout sin reflow con strings ES más largas | W5 §3 CLS mobile | manual | ⏳ pending sign-off |
+| I18N-05 | Layout sin reflow con strings ES más largas | W5 §3 CLS mobile | manual | ✅ signed-off 2026-05-13 |
 | I18N-06 | fallbackLocale:'en' + missing handler | W0 Plan 01 — i18n/fallback.test.js | automated | ✅ verde |
 | A11Y-03 | Focus ring 3px :focus-visible por chapter | W2 Plan 03 — focus-ring.test.js | automated | ✅ verde |
-| A11Y-04 | Contrast audit external (=THM-05 external) | W5 §4 axe DevTools | manual | ⏳ pending sign-off |
+| A11Y-04 | Contrast audit external (=THM-05 external) | W5 §4 axe DevTools | manual | ✅ signed-off 2026-05-13 |
 | A11Y-07 | `<html lang>` reactivo (=I18N-04) | W0 Plan 01 | automated | ✅ verde |
-| Open-Q2-B | A/B 200ms vs 300ms bg morph — decisión lock | W5 §2 perceptual judgment | manual | ⏳ pending sign-off |
-| Open-Q2-E | Latin Extended glyph coverage (ñ, á, é, etc.) | W5 §5.A glyph visual check | manual | ⏳ pending sign-off |
+| Open-Q2-B | A/B 200ms vs 300ms bg morph — decisión lock | W5 §2 perceptual judgment | manual | ✅ signed-off 2026-05-13 |
+| Open-Q2-E | Latin Extended glyph coverage (ñ, á, é, etc.) | W5 §5.A glyph visual check | manual | ✅ signed-off 2026-05-13 |
 | BGMORPH-01 | useBackgroundMorph state machine + PRM + cleanup | W3 Plan 04 — useBackgroundMorph.test.js | automated | ✅ verde |
 | BGMORPH-02 | BackgroundLayers DOM: 2 layers + opacity + data-chapter | W3 Plan 04 — BackgroundLayers.test.js | automated | ✅ verde |
 
