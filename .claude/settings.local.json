@@ -37,7 +37,29 @@
       "Bash(powershell.exe *)",
       "Bash(python3 *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git symbolic-ref *)",
+      "Bash(npx vitest *)",
+      "Bash(git commit -m 'feat\\(prm\\): plan 03 task 3.1 — usePRM composable + 4 tests \\(W2\\) *)",
+      "Bash(npm run *)",
+      "Bash(git commit -m 'feat\\(prm\\): plan 03 task 3.2 — provide\\('\\\\''prm'\\\\'', usePRM\\(\\)\\) en App.vue \\(W2\\) *)",
+      "Bash(git commit -m 'docs\\(prm\\): plan 03 — usePRM-composable completo \\(W2\\) *)",
+      "Bash(git commit -m 'test\\(timeline\\): plan 05 task 5.1 RED — 13 tests para StickyTimeline \\(W4\\) *)",
+      "Bash(git commit -m 'feat\\(timeline\\): plan 05 task 5.1 — StickyTimeline.vue GREEN \\(W4\\) *)",
+      "Bash(git commit -m 'test\\(shell\\): plan 05 task 5.2 RED — 10 tests para keyboard navigation \\(W4\\) *)",
+      "Bash(git commit -m 'feat\\(shell\\): plan 05 task 5.2 — ScrollShell keyboard nav GREEN \\(W4\\) *)",
+      "Bash(git commit -m 'feat\\(app\\): plan 05 task 5.3 — mount <StickyTimeline /> + viewport-fit=cover \\(W4\\) *)",
+      "Bash(git commit -m 'docs\\(timeline\\): plan 05 task 5.4 — manual checklist artifact \\(W4\\) *)",
+      "Bash(curl -sf http://127.0.0.1:5173/)",
+      "Bash(curl -sf http://127.0.0.1:5173/src/App.vue)",
+      "Bash(curl -sf \"http://127.0.0.1:5173/src/components/StickyTimeline.vue\")",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(git commit -m 'docs\\(timeline\\): plan 05 — sticky-timeline-marker completo \\(W4\\) *)",
+      "Bash(awk '{print $NF, $5}')",
+      "Skill(gsd-resume-work)",
+      "Skill(gsd-discuss-phase)",
+      "Skill(gsd-plan-phase)",
+      "Skill(gsd-ui-phase)"
     ]
   }
 }
