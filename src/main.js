@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createHead } from '@unhead/vue'
 import App from './App.vue'
 import { i18n } from './i18n'
 
@@ -20,4 +21,8 @@ import '@fontsource/press-start-2p/latin-ext.css' // ch6 — latin-ext (ñ, á, 
 
 import './styles/chapter-themes.css'   // W2: @layer cascade + 7 themes era-auténticos
 
-createApp(App).use(i18n).mount('#app')
+const app = createApp(App)
+const head = createHead()
+app.use(i18n)
+app.use(head)
+app.mount('#app')

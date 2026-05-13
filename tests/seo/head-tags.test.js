@@ -3,13 +3,16 @@
 // Plan 03-04 TDD. RED phase: App.vue aun no tiene useHead (falla T1-T5).
 // GREEN phase: App.vue + main.js wired (Task 4.2 GREEN).
 //
-// Strategy: mount App.vue con stubs de componentes pesados para que el test
-// solo ejerza el head wiring del <script setup> de App.vue.
-// @unhead/vue inyecta tags en document.head (jsdom) via createHead() plugin.
+// Strategy: mount App.vue con stubs de componentes pesados.
+// @unhead/vue en jsdom NO inyecta al DOM automaticamente sin DomPlugin.
+// Usamos head.resolveTags() para verificar los tags resueltos por unhead
+// (API programatica, mas confiable que DOM en testing).
+// Para T2-T5 que necesitan DOM, usamos renderDOMHead de @unhead/dom.
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createHead } from '@unhead/vue'
+import { renderDOMHead } from '@unhead/dom'
 import App from '@/App.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
@@ -24,26 +27,22 @@ const heavyStubs = {
   ContactHUD: true,
 }
 
-// Helper para esperar que unhead flush tags al DOM (puede ser async en jsdom)
+// Helper para esperar que Vue/unhead flush (async watchers + microtasks)
 async function waitForHead() {
   await flushPromises()
   await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
+afterEach(() => {
+  // Limpiar tags inyectados por renderDOMHead entre tests
+  document.head.querySelectorAll('meta[name="description"]').forEach((el) => el.remove())
+  document.head.querySelectorAll('meta[property^="og:"]').forEach((el) => el.remove())
+  document.head.querySelectorAll('link[rel="alternate"]').forEach((el) => el.remove())
+  document.head.querySelectorAll('script[type="application/ld+json"]').forEach((el) => el.remove())
+  document.head.querySelectorAll('title').forEach((el) => el.remove())
+})
+
 describe('SEO head tags (SEO-01..04)', () => {
-  let cleanupFns = []
-
-  afterEach(() => {
-    // Limpiar el document.head entre tests para evitar contaminacion entre runs
-    cleanupFns.forEach((fn) => fn())
-    cleanupFns = []
-    // Limpiar todos los meta/link/script que unhead haya inyectado
-    document.head.querySelectorAll('meta[name="description"]').forEach((el) => el.remove())
-    document.head.querySelectorAll('meta[property^="og:"]').forEach((el) => el.remove())
-    document.head.querySelectorAll('link[rel="alternate"]').forEach((el) => el.remove())
-    document.head.querySelectorAll('script[type="application/ld+json"]').forEach((el) => el.remove())
-  })
-
   it('T1 — title reactive al locale (SEO-03)', async () => {
     const i18n = createTestI18n({ locale: 'es' })
     const head = createHead()
@@ -55,24 +54,26 @@ describe('SEO head tags (SEO-01..04)', () => {
     })
     await waitForHead()
 
-    // Verificar que title es un string no vacio (puede ser placeholder o valor real)
-    expect(typeof document.title).toBe('string')
-    expect(document.title.length).toBeGreaterThan(0)
+    // Verificar el title via head.resolveTags() — API programatica de unhead
+    // (mas confiable que DOM en jsdom sin DomPlugin activo en el watcher cycle)
+    const tagsEs = await head.resolveTags()
+    const titleTagEs = tagsEs.find((tag) => tag.tag === 'title')
+    expect(titleTagEs).toBeDefined()
+    const titleValueEs = titleTagEs?.textContent ?? titleTagEs?.children ?? ''
+    expect(String(titleValueEs).length).toBeGreaterThan(0)
 
-    const titleEs = document.title
-
-    // Cambiar locale a EN — title debe mutar reactivamente
+    // Cambiar locale a EN — reactive functions deben recalcular
     i18n.global.locale.value = 'en'
     await waitForHead()
 
-    // Si los valores ES/EN son diferentes, el titulo debe cambiar
-    // (con placeholders diferentes en ES vs EN, el titulo cambia)
-    expect(typeof document.title).toBe('string')
-    expect(document.title.length).toBeGreaterThan(0)
+    const tagsEn = await head.resolveTags()
+    const titleTagEn = tagsEn.find((tag) => tag.tag === 'title')
+    expect(titleTagEn).toBeDefined()
+    const titleValueEn = titleTagEn?.textContent ?? titleTagEn?.children ?? ''
+    expect(String(titleValueEn).length).toBeGreaterThan(0)
 
-    // Confirmar que el wiring reactivo funciono: al menos uno de ES o EN tuviera contenido
-    // (title ES y EN son distintos por los placeholders con idioma embebido)
-    expect(document.title).not.toBe(titleEs)
+    // ES y EN tienen placeholders distintos (ES: "...title ES..." vs EN: "...title EN...")
+    expect(String(titleValueEn)).not.toBe(String(titleValueEs))
   })
 
   it('T2 — meta description, og:title, og:description presentes (SEO-01 + SEO-03)', async () => {
@@ -85,6 +86,8 @@ describe('SEO head tags (SEO-01..04)', () => {
       },
     })
     await waitForHead()
+    // Forzar inyeccion DOM via renderDOMHead para que querySelector funcione
+    await renderDOMHead(head, { document })
 
     const desc = document.querySelector('meta[name="description"]')
     const ogTitle = document.querySelector('meta[property="og:title"]')
@@ -94,7 +97,6 @@ describe('SEO head tags (SEO-01..04)', () => {
     expect(ogTitle).not.toBeNull()
     expect(ogDesc).not.toBeNull()
 
-    // Verificar que tienen content
     expect(desc.getAttribute('content').length).toBeGreaterThan(0)
     expect(ogTitle.getAttribute('content').length).toBeGreaterThan(0)
     expect(ogDesc.getAttribute('content').length).toBeGreaterThan(0)
@@ -109,6 +111,7 @@ describe('SEO head tags (SEO-01..04)', () => {
       },
     })
     await waitForHead()
+    await renderDOMHead(head, { document })
 
     const ogImage = document.querySelector('meta[property="og:image"]')
     const ogType = document.querySelector('meta[property="og:type"]')
@@ -120,7 +123,7 @@ describe('SEO head tags (SEO-01..04)', () => {
 
     expect(ogImage.getAttribute('content')).toContain('/og-image.png')
     expect(ogType.getAttribute('content')).toBe('website')
-    // og:url puede ser placeholder (https://SITE_URL) o URL real — debe comenzar con http(s)://
+    // og:url puede ser placeholder (https://SITE_URL) — debe comenzar con http(s)://
     expect(ogUrl.getAttribute('content')).toMatch(/^https?:\/\//)
   })
 
@@ -133,6 +136,7 @@ describe('SEO head tags (SEO-01..04)', () => {
       },
     })
     await waitForHead()
+    await renderDOMHead(head, { document })
 
     const hreflangs = Array.from(
       document.querySelectorAll('link[rel="alternate"][hreflang]')
@@ -153,6 +157,7 @@ describe('SEO head tags (SEO-01..04)', () => {
       },
     })
     await waitForHead()
+    await renderDOMHead(head, { document })
 
     const jsonldEl = document.querySelector('script[type="application/ld+json"]')
     expect(jsonldEl).not.toBeNull()

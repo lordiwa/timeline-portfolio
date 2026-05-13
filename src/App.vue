@@ -24,6 +24,7 @@
 import { ref, provide, watch } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import BackgroundLayers from './components/BackgroundLayers.vue'
 import SkipLink from './components/SkipLink.vue'
 import ScrollShell from './components/ScrollShell.vue'
@@ -34,6 +35,7 @@ import ContactHUD from './components/ContactHUD.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
+import { seoConfig, buildPersonSchema } from './config/seo'
 
 const shellRef = ref(null)
 // Function ref con identidad estable: arrow inline `el => { shellRef.value = ... }`
@@ -59,7 +61,8 @@ provide('bgMorph', bgMorph)
 
 // I18N-04 + A11Y-07 — single source of truth para <html lang> mutation.
 // { immediate: true } garantiza sincronización desde el primer render (RESEARCH Pattern 6).
-const { locale } = useI18n()
+// t añadido en Plan 03-04 para useHead reactive title/description (SEO-03).
+const { locale, t } = useI18n()
 watch(locale, (l) => {
   document.documentElement.lang = l
 }, { immediate: true })
@@ -78,6 +81,46 @@ useResizeObserver(document.documentElement, (entries) => {
   if (!entry) return
   viewportWidth.value = entry.contentRect.width
   viewportHeight.value = entry.contentRect.height
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEO wiring (Plan 03-04) — SEO-01..04 reactive al locale via useI18n.
+// RESEARCH Pattern 2 verbatim (@unhead/vue@^1.11.20 LOCKED, Vite 5 compat).
+//
+// title/description/og:title/og:description: () => t(key) — REACTIVE al locale.
+//   Al toggle ES↔EN, unhead propaga el cambio al <title> + meta sin re-mount.
+// og:image, og:type, og:url: string estático — no dependen del locale.
+// hreflang: 3 links (es, en, x-default) — estáticos, apuntan a siteUrl placeholder.
+// JSON-LD Person schema: ESTÁTICO (schema.org tolera name/jobTitle en un idioma).
+//   Construido via buildPersonSchema() de src/config/seo.js — NO user input.
+//   textContent (no innerHTML) — safe-by-default por T-SEO-INJ + T-XSS-HEAD.
+// siteUrl PLACEHOLDER hasta Phase 6 (Firebase Hosting confirma dominio real).
+// og-image.png: placeholder 1×1 hasta Rafael provea screenshot 1200×630 post-03-05.
+// ─────────────────────────────────────────────────────────────────────────────
+useHead({
+  title: () => t('seo.title'),
+  meta: [
+    { name: 'description',        content: () => t('seo.description') },
+    // OG meta (SEO-01)
+    { property: 'og:title',       content: () => t('seo.title') },
+    { property: 'og:description', content: () => t('seo.description') },
+    { property: 'og:image',       content: `${seoConfig.siteUrl}/og-image.png` },
+    { property: 'og:type',        content: 'website' },
+    { property: 'og:url',         content: seoConfig.siteUrl },
+  ],
+  // hreflang (SEO-04)
+  link: [
+    { rel: 'alternate', hreflang: 'es',        href: seoConfig.siteUrl },
+    { rel: 'alternate', hreflang: 'en',        href: `${seoConfig.siteUrl}?lang=en` },
+    { rel: 'alternate', hreflang: 'x-default', href: seoConfig.siteUrl },
+  ],
+  // JSON-LD Person schema (SEO-02) — textContent NOT innerHTML (T-SEO-INJ mitigated)
+  script: [
+    {
+      type: 'application/ld+json',
+      textContent: JSON.stringify(buildPersonSchema()),
+    },
+  ],
 })
 </script>
 
