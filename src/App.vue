@@ -28,6 +28,7 @@ import SkipLink from './components/SkipLink.vue'
 import ScrollShell from './components/ScrollShell.vue'
 import StickyAvatar from './components/StickyAvatar.vue'
 import StickyTimeline from './components/StickyTimeline.vue'
+import LangToggle from './components/LangToggle.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 
@@ -74,6 +75,7 @@ useResizeObserver(document.documentElement, (entries) => {
   <StickyAvatar />
   <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
   <StickyTimeline />
+  <LangToggle />
 </template>
 
 <!--
