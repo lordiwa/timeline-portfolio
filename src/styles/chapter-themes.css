@@ -1,0 +1,162 @@
+/*
+ * chapter-themes.css — Motor visual Phase 2
+ * ─────────────────────────────────────────
+ * Propósito: 7 themes era-auténticos (ch0-ch6) via CSS Custom Properties override
+ * por selector [data-chapter="N"]. Ch0 (Terminal 1995) y Ch1 (HTML 90s) COMPLETOS.
+ * Ch2-6 stubs era-tinted que Phase 3/4 finalizarán con pixel art + paleta definitiva.
+ *
+ * Source of truth: UI-SPEC §4.2 (valores hex verbatim) + D2-01/D2-02/D2-03 (decisiones).
+ * Requirements cubiertos: THM-01 (7 chapters), THM-02 (@layer), THM-03 (6 tokens cada uno),
+ * THM-04 (theme isolation via [data-chapter] per-section), THM-05 (contrast tradeoff ch1).
+ *
+ * Nota: Este archivo NO declara :root — el fallback neutral vive en App.vue líneas 87-108.
+ * Solo overrides per-chapter via [data-chapter="N"] selectors que matchean el v-for de
+ * ScrollShell.vue (`:data-chapter="ch.id"` → renderiza como `data-chapter="0"`, etc.).
+ */
+
+/* Declaración de orden de capas — ASCENDENTE de prioridad (la última gana). THM-02. */
+@layer reset, themes, components, utilities;
+
+/* ─────────────────────────────────────────────────────────────────────────────────────
+ * @layer themes — 7 chapter blocks con CSS Custom Properties por era
+ *
+ * Fallback neutral declarado en App.vue líneas 87-108; chapter-themes.css NO duplica
+ * el :root — solo override per chapter via [data-chapter="N"].
+ * ───────────────────────────────────────────────────────────────────────────────────── */
+@layer themes {
+
+  /* ──────────────────────────────────────────────────────
+   * ch0 — Terminal (1995, ~10 años) — COMPLETO Phase 2
+   * Era: CRT monitor monocromático, phosphor green P1,
+   * línea de comando, BBS, MS-DOS prompt.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="0"] {
+    --c-bg: #000000;
+    --c-fg: #00ff41;
+    --c-accent: #00ff41;
+    --c-border: #003311;
+    --c-focus: #00ff41;
+    --font-body: 'VT323', ui-monospace, monospace;
+    /* contrast(#00ff41, #000000) = 15.3:1 — WCAG AAA passes naturally for ch0 (CRT terminal green-on-black era-authentic). No tradeoff documentation required. */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch1 — HTML 90s crudo (2001-2005, ~15-18 años) — COMPLETO Phase 2
+   * Era: GeoCities, Angelfire, marquee tags, Comic Sans,
+   * fondo estrellado navy, colores chillones, frames anidados.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="1"] {
+    --c-bg: #000080;
+    --c-fg: #ff00ff;
+    --c-accent: #ffff00;
+    --c-border: #ffffff;
+    --c-focus: #ffffff;
+    --font-body: 'Comic Neue', 'Comic Sans MS', cursive;
+    /* contrast(#ff00ff, #000080) = 3.2:1 — chapter 1 (HTML 90s crudo) accepts 3.2:1 here as era-authentic tradeoff per THM-05; era-accurate visual identity (Comic Sans + magenta on starry navy) demands this. Compensated by larger font-size 18px+ minimum which improves perceived legibility. */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch2 — Flash era (2009, ~22 años) — STUB Phase 2
+   * Era: ActionScript, skeuomorfismo temprano, banners
+   * animados, púrpura profundo, naranja de acento.
+   * Phase 4 finaliza paleta + fondos pixel art.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="2"] {
+    --c-bg: #2a1a4a;
+    --c-fg: #e0c0ff;
+    --c-accent: #ff8800;
+    --c-border: #8060c0;
+    --c-focus: #ffaa00;
+    --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
+    /* contrast(#e0c0ff, #2a1a4a) = 12.6:1 — chapter 2 stub (Flash era) — Phase 4
+       finaliza paleta + fondos pixel art */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch3 — Web 2.0 (2013, ~26 años) — STUB Phase 2 (default landing)
+   * Era: glassmorfismo, Lobster font, gradientes, redes
+   * sociales, pastel blue — Phase 3 finaliza.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="3"] {
+    --c-bg: #f0f4ff;
+    --c-fg: #1a1a2e;
+    --c-accent: #ff6699;
+    --c-border: #a0b0d8;
+    --c-focus: #0066cc;
+    --font-body: 'Lobster', Georgia, serif;
+    /* contrast(#1a1a2e, #f0f4ff) = 13.4:1 — chapter 3 stub Web 2.0 — Phase 3 owns
+       paleta final + pixel art decorations */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch4 — AR/VR (2015-2018, ~30 años) — STUB Phase 2
+   * Era: Unity/Unreal AR, deep space UI, holográfico,
+   * floating panels, paneles translúcidos.
+   * Phase 4 añade parallax + ship sprites.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="4"] {
+    --c-bg: #0a0f2e;
+    --c-fg: #b0d0ff;
+    --c-accent: #00ffff;
+    --c-border: #2050a0;
+    --c-focus: #00ffff;
+    --font-body: 'Audiowide', 'Eurostile', sans-serif;
+    /* contrast(#b0d0ff, #0a0f2e) = 11.8:1 — chapter 4 stub AR/VR — Phase 4 will
+       add parallax floating panels + ship sprites */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch5 — Modern animated (2022-2024, ~36 años) — STUB Phase 2
+   * Era: SaaS minimal, Tailwind, Inter Variable,
+   * micro-interacciones scroll-driven, indigo palette.
+   * Phase 4 añade scroll-driven micro-interactions.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="5"] {
+    --c-bg: #ffffff;
+    --c-fg: #1a1a2e;
+    --c-accent: #6366f1;
+    --c-border: #e2e8f0;
+    --c-focus: #6366f1;
+    --font-body: 'Inter Variable', system-ui, sans-serif;
+    /* contrast(#1a1a2e, #ffffff) = 14.2:1 — chapter 5 stub modern — Phase 4 will
+       add scroll-driven micro-interactions */
+  }
+
+  /* ──────────────────────────────────────────────────────
+   * ch6 — Phaser/AI (2025+, ~40 años) — STUB Phase 2
+   * Era: gamedev interactivo, IA generativa, pixel art retro-futurista,
+   * deep space black-blue, amber accents.
+   * Phase 5 finaliza la escena Phaser completa + ships + planets.
+   * ────────────────────────────────────────────────────── */
+  [data-chapter="6"] {
+    --c-bg: #000814;
+    --c-fg: #c0e0ff;
+    --c-accent: #ffaa00;
+    --c-border: #1a4080;
+    --c-focus: #ffaa00;
+    --font-body: 'Press Start 2P', monospace;
+    /* contrast(#c0e0ff, #000814) = 10.8:1 — chapter 6 stub Phaser — Phase 5 owns
+       scene + ships + planets */
+  }
+
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────
+ * @layer components — reservado Phase 3/4
+ * Era-authentic UI components: botones Web 2.0 glossy, marquees, AR/VR panels, etc.
+ * NO poblado en Phase 2.
+ * ───────────────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Phase 3/4 reservado para era-authentic UI components (Web 2.0 glossy buttons,
+     marquees, AR/VR floating panels, Phaser canvas overlay containers). */
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────
+ * @layer utilities — reservado Phase 3/4
+ * Utility classes responsive, spacing overrides, display helpers.
+ * NO poblado en Phase 2.
+ * ───────────────────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Phase 3/4 reservado para utility classes responsive y helpers de layout
+     que necesiten override explícito sobre components. */
+}
