@@ -59,7 +59,15 @@
       "Skill(gsd-resume-work)",
       "Skill(gsd-discuss-phase)",
       "Skill(gsd-plan-phase)",
-      "Skill(gsd-ui-phase)"
+      "Skill(gsd-ui-phase)",
+      "Bash(rm -rf node_modules/.vite)",
+      "Bash(rm -rf node_modules/.vite-temp)",
+      "Bash(curl -sf http://127.0.0.1:5173/src/components/StickyTimeline.vue)",
+      "Bash(curl -sf \"http://127.0.0.1:5173/src/components/StickyTimeline.vue?vue&type=style&index=0&scoped=true&lang.css\")",
+      "Bash(curl -sf \"http://127.0.0.1:5173/src/App.vue\")",
+      "Bash(rm -f .planning/phases/03-chapter-3-end-to-end/03-DISCUSS-CHECKPOINT.json)",
+      "Bash(git commit *)",
+      "Skill(gsd-execute-phase)"
     ]
   }
 }
