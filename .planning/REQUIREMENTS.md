@@ -86,10 +86,10 @@
 
 ### SEO — Findability y sharing
 
-- [ ] **SEO-01**: OG meta tags (`og:title`, `og:description`, `og:image`, `og:type`) — image puede ser un screenshot de chapter 3 default landing
-- [ ] **SEO-02**: JSON-LD Person schema en `<head>` con `jobTitle`, `worksFor`, `alumniOf`, `sameAs` (LinkedIn, GitHub)
-- [ ] **SEO-03**: `<title>` y meta description por locale (cambian al toggle de idioma)
-- [ ] **SEO-04**: `<link rel="alternate" hreflang>` para ES y EN
+- [x] **SEO-01**: OG meta tags (`og:title`, `og:description`, `og:image`, `og:type`) — image puede ser un screenshot de chapter 3 default landing
+- [x] **SEO-02**: JSON-LD Person schema en `<head>` con `jobTitle`, `worksFor`, `alumniOf`, `sameAs` (LinkedIn, GitHub)
+- [x] **SEO-03**: `<title>` y meta description por locale (cambian al toggle de idioma)
+- [x] **SEO-04**: `<link rel="alternate" hreflang>` para ES y EN
 
 ### DEPLOY — Build y hosting
 
@@ -207,10 +207,10 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 | ART-01 | Phase 3 | Pending |
 | ART-05 | Phase 3 | Pending |
 | ART-06 | Phase 3 | Pending |
-| SEO-01 | Phase 3 | Pending |
-| SEO-02 | Phase 3 | Pending |
-| SEO-03 | Phase 3 | Pending |
-| SEO-04 | Phase 3 | Pending |
+| SEO-01 | Phase 3 | Complete |
+| SEO-02 | Phase 3 | Complete |
+| SEO-03 | Phase 3 | Complete |
+| SEO-04 | Phase 3 | Complete |
 | ART-02 | Phase 4 | Pending |
 | ART-03 | Phase 4 | Pending |
 | ART-04 | Phase 4 | Pending |
