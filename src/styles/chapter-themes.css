@@ -147,8 +147,104 @@
  * NO poblado en Phase 2.
  * ───────────────────────────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Phase 3/4 reservado para era-authentic UI components (Web 2.0 glossy buttons,
-     marquees, AR/VR floating panels, Phaser canvas overlay containers). */
+  /* ─────────────────────────────────────────────────────────────
+   * ProjectCard — Skeumorphic Web 2.0 era-auténtico (D3-11)
+   * Source: D3-11 locked decision verbatim + RESEARCH Pattern 6.
+   * Hereda CSS Custom Props del [data-chapter="3"] block (línea 80-89):
+   * --c-surface, --c-accent (#ff6699), --c-fg, --c-border.
+   * Phase 4 puede declarar variants per chapter sobreescribiendo
+   * --c-accent o el gradient direction (ej. ch4 AR/VR cards harán
+   * gradient horizontal en lugar de vertical).
+   * ───────────────────────────────────────────────────────────── */
+  .project-card {
+    border-radius: 14px;
+    padding: var(--sp-md);
+
+    /* Gradiente glossy top-light → bottom-darker (Web 2.0 signature) */
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.18) 0%,
+        rgba(255, 255, 255, 0.04) 40%,
+        rgba(0, 0, 0, 0.06) 100%
+      ),
+      var(--c-surface, #fff);
+
+    /* Drop shadow exterior + inset highlight top (embossed effect — D3-11 verbatim) */
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+    /* Border glossy */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .project-card-title {
+    font-family: 'Lobster', Georgia, serif;
+    font-size: 1.4rem;
+    color: var(--c-fg);
+    /* Embossed text-shadow — D3-11 verbatim */
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+    margin: 0 0 var(--sp-xs) 0;
+  }
+
+  .project-card-desc {
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--c-fg);
+    margin: 0 0 var(--sp-sm) 0;
+  }
+
+  .project-card-role {
+    font-size: 0.85rem;
+    color: var(--c-fg);
+    opacity: 0.7;
+    font-style: italic;
+    margin: 0 0 var(--sp-xs) 0;
+  }
+
+  .project-card-tech {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-xs);
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--sp-md) 0;
+  }
+
+  .project-card-tech li {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    color: var(--c-fg);
+  }
+
+  .project-card-link {
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: linear-gradient(to bottom, var(--c-accent, #ff6699), color-mix(in srgb, var(--c-accent, #ff6699) 70%, #000));
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    color: #fff;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    transition: transform 80ms ease, box-shadow 80ms ease;
+    cursor: pointer;
+  }
+
+  .project-card-link:active {
+    /* "Press" depth effect — D3-11 verbatim */
+    transform: translateY(1px);
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.25),
+      inset 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────
