@@ -35,6 +35,15 @@ import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
 
 const shellRef = ref(null)
+// Function ref con identidad estable: arrow inline `el => { shellRef.value = ... }`
+// se recrea en cada render, lo cual hace que Vue invoque setRef dos veces por patch
+// (una con null para desbindear el viejo, otra con el nuevo). Ese churn dispara el
+// watch de useScrollState (flush:'post') → IntersectionObserver re-init → re-render
+// → loop "Maximum recursive updates exceeded". Una función con identidad estable
+// evita el ciclo (Vue compara la referencia y no re-bindea).
+function setShellRef(el) {
+  shellRef.value = el?.shellEl ?? null
+}
 const scrollState = useScrollState(shellRef)
 const prm = usePRM()
 
@@ -84,7 +93,7 @@ useResizeObserver(document.documentElement, (entries) => {
   <BackgroundLayers />
   <SkipLink />
   <StickyAvatar />
-  <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
+  <ScrollShell :ref="setShellRef" />
   <StickyTimeline />
   <LangToggle />
 </template>
