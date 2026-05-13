@@ -9,8 +9,17 @@
 //
 // El `<main>` raíz se expone vía defineExpose({ shellEl }) para que App.vue
 // pueda asignar la referencia DOM al shellRef que useScrollState está observando.
+//
+// Plan 05 (Wave 4): añade keyboard handlers ↑/↓/j/k/Home/End con clamping a
+// [0..6] y PRM-aware behavior (D-04). El composable useScrollState provee
+// activeChapter (para calcular target) y scrollToChapter (canonical method).
+// usePRM provee prefersReduced para el branch behavior smooth/auto.
+//
+// El `.prevent` modifier de Vue llama event.preventDefault() declarativamente
+// — esto bloquea que el browser intente hacer scroll por defecto con flechas
+// (lo que causaría doble-trigger del scroll snap + nuestro scrollToChapter).
 
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 
 // Single source of truth para los chapters de Phase 1. Copiado de UI-SPEC §7.1.
 const chapters = [
@@ -25,6 +34,27 @@ const chapters = [
 
 const shellEl = ref(null)
 
+// Inject del scrollState (provisto por App.vue desde Plan 02) y del prm (Plan 03).
+// Esta es la primera vez que ScrollShell consume el composable directamente —
+// antes solo exponía el shellEl ref para que App.vue lo pasara al composable.
+const { activeChapter, scrollToChapter } = inject('scrollState')
+const { prefersReduced } = inject('prm')
+
+// navigate(delta) — handler centralizado para los 6 keydown.
+// delta puede ser:
+//   - Number (-1 | +1): mover relativo al activeChapter actual, con clamping [0..6]
+//   - 'home': ir a 0
+//   - 'end': ir a 6
+// El behavior se decide aquí (D-04): bajo PRM, 'auto' (jump instantáneo);
+// default, 'smooth' (browser anima scrollTop).
+function navigate(delta) {
+  let target
+  if (delta === 'home') target = 0
+  else if (delta === 'end') target = 6
+  else target = Math.max(0, Math.min(6, activeChapter.value + delta))
+  scrollToChapter(target, prefersReduced.value ? 'auto' : 'smooth')
+}
+
 defineExpose({ shellEl })
 </script>
 
@@ -34,6 +64,12 @@ defineExpose({ shellEl })
     class="scroll-shell"
     tabindex="0"
     ref="shellEl"
+    @keydown.up.prevent="navigate(-1)"
+    @keydown.down.prevent="navigate(1)"
+    @keydown.home.prevent="navigate('home')"
+    @keydown.end.prevent="navigate('end')"
+    @keydown.j.prevent="navigate(1)"
+    @keydown.k.prevent="navigate(-1)"
   >
     <section
       v-for="ch in chapters"
