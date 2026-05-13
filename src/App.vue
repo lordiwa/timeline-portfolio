@@ -24,6 +24,7 @@
 import { ref, provide, watch } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import BackgroundLayers from './components/BackgroundLayers.vue'
 import SkipLink from './components/SkipLink.vue'
 import ScrollShell from './components/ScrollShell.vue'
 import StickyAvatar from './components/StickyAvatar.vue'
@@ -31,6 +32,7 @@ import StickyTimeline from './components/StickyTimeline.vue'
 import LangToggle from './components/LangToggle.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
+import { useBackgroundMorph } from './composables/useBackgroundMorph'
 
 const shellRef = ref(null)
 const scrollState = useScrollState(shellRef)
@@ -38,6 +40,12 @@ const prm = usePRM()
 
 provide('scrollState', scrollState)
 provide('prm', prm)
+
+// Plan 02-04 (W3): useBackgroundMorph — motor de crossfade 2 capas sincronizado
+// con el avatar swap (200ms default, 150ms PRM). Provisto como 'bgMorph' para
+// que BackgroundLayers.vue lo consuma via inject('bgMorph'). UI-SPEC §7 + D2-04/D2-05.
+const bgMorph = useBackgroundMorph(scrollState.activeChapter, prm)
+provide('bgMorph', bgMorph)
 
 // I18N-04 + A11Y-07 — single source of truth para <html lang> mutation.
 // { immediate: true } garantiza sincronización desde el primer render (RESEARCH Pattern 6).
@@ -64,13 +72,16 @@ useResizeObserver(document.documentElement, (entries) => {
 </script>
 
 <template>
-  <!-- Orden DOM (UI-SPEC §6 + §10): SkipLink → StickyAvatar → ScrollShell → StickyTimeline.
+  <!-- Orden DOM (UI-SPEC §6 + §7.3 + §10 post-W3):
+       BackgroundLayers → SkipLink → StickyAvatar → ScrollShell → StickyTimeline → LangToggle
        Tab order derivado del orden DOM:
          1. .skip-link (primer focusable)
          2. #main-content (ScrollShell con tabindex="0")
          3. .tick-button[data-chapter="0"] ... [data-chapter="6"]
        El avatar es non-focusable (aside con span). Visualmente el z-index
-       controla la pila: skip-link 50 (top), avatar/timeline 40, chapters 0. -->
+       controla la pila: bg-layers -1 (fondo) | skip-link 50 (top) | avatar/timeline 40 | chapters 0.
+       BackgroundLayers: position:fixed, z-index:-1, pointer-events:none (no interfiere con tab/click). -->
+  <BackgroundLayers />
   <SkipLink />
   <StickyAvatar />
   <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
