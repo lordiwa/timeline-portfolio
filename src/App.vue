@@ -1,22 +1,29 @@
 <script setup>
-// App.vue — Layout root del walking skeleton (Plan 02) + PRM provider (Plan 03).
+// App.vue — Layout root del walking skeleton (Plan 02) + PRM provider (Plan 03)
+// + SkipLink/ResizeObserver/focus-ring universal (Plan 06).
 //
-// Reemplaza el placeholder original con:
-// - <ScrollShell /> renderizado como el único hijo de #app
+// Composición:
+// - <SkipLink /> primer hijo del template root (UI-SPEC §10 — tab order: skip
+//   → main → ticks). A11Y-01.
+// - <ScrollShell /> renderizado como el único hijo scrolleable de #app.
 // - useScrollState(shellRef) instanciado en setup() — el composable usa
 //   `watch(shellRef, ..., { immediate: true, flush: 'post' })` internamente
 //   así que NO importa que shellRef.value sea null en este momento (PATTERN A).
-// - provide('scrollState', ...) para que futuros StickyAvatar/StickyTimeline puedan inject
+// - provide('scrollState', ...) para que StickyAvatar/StickyTimeline puedan inject.
 // - Plan 03 (W2): usePRM() instanciado y provisto como 'prm' — single source of
-//   truth para prefers-reduced-motion. Consumers (StickyAvatar Plan 04, StickyTimeline
-//   Plan 05) lo inject('prm') sin prop drilling. UI-SPEC §8.
+//   truth para prefers-reduced-motion. UI-SPEC §8.
+// - Plan 06 (W5): useResizeObserver(document.documentElement, ...) cableado
+//   como placeholder defensive — viewportWidth/viewportHeight refs NO se
+//   consumen en Phase 1, pero satisfacen MOB-03 (ResizeObserver sobre
+//   document.documentElement, no orientationchange). Phase 5 (Phaser) los
+//   promoverá para Math.floor(vw/480), Math.floor(vh/270).
 //
 // El "function ref" pattern del template asigna `el.shellEl` (expuesto por
-// ScrollShell vía defineExpose) al shellRef cuando ScrollShell monta. El watch
-// interno del composable detecta el cambio de null → DOM element y dispara
-// la inicialización (IO + listener + deep-link parsing).
+// ScrollShell vía defineExpose) al shellRef cuando ScrollShell monta.
 
 import { ref, provide } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
+import SkipLink from './components/SkipLink.vue'
 import ScrollShell from './components/ScrollShell.vue'
 import StickyAvatar from './components/StickyAvatar.vue'
 import StickyTimeline from './components/StickyTimeline.vue'
@@ -29,14 +36,33 @@ const prm = usePRM()
 
 provide('scrollState', scrollState)
 provide('prm', prm)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ResizeObserver defensive — MOB-03 (UI-SPEC §9, RESEARCH §Área 7).
+// Refs internos NO consumidos en Phase 1; Phase 5 (Phaser scene) los necesita
+// para zoom recalculation. Mantenerlos cableados desde day 1 evita re-cableo
+// en Phase 5 y satisface MOB-03 literalmente. vueuse maneja cleanup.
+// ─────────────────────────────────────────────────────────────────────────────
+const viewportWidth = ref(window.innerWidth)
+const viewportHeight = ref(window.innerHeight)
+
+useResizeObserver(document.documentElement, (entries) => {
+  const entry = entries[0]
+  if (!entry) return
+  viewportWidth.value = entry.contentRect.width
+  viewportHeight.value = entry.contentRect.height
+})
 </script>
 
 <template>
-  <!-- Orden DOM (UI-SPEC §6): SkipLink (Plan 06) → StickyAvatar → ScrollShell → StickyTimeline.
-       Los sticky elements son position: fixed; el orden DOM importa para tab order:
-       el avatar es non-focusable, el ScrollShell es focusable (tabindex="0"),
-       los 7 tick-buttons del StickyTimeline son focusables y vienen al final del Tab order.
-       Visualmente el z-index controla la pila (avatar/timeline 40, skip-link 50). -->
+  <!-- Orden DOM (UI-SPEC §6 + §10): SkipLink → StickyAvatar → ScrollShell → StickyTimeline.
+       Tab order derivado del orden DOM:
+         1. .skip-link (primer focusable)
+         2. #main-content (ScrollShell con tabindex="0")
+         3. .tick-button[data-chapter="0"] ... [data-chapter="6"]
+       El avatar es non-focusable (aside con span). Visualmente el z-index
+       controla la pila: skip-link 50 (top), avatar/timeline 40, chapters 0. -->
+  <SkipLink />
   <StickyAvatar />
   <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
   <StickyTimeline />
@@ -80,5 +106,16 @@ provide('prm', prm)
   .scroll-shell {
     scroll-behavior: auto;
   }
+}
+
+/* Focus ring universal — UI-SPEC §10 (Plan 06, A11Y-05 — interaction-derived
+   por D-05, se mantiene bajo PRM). Aplica a CUALQUIER focusable: .skip-link,
+   #main-content, .tick-button, y cualquier futuro elemento. Declarado en este
+   <style> NO scoped para que aplique a los componentes hijos (un scoped no
+   alcanzaría a SkipLink/ScrollShell/StickyTimeline). Phase 2 puede sobreescribir
+   --c-focus por theme manteniendo grosor y offset. */
+:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 3px;
 }
 </style>
