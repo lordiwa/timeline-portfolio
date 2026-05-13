@@ -21,6 +21,7 @@
 
 import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
+import Chapter3Content from './Chapter3Content.vue'
 
 // Single source of truth para los chapters de Phase 1. Copiado de UI-SPEC §7.1.
 const chapters = [
@@ -81,7 +82,8 @@ defineExpose({ shellEl })
       :aria-label="t('chapters.' + ch.id + '.title')"
       class="chapter-section"
     >
-      <div class="chapter-placeholder">
+      <Chapter3Content v-if="ch.id === 3" />
+      <div v-else class="chapter-placeholder">
         <p class="era-title">{{ ch.year }} · {{ ch.era }}</p>
       </div>
     </section>

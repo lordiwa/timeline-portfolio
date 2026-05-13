@@ -101,7 +101,7 @@ describe('Chapter3Content.vue', () => {
     expect(wrapper.find('.ch3-meta img.ch3-avatar').exists()).toBe(true)
   })
 
-  it('T1 DOM contract: .ch3-content contiene .ch3-bio', () => {
+  it('T1 DOM contract: .ch3-content contiene .ch3-bio (div, no section)', () => {
     const { wrapper } = mountCh3()
     expect(wrapper.find('.ch3-content .ch3-bio').exists()).toBe(true)
   })

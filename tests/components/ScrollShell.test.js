@@ -109,21 +109,23 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: each section contains <p class="era-title"> with "YYYY · {era}" (UI-SPEC §7.1)
+  // Test 4: 6 non-ch3 sections tienen <p class="era-title"> con "YYYY · {era}" (UI-SPEC §7.1)
+  // NOTA: chapter 3 (2013 · Web 2.0) ya usa Chapter3Content en lugar del placeholder —
+  // por eso solo 6 sections mantienen el .era-title Phase 1 (Plan 03-03 Wave 2).
   // ─────────────────────────────────────────────────────────────────────────
-  it('each section contains era-title with "YYYY · {era}" copy', () => {
+  it('6 non-ch3 sections contain era-title with "YYYY · {era}" copy (ch3 uses Chapter3Content)', () => {
     const wrapper = mountBasic()
     const expected = [
       '1995 · Terminal',
       '2001 · HTML 90s',
       '2009 · Flash',
-      '2013 · Web 2.0',
+      // '2013 · Web 2.0' → ch3 usa Chapter3Content, NO placeholder
       '2015 · AR/VR',
       '2022 · Modern',
       '2026 · Phaser',
     ]
     const titles = wrapper.findAll('.era-title')
-    expect(titles.length).toBe(7)
+    expect(titles.length).toBe(6)
     titles.forEach((t, idx) => {
       expect(t.text()).toBe(expected[idx])
     })
