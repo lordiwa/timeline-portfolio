@@ -7,7 +7,7 @@ type: execute
 mode: mvp
 autonomous: true
 gap_closure: false
-requirements: [THM-03, THM-04]
+requirements: [THM-03]
 depends_on: [3]
 files_modified:
   - src/composables/useBackgroundMorph.js
@@ -16,6 +16,13 @@ files_modified:
   - index.html
   - tests/composables/useBackgroundMorph.test.js
   - tests/components/BackgroundLayers.test.js
+notes:
+  thm_04_scope: >
+    W3 NO reclama THM-04 en requirements (cambio desde la versión anterior que listaba
+    [THM-03, THM-04]). THM-04 = "theme isolation / no bleed entre chapters" se cubre
+    arquitectónicamente en W2 (Plan 03) via `tests/components/ScrollShell.theme-isolation.test.js`
+    + visualmente en W5 §1 (manual diff theme bleed durante smooth-scroll). W3 no añade
+    ni testea bleed — solo introduce el bg morph crossfade entre eras (D2-04 + D2-05).
 must_haves:
   truths:
     - "El composable `useBackgroundMorph(activeChapter, prm)` exporta `{ layerA, layerB, transitionPhase }` donde layerA/layerB son `{ chapter: Ref<number|null>, opacity: Ref<0..1> }` y transitionPhase es `Ref<'idle'|'crossfading'>` (UI-SPEC §7.4)"
@@ -26,7 +33,7 @@ must_haves:
     - "BackgroundLayers.vue es el primer hijo del template root de App.vue: dos divs apilados `.bg-layer` (`position: absolute; inset: 0`) dentro de un wrapper `.bg-layers` (`position: fixed; inset: 0; z-index: -1; pointer-events: none`) con `aria-hidden=\"true\"`"
     - "Cada `.bg-layer` tiene `:data-chapter` bind reactivo al composable state y `:style=\"{ opacity }\"` bind a sus opacity refs; el background de la layer es `var(--c-bg)` que automáticamente lee el theme del chapter desde chapter-themes.css (W2)"
     - "El CSS scoped declara `transition: opacity 200ms ease` default + `@media (prefers-reduced-motion: reduce) { transition: opacity 150ms ease }` (D-03 cross-cutting)"
-    - "`index.html` ya NO declara `background: #0b0b16` en `html, body` (BackgroundLayers con `z-index: -1` quedarían ocultas detrás del body bg — Pitfall 9 + UI-SPEC §7.6)"
+    - "`index.html` ya NO declara `background: #0b0b16` en `html, body` (BackgroundLayers con `z-index: -1` quedarían ocultas detrás del body bg — Pitfall 9 + UI-SPEC §7.6). Preserva `min-height: 100vh`, `color: #e7e7f0`, `margin: 0`, `padding: 0`, `font-family` heredado"
     - "Pending timer cleanup en onBeforeUnmount del composable (defensive — protege contra HMR leaks)"
     - "Scrollear de ch0 a ch6 muestra el bg morphar entre chapters al unísono con el avatar swap (ambos 200ms total, sincronizados visualmente — D2-05 sync goal)"
   artifacts:
@@ -66,13 +73,14 @@ must_haves:
 <objective>
 Construir el motor de background morph: composable `useBackgroundMorph` (state machine análogo al avatar swap Plan 03 Phase 1 — RESEARCH Pattern 2 verbatim) + componente `BackgroundLayers.vue` con 2 capas apiladas + wire en App.vue (provide/inject + insertar como primer hijo del template) + cleanup del `background: #0b0b16` del `index.html` body (Pitfall 9 — BackgroundLayers con `z-index: -1` quedarían ocultos detrás del body bg).
 
-**Purpose:** Cubre D2-04 (2-layer crossfade architecture) + D2-05 (200ms default sync con avatar / ≤150ms PRM) + completa la experiencia visual de THM-03 (los 7 themes ahora se ven en el bg full-viewport, no solo en el inside de las sections) y refuerza THM-04 (theme isolation — el bg morph es global discrete pero las sections siguen scoping su theme via data-chapter local).
+**Purpose:** Cubre D2-04 (2-layer crossfade architecture) + D2-05 (200ms default sync con avatar / ≤150ms PRM) + completa la experiencia visual de THM-03 (los 7 themes ahora se ven en el bg full-viewport, no solo en el inside de las sections). **THM-04 NO se reclama en W3** — ver `notes.thm_04_scope`: la theme isolation arquitectónica vive en W2 + la verificación visual de no-bleed vive en W5 §1.
 
 **Lo que ESTE plan NO hace:**
 - NO añade `--bg-image: url(...)` per chapter (Phase 3/4 cuando llegue pixel art). El motor está listo para consumir `--bg-image` si Phase 3 lo introduce; W3 solo declara `background: var(--c-bg)` en `.bg-layer`.
 - NO altera el avatar swap del Plan 03 Phase 1 (D-02 sigue instantáneo bajo PRM — DIFERENTE del bg morph D-03 que es crossfade ≤150ms).
 - NO instala fuentes self-hosted (W4 — los themes ya están aplicando font-family fallbacks system-safe).
 - NO ejecuta tests visuales de "no theme bleed durante smooth-scroll" (eso es W5 manual checklist — el architectural test ya está en W2).
+- **NO reclama THM-04** (cambio respecto a la versión previa del plan — ver `notes.thm_04_scope`).
 </objective>
 
 <execution_context>
@@ -203,6 +211,12 @@ html, body {
   min-height: 100vh;
 }
 ```
+
+**Preservation criteria (verificar tras edit):**
+- `min-height: 100vh;` SIGUE presente.
+- `color: #e7e7f0;` SIGUE presente.
+- `margin: 0; padding: 0;` SIGUEN presentes.
+- `font-family: ui-monospace, ...;` SIGUE presente.
 
 NO tocar otras líneas del index.html (NO el `<html lang="es">` línea 2, NO el viewport-fit=cover, NO el `image-rendering: pixelated`).
 </interfaces>
@@ -346,13 +360,17 @@ NO tocar otras líneas del index.html (NO el `<html lang="es">` línea 2, NO el 
     - `src/components/BackgroundLayers.vue` existe con script setup + template con 2 layers + style scoped completos
     - `src/App.vue` contiene: `import BackgroundLayers`, `import { useBackgroundMorph }`, `const bgMorph = useBackgroundMorph(scrollState.activeChapter, prm)`, `provide('bgMorph', bgMorph)`, y `<BackgroundLayers />` como primer elemento del template root
     - `index.html` ya NO contiene `background: #0b0b16` (verificable con `Select-String -Path index.html -Pattern '#0b0b16' -SimpleMatch -Quiet` returns `False`)
+    - `index.html` preserva las declaraciones criticas (Preservation criteria del `<interfaces>` block):
+      - `Select-String -Path index.html -Pattern 'min-height: 100vh' -SimpleMatch -Quiet` returns `True`
+      - `Select-String -Path index.html -Pattern 'color: #e7e7f0' -SimpleMatch -Quiet` returns `True`
+      - `Select-String -Path index.html -Pattern 'margin: 0' -SimpleMatch -Quiet` returns `True`
     - `index.html` SIGUE conteniendo `<html lang="es">`, `image-rendering: pixelated`, `viewport-fit=cover` (regresión check)
     - `tests/components/BackgroundLayers.test.js` corre ≥7 tests verdes
     - Suite global `npm run test:run` ≥137 tests verdes (Phase 1 67 + W0 18 + W1 ≥15 + W2 ≥22 + W3 composable 8 + W3 component 7)
     - `npm run build` verde; bundle CSS ~7-8KB (BackgroundLayers añade ~0.3-0.5KB), JS ~78-80KB (useBackgroundMorph + BackgroundLayers añaden ~1-2KB)
     - DevTools manual `npm run dev`: scrollear de ch0 a ch6 → el fondo completo (no solo el inside de las sections) crossfade entre los colores de cada chapter en sync con el avatar swap. Mid-fade visible si el scroll es lento (200ms ventana). Bajo PRM (DevTools rendering panel: emulate prefers-reduced-motion: reduce), el crossfade baja a 150ms perceptiblemente más rápido. Toggle PRM mid-fade → el bg snap finaliza sin quedarse atascado en opacidad parcial.
   </acceptance_criteria>
-  <done>BackgroundLayers.vue funcional con 2 layers + transitions + PRM branch, App.vue wired con composable provide, index.html limpio de body bg, ≥7 tests component verdes, build verde, manual visual verification OK.</done>
+  <done>BackgroundLayers.vue funcional con 2 layers + transitions + PRM branch, App.vue wired con composable provide, index.html limpio de body bg (preservando min-height/color/margin/font-family), ≥7 tests component verdes, build verde, manual visual verification OK.</done>
 </task>
 
 </tasks>
@@ -368,10 +386,11 @@ NO tocar otras líneas del index.html (NO el `<html lang="es">` línea 2, NO el 
 - useBackgroundMorph composable con state machine + PRM recovery + cleanup defensive
 - BackgroundLayers.vue funcional como HUD invariante no-pointer
 - App.vue wired con provide('bgMorph') + BackgroundLayers como primer hijo del template
-- index.html limpio del body bg legacy (Pitfall 9)
+- index.html limpio del body bg legacy (Pitfall 9) — preservando min-height, color, margin, font-family
 - Bg morph sincronizado visualmente con avatar swap (D2-05 sync goal)
 - PRM branch verificado (150ms total bajo PRM, mid-flight snap recovery)
 - Suite global ≥137 verdes, build verde
+- THM-03 (color + bg morph engine) cubierto; THM-04 NO reclamado en W3 (cubierto W2 architectural + W5 §1 visual — ver `notes.thm_04_scope`)
 </success_criteria>
 
 <output>
@@ -379,7 +398,7 @@ After completion, create `.planning/phases/02-theme-system-i18n/02-04-SUMMARY.md
 - useBackgroundMorph composable (LOC, state machine flow, decisiones)
 - BackgroundLayers.vue (LOC, DOM contract)
 - App.vue extends (orden DOM final, provide tree)
-- index.html cleanup (líneas removidas)
+- index.html cleanup (líneas removidas + preservation criteria verificadas)
 - Tests añadidos (count + mapping a D2-04/D2-05/Pitfall 9)
 - Bundle delta vs W2
 - Pending para W4: fonts pipeline self-hosted + import en main.js

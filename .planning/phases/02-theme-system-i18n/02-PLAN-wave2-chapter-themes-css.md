@@ -7,7 +7,7 @@ type: execute
 mode: mvp
 autonomous: true
 gap_closure: false
-requirements: [THM-01, THM-02, THM-03, THM-04, THM-05, A11Y-03, A11Y-04]
+requirements: [THM-01, THM-02, THM-03, THM-04, THM-05, A11Y-03]
 depends_on: [1]
 files_modified:
   - src/styles/chapter-themes.css
@@ -17,6 +17,25 @@ files_modified:
   - tests/styles/contrast-docs.test.js
   - tests/styles/focus-ring.test.js
   - tests/components/ScrollShell.theme-isolation.test.js
+notes:
+  a11y_04_scope: >
+    W2 NO reclama A11Y-04 (cambio respecto a versión anterior que lo listaba). A11Y-04 =
+    "Contrast pasa axe DevTools / Pa11y / Lighthouse external audit" requiere herramientas
+    externas que se ejecutan MANUAL → cubierto W5 §4. W2 sí documenta contrast values
+    inline en comentarios CSS (eso es THM-05), pero NO verifica programáticamente contra
+    axe/Pa11y (esa es la dimensión que define A11Y-04, no THM-05). El test
+    `contrast-docs.test.js` solo verifica presencia del comentario tradeoff de ch1 — no
+    es un axe scan.
+  jsdom_limitation: >
+    Los tests architectural de theme isolation (Task 3.2) verifican el DOM markup
+    (data-chapter presence + no ancestor data-chapter) pero NO computan estilos finales.
+    jsdom NO resuelve completamente @layer cascade + CSS Custom Props heredados via
+    DOM tree walk (RESEARCH §3 + Assumption A1 confirman esta limitación de jsdom). La
+    validación de computed-style (que `var(--c-bg)` resuelve al valor correcto del
+    chapter) se hace MANUAL en W5 §1 (DevTools Computed panel inspection) y W5 §6
+    checkpoint "7 chapter sections muestran su data-chapter correcto". El test
+    architectural sigue siendo valioso como guard contra regresión del DOM contract
+    (que es 100% deterministico).
 must_haves:
   truths:
     - "Existe `src/styles/chapter-themes.css` con declaración `@layer reset, themes, components, utilities;` en la primera línea no-comentario del archivo (THM-02)"
@@ -28,7 +47,7 @@ must_haves:
     - "Los otros 6 bloques (ch0, ch2-6) NO requieren contrast tradeoff comment porque sus ratios ≥ 4.5:1 (UI-SPEC §4.2 muestra tablas con WCAG AAA pass)"
     - "`chapter-themes.css` está importado en `src/main.js` ANTES de `createApp(App).use(i18n).mount('#app')` para que el browser cascade aplique antes del primer render"
     - "El `:root` fallback neutral de App.vue líneas 76-98 sigue intacto — `chapter-themes.css` NO duplica esos tokens; SOLO override por chapter via `[data-chapter=\"N\"]`"
-    - "Cada `<section>` de ScrollShell renderea con su correspondiente `data-chapter` (ya en place desde Phase 1) — verificado por test unit que cada section tiene el atributo correcto y NO hereda de un ancestor (THM-04 architectural)"
+    - "Cada `<section>` de ScrollShell renderea con su correspondiente `data-chapter` (ya en place desde Phase 1) — verificado por test unit que cada section tiene el atributo correcto y NO hereda de un ancestor (THM-04 architectural — el computed-style validation queda para W5 §1 manual; ver `notes.jsdom_limitation`)"
     - "El `:focus-visible` universal de App.vue (3px solid var(--c-focus), offset 3px) se mantiene intacto — A11Y-03 cumple variando `--c-focus` per chapter sin perder grosor/offset"
   artifacts:
     - path: src/styles/chapter-themes.css
@@ -41,13 +60,13 @@ must_haves:
       provides: "Tests: cada chapter tiene los 6 tokens; valores ch0/ch1 verificados verbatim (THM-03)"
       contains: "theme-tokens"
     - path: tests/styles/contrast-docs.test.js
-      provides: "Tests: ch1 tiene comentario tradeoff con formato verbatim D2-03; otros chapters NO requieren (THM-05)"
+      provides: "Tests: ch1 tiene comentario tradeoff con formato verbatim D2-03; otros chapters NO requieren (THM-05 docs only — el external audit de contrast es W5 §4 / A11Y-04)"
       contains: "contrast"
     - path: tests/styles/focus-ring.test.js
       provides: "Tests: App.vue mantiene :focus-visible universal 3px solid offset 3px; chapter-themes.css NO declara `outline:` (Pitfall 7)"
       contains: "focus-visible"
     - path: tests/components/ScrollShell.theme-isolation.test.js
-      provides: "Tests: cada section tiene data-chapter correcto; ningún ancestor tiene data-chapter (THM-04 architectural)"
+      provides: "Tests: cada section tiene data-chapter correcto; ningún ancestor tiene data-chapter (THM-04 architectural — DOM markup only; computed-style validation deferred a W5 §1 manual, ver `notes.jsdom_limitation`)"
       contains: "theme-isolation"
   key_links:
     - from: src/main.js
@@ -69,7 +88,7 @@ must_haves:
 <objective>
 Construir el motor visual: `src/styles/chapter-themes.css` con `@layer` cascade + 7 bloques `[data-chapter="N"]` (2 completos + 5 stubs era-tinted). Wire el import en `main.js`. Crear los 5 tests unit que verifican (1) la existencia del archivo y el @layer order, (2) los tokens per chapter, (3) el contrast tradeoff comment de ch1, (4) el focus ring universal preservado, (5) la theme isolation architectural (cada section tiene data-chapter, ningún ancestor lo tiene).
 
-**Purpose:** Cubre los 7 REQ-IDs de visuals del phase (THM-01..05 + A11Y-03 + A11Y-04). Hace el sitio "se vea diferente" en cada chapter incluso sin fuentes custom (que vienen en W4) ni background morph (W3) — el inside-color de cada section ya cambia.
+**Purpose:** Cubre 6 REQ-IDs de visuals del phase (THM-01..05 + A11Y-03). **A11Y-04 NO se reclama en W2** — ver `notes.a11y_04_scope`: A11Y-04 requiere axe/Pa11y/Lighthouse external audit que es manual; W2 documenta contrast inline (THM-05) pero no audita externamente (eso es W5 §4). Hace el sitio "se vea diferente" en cada chapter incluso sin fuentes custom (que vienen en W4) ni background morph (W3) — el inside-color de cada section ya cambia.
 
 **Lo que ESTE plan NO hace:**
 - NO crea BackgroundLayers ni useBackgroundMorph (W3 — los fondos full-frame con bg-image llegan después).
@@ -78,6 +97,8 @@ Construir el motor visual: `src/styles/chapter-themes.css` con `@layer` cascade 
 - NO añade era-authentic UI components (Phase 3/4 — botones Web 2.0 glossy, marquees, AR/VR panels).
 - NO declara nada en `@layer components` ni `@layer utilities` (esos quedan como namespace reservado para Phase 3/4).
 - NO finaliza ch3 — su stub era-tinted basta hasta que Phase 3 entregue paleta + pixel art definitivos (D2-01).
+- **NO reclama A11Y-04** (cambio respecto a versión anterior; A11Y-04 vive solo en W5 §4 manual axe audit — `notes.a11y_04_scope`).
+- **NO valida computed-style** (jsdom limitation, ver `notes.jsdom_limitation`) — el test architectural verifica DOM markup, no estilos resueltos. Validación visual computed-style en W5 §1 + §6 manual DevTools Computed panel.
 </objective>
 
 <execution_context>
@@ -229,6 +250,8 @@ Order matters: `chapter-themes.css` debe importarse ANTES del `mount` para que e
     - `theme-tokens.test.js`: 9 tests (7 generic per-chapter + 2 verbatim ch0/ch1). Helper interno `extractBlock(source, chapter)` que retorna el contenido entre `[data-chapter="N"] {` y el `}` correspondiente. Asserts sobre sub-string presence.
     - `contrast-docs.test.js`: 3 tests (ch1 verbatim tradeoff presence, ch0 sin tradeoff phrase, ch2-6 sin tradeoff phrase). Mismo helper extractBlock.
 
+    > Header de cada test file (theme-tokens.test.js especialmente) incluye comentario: "Theme tokens verificados via source strings + architectural DOM walk (jsdom no resuelve @layer + Custom Props heredados — ver `notes.jsdom_limitation` del plan). Computed-style validation se hace MANUAL en W5 §1 (DevTools Computed panel)."
+
     Tests RED commit (archivo no existe aún o tests fallan) → GREEN commit (archivo creado con contenido).
   </action>
   <verify>
@@ -286,6 +309,7 @@ Order matters: `chapter-themes.css` debe importarse ANTES del `mount` para que e
     - T3: extract `<style scoped>` content de LangToggle.vue (regex `<style scoped[^>]*>([\s\S]*?)</style>`); dentro extraer `.lang-toggle {...}` block; assert NO `outline:` dentro de ese block (allow outside como en otros selectors si los hubiera).
 
     Crear `tests/components/ScrollShell.theme-isolation.test.js`:
+    - **Header comment del file:** "THM-04 architectural test — verifica el DOM markup (data-chapter presence + no ancestor data-chapter). NO valida computed-style: jsdom no resuelve @layer + CSS Custom Props heredados via tree walk (RESEARCH §3 + Assumption A1). La validación visual computed-style se hace MANUAL en W5 §1 + §6 (DevTools Computed panel). Ver plan `notes.jsdom_limitation`."
     - Mount helper análogo a `tests/composables/useScrollState.test.js` líneas 22-48 — wrapper que mount `ScrollShell` con providers stubs (`scrollState: { activeChapter: ref(3), scrollToChapter: vi.fn() }`, `prm: { prefersReduced: ref(false) }`) + plugin i18n test instance.
     - T1: `const sections = wrapper.findAll('section')`; `expect(sections).toHaveLength(7)`; iterate `sections.forEach((s, i) => expect(s.attributes('data-chapter')).toBe(String(i)))`.
     - T2: walking ancestors loop verbatim de RESEARCH líneas 1208-1219:
@@ -316,7 +340,7 @@ Order matters: `chapter-themes.css` debe importarse ANTES del `mount` para que e
     - `npm run build` verde
     - DevTools manual: tab focus a través del SkipLink → ScrollShell → 7 ticks de Timeline → LangToggle muestra outline 3px solid en CADA chapter; el color del outline cambia per chapter (ch0 verde fosforescente, ch1 blanco, ch2 amber, ch3 azul Web 2.0, ch4 cyan, ch5 indigo, ch6 amber)
   </acceptance_criteria>
-  <done>Focus ring universal preservado + arquitectura theme isolation verificada con 6 tests architectural verdes + cross-component verification que ningún componente declara outline propio.</done>
+  <done>Focus ring universal preservado + arquitectura theme isolation verificada con 6 tests architectural verdes + cross-component verification que ningún componente declara outline propio. Computed-style validation deferred a W5 §1 manual (ver `notes.jsdom_limitation`).</done>
 </task>
 
 </tasks>
@@ -336,13 +360,14 @@ Order matters: `chapter-themes.css` debe importarse ANTES del `mount` para que e
 - Theme isolation architectural verificado (THM-04 — cada section data-chapter, no ancestor)
 - Suite global ≥120 tests verdes, build verde
 - DevTools manual muestra cambio visual real entre chapters
+- A11Y-04 NO reclamado en W2 (cubierto solo W5 §4 manual axe audit — ver `notes.a11y_04_scope`)
 </success_criteria>
 
 <output>
 After completion, create `.planning/phases/02-theme-system-i18n/02-03-SUMMARY.md` con:
 - chapter-themes.css creado (LOC, layer structure, 7 chapter blocks count)
-- Tests styles añadidos (file count + test count, mapping a REQ-IDs)
+- Tests styles añadidos (file count + test count, mapping a REQ-IDs — incluyendo nota de que A11Y-04 queda para W5 §4)
 - Bundle delta (CSS antes/después, JS antes/después)
-- Decisiones tomadas (informative comments ch0/ch2-6 sí/no, helper extractBlock pattern)
+- Decisiones tomadas (informative comments ch0/ch2-6 sí/no, helper extractBlock pattern, jsdom limitation reconocida)
 - Pending para W3: BackgroundLayers + useBackgroundMorph + remover body bg de index.html
 </output>

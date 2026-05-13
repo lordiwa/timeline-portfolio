@@ -20,6 +20,22 @@ files_modified:
   - tests/components/SkipLink.test.js
   - tests/components/StickyTimeline.test.js
   - tests/components/StickyAvatar.test.js
+notes:
+  phase_1_regression_baseline: >
+    Suite Phase 1 baseline = 67 tests verdes distribuidos en estos test files que DEBEN
+    seguir todos verdes tras W1 (cero regresión funcional):
+      - tests/components/SkipLink.test.js (Phase 1 Plan 06)
+      - tests/components/StickyTimeline.test.js (Phase 1 Plan 04)
+      - tests/components/StickyAvatar.test.js (Phase 1 Plan 03)
+      - tests/composables/useScrollState.test.js (Phase 1 Plan 02)
+      - tests/composables/usePRM.test.js (Phase 1 Plan 03)
+      - tests/smoke.test.js (Phase 1 setup)
+      - Cualquier otro test file presente bajo tests/ tracked por git (verificar con
+        `Get-ChildItem -Recurse tests -Filter *.test.js` antes de iniciar W1).
+    W1 modifica 4 de estos componentes (SkipLink, StickyTimeline, StickyAvatar,
+    ScrollShell) para i18nificar strings — los tests existentes se ACTUALIZAN para
+    leer desde t() / multiplexar por locale, pero el COUNT total de tests Phase 1
+    NO debe disminuir (puede crecer al añadir tests reactive Pitfall 3).
 must_haves:
   truths:
     - "Existe un botón pill `.lang-toggle` fijo top-right (16px offsets) con texto 'ES | EN' en desktop ≥600px, simétrico al StickyAvatar top-left (D2-10)"
@@ -32,6 +48,7 @@ must_haves:
     - "ScrollShell aria-label de cada `<section>` viene de `t('chapters.' + ch.id + '.title')` para mostrar el chapter title bilingue (I18N-3 + D2-11)"
     - "El focus-visible del LangToggle hereda el outline 3px solid `var(--c-focus)` universal de App.vue — NO se declara `outline:` propio en `.lang-toggle` (Pitfall 7 evitado)"
     - "El LangToggle es HUD invariante: NO consume `[data-chapter]` overrides, sus colores vienen de `--c-surface`, `--c-border`, `--c-fg`, `--c-muted` neutros (UI-SPEC §8.5) — se ve igual en los 7 chapters"
+    - "Cero regresión Phase 1: todos los 67 tests baseline siguen verdes (lista de test files en `notes.phase_1_regression_baseline`); el COUNT total post-W1 ≥ 67 (puede crecer si se añaden tests reactive Pitfall 3)"
   artifacts:
     - path: src/components/LangToggle.vue
       provides: "Component standalone fixed top-right con pill ES|EN + click toggle + persistencia + mobile shrink icon-only"
@@ -332,15 +349,19 @@ Alternativamente, inline en cada test la creación del i18n test instance — es
     - `src/components/StickyTimeline.vue` contiene `t('ui.timeline.navAria')` y `t('ui.timeline.tickAria', { era:` (al menos como sub-string en el template)
     - `src/components/StickyAvatar.vue` contiene `t('avatar.ariaTemplate', { chapter: activeChapter })`
     - `src/components/ScrollShell.vue` contiene `t('chapters.' + ch.id + '.title')` (o equivalente template literal `t(\`chapters.${ch.id}.title\`)`)
-    - `tests/components/SkipLink.test.js` corre ≥9 tests verdes (8 originales + 1+ extra reactive)
-    - `tests/components/StickyTimeline.test.js` corre los tests originales verdes + ≥2 nuevos para i18n reactive nav/tick
-    - `tests/components/StickyAvatar.test.js` corre tests originales (≥10) + ≥1 reactive verdes
+    - **Phase 1 regression baseline (cero regresión funcional)**: todos los tests files listados en `notes.phase_1_regression_baseline` siguen verdes — específicamente:
+      - `tests/components/SkipLink.test.js` corre ≥9 tests verdes (8 originales Phase 1 Plan 06 + 1+ extra reactive Pitfall 3)
+      - `tests/components/StickyTimeline.test.js` corre los tests originales Phase 1 Plan 04 verdes + ≥2 nuevos para i18n reactive nav/tick
+      - `tests/components/StickyAvatar.test.js` corre tests originales Phase 1 Plan 03 (≥10) + ≥1 reactive verdes
+      - `tests/composables/useScrollState.test.js` sigue verde sin modificaciones
+      - `tests/composables/usePRM.test.js` sigue verde sin modificaciones
+      - `tests/smoke.test.js` sigue verde sin modificaciones
     - `tests/components/ScrollShell.test.js` existe con ≥2 tests verdes (o el existente tiene assertions equivalentes para i18n)
-    - Suite global `npm run test:run` ≥100 tests verdes (Phase 1 baseline 67 + W0 18 + LangToggle 9 + extends en ≥4 componentes ≥6 = ≥100)
+    - Suite global `npm run test:run` ≥100 tests verdes (Phase 1 baseline 67 + W0 18 + LangToggle 9 + extends en ≥4 componentes ≥6 = ≥100); el COUNT total NO debe haber disminuido respecto a Phase 1 + W0 (≥85 → ≥100)
     - `npm run build` verde; bundle CSS no crece más de ~1KB (i18nificar es pure data, NO añade CSS)
     - DevTools manual: con LangToggle activo desde W1.1, toggle locale → ver en DevTools elements panel que aria-label del SkipLink, de cada `<button class="tick-button">` (7 ticks), del `<aside class="sticky-avatar">` y de cada `<section data-chapter>` cambia entre ES/EN sin recargar la página
   </acceptance_criteria>
-  <done>4 componentes Phase 1 i18nificados, tests existentes pasan con nuevos asserts ES/EN, ≥4 tests nuevos de reactive aria, suite global verde, build verde.</done>
+  <done>4 componentes Phase 1 i18nificados, todos los test files Phase 1 listados en `notes.phase_1_regression_baseline` siguen verdes (cero regresión funcional), ≥4 tests nuevos de reactive aria, suite global verde, build verde.</done>
 </task>
 
 </tasks>
@@ -358,7 +379,7 @@ Alternativamente, inline en cada test la creación del i18n test instance — es
 - Reactividad i18n verificada (Pitfall 3 evitado) — toggle locale propaga sin re-mount
 - Layout robustness preliminar (I18N-05) — LangToggle ancho estable, no overflow horizontal en 375×667 (test final en W5 manual checklist)
 - Suite global ≥100 tests verdes, build verde
-- Phase 1 zero regression
+- Phase 1 zero regression — todos los test files listados en `notes.phase_1_regression_baseline` siguen verdes
 </success_criteria>
 
 <output>
@@ -366,6 +387,7 @@ After completion, create `.planning/phases/02-theme-system-i18n/02-02-SUMMARY.md
 - LangToggle.vue creado (LOC, principal CSS choices)
 - 4 componentes Phase 1 i18nificados (diff scope)
 - Tests añadidos/extendidos (count y mapping a REQ-IDs)
+- Phase 1 regression baseline confirmado (lista de test files verdes — ver `notes.phase_1_regression_baseline`)
 - Decisiones tomadas (helper test-helpers.js sí/no, assertion multiplexing strategy)
 - Pending para W2: chapter-themes.css con motor de themes + ch0/ch1 completos + stubs ch2-6
 </output>

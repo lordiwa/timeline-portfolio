@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 1 cerrada formalmente con 6/7 plans ejecutados + Plan 07 deferred. Workflow paralelo aprobado: implementación Phase 2 (Theme + i18n) + producción de contenido Phase 3 (bio ES/EN, proyectos, paletas) por Rafael en paralelo."
-stopped_at: Phase 2 context gathered
-last_updated: "2026-05-13T04:37:27.408Z"
-last_activity: 2026-05-12 — Phase 1 cerrada; iOS smoke test deferido; arranque inminente de Phase 2.
+status: "Phase 2 planning completo: 6 plans W0-W5 creados (vertical slices mvp), plan-checker VERIFICATION PASSED iter 2 (4 blockers + 7 warnings resueltos), 14/14 REQ-IDs cubiertos, 11/11 decisiones D2-XX honradas. Listo para `/gsd-execute-phase 2`."
+stopped_at: Phase 2 planned — ready for execution
+last_updated: "2026-05-13T00:00:00.000Z"
+last_activity: 2026-05-13 — Phase 2 planning completo (6 plans + checker PASS).
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 6
-  percent: 100
+  total_plans: 6
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,14 +25,25 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 ## Current Position
 
-Phase: 2 of 6 (Theme System + i18n) — siguiente
+Phase: 2 of 6 (Theme System + i18n) — planificada, lista para ejecutar
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
-Plan: TBD (Phase 2 needs /gsd-discuss-phase 2 → /gsd-plan-phase 2)
-Status: Phase 1 cerrada formalmente con 6/7 plans ejecutados + Plan 07 deferred. Workflow paralelo aprobado: implementación Phase 2 (Theme + i18n) + producción de contenido Phase 3 (bio ES/EN, proyectos, paletas) por Rafael en paralelo.
-Last activity: 2026-05-12 — Phase 1 cerrada; iOS smoke test deferido; arranque inminente de Phase 2.
+Plan: 6 plans creados (W0..W5) — Plan-checker VERIFICATION PASSED iter 2/3
+Status: Phase 2 planning completo. 4 blockers + 7 warnings críticos del iter 1 resueltos en iter 2. 14/14 REQ-IDs cubiertos (THM-01..05, I18N-01..06, A11Y-03, A11Y-04, A11Y-07). 11/11 decisiones D2-01..D2-11 honradas explícitamente. Listo para `/gsd-execute-phase 2`.
+Last activity: 2026-05-13 — Phase 2 planning completo (6 plans + checker PASS iter 2).
 
-Progress (Phase 1 isolated): [██████████] 6/7 plans ejecutados + 1 deferred verification
-Progress (project): Phase 1 ✓ → Phase 2 (next)
+Progress (Phase 2 isolated): [          ] 0/6 plans ejecutados (planning done, execution pending)
+Progress (project): Phase 1 ✓ → Phase 2 (planned, ready to execute)
+
+## Phase 2 Plans Created
+
+| Plan | Wave | Slice | Autonomous | Depends on | Requirements |
+|------|------|-------|------------|------------|--------------|
+| 01 | W0 | i18n engine skeleton (vue-i18n@^11 + locales + auto-detect + html-lang watcher) | yes | — | I18N-01, I18N-02, I18N-04, I18N-06, A11Y-07 |
+| 02 | W1 | LangToggle vertical slice (componente + i18nificación 4 components Phase 1) | yes | W0 | I18N-03, I18N-05 |
+| 03 | W2 | chapter-themes.css (@layer + 7 themes + tests architectural) | yes | W0 | THM-01..05, A11Y-03 |
+| 04 | W3 | useBackgroundMorph + BackgroundLayers (2-layer crossfade) | yes | W2 | THM-03 |
+| 05 | W4 | Self-hosted fonts (@fontsource 6 packages + Task 5.2 bundle smoke verify) | yes | W2 | THM-03 |
+| 06 | W5 | Manual checklist + Rafael ejecuta + firma sign-off (única wave human-verify gate) | **no** | W0..W4 | THM-04, THM-05, I18N-05, A11Y-04 |
 
 ## Performance Metrics
 
@@ -105,7 +116,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-13T04:37:27.397Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-theme-system-i18n/02-CONTEXT.md
-Next command: /gsd-discuss-phase 2  (Phase 2: Theme System + i18n — no hay CONTEXT.md aún)
+Last session: 2026-05-13T00:00:00.000Z
+Stopped at: Phase 2 planned — ready for execution
+Resume file: .planning/phases/02-theme-system-i18n/02-PLAN-wave0-i18n-engine-skeleton.md
+Next command: /gsd-execute-phase 2  (recomendado: /clear primero — fresh context window para wave execution)

@@ -21,6 +21,15 @@ files_modified:
   - tests/i18n/locale-init.test.js
   - tests/i18n/html-lang-watcher.test.js
   - tests/i18n/fallback.test.js
+notes:
+  shell_assumption: >
+    Cross-cutting note para TODOS los plans Phase 2 (W0..W5): los comandos `<automated>`
+    usan `&&` para chainear pasos (ej. `npm install && npm run test:run`). Esto asume
+    un shell con chaining nativo: bash o pwsh 7+. El ejecutor de Claude Code típicamente
+    usa la Bash tool donde `&&` funciona out-of-the-box. Si Rafael ejecuta manualmente
+    en PS 5.1, debe dividir cada chain en statements separados (`npm install`; si OK,
+    `npm run test:run`). Esta nota se aplica una sola vez en W0 (primer plan) por
+    visibilidad — los plans W1..W5 asumen la misma convención sin repetirla.
 must_haves:
   truths:
     - "vue-i18n@^11.4.2 está instalado y registrado en `main.js` con `app.use(i18n)`"
@@ -70,6 +79,8 @@ must_haves:
 **As a** visitante de cualquier idioma, **I want to** que el sitio detecte mi locale automáticamente la primera vez y respete mi elección en visitas posteriores, **so that** mi experiencia esté en mi idioma sin fricción.
 
 > **Nota MVP:** este Wave 0 entrega el MOTOR i18n end-to-end — la única UI visible que cambia con locale es el atributo `<html lang>` (verificable en DevTools) y el chapter title aria-label de ScrollShell (que ya inyecta `t()`). El toggle visible viene en W1. Después de este plan, abrir DevTools y ejecutar `i18n.global.locale.value = 'en'` muta `<html lang>` y los aria-labels de los componentes Phase 1 (W1 los conecta visualmente).
+
+> **Shell assumption (Phase 2 cross-cutting — aplica a todos los plans W0..W5):** los comandos `<automated>` usan `&&` para chainear pasos. Esto asume shell con chaining nativo (bash o pwsh 7+). El ejecutor Claude Code típicamente usa Bash tool donde `&&` funciona. Si Rafael ejecuta manualmente en PS 5.1, dividir cada chain en statements separados (`npm install`; si OK, `npm run test:run`). Esta nota se documenta UNA VEZ en W0 (primer plan) — W1..W5 asumen la misma convención.
 
 <objective>
 Wave 0 instala el motor i18n completo (vue-i18n v11 + locales JSON + auto-detect + persist + `<html lang>` reactivo) y los tests scaffolding críticos del phase. Es el primer slice vertical: sin UI visible nueva, pero el motor responde de cabo a rabo — `useI18n()` funciona en cualquier componente, `<html lang>` muta reactivamente, locale persiste en localStorage, missing handler hace marker visible en dev.
