@@ -2,7 +2,12 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover: pre-condicion para que env(safe-area-inset-bottom)
+         produzca valores no-cero en iPhone con notch / Dynamic Island.
+         StickyTimeline (Plan 05) usa env(safe-area-inset-bottom, 0) para
+         prevenir overlap con la Safari toolbar dinamica. Sin viewport-fit=cover,
+         env() retorna 0 en iOS y la mitigacion no funcionaria. Phase 1 §iOS-01. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>mato-new-portfolio</title>
     <style>
       html, body {
