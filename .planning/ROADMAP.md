@@ -50,10 +50,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01-PLAN.md — Wave 0: Instalar vue-i18n@^11.4.2 + crear `src/i18n/` (locales JSON + index.js con auto-detect + persist) + watcher `<html lang>` reactivo en App.vue + tests scaffolding
-- [ ] 02-02-PLAN.md — Wave 1: Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
-- [ ] 02-03-PLAN.md — Wave 2: Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
-- [ ] 02-04-PLAN.md — Wave 3: Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
+- [x] 02-01-PLAN.md — Wave 0: Instalar vue-i18n@^11.4.2 + crear `src/i18n/` (locales JSON + index.js con auto-detect + persist) + watcher `<html lang>` reactivo en App.vue + tests scaffolding
+- [x] 02-02-PLAN.md — Wave 1: Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
+- [x] 02-03-PLAN.md — Wave 2: Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
+- [x] 02-04-PLAN.md — Wave 3: Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
 - [ ] 02-05-PLAN.md — Wave 4: Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
 - [ ] 02-06-PLAN.md — Wave 5: Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
 
@@ -115,7 +115,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
-| 2. Theme System + i18n | 0/6 | Plans created — `/gsd-execute-phase 2` to begin (5 autonomous waves + 1 human gate) | - |
+| 2. Theme System + i18n | 4/6 | In Progress|  |
 | 3. Chapter 3 End-to-End | 0/TBD | Content prep en paralelo (Rafael) | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
 | 5. Phaser Chapter 6 | 0/TBD | Not started | - |

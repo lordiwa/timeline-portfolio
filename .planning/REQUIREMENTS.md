@@ -25,7 +25,7 @@
 
 - [ ] **THM-01**: `src/styles/chapter-themes.css` con 7 bloques `[data-chapter="N"]` (N=0..6) usando CSS Custom Properties
 - [ ] **THM-02**: `@layer` cascade order: reset / themes / components / utilities
-- [ ] **THM-03**: 7 era-authentic themes implementados (ver Context > Mapeo de chapters en PROJECT.md): terminal (0), 90s HTML crudo (1), Flash vector (2), Web 2.0 (3), AR/VR immersive (4), modern animated (5), Phaser scene (6)
+- [x] **THM-03**: 7 era-authentic themes implementados (ver Context > Mapeo de chapters en PROJECT.md): terminal (0), 90s HTML crudo (1), Flash vector (2), Web 2.0 (3), AR/VR immersive (4), modern animated (5), Phaser scene (6)
 - [ ] **THM-04**: Validación de "no theme bleed" — fonts/colors no se filtran durante snap transitions (test gate manual + visual diff entre chapters)
 - [ ] **THM-05**: Color contrast 4.5:1 cumplido por chapter; era-authenticity tradeoffs documentados explícitamente cuando se rompe (p.ej. terminal verde sobre negro)
 
@@ -186,7 +186,7 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 | A11Y-05 | Phase 1 | Pending |
 | THM-01 | Phase 2 | Pending |
 | THM-02 | Phase 2 | Pending |
-| THM-03 | Phase 2 | Pending |
+| THM-03 | Phase 2 | Complete |
 | THM-04 | Phase 2 | Pending |
 | THM-05 | Phase 2 | Pending |
 | I18N-01 | Phase 2 | Pending |
