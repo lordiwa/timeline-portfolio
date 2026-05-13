@@ -22,12 +22,13 @@
 // sobre preventDefault. La directiva `.prevent` es declarativa de Vue
 // framework, garantiza el preventDefault internamente.
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ScrollShell from '@/components/ScrollShell.vue'
+import Chapter3Content from '@/components/Chapter3Content.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 // Helper para los tests de keyboard navigation: monta ScrollShell con provides
@@ -288,5 +289,38 @@ describe('ScrollShell keyboard navigation', () => {
     await wrapper.find('main').trigger('keydown.down')
     expect(scrollToChapter).toHaveBeenCalledTimes(1)
     expect(scrollToChapter).toHaveBeenCalledWith(4, 'auto')
+  })
+})
+
+// ───────────────────────────────────────────────────────────────────────────
+// Plan 03-03 (Wave 2): Chapter3Content integration test
+// Verifica que section[data-chapter="3"] monta <Chapter3Content />,
+// y que las otras 6 sections mantienen el placeholder Phase 1.
+// ───────────────────────────────────────────────────────────────────────────
+describe('ScrollShell ch3 integration (Plan 03-03)', () => {
+  // T1: section[data-chapter=3] contiene el componente Chapter3Content
+  it('section[data-chapter="3"] monta Chapter3Content (v-if ch.id===3)', () => {
+    const { wrapper } = mountShell()
+    const ch3Section = wrapper.find('section[data-chapter="3"]')
+    expect(ch3Section.exists()).toBe(true)
+    expect(ch3Section.findComponent(Chapter3Content).exists()).toBe(true)
+  })
+
+  // T2: section[data-chapter=0] NO monta Chapter3Content — mantiene placeholder
+  it('section[data-chapter="0"] mantiene .chapter-placeholder (no Chapter3Content)', () => {
+    const { wrapper } = mountShell()
+    const ch0Section = wrapper.find('section[data-chapter="0"]')
+    expect(ch0Section.findComponent(Chapter3Content).exists()).toBe(false)
+    expect(ch0Section.find('.chapter-placeholder').exists()).toBe(true)
+  })
+
+  // T3: seis sections non-ch3 tienen .era-title placeholder (Phase 1 verbatim)
+  it('sections data-chapter 0,1,2,4,5,6 todas mantienen .era-title placeholder', () => {
+    const { wrapper } = mountShell()
+    const nonCh3Ids = [0, 1, 2, 4, 5, 6]
+    nonCh3Ids.forEach((id) => {
+      const section = wrapper.find(`section[data-chapter="${id}"]`)
+      expect(section.find('.era-title').exists()).toBe(true)
+    })
   })
 })
