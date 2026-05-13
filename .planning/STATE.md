@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Wave 2 complete, ready for Wave 3
-stopped_at: Phase 1 Plan 03 (usePRM-composable) complete — usePRM cableado + provide('prm') en App.vue, 26/26 tests verde
-last_updated: "2026-05-13T03:00:37Z"
-last_activity: 2026-05-13 — Plan 03 (W2, usePRM-composable) ejecutado: src/composables/usePRM.js wrapea @vueuse/core usePreferredReducedMotion en API mínima { motion, prefersReduced } (prefersReduced via computed); App.vue añade const prm = usePRM() + provide('prm', prm) junto al provide('scrollState') existente. Tests: 4 nuevos (T1 export shape, T2 no-preference, T3 reduce, T4 reactividad via fireChange manual), suite total 26/26 verde. Test 5 (readonly setter) eliminado por MEDIUM 2 — computed sin setter solo warning, no throw. CSS branch @media (prefers-reduced-motion: reduce) en App.vue ya existente (Plan 02); JS branch en scrollToChapter queda para Plan 05 (anti-scope explícito del Plan 03).
+status: Wave 3 complete, ready for Wave 4
+stopped_at: Phase 1 Plan 04 (sticky-avatar-placeholder) complete — StickyAvatar.vue + crossfade JS 200ms TOTAL + PRM-mid-flight recovery watcher, 36/36 tests verde
+last_updated: "2026-05-12T22:12:00Z"
+last_activity: 2026-05-12 — Plan 04 (W3, sticky-avatar-placeholder) ejecutado: src/components/StickyAvatar.vue con DOM UI-SPEC §7.2 verbatim (<aside aria-live="polite"> + placeholder gris ch{N} + inject('scrollState') + inject('prm')); crossfade JS 200ms TOTAL = fade-out 100ms + swap + fade-in 100ms (HIGH 1 fix, CSS transition: opacity 100ms ease, NO 200ms); watcher dedicado sobre prefersReduced cancela timer pending + restaura opacity=1 si PRM activa mid-flight (HIGH 2 fix); mobile <600px → 56×68px (UI-SPEC §9). App.vue monta <StickyAvatar /> antes del <ScrollShell /> como hermano. Tests: 10 nuevos (incl. T4 timing 100ms NO 200ms, T6 PRM-mid-flight recovery, T8 negative assertion contra "transition: opacity 200ms", T9 mobile breakpoint), suite total 36/36 verde. Build verde (68 KB JS + 1.86 KB CSS gzip). Smoke test browser-based no ejecutado (entorno headless); cobertura programática equivalente vía tests + build + dev server arrancado sin errores.
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
-  percent: 43
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -26,30 +26,30 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 1 of 6 (Scroll Shell + Sticky Anchors)
-Plan: 3 of 7 in current phase
-Status: Wave 2 complete, ready for Wave 3
-Last activity: 2026-05-13 — Plan 03 (W2, usePRM-composable) ejecutado y commiteado; usePRM + provide('prm') cableados, 26/26 tests verde
+Plan: 4 of 7 in current phase
+Status: Wave 3 complete, ready for Wave 4
+Last activity: 2026-05-12 — Plan 04 (W3, sticky-avatar-placeholder) ejecutado y commiteado; StickyAvatar + crossfade 200ms TOTAL + recovery PRM-mid-flight, 36/36 tests verde
 
-Progress: [████░░░░░░] 43%
+Progress: [█████░░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: ~12 min
-- Total execution time: ~0.6 hours
+- Total execution time: ~0.8 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 | 3/7 | ~36 min | ~12 min |
+| 1 | 4/7 | ~48 min | ~12 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01 (W0, toolchain-setup, ~8 min, PASS); 02 (W1, walking-skeleton, ~18 min, PASS); 03 (W2, usePRM-composable, ~10 min, PASS)
-- Trend: 3 plans completados, 26/26 tests green, build verde, PRM conduit cableado y listo para consumir por Plans 04/05
+- Last 5 plans: 01 (W0, toolchain-setup, ~8 min, PASS); 02 (W1, walking-skeleton, ~18 min, PASS); 03 (W2, usePRM-composable, ~10 min, PASS); 04 (W3, sticky-avatar-placeholder, ~12 min, PASS)
+- Trend: 4 plans completados, 36/36 tests green, build verde, primer ancla sticky funcional (avatar reactivo end-to-end al IO de Plan 02)
 
 *Updated after each plan completion*
 
@@ -60,6 +60,9 @@ Progress: [████░░░░░░] 43%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- 2026-05-12 (W3): **Crossfade timing 200ms TOTAL** — CSS `transition: opacity 100ms ease` + JS `setTimeout(100)` = fade-out 100 + swap + fade-in 100 = 200ms total perceptible, alineado con UI-SPEC §8 verbatim. NO 400ms (que sería transition 200ms + setTimeout 200ms). HIGH 1 fix de la iter 2 del plan-checker.
+- 2026-05-12 (W3): **PRM-mid-flight recovery watcher** — `watch(prefersReduced, isPRM => { if (isPRM) { clearTimeout(pendingSwapTimer); opacity.value = 1 } })` dedicado, independiente del watch de activeChapter. Sin él, activar PRM mid-fade dejaría el avatar invisible permanentemente. HIGH 2 fix de la iter 2 del plan-checker.
+- 2026-05-12 (W3): **Tests con flushPromises bajo fake timers** — bajo `vi.useFakeTimers()`, el watcher async del componente hace `await nextTick()` antes del `setTimeout()`. Un solo `nextTick()` desde el test NO drena todos los microtasks; `flushPromises()` de @vue/test-utils sí. Lección para Plans 05+: usar `flushPromises` (no `nextTick`) cuando se mockean timers y se prueba lógica async.
 - 2026-05-13 (W2): **usePRM single source of truth** — un único composable `{ motion, prefersReduced }` provisto vía `provide('prm', usePRM())` en App.vue; consumers (Plans 04 y 05) inyectan en lugar de duplicar `matchMedia` listeners. `prefersReduced` es `computed` (no `ref`) porque deriva de `motion`. Cleanup delegado a vueuse — no `onBeforeUnmount` propio.
 - 2026-05-13 (W2): **Plan 03 anti-scope** — NO modifica `scrollToChapter` para usar PRM (eso es Plan 05). El CSS branch `@media (prefers-reduced-motion: reduce)` ya está en App.vue desde Plan 02. Plan 03 solo cablea el conduit JS para que Plans 04 (avatar crossfade) y 05 (click-to-nav, keyboard) lo consuman.
 - 2026-05-13 (W2): **Test 5 (readonly setter assertion) eliminado por ambigüedad** — MEDIUM 2 del plan-checker: `computed()` sin setter emite warning, no throw; verificarlo sería test de Vue framework, no de nuestro código. Total: 4 tests (T1-T4).
@@ -91,7 +94,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-13T03:00:37Z
-Stopped at: Plan 03 (W2, usePRM-composable) complete — Wave 3 (sticky-avatar-placeholder) desbloqueado
-Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-PLAN-sticky-avatar-placeholder.md
-Next command: /gsd-execute-plan 1 4  (o continuar la cadena con /gsd-execute-phase 1)
+Last session: 2026-05-12T22:12:00Z
+Stopped at: Plan 04 (W3, sticky-avatar-placeholder) complete — Wave 4 (sticky-timeline-marker) desbloqueado
+Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-PLAN-sticky-timeline-marker.md
+Next command: /gsd-execute-plan 1 5  (o continuar la cadena con /gsd-execute-phase 1)
