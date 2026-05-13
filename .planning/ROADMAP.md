@@ -106,7 +106,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scroll Shell + Sticky Anchors | 5/7 | In progress (W0+W1+W2+W3+W4 done, W5 next) | - |
+| 1. Scroll Shell + Sticky Anchors | 6/7 | In progress (W0+W1+W2+W3+W4+W5 done, W6 human gate — last wave) | - |
 | 2. Theme System + i18n | 0/TBD | Not started | - |
 | 3. Chapter 3 End-to-End | 0/TBD | Not started | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
