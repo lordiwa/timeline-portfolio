@@ -18,6 +18,7 @@
 
 import { ref, provide } from 'vue'
 import ScrollShell from './components/ScrollShell.vue'
+import StickyAvatar from './components/StickyAvatar.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 
@@ -30,6 +31,11 @@ provide('prm', prm)
 </script>
 
 <template>
+  <!-- StickyAvatar va ANTES del ScrollShell en el DOM (UI-SPEC §6) — ambos son
+       position: fixed y el z-index manda visualmente, pero el orden DOM es
+       relevante para tab order: el avatar es non-focusable y va antes del main
+       que sí lo es. -->
+  <StickyAvatar />
   <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
 </template>
 
