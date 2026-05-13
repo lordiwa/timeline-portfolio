@@ -47,8 +47,14 @@ function makeWrapper() {
   return { wrapper, get: () => exposed }
 }
 
-// Helper: espera doble RAF + flushPromises para que el deep-link se aplique.
+// Helper: espera a que el deep-link se aplique.
+// Cadena de espera:
+// 1. flushPromises() — drena microtasks pendientes (incluido el watch flush:post
+//    del composable, que es lo que programa los RAFs internos de maybeApplyDeepLink).
+// 2. Doble RAF — espera los 2 RAFs internos de maybeApplyDeepLink antes del scrollToChapter.
+// 3. flushPromises() — drena cualquier microtask producido por el callback final.
 async function waitForDeepLink() {
+  await flushPromises()
   await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
   await flushPromises()
 }
@@ -61,11 +67,8 @@ function assertNavigatedTo(N, behavior) {
 }
 
 describe('useScrollState', () => {
-  // Una sola asignación de spy en el prototype, persiste a través de todos los tests.
-  // mockRestore entre tests causa order-dependency con jsdom porque elementos creados
-  // por un wrapper anterior conservan referencia al método original. Mantenemos un
-  // único vi.fn() instalado y solo limpiamos sus calls con mockClear en beforeEach.
-  HTMLElement.prototype.scrollIntoView = vi.fn()
+  // scrollIntoView ya está instalado como vi.fn() global en tests/setup.js.
+  // Aquí solo limpiamos sus llamadas entre tests con mockClear en beforeEach.
 
   beforeEach(() => {
     // Reset IntersectionObserver mock instances entre tests.
