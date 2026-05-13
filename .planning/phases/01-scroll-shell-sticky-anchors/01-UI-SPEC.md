@@ -1,10 +1,12 @@
 ---
 phase: 1
 slug: scroll-shell-sticky-anchors
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-12
+reviewed_at: 2026-05-12
+checker_verdict: 6/6 PASS
 ---
 
 # Phase 1 — UI Design Contract: Scroll Shell + Sticky Anchors
@@ -129,16 +131,22 @@ neutral con la fuente monoespaciada del scaffold.
 | Rol | Tamaño | Peso | Line-height | Uso |
 |-----|--------|------|-------------|-----|
 | Era title | `clamp(2rem, 5vw, 3.5rem)` | 700 (bold) | 1.1 | Título grande en cada ChapterSection ("1995 · Terminal") |
-| Era year (timeline) | 11px | 400 (regular) | 1.0 | Año debajo de cada tick (1995, 2001...) |
-| Era label (active) | 12px | 700 (bold) | 1.0 | Año del chapter activo — mayor contraste/peso |
-| Avatar slot text | 14px | 400 (regular) | 1.0 | Texto `ch{N}` en el placeholder gris |
-| Skip link | 14px | 700 (bold) | 1.4 | "Saltar al contenido / Skip to content" |
+| Timeline year | `12px` | 400 (regular) inactivo / 700 (bold) activo | 1.0 | Año debajo de cada tick (1995, 2001…); el chapter activo se distingue por peso, no por tamaño |
+| Avatar slot text / Skip link | `14px` | 400 avatar · 700 skip link | 1.0 avatar · 1.4 skip link | Texto `ch{N}` en placeholder gris; "Saltar al contenido / Skip to content" |
+
+**Tamaños declarados: 3** — `clamp(2rem, 5vw, 3.5rem)`, `12px`, `14px`.
+No se introducen tamaños adicionales en este contrato.
 
 **Familia tipográfica Phase 1:** `ui-monospace, SFMono-Regular, Menlo, monospace`
 (heredada del scaffold; Phase 2 la sobreescribe por chapter).
 
 **Nota sobre el era title:** `clamp()` garantiza legibilidad en mobile sin overflow.
 El separador `·` (U+00B7, middle dot) se usa entre año y nombre de era.
+
+**Diferenciación activo/inactivo en timeline:** el año del tick activo se renderiza en
+`font-weight: 700` y color `--c-track-active` (#e7e7f0); los ticks inactivos usan
+`font-weight: 400` y color `--c-muted` (#6b6b8a). El tamaño de 12px es igual para
+ambos estados — el peso y el color son suficientes para la distinción visual.
 
 ---
 
@@ -468,7 +476,7 @@ opacidad y hacer el replace directo.
 }
 
 .tick-year {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 400;
   color: var(--c-muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -647,7 +655,7 @@ en mobile.
     left: 8px;
   }
   .avatar-chapter-label {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 ```
@@ -660,11 +668,11 @@ en mobile.
     height: 44px;
     padding: 0 8px;
   }
-  .tick-year {
-    font-size: 9px;   /* reducir para que quepan los 7 años */
-  }
+  /* tick-year mantiene font-size: 12px — sin nuevo token de tamaño */
 }
 ```
+
+Executor discretion: at viewports < 600px, scale tick-year down within 9–11px range to prevent label overlap. No new size token is introduced; this is a final-mile adjustment delegated to the implementer.
 
 En portrait muy estrecho (< 380px), los años pueden solaparse. Mitigación:
 mostrar solo el año del tick activo y los ticks adyacentes; los otros muestran
