@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio. **Cerrada 2026-05-12 con deferred verification:** 6/7 plans ejecutados, Plan 07 (iOS smoke test) deferido por falta de hardware iOS.
 - [x] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real. **Cerrada 2026-05-13:** 6/6 plans + manual gate firmado por Rafael verdict PASS. Caveats: panel del StickyTimeline (rediseñado vertical-left ese mismo día) usa tokens :root estáticos — opcional override por theme en Phase 3.
-- [ ] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas
+- [~] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas. **Cerrada 2026-05-13 con deferred art:** 4/5 plans ejecutados (W0 data + W1 ContactHUD + W1 SEO @unhead/vue + W2 Chapter3Content/ProjectCard). Plan 03-05 (avatar pixel art batch 7 busts) deferred — Task 5.1 gate BLOCKED pending Rafael CONTENT-CHECKLIST + foto ~30 años en `public/assets/.refs/` + `.gitignore` entry. 216 tests verdes, build verde. Placeholder mode activo.
 - [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
 - [ ] **Phase 5: Phaser Chapter 6** - Escena espacial explorable en Phaser con parallax, naves y planetas-proyecto
 - [ ] **Phase 6: Deploy + Polish** - Build de producción, Firebase Hosting configurado y cache headers correctos
