@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to discuss (post-pivote)
-stopped_at: Phase 1 context gathered
-last_updated: "2026-05-13T01:22:14.300Z"
+stopped_at: Phase 1 UI-SPEC approved
+last_updated: "2026-05-13T01:44:06.620Z"
 last_activity: 2026-05-12 — Pivote a vertical+sticky avatar+sticky timeline aplicado; PROJECT/REQUIREMENTS/ROADMAP re-baselineados
 progress:
   total_phases: 6
@@ -83,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-13T01:22:14.276Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-CONTEXT.md
+Last session: 2026-05-13T01:44:06.596Z
+Stopped at: Phase 1 UI-SPEC approved
+Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-UI-SPEC.md
