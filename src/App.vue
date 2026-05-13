@@ -30,6 +30,7 @@ import ScrollShell from './components/ScrollShell.vue'
 import StickyAvatar from './components/StickyAvatar.vue'
 import StickyTimeline from './components/StickyTimeline.vue'
 import LangToggle from './components/LangToggle.vue'
+import ContactHUD from './components/ContactHUD.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
@@ -81,21 +82,24 @@ useResizeObserver(document.documentElement, (entries) => {
 </script>
 
 <template>
-  <!-- Orden DOM (UI-SPEC §6 + §7.3 + §10 post-W3):
-       BackgroundLayers → SkipLink → StickyAvatar → ScrollShell → StickyTimeline → LangToggle
+  <!-- Orden DOM (UI-SPEC §6 + §7.3 + §10 post-W1-Phase3):
+       BackgroundLayers → SkipLink → StickyAvatar → ScrollShell → StickyTimeline → LangToggle → ContactHUD
        Tab order derivado del orden DOM:
          1. .skip-link (primer focusable)
          2. #main-content (ScrollShell con tabindex="0")
          3. .tick-button[data-chapter="0"] ... [data-chapter="6"]
        El avatar es non-focusable (aside con span). Visualmente el z-index
-       controla la pila: bg-layers -1 (fondo) | skip-link 50 (top) | avatar/timeline 40 | chapters 0.
-       BackgroundLayers: position:fixed, z-index:-1, pointer-events:none (no interfiere con tab/click). -->
+       controla la pila: bg-layers -1 (fondo) | skip-link 50 (top) | avatar/timeline/HUDs 40 | chapters 0.
+       BackgroundLayers: position:fixed, z-index:-1, pointer-events:none (no interfiere con tab/click).
+       LangToggle: position:fixed top-right. ContactHUD: position:fixed bottom-right. Ambos z-index:40.
+       ContactHUD es invariante a chapter (D3-10) — análogo a LangToggle (Phase 2 W1). -->
   <BackgroundLayers />
   <SkipLink />
   <StickyAvatar />
   <ScrollShell :ref="setShellRef" />
   <StickyTimeline />
   <LangToggle />
+  <ContactHUD />
 </template>
 
 <!--
