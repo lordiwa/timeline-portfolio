@@ -1,57 +1,55 @@
 // tests/components/ScrollShell.test.js
-// Tests del componente ScrollShell.vue.
+// Tests del componente ScrollShell.vue + i18n (Plan 02-02, Task 2.2).
 //
 // Cobertura:
 // - Renders 7 chapter sections con IDs correctos
 // - <main> raíz tiene class, id, tabindex correctos (A11Y-02)
-// - Era titles exactos: 1995·Terminal..2026·Phaser (UI-SPEC §7.1)
+// - Era titles exactos: 1995·Terminal..2026·Phaser (UI-SPEC §7.1) — NO i18nificados (Phase 3)
 // - CSS críticos (lectura raw del SFC):
 //   * scroll-snap-type: y mandatory (CORE-01)
 //   * scroll-snap-align: start (CORE-04)
 //   * scroll-snap-stop: always (CORE-04)
 //   * height: 100dvh (CORE-08)
 //   * -webkit-overflow-scrolling: touch (iOS-01)
-// - Keyboard navigation handlers (Plan 05, A11Y-02 completo):
-//   * ↑/↓ navegan entre chapters con clamping a [0..6]
-//   * j/k aliases vim-style (↓/↑)
-//   * Home/End → 0 / 6
-//   * PRM branch: behavior='auto' (D-04)
+// - Keyboard navigation handlers (Plan 05, A11Y-02 completo)
+// - i18n (Plan 02-02, Task 2.2):
+//   * locale='es' → section[data-chapter=3] aria-label === t('chapters.3.title') en es
+//   * locale='en' → section[data-chapter=3] aria-label === t('chapters.3.title') en en
+//   * reactive: toggle locale 'es'→'en' → aria-label actualiza sin re-mount
 //
 // NOTA: el test original de preventDefault fue eliminado por ambigüedad —
 // Vue Test Utils `trigger` no expone el evento nativo con spy verificable
 // sobre preventDefault. La directiva `.prevent` es declarativa de Vue
-// framework, garantiza el preventDefault internamente. Los tests del
-// `describe('keyboard navigation')` verifican el comportamiento funcional
-// (que `navigate()` se invoca con la delta correcta + clamping + PRM
-// branch), que es lo que importa para a11y. Ver Plan 05 §key-decisions.
+// framework, garantiza el preventDefault internamente.
 
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ScrollShell from '@/components/ScrollShell.vue'
+import { createTestI18n } from '../i18n/test-helpers.js'
 
 // Helper para los tests de keyboard navigation: monta ScrollShell con provides
-// mutables. Retorna { wrapper, activeChapter, prefersReduced, scrollToChapter }.
-function mountShell({ initialChapter = 3, initialPRM = false } = {}) {
+// mutables + plugin i18n. Retorna { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }.
+function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es' } = {}) {
   const activeChapter = ref(initialChapter)
   const prefersReduced = ref(initialPRM)
   const scrollToChapter = vi.fn()
+  const i18n = createTestI18n({ locale })
   const wrapper = mount(ScrollShell, {
     global: {
+      plugins: [i18n],
       provide: {
         scrollState: { activeChapter, scrollToChapter },
         prm: { prefersReduced },
       },
     },
   })
-  return { wrapper, activeChapter, prefersReduced, scrollToChapter }
+  return { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }
 }
 
 // Lee el archivo .vue como string para asserts de CSS estático en el bloque <style>.
-// Usamos process.cwd() porque vitest corre desde el root del proyecto y la URL
-// de import.meta.url bajo jsdom/vitest puede no ser scheme file:// portable.
 const SCROLL_SHELL_SOURCE = readFileSync(
   resolve(process.cwd(), 'src/components/ScrollShell.vue'),
   'utf8'
@@ -59,9 +57,8 @@ const SCROLL_SHELL_SOURCE = readFileSync(
 
 describe('ScrollShell.vue', () => {
   // Helper para tests que no usan keyboard nav: monta con provides mínimos
-  // (ScrollShell ahora hace inject de scrollState y prm desde Plan 05).
-  function mountBasic() {
-    const { wrapper } = mountShell()
+  function mountBasic({ locale = 'es' } = {}) {
+    const { wrapper } = mountShell({ locale })
     return wrapper
   }
 
@@ -90,20 +87,20 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 3: each section has id=chapter-N and correct aria-label
+  // Test 3: each section has id=chapter-N and correct aria-label from i18n (es)
   // ─────────────────────────────────────────────────────────────────────────
-  it('each section has id chapter-N and aria-label "{era} — {year}"', () => {
-    const wrapper = mountBasic()
-    const expected = [
-      { id: 'chapter-0', label: 'Terminal — 1995' },
-      { id: 'chapter-1', label: 'HTML 90s — 2001' },
-      { id: 'chapter-2', label: 'Flash — 2009' },
-      { id: 'chapter-3', label: 'Web 2.0 — 2013' },
-      { id: 'chapter-4', label: 'AR/VR — 2015' },
-      { id: 'chapter-5', label: 'Modern — 2022' },
-      { id: 'chapter-6', label: 'Phaser — 2026' },
+  it('each section has id chapter-N and aria-label from t("chapters.N.title") in locale es', () => {
+    const wrapper = mountBasic({ locale: 'es' })
+    const expectedEs = [
+      { id: 'chapter-0', label: 'Pre-carrera: niñez digital' },
+      { id: 'chapter-1', label: 'Pre-carrera tardío: HTML 90s' },
+      { id: 'chapter-2', label: 'Flash era: gameplay programmer' },
+      { id: 'chapter-3', label: 'Web 2.0: UX + dev + líder' },
+      { id: 'chapter-4', label: 'AR/VR: empresa propia + Metrodigi' },
+      { id: 'chapter-5', label: 'Modern: streaming, QA, frontend lead' },
+      { id: 'chapter-6', label: 'Convergencia: QA + AI' },
     ]
-    expected.forEach(({ id, label }) => {
+    expectedEs.forEach(({ id, label }) => {
       const section = wrapper.find(`#${id}`)
       expect(section.exists()).toBe(true)
       expect(section.attributes('aria-label')).toBe(label)
@@ -160,6 +157,28 @@ describe('ScrollShell.vue', () => {
   it('CSS: .scroll-shell declares -webkit-overflow-scrolling: touch', () => {
     expect(SCROLL_SHELL_SOURCE).toMatch(/-webkit-overflow-scrolling:\s*touch/)
   })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Test 9 (i18n): locale='en' → section[data-chapter=3] aria-label en inglés
+  // ─────────────────────────────────────────────────────────────────────────
+  it('i18n: locale=en → section[data-chapter=3] aria-label "Web 2.0: UX + dev + lead"', () => {
+    const wrapper = mountBasic({ locale: 'en' })
+    const section = wrapper.find('section[data-chapter="3"]')
+    expect(section.attributes('aria-label')).toBe('Web 2.0: UX + dev + lead')
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Test 10 (i18n reactive — Pitfall 3): toggle locale → aria-label actualiza
+  // ─────────────────────────────────────────────────────────────────────────
+  it('i18n reactive (Pitfall 3): toggle locale "es"→"en" → section aria-labels actualizan sin re-mount', async () => {
+    const { wrapper, i18n } = mountShell({ locale: 'es' })
+    const section = wrapper.find('section[data-chapter="3"]')
+    expect(section.attributes('aria-label')).toBe('Web 2.0: UX + dev + líder')
+    i18n.global.locale.value = 'en'
+    await flushPromises()
+    expect(wrapper.find('section[data-chapter="3"]').attributes('aria-label'))
+      .toBe('Web 2.0: UX + dev + lead')
+  })
 })
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -167,23 +186,10 @@ describe('ScrollShell.vue', () => {
 //
 // El <main> raíz declara 6 @keydown handlers con `.prevent`:
 //   ↑/k → navigate(-1), ↓/j → navigate(1), Home → navigate('home'), End → navigate('end')
-//
-// `navigate(delta)` clamp el target a [0..6] y llama
-// `scrollToChapter(target, prm ? 'auto' : 'smooth')`.
-//
-// NOTA sobre preventDefault: el test 11 original (que asertaba que
-// preventDefault fue llamado via `trigger('keydown.up')`) fue eliminado por
-// ambigüedad — Vue Test Utils `trigger` no expone el evento nativo subyacente
-// con un spy verificable. La directiva `.prevent` es declarativa de Vue
-// framework y llama event.preventDefault() internamente. Los Tests 2-10
-// abajo verifican el comportamiento funcional (navigate dispara con la delta
-// correcta y el behavior correcto), que es lo que importa para a11y.
-// Ver Plan 05 §key-decisions para rationale completo.
 // ───────────────────────────────────────────────────────────────────────────
 describe('ScrollShell keyboard navigation', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // Test 1: <main> template declara los 6 @keydown handlers con .prevent
-  // (verificable raw del SFC source)
   // ─────────────────────────────────────────────────────────────────────────
   it('declares 6 @keydown handlers with .prevent in template (raw source check)', () => {
     expect(SCROLL_SHELL_SOURCE).toMatch(/@keydown\.up\.prevent/)

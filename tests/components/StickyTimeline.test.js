@@ -1,11 +1,12 @@
 // tests/components/StickyTimeline.test.js
-// Tests del componente StickyTimeline.vue (Plan 05, Wave 4).
+// Tests del componente StickyTimeline.vue (Plan 05, Wave 4) + i18n (Plan 02-02, Task 2.2).
 //
-// Cobertura (13 tests):
+// Cobertura (16 tests):
+//   Originales Phase 1 (13):
 //   1. Render: <nav class="sticky-timeline"> tiene role="navigation" y
-//      aria-label="Navegación de capítulos por era".
+//      aria-label desde t('ui.timeline.navAria').
 //   2. Render: existen exactamente 7 <button class="tick-button"> con data-chapter
-//      0..6 y aria-label="Ir a {era} ({year})" en español.
+//      0..6 y aria-label desde t('ui.timeline.tickAria', { era, year }).
 //   3. Render: cada tick-button contiene <span class="tick-notch"> y
 //      <span class="tick-year"> con el año correcto.
 //   4. Render del marker: <div class="timeline-marker"> existe con
@@ -22,22 +23,21 @@
 //      z-index 40.
 //  10. CSS: .tick-button declara min-width 44px y min-height 44px (touch target).
 //  11. CSS: @media (max-width: 599px) con height 44px en .sticky-timeline.
-//  12. CSS: .timeline-marker declara transition: left 0ms linear (binding
-//      continuo, no animation).
-//  13. CSS: .sticky-timeline declara bottom: env(safe-area-inset-bottom, 0)
-//      desde day 1 (HIGH 4 preventive fix).
-//
-// Wrapper de inject: provee `scrollState` con `activeChapter` y `scrollProgress`
-// mutables (ref) + `scrollToChapter` como vi.fn(), y `prm` con `prefersReduced`
-// mutable (ref). Esto permite que los tests muten valores y verifiquen
-// reactividad + spies sobre el click handler.
+//  12. CSS: .timeline-marker declara transition: left 0ms linear.
+//  13. CSS: .sticky-timeline declara bottom: env(safe-area-inset-bottom, 0).
+//   Nuevos i18n (3):
+//  14. i18n nav aria: locale='es' → 'Navegación de capítulos por era'; 'en' → 'Era-based chapter navigation'
+//  15. i18n tick aria: locale='es' + chapter 3 → aria-label contiene 'Ir a' + 'Web 2.0' + '2013'
+//  16. i18n reactive (Pitfall 3): mutar locale 'es'→'en' + nextTick → aria-labels actualizan
+//      sin re-mount.
 
 import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import StickyTimeline from '@/components/StickyTimeline.vue'
+import { createTestI18n } from '../i18n/test-helpers.js'
 
 // Lee el SFC raw para asserts de CSS estático en el bloque <style scoped>.
 const STICKY_TIMELINE_SOURCE = readFileSync(
@@ -45,35 +45,38 @@ const STICKY_TIMELINE_SOURCE = readFileSync(
   'utf8'
 )
 
-// Helper: monta StickyTimeline con provides mutables.
-// Retorna { wrapper, activeChapter, scrollProgress, prefersReduced, scrollToChapter }
+// Helper: monta StickyTimeline con provides mutables + plugin i18n.
+// Retorna { wrapper, activeChapter, scrollProgress, prefersReduced, scrollToChapter, i18n }
 // para poder mutar refs en runtime e inspeccionar el spy.
 function mountTimeline({
   initialChapter = 3,
   initialProgress = 0,
   initialPRM = false,
+  locale = 'es',
 } = {}) {
   const activeChapter = ref(initialChapter)
   const scrollProgress = ref(initialProgress)
   const prefersReduced = ref(initialPRM)
   const scrollToChapter = vi.fn()
+  const i18n = createTestI18n({ locale })
   const wrapper = mount(StickyTimeline, {
     global: {
+      plugins: [i18n],
       provide: {
         scrollState: { activeChapter, scrollProgress, scrollToChapter },
         prm: { prefersReduced },
       },
     },
   })
-  return { wrapper, activeChapter, scrollProgress, prefersReduced, scrollToChapter }
+  return { wrapper, activeChapter, scrollProgress, prefersReduced, scrollToChapter, i18n }
 }
 
 describe('StickyTimeline.vue', () => {
   // ───────────────────────────────────────────────────────────────────────────
-  // Test 1: <nav> raíz con role="navigation" y aria-label
+  // Test 1: <nav> raíz con role="navigation" y aria-label desde i18n
   // ───────────────────────────────────────────────────────────────────────────
-  it('renders <nav class="sticky-timeline"> with role="navigation" and aria-label', () => {
-    const { wrapper } = mountTimeline()
+  it('renders <nav class="sticky-timeline"> with role="navigation" and aria-label from i18n (es)', () => {
+    const { wrapper } = mountTimeline({ locale: 'es' })
     const nav = wrapper.find('nav.sticky-timeline')
     expect(nav.exists()).toBe(true)
     expect(nav.attributes('role')).toBe('navigation')
@@ -81,10 +84,10 @@ describe('StickyTimeline.vue', () => {
   })
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Test 2: exactly 7 tick-buttons with data-chapter 0..6 + aria-label
+  // Test 2: exactly 7 tick-buttons with data-chapter 0..6 + aria-label desde i18n
   // ───────────────────────────────────────────────────────────────────────────
-  it('renders 7 tick-buttons with data-chapter 0..6 and aria-label "Ir a {era} ({year})"', () => {
-    const { wrapper } = mountTimeline()
+  it('renders 7 tick-buttons with data-chapter 0..6 and aria-label from t("ui.timeline.tickAria")', () => {
+    const { wrapper } = mountTimeline({ locale: 'es' })
     const buttons = wrapper.findAll('button.tick-button')
     expect(buttons.length).toBe(7)
     const expected = [
@@ -238,5 +241,54 @@ describe('StickyTimeline.vue', () => {
     expect(STICKY_TIMELINE_SOURCE).toMatch(
       /\.sticky-timeline\s*\{[\s\S]*?bottom:\s*env\(safe-area-inset-bottom,\s*0\)/
     )
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Test 14 (i18n nav aria): locale='es' → 'Navegación de capítulos por era';
+  //                           locale='en' → 'Era-based chapter navigation'
+  // ───────────────────────────────────────────────────────────────────────────
+  it('i18n nav aria: locale=es → "Navegación de capítulos por era"; locale=en → "Era-based chapter navigation"', () => {
+    const { wrapper: wrapperEs } = mountTimeline({ locale: 'es' })
+    expect(wrapperEs.find('nav.sticky-timeline').attributes('aria-label'))
+      .toBe('Navegación de capítulos por era')
+
+    const { wrapper: wrapperEn } = mountTimeline({ locale: 'en' })
+    expect(wrapperEn.find('nav.sticky-timeline').attributes('aria-label'))
+      .toBe('Era-based chapter navigation')
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Test 15 (i18n tick aria): locale='es' + chapter 3 → aria-label contiene
+  //                            'Ir a' + 'Web 2.0' + '2013'
+  // ───────────────────────────────────────────────────────────────────────────
+  it('i18n tick aria: locale=es, chapter 3 → "Ir a Web 2.0 (2013)"; locale=en → "Go to Web 2.0 (2013)"', () => {
+    const { wrapper: wrapperEs } = mountTimeline({ locale: 'es' })
+    const btnEs = wrapperEs.find('button[data-chapter="3"]')
+    expect(btnEs.attributes('aria-label')).toContain('Ir a')
+    expect(btnEs.attributes('aria-label')).toContain('Web 2.0')
+    expect(btnEs.attributes('aria-label')).toContain('2013')
+
+    const { wrapper: wrapperEn } = mountTimeline({ locale: 'en' })
+    const btnEn = wrapperEn.find('button[data-chapter="3"]')
+    expect(btnEn.attributes('aria-label')).toContain('Go to')
+    expect(btnEn.attributes('aria-label')).toContain('Web 2.0')
+    expect(btnEn.attributes('aria-label')).toContain('2013')
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Test 16 (i18n reactive — Pitfall 3): mutar locale 'es'→'en' → aria-labels
+  // actualizan SIN re-mount (el binding usa t() reactivo).
+  // ───────────────────────────────────────────────────────────────────────────
+  it('i18n reactive (Pitfall 3): mutar locale "es"→"en" → aria-labels actualizan sin re-mount', async () => {
+    const { wrapper, i18n } = mountTimeline({ locale: 'es' })
+    expect(wrapper.find('nav.sticky-timeline').attributes('aria-label'))
+      .toBe('Navegación de capítulos por era')
+    i18n.global.locale.value = 'en'
+    await flushPromises()
+    expect(wrapper.find('nav.sticky-timeline').attributes('aria-label'))
+      .toBe('Era-based chapter navigation')
+    // Verificar también un tick
+    const btn = wrapper.find('button[data-chapter="3"]')
+    expect(btn.attributes('aria-label')).toContain('Go to')
   })
 })
