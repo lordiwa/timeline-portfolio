@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 2 planning completo: 6 plans W0-W5 creados (vertical slices mvp), plan-checker VERIFICATION PASSED iter 2 (4 blockers + 7 warnings resueltos), 14/14 REQ-IDs cubiertos, 11/11 decisiones D2-XX honradas. Listo para `/gsd-execute-phase 2`."
+status: executing
 stopped_at: Phase 2 planned — ready for execution
-last_updated: "2026-05-13T00:00:00.000Z"
-last_activity: 2026-05-13 — Phase 2 planning completo (6 plans + checker PASS).
+last_updated: "2026-05-13T16:49:01.588Z"
+last_activity: 2026-05-13 -- Phase 2 execution started
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 0
-  percent: 0
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Que un visitante mueva el scroll, vea el sitio transformarse, y entienda en 30 segundos sin leer una sola viñeta de CV que está mirando a alguien que vivió tres décadas de tecnología y cuyas habilidades convergen en algo único.
-**Current focus:** Phase 1 — Scroll Shell + Sticky Anchors
+**Current focus:** Phase 2 — theme-system-i18n
 
 ## Current Position
 
-Phase: 2 of 6 (Theme System + i18n) — planificada, lista para ejecutar
+Phase: 2 (theme-system-i18n) — EXECUTING
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
-Plan: 6 plans creados (W0..W5) — Plan-checker VERIFICATION PASSED iter 2/3
-Status: Phase 2 planning completo. 4 blockers + 7 warnings críticos del iter 1 resueltos en iter 2. 14/14 REQ-IDs cubiertos (THM-01..05, I18N-01..06, A11Y-03, A11Y-04, A11Y-07). 11/11 decisiones D2-01..D2-11 honradas explícitamente. Listo para `/gsd-execute-phase 2`.
-Last activity: 2026-05-13 — Phase 2 planning completo (6 plans + checker PASS iter 2).
+Plan: 1 of 6
+Status: Executing Phase 2
+Last activity: 2026-05-13 -- Phase 2 execution started
 
 Progress (Phase 2 isolated): [          ] 0/6 plans ejecutados (planning done, execution pending)
 Progress (project): Phase 1 ✓ → Phase 2 (planned, ready to execute)
