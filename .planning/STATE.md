@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase-closed
-stopped_at: "Phase 2 CERRADA — Rafael firmó sign-off verdict PASS en 02-MANUAL-CHECKLIST.md §10 (2026-05-13). Listo para Phase 3."
-last_updated: "2026-05-13T20:00:00Z"
+stopped_at: Phase 3 context gathered
+last_updated: "2026-05-13T20:24:17.178Z"
 last_activity: 2026-05-13 — Rafael firmó manual checklist verdict PASS; Phase 2 cerrada
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 16
-  completed_plans: 16
-  percent: 28
+  completed_phases: 2
+  total_plans: 7
+  completed_plans: 12
+  percent: 100
 ---
 
 # Project State
@@ -50,6 +50,7 @@ Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 (listo para arrancar
 ### Human Gate Items (Rafael debe ejecutar)
 
 Ver `.planning/phases/02-theme-system-i18n/02-MANUAL-CHECKLIST.md` completo:
+
 - §1 Theme bleed visual (ch0→ch5 snap sin filtración) — SC-1, THM-04
 - §2 Background morph perception 200ms — Open-Q2-B
 - §3 Layout shift CLS — ES text mobile 375×667 — I18N-05
@@ -115,14 +116,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Rafael ejecutar `02-MANUAL-CHECKLIST.md` y firmar §10 para cerrar Phase 2.
-- Rafael produce contenido Phase 3 en paralelo (bio ES/EN, proyectos, paletas).
+- Rafael llenar `CONTENT-CHECKLIST.md` de Phase 3 (bio ES/EN, proyectos, contacto, SEO titles/desc, 7 paletas, paleta humana avatar, foto Rafael ~30 años en `public/assets/.refs/` con `.gitignore` entry). Blocking input para `/gsd-plan-phase 3`.
 
 ### Blockers/Concerns
 
-- **Phase 2 human gate ABIERTO** — Ver `.planning/phases/02-theme-system-i18n/02-MANUAL-CHECKLIST.md`. Rafael ejecuta y firma §10 antes de iniciar Phase 3.
+- ~~**Phase 2 human gate ABIERTO**~~ **CERRADO 2026-05-13** — Rafael firmó verdict PASS en §10 de 02-MANUAL-CHECKLIST.md.
 - ~~**Plan 07 iOS smoke test:**~~ **MOVIDO A DEFERRED 2026-05-12** — Rafael NO posee hardware iOS.
-- **Content readiness (Phase 3):** Bio en ES/EN y lista de proyectos por chapter no están escritos aún. Phase 3 depende de este contenido.
+- **Content readiness (Phase 3) — blocking para plan-phase:** `CONTENT-CHECKLIST.md` vacío. El planner pausa con checkpoint:human-input si Rafael no llenó bio + proyectos ch3 + contacto + paletas + foto ~30 años antes de arrancar.
+- **Phase 3 scope expandido:** D3-05 lockea batch 7 busts (no solo ch3). Implica que las 7 paletas + age refs deben estar aprobadas antes de execute, no solo la de ch3.
 - **pixelforge palette consistency:** Paletas por chapter deben documentarse ANTES de generar assets (ART-06).
 
 ## Deferred Items
@@ -134,7 +135,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-13T18:00:00Z
-Stopped at: Phase 2 verificada PASS-with-pending-manual — esperando sign-off Rafael
-Resume file: .planning/phases/02-theme-system-i18n/02-MANUAL-CHECKLIST.md (Rafael ejecuta)
+Last session: 2026-05-13T20:24:17.146Z
+Stopped at: Phase 3 context gathered
+Resume file: .planning/phases/03-chapter-3-end-to-end/03-CONTEXT.md
 Next command: (después del sign-off) /gsd-execute-phase 3
