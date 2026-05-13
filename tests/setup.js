@@ -78,6 +78,16 @@ if (typeof window !== 'undefined') {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HTMLElement.prototype.scrollIntoView
+// ─────────────────────────────────────────────────────────────────────────────
+// JSDOM no implementa scrollIntoView. Lo declaramos como no-op para que existir
+// en el prototype permita `vi.spyOn(HTMLElement.prototype, 'scrollIntoView')`
+// desde los tests. Los tests que necesiten observar las llamadas hacen su propio spy.
+if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = function () {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // requestAnimationFrame / cancelAnimationFrame
 // ─────────────────────────────────────────────────────────────────────────────
 // JSDOM 26+ trae una implementación básica, pero la sustituimos por una
