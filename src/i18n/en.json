@@ -1,0 +1,34 @@
+{
+  "chapters": {
+    "0": { "title": "Pre-career: digital childhood" },
+    "1": { "title": "Pre-career late: 90s HTML" },
+    "2": { "title": "Flash era: gameplay programmer" },
+    "3": { "title": "Web 2.0: UX + dev + lead" },
+    "4": { "title": "AR/VR: own company + Metrodigi" },
+    "5": { "title": "Modern: streaming, QA, frontend lead" },
+    "6": { "title": "Convergence: QA + AI" }
+  },
+  "ui": {
+    "skipLink": "Skip to content",
+    "langToggle": {
+      "aria": "Switch language to Spanish",
+      "label": "ES"
+    },
+    "timeline": {
+      "navAria": "Era-based chapter navigation",
+      "tickAria": "Go to {era} ({year})"
+    }
+  },
+  "avatar": {
+    "ariaTemplate": "Rafael's avatar — chapter {chapter} active",
+    "busts": {
+      "0": { "alt": "Placeholder — digital childhood (~10 years old, 1995)" },
+      "1": { "alt": "Placeholder — late pre-career (~17 years old, 2001)" },
+      "2": { "alt": "Placeholder — Flash era (~22 years old, 2009)" },
+      "3": { "alt": "Placeholder — Web 2.0 (~26 years old, 2013)" },
+      "4": { "alt": "Placeholder — AR/VR (~30 years old, 2015)" },
+      "5": { "alt": "Placeholder — Modern (~36 years old, 2022)" },
+      "6": { "alt": "Placeholder — Convergence (~40 years old, 2026)" }
+    }
+  }
+}
