@@ -12,7 +12,7 @@ Un portafolio vertical de 7 chapters con dos anclajes sticky (avatar pixel-art t
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio
+- [x] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio. **Cerrada 2026-05-12 con deferred verification:** 6/7 plans ejecutados, Plan 07 (iOS smoke test) deferido por falta de hardware iOS.
 - [ ] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real
 - [ ] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas
 - [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
@@ -106,9 +106,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scroll Shell + Sticky Anchors | 6/7 | In progress (W0+W1+W2+W3+W4+W5 done, W6 human gate — last wave) | - |
-| 2. Theme System + i18n | 0/TBD | Not started | - |
-| 3. Chapter 3 End-to-End | 0/TBD | Not started | - |
+| 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
+| 2. Theme System + i18n | 0/TBD | Next — `/gsd-discuss-phase 2` | - |
+| 3. Chapter 3 End-to-End | 0/TBD | Content prep en paralelo (Rafael) | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
 | 5. Phaser Chapter 6 | 0/TBD | Not started | - |
 | 6. Deploy + Polish | 0/TBD | Not started | - |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Wave 5 complete, ready for Wave 6 (iOS smoke test — human gate)
-stopped_at: Phase 1 Plan 06 (skiplink-a11y-polish) complete — SkipLink.vue + focus ring :focus-visible universal + ResizeObserver placeholder (MOB-03) + manual checklist con item 7 (MEDIUM 3) overflow 375×667, 67/67 tests verde
-last_updated: "2026-05-12T23:05:00Z"
-last_activity: 2026-05-12 — Plan 06 (W5, skiplink-a11y-polish) ejecutado: src/components/SkipLink.vue con DOM UI-SPEC §7.4 verbatim (<a href='#main-content' id='skip-link' class='skip-link'> con texto bilingüe "Saltar al contenido / Skip to content"); hide-on-scroll vía onMounted + window.addEventListener('scroll', handler, { once: true, passive: true }) directo — NO useEventListener (HIGH 5 fix iter 2 evita flake jsdom); defineExpose({ handleScrollOnce }) para test invocation determinístico; hide-on-blur vía @blur del <a>; onBeforeUnmount cleanup defensive. App.vue: <SkipLink /> primer hijo del template root (DOM order = tab order UI-SPEC §10); useResizeObserver(document.documentElement) cableado como placeholder defensive (MOB-03 satisfecho — viewportWidth/viewportHeight refs no consumidos en Phase 1, Phase 5 los promoverá para Phaser zoom); :focus-visible { outline 3px var(--c-focus) offset 3px } declarado en <style> NO scoped (aplica a SkipLink, main-content, tick-button y futuros). Tests: 8 SkipLink (Test 3 invoca wrapper.vm.handleScrollOnce() directo evitando dispatchEvent jsdom flake — HIGH 5; Test 5 vi.spyOn(window, 'addEventListener') verifica wiring con { once: true, passive: true }). Suite total 67/67 verde (+8 vs Plan 05). Build verde (71.76 KB JS gzip 28.51 + 4.50 KB CSS gzip 1.42; bundle CSS contiene :focus-visible + .skip-link + .skip-link.hidden + env(safe-area-inset-bottom) sin regresión Plan 05; bundle JS contiene handleScrollOnce + addEventListener('scroll' + once+passive). Tab order programáticamente verificado: [SkipLink, StickyAvatar, ScrollShell, StickyTimeline]. Manual checklist 01-06-MANUAL-CHECKLIST.md (10 secciones, 30+ items) escrito para Rafael en Plan 07: item 7 (★ MEDIUM 3) con dos mitigaciones documentadas (Opción A reducir copy / Opción B font-size 12px @media max-width 599px — preferida). Phase 1 funcionalmente completa salvo iOS smoke test (Plan 07/W6).
+status: "Phase 1 cerrada formalmente con 6/7 plans ejecutados + Plan 07 deferred. Workflow paralelo aprobado: implementación Phase 2 (Theme + i18n) + producción de contenido Phase 3 (bio ES/EN, proyectos, paletas) por Rafael en paralelo."
+stopped_at: Phase 2 context gathered
+last_updated: "2026-05-13T04:37:27.408Z"
+last_activity: 2026-05-12 — Phase 1 cerrada; iOS smoke test deferido; arranque inminente de Phase 2.
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 7
+  completed_phases: 1
+  total_plans: 1
   completed_plans: 6
-  percent: 86
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,14 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 ## Current Position
 
-Phase: 1 of 6 (Scroll Shell + Sticky Anchors)
-Plan: 6 of 7 in current phase
-Status: Wave 5 complete, ready for Wave 6 (iOS smoke test — human gate)
-Last activity: 2026-05-12 — Plan 06 (W5, skiplink-a11y-polish) ejecutado y commiteado; SkipLink.vue primer focusable del DOM con addEventListener nativo (HIGH 5) + defineExpose handler para tests + focus ring :focus-visible universal en App.vue + useResizeObserver(documentElement) defensive (MOB-03) + manual checklist con item 7 (MEDIUM 3) overflow 375×667, 67/67 tests verde (+8 vs Plan 05)
+Phase: 2 of 6 (Theme System + i18n) — siguiente
+Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
+Plan: TBD (Phase 2 needs /gsd-discuss-phase 2 → /gsd-plan-phase 2)
+Status: Phase 1 cerrada formalmente con 6/7 plans ejecutados + Plan 07 deferred. Workflow paralelo aprobado: implementación Phase 2 (Theme + i18n) + producción de contenido Phase 3 (bio ES/EN, proyectos, paletas) por Rafael en paralelo.
+Last activity: 2026-05-12 — Phase 1 cerrada; iOS smoke test deferido; arranque inminente de Phase 2.
 
-Progress: [████████░░] 86%
+Progress (Phase 1 isolated): [██████████] 6/7 plans ejecutados + 1 deferred verification
+Progress (project): Phase 1 ✓ → Phase 2 (next)
 
 ## Performance Metrics
 
@@ -90,21 +92,20 @@ None yet.
 
 ### Blockers/Concerns
 
-- **★ Plan 07 es human gate (no autonomous):** Es la **única wave restante de Phase 1** y la **única que requiere participación humana**. Rafael debe ejecutar (a) la checklist iOS de 10 ítems en su iPhone real, (b) el `01-05-MANUAL-CHECKLIST.md` (10 secciones, marker tracking HIGH 3) en desktop emulator, (c) el `01-06-MANUAL-CHECKLIST.md` (10 secciones, SkipLink + focus ring + MEDIUM 3 overflow 375×667). Si todos PASS → `/gsd-verify-work 1` cierra Phase 1.
-- **iOS smoke test (Phase 1 / Plan 07):** Confirmar que vertical snap responde chapter-a-chapter en iPhone/iPad real y que el avatar/timeline sticky no entran en conflicto con Safari's bottom toolbar dynamic. El env(safe-area-inset-bottom, 0) preventivo del Plan 05 + viewport-fit=cover en index.html ya están aplicados (HIGH 4 fix iter 2). El SkipLink overflow check del Plan 06 item 7 (MEDIUM 3) tiene dos mitigaciones documentadas listas para aplicar si FAIL. Ya NO es gate bloqueante; cualquier issue se mitiga dentro de la fase.
-- **Content readiness (Phase 3):** Bio en ES/EN y lista de proyectos por chapter no están escritos aún. Necesarios antes de finalizar Phase 3.
+- ~~**Plan 07 iOS smoke test:**~~ **MOVIDO A DEFERRED 2026-05-12** — Rafael NO posee hardware iOS. Plan 07 declarado deferred verification con mitigaciones preventivas suficientes en código. Ver Deferred Items.
+- **Content readiness (Phase 3) — AHORA ACTIVO en paralelo:** Bio en ES/EN y lista de proyectos por chapter no están escritos aún. Phase 3 depende de este contenido. Decisión 2026-05-12: Rafael produce contenido en paralelo a mi implementación de Phase 2. Ver `.planning/phases/03-chapter-3-end-to-end/CONTENT-CHECKLIST.md` (a generar antes de Phase 2 discuss).
 - ~~**Vue version (pre-work):** `@vueuse/core@14.3.0` requiere Vue 3.5+; scaffold pineado en `^3.4.0`.~~ **RESUELTO 2026-05-13** por Plan 01: manifest sincronizado a `^3.5.0` (la instalación real ya era 3.5.34), `@vueuse/core@14.3.0` añadido sin warnings de peer.
-- **pixelforge palette consistency:** Paletas por chapter deben documentarse ANTES de generar assets (ART-06). Rafael debe aprobar paletas antes de Phase 3.
+- **pixelforge palette consistency:** Paletas por chapter deben documentarse ANTES de generar assets (ART-06). Rafael debe aprobar paletas antes de Phase 3. Forma parte del CONTENT-CHECKLIST de Phase 3.
 
 ## Deferred Items
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| *(none)* | | | |
+| Verification | Phase 1 / Plan 07 — iOS smoke test (vertical snap chapter-a-chapter + safe-area-inset + SkipLink overflow 375×667 en iPhone/iPad real). Mitigaciones preventivas ya en código: env(safe-area-inset-bottom, 0) + viewport-fit=cover + dos opciones doc para overflow. Desbloqueante: Rafael consigue hardware iOS prestado, o se delega a BrowserStack/LambdaTest cloud testing. | Deferred verification | 2026-05-12 |
 
 ## Session Continuity
 
-Last session: 2026-05-12T23:05:00Z
-Stopped at: Plan 06 (W5, skiplink-a11y-polish) complete — Wave 6 (ios-smoke-test) desbloqueado. **Última wave técnica + única human gate de Phase 1.**
-Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-PLAN-ios-smoke-test.md
-Next command: /gsd-execute-plan 1 7  (Plan 07 NO es autonomous — requiere Rafael ejecutar checklist iOS en iPhone real + manual checklists del Plan 05/06 en desktop emulator)
+Last session: 2026-05-13T04:37:27.397Z
+Stopped at: Phase 2 context gathered
+Resume file: .planning/phases/02-theme-system-i18n/02-CONTEXT.md
+Next command: /gsd-discuss-phase 2  (Phase 2: Theme System + i18n — no hay CONTEXT.md aún)
