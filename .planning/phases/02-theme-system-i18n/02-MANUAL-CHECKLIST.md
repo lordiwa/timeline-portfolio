@@ -3,7 +3,7 @@ phase: 02-theme-system-i18n
 plan: 06
 slug: wave5-manual-checklist
 generated: 2026-05-13
-last_updated: 2026-05-13
+last_updated: 2026-05-13 (post StickyTimeline redesign vertical-left + App.vue function ref fix)
 executed_by: Rafael
 executed_at: (pending)
 verdict: (pending)
@@ -58,7 +58,13 @@ npm run dev
 Estado esperado al cargar:
 - Página carga en chapter 3 (Web 2.0 2013) con fondo `#f0f4ff` y texto oscuro
 - LangToggle visible en top-right (pill "ES | EN" o ícono 🌐)
-- StickyTimeline visible abajo con 7 ticks
+- StickyTimeline visible **a la izquierda** (panel vertical centrado verticalmente)
+  con 7 botones apilados (año + era cada uno). En ≤599px la era se oculta y
+  queda columna de años solamente. **NOTA REDISEÑO 2026-05-13:** la barra ya
+  no es horizontal-bottom con marker móvil — Rafael pidió "no que sea una
+  scrollbar sino botones de estados en una barra vertical sticky que se
+  sincronice al scroll nativo". Ver §6.4.14-§6.4.17 del DevTools panel para
+  los checkpoints estructurales del nuevo layout (items 17-20).
 - BackgroundLayers activo (sin `background: #0b0b16` en el `<body>`)
 
 ---
@@ -498,6 +504,36 @@ Con Chrome DevTools → Elements panel abierto, verificar uno a uno:
 - [ ] **6.4.16** Theme bleed: ningún "half-and-half" durante snap transition
          (ya verificado en §1 — marcar PASS aquí si §1 pasó).
 
+### §6.4.17-§6.4.20 — StickyTimeline redesign vertical-left (post 2026-05-13)
+
+> Estos 4 checkpoints verifican el rediseño que reemplazó la barra horizontal-
+> bottom con marker móvil por un panel vertical-left con state buttons.
+> Surgió durante manual gate testing — ver commits `3331724` (redesign) +
+> `2f7c7d…` (fix function ref loop en App.vue:87).
+
+- [ ] **6.4.17** Posición: en Elements panel, buscar `nav.sticky-timeline`.
+         DevTools Computed debe mostrar: `position: fixed`, `top: 50%`,
+         `left: 16px` (= `var(--sp-md)`), `transform: matrix(1,0,0,1,0,...)`
+         (= `translateY(-50%)`), `z-index: 40`. **NO debe haber** `bottom:`
+         declarado. El panel queda centrado vertical en el lado izquierdo.
+- [ ] **6.4.18** Estructura DOM: dentro del `<nav>` debe haber UNA `<ol class="timeline-ticks">`
+         con 7 `<li class="timeline-tick">` apilados verticalmente. Cada `<li>`
+         contiene UN `<button class="tick-button">` con un `<span class="tick-year">`
+         y un `<span class="tick-era">`. **NO debe existir** `<div class="timeline-marker">`
+         (eliminado del DOM en el redesign).
+- [ ] **6.4.19** Active state visual: navegar ch0→ch6 (scroll o click). El
+         botón del chapter activo debe mostrar `background: var(--c-track-active)`
+         (= `#e7e7f0` light gray) + `color: var(--c-bg)` (= `#0b0b16` near-black).
+         Los otros 6 botones tienen texto en `var(--c-muted)` (= `#6b6b8a` gray)
+         sobre `var(--c-surface)` (= `#1a1a2e` dark navy). **Caveat conocido:**
+         el panel NO toma los tokens del chapter activo (vive fuera del
+         `[data-chapter]` selector). Si querés que se tiñe por chapter, es
+         follow-up Phase 3+.
+- [ ] **6.4.20** Mobile <600px: emular DevTools 375×667. El panel debe
+         compactarse a `left: var(--sp-xs)` (= 4px) y los `.tick-era` deben
+         tener `display: none` (queda columna de años solamente). Verificar
+         en DevTools Computed que `.tick-era` es `display: none` en mobile.
+
 ### §6.5 — iOS Safari (DEFERRED)
 
 - [ ] **DEFERRED — Rafael no posee dispositivo iOS.** Verificación pendiente
@@ -506,11 +542,12 @@ Con Chrome DevTools → Elements panel abierto, verificar uno a uno:
        Items: Safari Tech Preview si disponible, iOS 17+ comportamiento de
        scroll snap, font rendering, LangToggle tap target 44×44.
 
-**PASS §6:** ≥14/16 checkpoints de UI-SPEC §14 marcados + Chrome + Firefox
-behavior idéntico. (Los 2 checkpoints de iOS cuentan como DEFERRED, no FAIL.)
+**PASS §6:** ≥18/20 checkpoints marcados PASS (16 originales UI-SPEC §14 +
+4 nuevos del redesign vertical-left) + Chrome + Firefox behavior idéntico.
+(Los items de iOS en §6.5 cuentan como DEFERRED, no FAIL.)
 
-**FAIL §6:** Si <14/16 → triage individual de cada item failing; investigar
-si es regresión de Phase 1 o nuevo en Phase 2.
+**FAIL §6:** Si <18/20 → triage individual de cada item failing; investigar
+si es regresión de Phase 1, nuevo en Phase 2, o regresión del redesign 2026-05-13.
 
 ---
 
