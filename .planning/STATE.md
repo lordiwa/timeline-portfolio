@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Que un visitante mueva el scroll, vea el sitio transformarse, y entienda en 30 segundos sin leer una sola viñeta de CV que está mirando a alguien que vivió tres décadas de tecnología y cuyas habilidades convergen en algo único.
-**Current focus:** Phase 1 — Scroll Shell + iOS Gate
+**Current focus:** Phase 1 — Scroll Shell + Sticky Anchors
 
 ## Current Position
 
-Phase: 1 of 6 (Scroll Shell + iOS Gate)
+Phase: 1 of 6 (Scroll Shell + Sticky Anchors)
 Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-05-12 — Roadmap created; 63 v1 requirements mapped across 6 phases
+Status: Ready to discuss (post-pivote)
+Last activity: 2026-05-12 — Pivote a vertical+sticky avatar+sticky timeline aplicado; PROJECT/REQUIREMENTS/ROADMAP re-baselineados
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -42,7 +42,7 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Init: iOS-02 es un gate bloqueante — no construir contenido hasta validar scroll snap en hardware iOS real. Si falla irrecuperablemente, pivotear a scroll JS-driven con `scrollTo()` sin CSS `scroll-snap-type`.
+- 2026-05-12: **Pivote a scroll vertical** con avatar pixel-art sticky top-left + timeline sticky bottom; ambas orientaciones mobile soportadas; iOS-02 reframed de gate bloqueante a smoke test confirmatorio (WebKit #243582 era específico de momentum horizontal).
 - Init: Phaser se carga SOLO cuando `activeChapter === 6` (lazy import dinámico); NUNCA con `v-if` que remueva secciones del DOM (rompe scroll-snap layout).
 - Init: Todos los assets pixel art en `public/assets/` (no `src/assets/`); naming: `ch{N}-{descriptor}[-{variant}].png`.
 
@@ -52,7 +52,7 @@ None yet.
 
 ### Blockers/Concerns
 
-- **iOS-02 (Phase 1 gate):** WebKit bug #243582 sigue abierto a abril 2026. Requiere test en hardware iOS real antes de avanzar a Phase 2. Si el mitigation stack falla, se necesita pivote a JS scroll.
+- **iOS smoke test (Phase 1):** Confirmar que vertical snap responde chapter-a-chapter en iPhone/iPad real y que el avatar/timeline sticky no entran en conflicto con Safari's bottom toolbar dynamic. Ya NO es gate bloqueante; cualquier issue se mitiga dentro de la fase.
 - **Content readiness (Phase 3):** Bio en ES/EN y lista de proyectos por chapter no están escritos aún. Necesarios antes de finalizar Phase 3.
 - **Vue version (pre-work):** `@vueuse/core@14.3.0` requiere Vue 3.5+; scaffold pineado en `^3.4.0`. Verificar con `npm list vue` al inicio de Phase 1.
 - **pixelforge palette consistency:** Paletas por chapter deben documentarse ANTES de generar assets (ART-06). Rafael debe aprobar paletas antes de Phase 3.
@@ -66,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-12
-Stopped at: Roadmap creation complete; STATE.md and REQUIREMENTS.md traceability written
+Stopped at: Pivote a vertical+sticky aplicado a PROJECT/REQUIREMENTS/ROADMAP/STATE; listo para re-correr /gsd-discuss-phase 1
 Resume file: None

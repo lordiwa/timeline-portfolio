@@ -1,9 +1,11 @@
 # Project Research Summary
 
+> ⚠ **SUPERSEDED 2026-05-12** — Pivote a **scroll vertical** con avatar pixel-art sticky top-left + timeline sticky bottom. Recomendaciones específicas a horizontal scroll (GSAP pinned horizontal, Lenis para horizontal feel, WebKit #243582 momentum mitigation, overlay "gira tu dispositivo", etc.) están **obsoletas**. Pitfalls genéricos sobre theme switching, IntersectionObserver, Phaser-in-Vue, i18n y pixel-art siguen vigentes. Fuente de verdad: `PROJECT.md` y `REQUIREMENTS.md`. Para research específico de Phase 1 vertical, el planner/researcher producirá `01-RESEARCH.md` dentro del phase dir.
+
 **Project:** mato-new-portfolio
-**Domain:** Horizontal scroll-snap storytelling portfolio — 7 chapters, multi-theme, Phaser island, bilingual
+**Domain:** ~~Horizontal~~ Vertical scroll-snap storytelling portfolio — 7 chapters, multi-theme, sticky avatar + sticky timeline, Phaser island, bilingual
 **Researched:** 2026-05-12
-**Confidence:** HIGH
+**Confidence:** HIGH (horizontal-era research — domain reframed to vertical post-2026-05-12)
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Un portafolio horizontal de 7 chapters que transforma al visitante en viajero temporal (1995 → 2026). La entrega sigue el orden que dicta el riesgo: primero se valida la mecánica de scroll en hardware iOS real, luego se construye el motor visual y lingüístico, después se pule el landing por defecto (chapter 3), se completan los chapters restantes en paralelo, se añade la escena Phaser, y finalmente se despliega a Firebase.
+Un portafolio vertical de 7 chapters con dos anclajes sticky (avatar pixel-art top-left + timeline bottom) que transforma al visitante en viajero temporal (1995 → 2026). La entrega sigue el orden que dicta el riesgo: primero se construye la mecánica de scroll vertical con snap + los anclajes sticky + smoke test iOS, luego el motor visual y lingüístico (themes + i18n), después se pule el landing por defecto (chapter 3), se completan los chapters restantes en paralelo, se añade la escena Phaser vertical, y finalmente se despliega a Firebase.
 
 ## Phases
 
@@ -12,7 +12,7 @@ Un portafolio horizontal de 7 chapters que transforma al visitante en viajero te
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scroll Shell + iOS Gate** - Infraestructura de scroll validada en hardware iOS real; sin este gate no se construye contenido
+- [ ] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio
 - [ ] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real
 - [ ] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas
 - [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
@@ -21,17 +21,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ## Phase Details
 
-### Phase 1: Scroll Shell + iOS Gate
-**Goal**: El visitante puede moverse entre los 7 chapters con scroll horizontal que hace snap suave; la orientación portrait está bloqueada; y el comportamiento en iOS real está validado como gate bloqueante.
+### Phase 1: Scroll Shell + Sticky Anchors
+**Goal**: El visitante puede moverse entre los 7 chapters con scroll vertical que hace snap suave; el avatar pixel-art sticky top-left y la timeline sticky bottom (con marker + año + click-to-navigate) permanecen visibles durante todo el recorrido; ambas orientaciones mobile soportadas sin overlay bloqueante; smoke test iOS confirma vertical snap sin sorpresas.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
-**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, CORE-08, CORE-09, MOB-01, MOB-02, MOB-03, MOB-04, iOS-01, iOS-02, A11Y-01, A11Y-02, A11Y-05
+**Requirements**: CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, CORE-06, CORE-07, CORE-08, CORE-09, CORE-10, CORE-11, MOB-01, MOB-03, iOS-01, iOS-02, A11Y-01, A11Y-02, A11Y-05
 **Success Criteria** (what must be TRUE):
-  1. Visitante abre el sitio en desktop y aterriza directamente en el chapter 3 placeholder; puede navegar con scroll horizontal, flechas de teclado y click en HUD dots; el scroll hace snap a cada uno de los 7 chapters sin saltar ni quedarse a medias.
-  2. En hardware iOS real (iPhone/iPad), hacer swipe rápido horizontal NO salta al último chapter; el snap se detiene chapter a chapter (mitigation stack validado o fallback JS confirmado).
-  3. En mobile landscape el touch swipe navega correctamente entre chapters con snap funcional.
-  4. Rotar el dispositivo a portrait muestra el overlay "gira tu dispositivo" (en ES y EN); rotar de vuelta a landscape lo oculta sin recargar la página.
-  5. Activar `prefers-reduced-motion` en el sistema operativo elimina todas las transiciones de snap animadas y el parallax; el scroll directo sigue funcionando.
+  1. Visitante abre el sitio en desktop y aterriza directamente en el chapter 3 placeholder; puede navegar con scroll vertical, flechas ↑/↓ y click en cualquier tick de la timeline sticky bottom; el scroll hace snap a cada uno de los 7 chapters sin saltar ni quedarse a medias.
+  2. El avatar pixel-art sticky top-left y la timeline sticky bottom (con marker móvil, año visible y label del chapter activo) se mantienen visibles durante todo el scroll; el bust del avatar swappea según `activeChapter` con transición suave.
+  3. En mobile portrait y mobile landscape el touch swipe vertical navega correctamente entre chapters con snap funcional; los anclajes sticky se reacomodan a la orientación sin overlay bloqueante.
+  4. Smoke test en hardware iOS real (iPhone/iPad) confirma vertical snap chapter-a-chapter sin saltos y los sticky elements visibles sin conflictos con Safari's bottom toolbar dinámica.
+  5. Activar `prefers-reduced-motion` en el sistema operativo elimina las transiciones suaves del snap y el crossfade del avatar; el scroll directo sigue funcionando, la navegación por click en la timeline es instantánea.
 **Plans**: TBD
 **UI hint**: yes
 
@@ -77,12 +77,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **UI hint**: yes
 
 ### Phase 5: Phaser Chapter 6
-**Goal**: El chapter 6 carga una escena Phaser explorable con parallax espacial, naves cruzando y 3 planetas-proyecto clicables; el locale bridge funciona; la instancia de Phaser no produce memory leaks al navegar a otros chapters y volver.
+**Goal**: El chapter 6 carga una escena Phaser explorable con **parallax vertical descendente**, naves cruzando y 3 planetas-proyecto clicables distribuidos verticalmente; el locale bridge funciona; la instancia de Phaser no produce memory leaks al navegar a otros chapters y volver.
 **Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: PHA-01, PHA-02, PHA-03, PHA-04, PHA-05, PHA-06, PHA-07, PHA-08, PHA-09
 **Success Criteria** (what must be TRUE):
-  1. Navegar al chapter 6 carga la escena Phaser con parallax multi-capa, naves cruzando en el fondo y al menos 3 planetas visibles; hacer click en un planeta abre un overlay Vue con el detalle del proyecto correspondiente.
+  1. Navegar al chapter 6 carga la escena Phaser con parallax vertical multi-capa, naves cruzando y al menos 3 planetas-proyecto visibles distribuidos verticalmente; hacer click en un planeta abre un overlay Vue con el detalle del proyecto correspondiente.
   2. Cambiar el idioma con el toggle mientras se está en chapter 6 actualiza los labels visibles dentro de la escena Phaser (nombre de planetas, tooltips) sin recargar la página.
   3. Navegar a otro chapter y volver al chapter 6 recrea la escena limpiamente; navegar hacia afuera y volver dos veces no produce canvas duplicados ni errores de WebGL en la consola del navegador.
   4. En una pantalla HiDPI (Retina), los sprites pixel art en la escena Phaser se renderizan con bordes nítidos pixel-perfect (sin blur); el zoom es un entero calculado con `Math.floor`.
@@ -106,7 +106,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scroll Shell + iOS Gate | 0/TBD | Not started | - |
+| 1. Scroll Shell + Sticky Anchors | 0/TBD | Not started | - |
 | 2. Theme System + i18n | 0/TBD | Not started | - |
 | 3. Chapter 3 End-to-End | 0/TBD | Not started | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |

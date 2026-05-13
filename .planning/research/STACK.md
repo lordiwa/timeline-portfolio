@@ -1,8 +1,10 @@
 # Stack Research
 
-**Domain:** Scroll-driven horizontal-snap portfolio with per-chapter CSS theme switching, Phaser embed, and i18n
+> ⚠ **SUPERSEDED 2026-05-12** — Pivote a **scroll vertical**. Recomendaciones específicas de horizontal pinning (GSAP ScrollTrigger horizontal pinned track, Lenis para inertia horizontal, Locomotive Scroll, Swiper.js) están **obsoletas**: vertical scroll nativo + CSS `scroll-snap-type: y mandatory` no necesita esa maquinaria. Sigue vigente: Vue 3 + Vite 5 + Phaser 3.86 + vue-i18n + IntersectionObserver tracking pattern; recomendaciones contra Vue Router, Pinia, Locomotive Scroll. Fuente canonica: `PROJECT.md` + `REQUIREMENTS.md`.
+
+**Domain:** ~~Horizontal-snap~~ Vertical-snap portfolio with per-chapter CSS theme switching, sticky avatar + sticky timeline, Phaser embed, and i18n
 **Researched:** 2026-05-12
-**Confidence:** HIGH (all major decisions verified against current docs, npm registries, and official sources)
+**Confidence:** HIGH (horizontal-era research — stack recommendations reframed to vertical post-2026-05-12)
 
 ---
 

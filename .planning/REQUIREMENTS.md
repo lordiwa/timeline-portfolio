@@ -9,15 +9,17 @@
 
 ### CORE — Mecánica de scroll
 
-- [ ] **CORE-01**: ScrollShell horizontal con `scroll-snap-type: x mandatory` sobre los 7 chapters
+- [ ] **CORE-01**: ScrollShell vertical con `scroll-snap-type: y mandatory` sobre los 7 chapters
 - [ ] **CORE-02**: 7 chapter sections coexisten en el DOM (sin Vue Router; sin v-if entre ellos)
 - [ ] **CORE-03**: Composable `useScrollState` con `activeChapter` ref + IntersectionObserver para tracking reactivo
-- [ ] **CORE-04**: `scroll-snap-stop: always` en cada section (mitigación de iOS momentum swipe)
+- [ ] **CORE-04**: `scroll-snap-stop: always` en cada section (snap discreto chapter-a-chapter, sin skipping en swipes rápidos)
 - [ ] **CORE-05**: Default landing en chapter 3 al cargar; query string `?ch=N` override permitido
-- [ ] **CORE-06**: Navegación con flechas (←/→) sobre el ScrollShell focus
-- [ ] **CORE-07**: HUD: chapter dots (7) + chapter label visible; click navega
+- [ ] **CORE-06**: Navegación con flechas (↑/↓; Page Up/Down opcional; Home/End opcional) sobre el ScrollShell focus
+- [ ] **CORE-07**: **Timeline sticky bottom** con marker móvil + año/era + 7 ticks click-to-navigate (reemplaza HUD dots clásicos)
 - [ ] **CORE-08**: `height: 100dvh` en chapters para evitar address-bar drift en mobile
 - [ ] **CORE-09**: `prefers-reduced-motion` respetado global (sin parallax, transiciones instantáneas)
+- [ ] **CORE-10**: **Sticky avatar slot top-left** — un solo container fijo (position: sticky/fixed con z-index sobre contenido) que rendera el bust pixel-art del `activeChapter`; transición suave (crossfade) al cambiar de chapter; no re-mount del elemento (un img/canvas único cuya src/state cambia)
+- [ ] **CORE-11**: **Timeline sticky bottom** detalle de comportamiento — marker móvil se posiciona según `scrollProgress` (0..1) sobre el rango visual de la timeline; tick activo se resalta; muestra año (1995–2026) + label del chapter activo en el idioma actual; click en cualquier tick navega con `scrollTo({ behavior: 'smooth' })` (o instantáneo si `prefers-reduced-motion`)
 
 ### THEME — Estilos por chapter
 
@@ -47,7 +49,7 @@
 
 ### ART — Pixel art generado (vía pixelforge MCP)
 
-- [ ] **ART-01**: 7 retratos bust del avatar (uno por chapter), **estilo pixel art consistente; solo la edad cambia** entre ~10 (ch0) y 40 con pocas canas (ch6)
+- [ ] **ART-01**: 7 retratos bust del avatar (uno por chapter), **estilo pixel art consistente; solo la edad cambia** entre ~10 (ch0) y 40 con pocas canas (ch6); el display container es único (CORE-10) — un solo slot sticky top-left que swappea entre los 7 assets según `activeChapter`
 - [ ] **ART-02**: 5 fondos full-frame (chapters 2-6) generados con `forge_background` (sin bg removal)
 - [ ] **ART-03**: Elementos ambientales chapter 4 (AR/VR era): paneles flotantes, parallax layers de profundidad
 - [ ] **ART-04**: Elementos ambientales chapter 6 (Phaser): ships, planetas, partículas — sin character animation
@@ -61,7 +63,7 @@
 - [ ] **PHA-02**: `game.destroy(true, false)` en `onBeforeUnmount`; `import.meta.hot.dispose()` guard para HMR en dev
 - [ ] **PHA-03**: `Phaser.Scale.NONE` con `zoom = Math.min(Math.floor(vw/480), Math.floor(vh/270))` (integer scale obligatorio)
 - [ ] **PHA-04**: Phaser se importa con `import()` dinámico y se monta solo cuando `activeChapter === 6` (lazy bundle)
-- [ ] **PHA-05**: `SpaceScene` con parallax multi-capa, naves cruzando, **3 planetas-proyecto** (selección top-of-career de Rafael)
+- [ ] **PHA-05**: `SpaceScene` con **parallax vertical descendente** multi-capa, naves cruzando, **3 planetas-proyecto** distribuidos verticalmente (selección top-of-career de Rafael)
 - [ ] **PHA-06**: Locale bridge: `game.events.emit("locale-changed", locale)` cuando el toggle cambia; scene escucha y re-renderiza labels
 - [ ] **PHA-07**: Project click bridge: planet click → `game.events.emit("vue:show-project", id)` → Vue overlay muestra detalle del proyecto
 - [ ] **PHA-08**: Cero character animation (constraint cerrado por limitación pixelforge)
@@ -69,10 +71,8 @@
 
 ### MOBILE — Compatibilidad móvil
 
-- [ ] **MOB-01**: Mobile landscape funcional (touch swipe → horizontal scroll natural; snap responde)
-- [ ] **MOB-02**: Overlay "gira tu dispositivo" (ES + EN) cuando portrait detectado
-- [ ] **MOB-03**: `ResizeObserver` sobre `document.documentElement` para orientation detection (NO `orientationchange`)
-- [ ] **MOB-04**: `@media (orientation: portrait)` CSS fallback que muestra el overlay sin JS
+- [ ] **MOB-01**: Mobile portrait y landscape ambos funcionales (touch swipe vertical natural; snap responde en ambas orientaciones)
+- [ ] **MOB-03**: `ResizeObserver` sobre `document.documentElement` para responsive layout del avatar sticky y la timeline sticky (NO `orientationchange`); el layout se adapta a portrait/landscape sin bloquear ninguna
 
 ### A11Y — Accesibilidad mínima
 
@@ -98,10 +98,12 @@
 - [ ] **DEPLOY-03**: SPA rewrite rule en `firebase.json` (`"source": "**", "destination": "/index.html"`)
 - [ ] **DEPLOY-04**: Cache headers configurados: hashed Vite assets cache-eternal; index.html no-cache
 
-### iOS-RISK — Mitigación de bug WebKit #243582
+### iOS — Compat smoke test
 
-- [ ] **iOS-01**: Scroll-snap iOS mitigation stack implementado: `scroll-snap-stop: always` + `-webkit-overflow-scrolling: touch` + JS scroll intercept como fallback
-- [ ] **iOS-02**: **Test en hardware iOS real ANTES de construir contenido (Phase 1 gate bloqueante)** — si snap falla irrecuperablemente en iOS, pivotear a scroll JS-driven con `scrollTo()` sin CSS snap
+> El WebKit bug #243582 era específico de **momentum horizontal**. Con el pivote a scroll vertical, el snap está bien soportado en iOS. El gate bloqueante original se disuelve y queda como smoke test confirmatorio.
+
+- [ ] **iOS-01**: Stack base iOS: `scroll-snap-stop: always` + `-webkit-overflow-scrolling: touch` para inercia nativa; verificar que el avatar sticky y la timeline sticky no entran en conflicto con Safari's bottom toolbar dynamic
+- [ ] **iOS-02**: **Smoke test en hardware iOS real al inicio de Phase 1** (no gate bloqueante): vertical snap responde chapter-a-chapter; sticky elements se mantienen visibles durante el scroll; ambas orientaciones funcionan. Si surge algún issue específico de iOS, documentar y mitigar dentro de la fase, no abortarla.
 
 ---
 
@@ -144,7 +146,6 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 |---------|-------|
 | Character animation pixel art | Limitación documentada de pixelforge: frames incoherentes entre generaciones. Constraint dura. |
 | Gameplay con objetivos/score en chapter 6 | Sin NPCs animados, forzar gameplay sería artificial. La escena es exploración ambiente. |
-| Mobile portrait con navegación completa | Concepto requiere ancho horizontal; mantener dos modos doblaría scope sin aporte equivalente. Overlay "gira" es suficiente. |
 | CMS / backend dinámico | El contenido es estático en v1. No hay panel de admin, no edición runtime. |
 | Blog / artículos largos | El formato del sitio no calza con lectura larga. Otra plataforma si Rafael publica. |
 | Modo accesibilidad "linealizado" | Debilitaría el concepto experiencial. Re-evaluar si surge presión real por screen readers en producción. |
@@ -174,10 +175,10 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 | CORE-07 | Phase 1 | Pending |
 | CORE-08 | Phase 1 | Pending |
 | CORE-09 | Phase 1 | Pending |
+| CORE-10 | Phase 1 | Pending |
+| CORE-11 | Phase 1 | Pending |
 | MOB-01 | Phase 1 | Pending |
-| MOB-02 | Phase 1 | Pending |
 | MOB-03 | Phase 1 | Pending |
-| MOB-04 | Phase 1 | Pending |
 | iOS-01 | Phase 1 | Pending |
 | iOS-02 | Phase 1 | Pending |
 | A11Y-01 | Phase 1 | Pending |
@@ -230,13 +231,13 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 | DEPLOY-04 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements identified: 63 unique IDs (source file declared 64 — one count discrepancy; all identifiable IDs are mapped)
+- v1 requirements identified: 63 unique IDs (post-pivote 2026-05-12: −MOB-02, −MOB-04, +CORE-10, +CORE-11; net unchanged)
 - Mapped to phases: 63
 - Unmapped: 0
 
 **Coverage notes:**
-- REQUIREMENTS.md declares 64 total v1 requirements but 63 unique REQ-IDs are present in the document. No orphaned requirements were found. The discrepancy of 1 is in the source count, not a missing mapping.
+- Pivote 2026-05-12 (horizontal → vertical con sticky avatar + sticky timeline): eliminados MOB-02 y MOB-04 (overlay "gira tu dispositivo"); añadidos CORE-10 (sticky avatar slot) y CORE-11 (timeline marker behavior). iOS-02 reframe de gate bloqueante a smoke test confirmatorio. Net count preserved.
 
 ---
 *Requirements defined: 2026-05-12*
-*Last updated: 2026-05-12 — traceability populated by roadmapper*
+*Last updated: 2026-05-12 — pivote a vertical: CORE-01/06/07 reframed; +CORE-10/11; −MOB-02/04; iOS-02 reframed; PHA-05/ART-01 ajustados*

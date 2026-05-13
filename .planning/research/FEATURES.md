@@ -1,8 +1,10 @@
 # Feature Research
 
-**Domain:** Scroll-driven storytelling personal portfolio — 7-chapter horizontal journey (1995 → 2026)
+> ⚠ **SUPERSEDED 2026-05-12** — Pivote a **scroll vertical** con sticky avatar (top-left) + sticky timeline (bottom). Recomendaciones específicas a horizontal (cue "scroll horizontal", chapter dots HUD clásico, overlay portrait blocker, mitigation WebKit horizontal momentum) están **obsoletas**. Sigue vigente lo de table-stakes accessibility, i18n, contraste por chapter, JSON-LD Person schema, OG meta, prefers-reduced-motion. Fuente canonica: `PROJECT.md` + `REQUIREMENTS.md`.
+
+**Domain:** Scroll-driven storytelling personal portfolio — 7-chapter ~~horizontal~~ vertical journey (1995 → 2026) con sticky anchors
 **Researched:** 2026-05-12
-**Confidence:** HIGH (table stakes/accessibility/i18n verified against WCAG, MDN, official Vue i18n docs); MEDIUM (differentiators verified against Awwwards/FWA analysis + showcase sites); LOW where noted
+**Confidence:** HIGH (table stakes/accessibility/i18n verified against WCAG, MDN, official Vue i18n docs); MEDIUM (differentiators verified against Awwwards/FWA analysis + showcase sites); LOW where noted — horizontal-era research, vertical reframe vigente
 
 ---
 

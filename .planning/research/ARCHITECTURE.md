@@ -1,8 +1,10 @@
 # Architecture Research
 
-**Domain:** Scroll-driven multi-theme storytelling portfolio — Vue 3 + Phaser 3
+> ⚠ **SUPERSEDED 2026-05-12** — Pivote a **scroll vertical**. Toda referencia a "horizontal scroll engine", "horizontal pinned track", "horizontal scroll IS the navigation" debe leerse como **vertical**. La arquitectura general (Vue 3 + 7 sections en DOM + IntersectionObserver + composable `useScrollState` + Phaser island en ch6) **se mantiene**; lo que cambia es el eje (x → y), la sticky-anchors layout (avatar top-left + timeline bottom reemplaza dots HUD), y la orientación móvil (ambas soportadas, no overlay). Fuente canonica: `PROJECT.md` + `REQUIREMENTS.md`.
+
+**Domain:** Scroll-driven multi-theme storytelling portfolio — Vue 3 + Phaser 3 (post-pivote: scroll vertical)
 **Researched:** 2026-05-12
-**Confidence:** HIGH (Vue/CSS patterns) | MEDIUM (Phaser-Vue boundary specifics)
+**Confidence:** HIGH (Vue/CSS patterns) | MEDIUM (Phaser-Vue boundary specifics) — horizontal-era research, vertical reframe vigente
 
 ---
 

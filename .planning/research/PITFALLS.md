@@ -1,8 +1,10 @@
 # Pitfalls Research
 
-**Domain:** Horizontal scroll-snap portfolio — multi-theme, pixel art, Phaser-in-Vue, bilingual
+> ⚠ **SUPERSEDED 2026-05-12** — Pivote a **scroll vertical**. El pitfall principal documentado (WebKit bug #243582 "horizontal momentum skips snap targets") **deja de aplicar**: era específico de momentum horizontal en iOS y vertical snap está bien soportado. Otros pitfalls **siguen vigentes**: theme bleed entre chapters durante snap, layout shift al cambiar locale, Phaser memory leaks al unmount, IntersectionObserver thresholds para active chapter tracking, pixel-art image-rendering CSS, address-bar drift mitigado con `100dvh`. Fuente canonica: `PROJECT.md` + `REQUIREMENTS.md`.
+
+**Domain:** ~~Horizontal~~ Vertical scroll-snap portfolio — multi-theme, pixel art, Phaser-in-Vue, bilingual, sticky anchors
 **Researched:** 2026-05-12
-**Confidence:** HIGH (all critical claims verified against MDN, WebKit Bugzilla, Phaser docs, or official sources)
+**Confidence:** HIGH (all critical claims verified against MDN, WebKit Bugzilla, Phaser docs, or official sources) — horizontal-era pitfalls reframed for vertical post-2026-05-12
 
 ---
 
