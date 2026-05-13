@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Wave 0 complete, ready for Wave 1
-stopped_at: Phase 1 Plan 01 (toolchain-setup) complete — harness Vitest + vueuse + Vite LAN listos
-last_updated: "2026-05-13T02:35:00.000Z"
-last_activity: 2026-05-13 — Plan 01 (W0) ejecutado: Vue manifest ^3.5.0 + @vueuse/core@14.3.0 + Vitest 4.1.6 + jsdom + mocks globales + Vite host:true. Smoke test green (3/3). LAN IP detectada (192.168.18.40). Wave 1 (walking-skeleton) desbloqueado.
+status: Wave 1 complete, ready for Wave 2
+stopped_at: Phase 1 Plan 02 (walking-skeleton) complete — useScrollState + ScrollShell + App.vue cableados, 22/22 tests verde
+last_updated: "2026-05-13T02:50:00.000Z"
+last_activity: 2026-05-13 — Plan 02 (W1, walking-skeleton) ejecutado: useScrollState composable (watch+immediate+flush:post, deep-link ?ch=N → scrollToChapter, IO threshold 0.6), ScrollShell.vue con 7 ChapterSection inline (scroll-snap-y mandatory, 100dvh, snap-stop:always, -webkit-overflow-scrolling:touch, tabindex 0), App.vue layout root con provide('scrollState'). Tests: 11 composable + 8 component = 19 nuevos, 22/22 totales pasando estable.
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
-  percent: 14
+  completed_plans: 2
+  percent: 29
 ---
 
 # Project State
@@ -26,30 +26,30 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 1 of 6 (Scroll Shell + Sticky Anchors)
-Plan: 1 of 7 in current phase
-Status: Wave 0 complete, ready for Wave 1
-Last activity: 2026-05-13 — Plan 01 (W0, toolchain-setup) ejecutado y commiteado; harness Vitest + @vueuse/core listos para Wave 1
+Plan: 2 of 7 in current phase
+Status: Wave 1 complete, ready for Wave 2
+Last activity: 2026-05-13 — Plan 02 (W1, walking-skeleton) ejecutado y commiteado; useScrollState + ScrollShell + App.vue cableados, 22/22 tests verde
 
-Progress: [█░░░░░░░░░] 14%
+Progress: [██░░░░░░░░] 29%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: ~8 min
-- Total execution time: ~0.13 hours
+- Total plans completed: 2
+- Average duration: ~13 min
+- Total execution time: ~0.43 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1 | 1/7 | ~8 min | ~8 min |
+| 1 | 2/7 | ~26 min | ~13 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01 (W0, toolchain-setup, ~8 min, PASS)
-- Trend: 1 plan completado, smoke test green
+- Last 5 plans: 01 (W0, toolchain-setup, ~8 min, PASS); 02 (W1, walking-skeleton, ~18 min, PASS)
+- Trend: 2 plans completados, 22/22 tests green, build verde, walking skeleton funcional end-to-end
 
 *Updated after each plan completion*
 
@@ -60,6 +60,11 @@ Progress: [█░░░░░░░░░] 14%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- 2026-05-13 (W1): **PATTERN A** — `useScrollState` se cablea vía `watch(shellRef, ..., { immediate: true, flush: 'post' })` en lugar de `onMounted`, porque el composable se instancia ANTES del :ref callback de Vue; watch reactivo elimina el race con null ref.
+- 2026-05-13 (W1): **PATTERN B** — Deep-link `?ch=N` invoca `scrollToChapter(N, 'auto')` (método canónico del composable), NO `getElementById().scrollIntoView()` directo; mantiene una sola ruta testeable.
+- 2026-05-13 (W1): **PATTERN C** — Tests del composable usan wrapper template con 7 chapter stubs `<section id="chapter-N">` para que `document.getElementById` funcione en jsdom; sin stubs los tests pasarían por accidente.
+- 2026-05-13 (W1): `provide('scrollState', ...)` en App.vue es el canal de comunicación cross-componente; StickyAvatar/StickyTimeline futuros usarán `inject('scrollState')` sin prop drilling.
+- 2026-05-13 (W1): Stub global `HTMLElement.prototype.scrollIntoView = vi.fn()` en `tests/setup.js` (no spyOn+mockRestore por suite) — descartado el patrón con mockRestore porque causaba flakiness order-dependent en jsdom.
 - 2026-05-12: **Pivote a scroll vertical** con avatar pixel-art sticky top-left + timeline sticky bottom; ambas orientaciones mobile soportadas; iOS-02 reframed de gate bloqueante a smoke test confirmatorio (WebKit #243582 era específico de momentum horizontal).
 - Init: Phaser se carga SOLO cuando `activeChapter === 6` (lazy import dinámico); NUNCA con `v-if` que remueva secciones del DOM (rompe scroll-snap layout).
 - Init: Todos los assets pixel art en `public/assets/` (no `src/assets/`); naming: `ch{N}-{descriptor}[-{variant}].png`.
@@ -83,7 +88,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-13T02:35:00.000Z
-Stopped at: Plan 01 (W0, toolchain-setup) complete — Wave 1 (walking-skeleton) desbloqueado
-Resume file: .planning/phases/01-scroll-shell-sticky-anchors/02-PLAN-walking-skeleton.md
-Next command: /gsd-execute-plan 1 2  (o continuar la cadena con /gsd-execute-phase 1)
+Last session: 2026-05-13T02:50:00.000Z
+Stopped at: Plan 02 (W1, walking-skeleton) complete — Wave 2 (usePRM-composable) desbloqueado
+Resume file: .planning/phases/01-scroll-shell-sticky-anchors/01-PLAN-usePRM-composable.md
+Next command: /gsd-execute-plan 1 3  (o continuar la cadena con /gsd-execute-phase 1)
