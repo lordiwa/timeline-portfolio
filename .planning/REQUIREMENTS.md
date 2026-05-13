@@ -31,8 +31,8 @@
 
 ### CONTENT — Contenido y datos
 
-- [ ] **CON-01**: Bio core (~1-2 párrafos) renderizada en cada chapter con el estilo de su era
-- [ ] **CON-02**: 1-3 proyectos destacados por chapter, mapeados al chapter de carrera correspondiente
+- [x] **CON-01**: Bio core (~1-2 párrafos) renderizada en cada chapter con el estilo de su era
+- [x] **CON-02**: 1-3 proyectos destacados por chapter, mapeados al chapter de carrera correspondiente
 - [ ] **CON-03**: Contact info persistente y accesible desde cualquier chapter (overlay fijo o HUD footer): email, LinkedIn, GitHub
 - [ ] **CON-04**: Mantra "And always show a smile" aparece como **easter egg al llegar al chapter 6** (final del viaje), no antes
 - [ ] **CON-05**: `src/data/chapters.js` define array de chapter configs (id, era, year, avatar src, project ids, locale keys)
@@ -198,8 +198,8 @@ Explícitamente excluido para v1. Documentado para prevenir scope creep.
 | A11Y-03 | Phase 2 | Pending |
 | A11Y-04 | Phase 2 | Pending |
 | A11Y-07 | Phase 2 | Pending |
-| CON-01 | Phase 3 | Pending |
-| CON-02 | Phase 3 | Pending |
+| CON-01 | Phase 3 | Complete |
+| CON-02 | Phase 3 | Complete |
 | CON-03 | Phase 3 | Pending |
 | CON-04 | Phase 3 | Pending |
 | CON-05 | Phase 3 | Pending |

@@ -116,7 +116,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
 | 2. Theme System + i18n | 4/6 | In Progress|  |
-| 3. Chapter 3 End-to-End | 3/5 | In Progress|  |
+| 3. Chapter 3 End-to-End | 4/5 | In Progress|  |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
 | 5. Phaser Chapter 6 | 0/TBD | Not started | - |
 | 6. Deploy + Polish | 0/TBD | Not started | - |
