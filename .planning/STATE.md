@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase-closed
-stopped_at: Phase 3 planning complete — 5 plans + iter 1 fixes
-last_updated: "2026-05-13T22:20:27.145Z"
-last_activity: 2026-05-13
+stopped_at: "Phase 3 ejecutada PASS-with-deferred-art (4/5 plans). Plan 03-05 avatar art deferred pending Rafael CONTENT-CHECKLIST + foto."
+last_updated: "2026-05-13T22:30:00.000Z"
+last_activity: 2026-05-13 — Phase 3 execute 4/5 PASS; Plan 03-05 gate BLOCKED (placeholder mode esperado)
 progress:
   total_phases: 6
   completed_phases: 2
