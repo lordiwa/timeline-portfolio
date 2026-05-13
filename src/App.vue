@@ -1,5 +1,5 @@
 <script setup>
-// App.vue — Layout root del walking skeleton (Plan 02).
+// App.vue — Layout root del walking skeleton (Plan 02) + PRM provider (Plan 03).
 //
 // Reemplaza el placeholder original con:
 // - <ScrollShell /> renderizado como el único hijo de #app
@@ -7,6 +7,9 @@
 //   `watch(shellRef, ..., { immediate: true, flush: 'post' })` internamente
 //   así que NO importa que shellRef.value sea null en este momento (PATTERN A).
 // - provide('scrollState', ...) para que futuros StickyAvatar/StickyTimeline puedan inject
+// - Plan 03 (W2): usePRM() instanciado y provisto como 'prm' — single source of
+//   truth para prefers-reduced-motion. Consumers (StickyAvatar Plan 04, StickyTimeline
+//   Plan 05) lo inject('prm') sin prop drilling. UI-SPEC §8.
 //
 // El "function ref" pattern del template asigna `el.shellEl` (expuesto por
 // ScrollShell vía defineExpose) al shellRef cuando ScrollShell monta. El watch
@@ -16,11 +19,14 @@
 import { ref, provide } from 'vue'
 import ScrollShell from './components/ScrollShell.vue'
 import { useScrollState } from './composables/useScrollState'
+import { usePRM } from './composables/usePRM'
 
 const shellRef = ref(null)
 const scrollState = useScrollState(shellRef)
+const prm = usePRM()
 
 provide('scrollState', scrollState)
+provide('prm', prm)
 </script>
 
 <template>
