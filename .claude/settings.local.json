@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude/agents .claude/skills .claude/commands)",
+      "Bash(mv planner.md artist-creator.md artist-editor.md frontend-dev.md qa.md .claude/agents/)",
+      "Bash(mv crear-arte-pixelforge.md editar-arte-adobe.md dev-vue3-phaser.md .claude/skills/)",
+      "Bash(mv verificar-mcps.md nueva-capa.md .claude/commands/)",
+      "Bash(claude mcp *)",
+      "PowerShell(npx get-shit-done-cc@latest --version 2>&1 | Select-Object -First 20)",
+      "PowerShell(claude mcp *)",
+      "Bash(cp \"C:/Users/RafaelMatovelle/.claude/settings.json\" \"C:/Users/RafaelMatovelle/.claude/settings.json.bak-2026-05-12\")",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" -e \"console.log\\('node from bash works:', process.version\\)\")",
+      "Bash(C:/Program Files/nodejs/node.exe *)",
+      "Skill(gsd-new-project)",
+      "Bash(gsd-sdk query *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.awwwards.com)",
+      "WebFetch(domain:muz.li)",
+      "WebFetch(domain:npmjs.com)",
+      "WebFetch(domain:groups.google.com)",
+      "WebFetch(domain:www.creativeboom.com)",
+      "WebFetch(domain:newdocs.phaser.io)",
+      "WebFetch(domain:gsap.com)",
+      "WebFetch(domain:www.hirecorewebvitalsconsultant.com)",
+      "WebFetch(domain:frontendmasters.com)",
+      "WebFetch(domain:rexrainbow.github.io)",
+      "WebFetch(domain:phaser.io)",
+      "WebFetch(domain:tympanus.net)",
+      "WebFetch(domain:bugs.webkit.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:phaser.discourse.group)",
+      "Bash(npx --yes ctx7@latest library phaser \"Phaser 3 Vue integration\")",
+      "Bash(npx --yes ctx7@latest docs /websites/phaser_io_phaser \"Vue integration lifecycle destroy ScaleManager parent\")",
+      "Bash(npx --yes ctx7@latest docs websites/phaser_io_phaser \"Vue integration lifecycle destroy ScaleManager parent\")",
+      "Bash(node *)",
+      "Bash(powershell.exe *)",
+      "Bash(python3 *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

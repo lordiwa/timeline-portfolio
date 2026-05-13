@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. En mobile portrait y mobile landscape el touch swipe vertical navega correctamente entre chapters con snap funcional; los anclajes sticky se reacomodan a la orientación sin overlay bloqueante.
   4. Smoke test en hardware iOS real (iPhone/iPad) confirma vertical snap chapter-a-chapter sin saltos y los sticky elements visibles sin conflictos con Safari's bottom toolbar dinámica.
   5. Activar `prefers-reduced-motion` en el sistema operativo elimina las transiciones suaves del snap y el crossfade del avatar; el scroll directo sigue funcionando, la navegación por click en la timeline es instantánea.
-**Plans**: TBD
+**Plans**: 7 (toolchain-setup, walking-skeleton, usePRM-composable, sticky-avatar-placeholder, sticky-timeline-marker, skiplink-a11y-polish, ios-smoke-test)
 **UI hint**: yes
 
 ### Phase 2: Theme System + i18n
@@ -106,7 +106,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scroll Shell + Sticky Anchors | 0/TBD | Not started | - |
+| 1. Scroll Shell + Sticky Anchors | 0/7 | Planned (ready to execute) | - |
 | 2. Theme System + i18n | 0/TBD | Not started | - |
 | 3. Chapter 3 End-to-End | 0/TBD | Not started | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
