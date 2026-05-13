@@ -105,6 +105,13 @@ defineExpose({ shellEl })
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   outline: none;
+  /* StickyTimeline (bottom marker) es el indicador primario de progreso de scroll
+     — la barra nativa coexistía y se sentía redundante / confusa. Ocultar el rail
+     visual no afecta el scroll funcional (wheel/teclado/touch/snap siguen igual). */
+  scrollbar-width: none; /* Firefox + Edge moderno */
+}
+.scroll-shell::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / Edge legacy */
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
