@@ -1,12 +1,12 @@
 {
   "chapters": {
-    "0": { "title": "Pre-carrera: niñez digital" },
-    "1": { "title": "Pre-carrera tardío: HTML 90s" },
-    "2": { "title": "Flash era: gameplay programmer" },
-    "3": { "title": "Web 2.0: UX + dev + líder" },
-    "4": { "title": "AR/VR: empresa propia + Metrodigi" },
-    "5": { "title": "Modern: streaming, QA, frontend lead" },
-    "6": { "title": "Convergencia: QA + AI" }
+    "0": { "title": "Pre-carrera: niñez digital", "era": "Terminal" },
+    "1": { "title": "Pre-carrera tardío: HTML 90s", "era": "HTML 90s crudo" },
+    "2": { "title": "Flash era: gameplay programmer", "era": "Flash" },
+    "3": { "title": "Web 2.0: UX + dev + líder", "era": "Web 2.0" },
+    "4": { "title": "AR/VR: empresa propia + Metrodigi", "era": "AR/VR" },
+    "5": { "title": "Modern: streaming, QA, frontend lead", "era": "Modern" },
+    "6": { "title": "Convergencia: QA + AI", "era": "Convergencia" }
   },
   "ui": {
     "skipLink": "Saltar al contenido",
@@ -30,5 +30,25 @@
       "5": { "alt": "Placeholder — Modern (~36 años, 2022)" },
       "6": { "alt": "Placeholder — Convergencia (~40 años, 2026)" }
     }
+  },
+  "bio": {
+    "core": "PENDING — CONTENT-CHECKLIST §1.1 (Rafael escribe bio ES: 1-2 párrafos, tono cálido-juguetón, convergencia dev+QA+líder+AI)"
+  },
+  "projects": {
+    "pp1": {
+      "title": "PENDING — CONTENT-CHECKLIST §2.2 (nombre proyecto #1 Pink Parrot ES)",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.2 (descripción proyecto #1 ES)"
+    }
+  },
+  "contact": {
+    "hudAria": "Contacto rápido",
+    "emailAria": "Enviar email a Rafael",
+    "emailTooltip": "Copiar email",
+    "linkedinAria": "Perfil LinkedIn de Rafael",
+    "githubAria": "GitHub de Rafael"
+  },
+  "seo": {
+    "title": "PENDING — CONTENT-CHECKLIST §4.1 (title ES ≤60 chars)",
+    "description": "PENDING — CONTENT-CHECKLIST §4.1 (description ES ≤155 chars)"
   }
 }
