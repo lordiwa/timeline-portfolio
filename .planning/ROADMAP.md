@@ -46,8 +46,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Con el texto en español (20-30% más largo), ningún layout se rompe ni se desborda; el texto sigue siendo legible y el capítulo sigue teniendo el estilo correcto.
   4. El contraste de color es 4.5:1 en todos los chapters (o el tradeoff está documentado explícitamente con justificación era-auténtica en el código).
   5. El HUD (dots + label + toggle de idioma) tiene `outline` de focus visible que varía por chapter sin perder contraste.
-**Plans**: TBD
+**Plans**: 6 (wave0-i18n-engine-skeleton, wave1-lang-toggle-vertical-slice, wave2-chapter-themes-css, wave3-background-morph-engine, wave4-fonts-self-hosted-pipeline, wave5-manual-checklist-and-verification)
 **UI hint**: yes
+
+Plans:
+- [ ] 02-PLAN-wave0-i18n-engine-skeleton.md — Instalar vue-i18n@^11.4.2 + crear `src/i18n/` (locales JSON + index.js con auto-detect + persist) + watcher `<html lang>` reactivo en App.vue + tests scaffolding W0
+- [ ] 02-PLAN-wave1-lang-toggle-vertical-slice.md — Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
+- [ ] 02-PLAN-wave2-chapter-themes-css.md — Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
+- [ ] 02-PLAN-wave3-background-morph-engine.md — Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
+- [ ] 02-PLAN-wave4-fonts-self-hosted-pipeline.md — Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
+- [ ] 02-PLAN-wave5-manual-checklist-and-verification.md — Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
 
 ### Phase 3: Chapter 3 End-to-End
 **Goal**: El chapter 3 (Web 2.0 + arte digital) es el landing polished que un recruiter ve al abrir el sitio; tiene avatar, bio, proyectos de la era, contacto persistente, metadatos SEO y funciona impecablemente en ES y EN.
@@ -107,7 +115,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
-| 2. Theme System + i18n | 0/TBD | Next — `/gsd-discuss-phase 2` | - |
+| 2. Theme System + i18n | 0/6 | Plans created — `/gsd-execute-phase 2` to begin (5 autonomous waves + 1 human gate) | - |
 | 3. Chapter 3 End-to-End | 0/TBD | Content prep en paralelo (Rafael) | - |
 | 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
 | 5. Phaser Chapter 6 | 0/TBD | Not started | - |

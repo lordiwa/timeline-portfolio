@@ -1,0 +1,386 @@
+---
+phase: 02-theme-system-i18n
+plan: 04
+slug: wave3-background-morph-engine
+wave: 3
+type: execute
+mode: mvp
+autonomous: true
+gap_closure: false
+requirements: [THM-03, THM-04]
+depends_on: [3]
+files_modified:
+  - src/composables/useBackgroundMorph.js
+  - src/components/BackgroundLayers.vue
+  - src/App.vue
+  - index.html
+  - tests/composables/useBackgroundMorph.test.js
+  - tests/components/BackgroundLayers.test.js
+must_haves:
+  truths:
+    - "El composable `useBackgroundMorph(activeChapter, prm)` exporta `{ layerA, layerB, transitionPhase }` donde layerA/layerB son `{ chapter: Ref<number|null>, opacity: Ref<0..1> }` y transitionPhase es `Ref<'idle'|'crossfading'>` (UI-SPEC §7.4)"
+    - "Initial state (mount) con activeChapter=3: layerA={ chapter: 3, opacity: 1 }, layerB={ chapter: null, opacity: 0 }, transitionPhase='idle' (UI-SPEC §7.4 verbatim)"
+    - "Al cambiar activeChapter de N→M (default motion): la capa outgoing fade-out a opacity 0 y la incoming fade-in a opacity 1; tras 200ms `setTimeout`, outgoing.chapter=null, transitionPhase='idle', activeLayer flips"
+    - "Bajo PRM (D-03): la duración total baja a 150ms (no instant — el bg morph crossfade ≤150ms, NO sin transición) — diferente del avatar swap que es instant bajo PRM (D-02)"
+    - "PRM mid-flight recovery: si user activa PRM durante crossfade, watcher dedicado snap-finaliza (incoming.opacity=1, outgoing.opacity=0, outgoing.chapter=null, transitionPhase='idle', flip activeLayer)"
+    - "BackgroundLayers.vue es el primer hijo del template root de App.vue: dos divs apilados `.bg-layer` (`position: absolute; inset: 0`) dentro de un wrapper `.bg-layers` (`position: fixed; inset: 0; z-index: -1; pointer-events: none`) con `aria-hidden=\"true\"`"
+    - "Cada `.bg-layer` tiene `:data-chapter` bind reactivo al composable state y `:style=\"{ opacity }\"` bind a sus opacity refs; el background de la layer es `var(--c-bg)` que automáticamente lee el theme del chapter desde chapter-themes.css (W2)"
+    - "El CSS scoped declara `transition: opacity 200ms ease` default + `@media (prefers-reduced-motion: reduce) { transition: opacity 150ms ease }` (D-03 cross-cutting)"
+    - "`index.html` ya NO declara `background: #0b0b16` en `html, body` (BackgroundLayers con `z-index: -1` quedarían ocultas detrás del body bg — Pitfall 9 + UI-SPEC §7.6)"
+    - "Pending timer cleanup en onBeforeUnmount del composable (defensive — protege contra HMR leaks)"
+    - "Scrollear de ch0 a ch6 muestra el bg morphar entre chapters al unísono con el avatar swap (ambos 200ms total, sincronizados visualmente — D2-05 sync goal)"
+  artifacts:
+    - path: src/composables/useBackgroundMorph.js
+      provides: "State machine 2-layer opacity crossfade con PRM branch + mid-flight recovery + cleanup"
+      contains: "useBackgroundMorph"
+    - path: src/components/BackgroundLayers.vue
+      provides: "Component HUD invariante no-pointer con 2 layers apiladas + aria-hidden + transition CSS"
+      contains: "bg-layers"
+    - path: tests/composables/useBackgroundMorph.test.js
+      provides: "Tests: initial state + watch activeChapter + 200ms timer fires + PRM branch 150ms + mid-flight recovery + cleanup onBeforeUnmount"
+      contains: "useBackgroundMorph"
+    - path: tests/components/BackgroundLayers.test.js
+      provides: "Tests: 2 layers presentes + opacity reactiva + data-chapter reactivo + z-index -1 + pointer-events none + transition CSS 200ms / 150ms PRM"
+      contains: "bg-layer"
+  key_links:
+    - from: src/App.vue
+      to: src/composables/useBackgroundMorph.js
+      via: "useBackgroundMorph(scrollState.activeChapter, prm) + provide('bgMorph', bgMorph)"
+      pattern: "provide\\(.bgMorph."
+    - from: src/components/BackgroundLayers.vue
+      to: src/composables/useBackgroundMorph.js
+      via: "inject('bgMorph')"
+      pattern: "inject\\(.bgMorph."
+    - from: src/components/BackgroundLayers.vue
+      to: src/styles/chapter-themes.css
+      via: ":data-chapter binding → CSS Custom Props del chapter resuelven --c-bg en background"
+      pattern: ":data-chapter="
+---
+
+## Phase Goal (MVP Vertical Slice)
+
+**As a** visitante haciendo scroll entre chapters, **I want to** que el fondo de la página morfee al unísono con el cambio de era, **so that** la "atmósfera completa" cambia perceptualmente como un solo evento (no solo el inside de las sections).
+
+> **Nota MVP:** este Wave 3 entrega el motor de background morph end-to-end: composable + componente + wiring + cleanup del bg legacy del body. Tras este plan, scrollear muestra el background full-viewport (las 2 capas apiladas detrás de las sections) crossfading entre los `--c-bg` de cada chapter en sync visual con el avatar swap de Phase 1 (ambos 200ms default, ≤150ms bajo PRM).
+
+<objective>
+Construir el motor de background morph: composable `useBackgroundMorph` (state machine análogo al avatar swap Plan 03 Phase 1 — RESEARCH Pattern 2 verbatim) + componente `BackgroundLayers.vue` con 2 capas apiladas + wire en App.vue (provide/inject + insertar como primer hijo del template) + cleanup del `background: #0b0b16` del `index.html` body (Pitfall 9 — BackgroundLayers con `z-index: -1` quedarían ocultos detrás del body bg).
+
+**Purpose:** Cubre D2-04 (2-layer crossfade architecture) + D2-05 (200ms default sync con avatar / ≤150ms PRM) + completa la experiencia visual de THM-03 (los 7 themes ahora se ven en el bg full-viewport, no solo en el inside de las sections) y refuerza THM-04 (theme isolation — el bg morph es global discrete pero las sections siguen scoping su theme via data-chapter local).
+
+**Lo que ESTE plan NO hace:**
+- NO añade `--bg-image: url(...)` per chapter (Phase 3/4 cuando llegue pixel art). El motor está listo para consumir `--bg-image` si Phase 3 lo introduce; W3 solo declara `background: var(--c-bg)` en `.bg-layer`.
+- NO altera el avatar swap del Plan 03 Phase 1 (D-02 sigue instantáneo bajo PRM — DIFERENTE del bg morph D-03 que es crossfade ≤150ms).
+- NO instala fuentes self-hosted (W4 — los themes ya están aplicando font-family fallbacks system-safe).
+- NO ejecuta tests visuales de "no theme bleed durante smooth-scroll" (eso es W5 manual checklist — el architectural test ya está en W2).
+</objective>
+
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context>
+
+<context>
+@CLAUDE.md
+@.planning/phases/02-theme-system-i18n/02-CONTEXT.md
+@.planning/phases/02-theme-system-i18n/02-UI-SPEC.md
+@.planning/phases/02-theme-system-i18n/02-RESEARCH.md
+@.planning/phases/02-theme-system-i18n/02-PATTERNS.md
+@.planning/phases/02-theme-system-i18n/02-03-SUMMARY.md
+@.planning/phases/01-scroll-shell-sticky-anchors/01-04-SUMMARY.md
+@src/App.vue
+@src/components/StickyAvatar.vue
+@src/composables/usePRM.js
+@src/composables/useScrollState.js
+@src/styles/chapter-themes.css
+@tests/composables/usePRM.test.js
+@tests/components/StickyAvatar.test.js
+@index.html
+
+<interfaces>
+<!-- src/composables/useBackgroundMorph.js — RESEARCH Pattern 2 líneas 456-542 verbatim -->
+
+Exports:
+- `useBackgroundMorph(activeChapter: Ref<number>, prm: { prefersReduced: ComputedRef<boolean> }) → { layerA, layerB, transitionPhase }`
+
+Constants:
+- `DEFAULT_DURATION_MS = 200` (Open-Q2-B locked sync con avatar Phase 1)
+- `PRM_DURATION_MS = 150` (D-03 cross-cutting Phase 1)
+
+State (composable scope):
+- `layerA = { chapter: ref(activeChapter.value), opacity: ref(1) }` (initial: visible carrying initial chapter)
+- `layerB = { chapter: ref(null), opacity: ref(0) }` (initial: transparent, ready)
+- `transitionPhase = ref('idle')`
+- `let pendingTimer = null` (closure-level — no ref needed)
+- `let activeLayer = 'A'` (closure-level bookkeeping — no ref to avoid re-renders)
+
+Function `morph(newChapter)`:
+1. Clear `pendingTimer` if non-null (defensive rapid scroll)
+2. Determine `duration = prefersReduced.value ? PRM_DURATION_MS : DEFAULT_DURATION_MS`
+3. `incoming = activeLayer === 'A' ? layerB : layerA`; `outgoing = activeLayer === 'A' ? layerA : layerB`
+4. `incoming.chapter.value = newChapter` (set BEFORE opacity bindings change — so the CSS transition has data-chapter correct)
+5. `transitionPhase.value = 'crossfading'`
+6. `incoming.opacity.value = 1`; `outgoing.opacity.value = 0` (CSS transition handles interpolation)
+7. `pendingTimer = setTimeout(() => { outgoing.chapter.value = null; transitionPhase.value = 'idle'; pendingTimer = null; activeLayer = activeLayer === 'A' ? 'B' : 'A' }, duration)`
+
+Watchers:
+- `watch(activeChapter, (newCh, oldCh) => { if (newCh === oldCh) return; morph(newCh) })` — main fire on each chapter change
+- `watch(prefersReduced, (isPRM) => { if (isPRM && pendingTimer) { clearTimeout(pendingTimer); pendingTimer=null; snap incoming.opacity=1, outgoing.opacity=0, outgoing.chapter=null, transitionPhase='idle', flip activeLayer } })` — PRM mid-flight recovery
+
+Cleanup:
+- `onBeforeUnmount(() => { if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null } })`
+
+<!-- src/components/BackgroundLayers.vue — UI-SPEC §7.1 + §7.2 verbatim -->
+
+Setup:
+- `import { inject } from 'vue'`
+- `const { layerA, layerB } = inject('bgMorph')`
+
+Template:
+```
+<div class="bg-layers" aria-hidden="true">
+  <div
+    class="bg-layer bg-layer-a"
+    :data-chapter="layerA.chapter.value"
+    :style="{ opacity: layerA.opacity.value }"
+  ></div>
+  <div
+    class="bg-layer bg-layer-b"
+    :data-chapter="layerB.chapter.value"
+    :style="{ opacity: layerB.opacity.value }"
+  ></div>
+</div>
+```
+
+CSS scoped (UI-SPEC §7.2 VERBATIM):
+- `.bg-layers { position: fixed; inset: 0; z-index: -1; pointer-events: none; }`
+- `.bg-layer { position: absolute; inset: 0; background: var(--c-bg); transition: opacity 200ms ease; }`
+- `@media (prefers-reduced-motion: reduce) { .bg-layer { transition: opacity 150ms ease; } }`
+
+<!-- src/App.vue extend: wire useBackgroundMorph + provide + mount BackgroundLayers -->
+
+Imports añadir:
+- `import BackgroundLayers from './components/BackgroundLayers.vue'`
+- `import { useBackgroundMorph } from './composables/useBackgroundMorph'`
+
+Setup script extend (PATTERNS.md §App.vue líneas 530-547):
+```
+const bgMorph = useBackgroundMorph(scrollState.activeChapter, prm)
+provide('bgMorph', bgMorph)
+```
+Insertar TRAS `provide('prm', prm)` y ANTES del watch de locale (que se mantiene de W0).
+
+Template extend:
+Orden DOM final post-W3 (UI-SPEC §7.3 + PATTERNS.md líneas 549-565):
+- `<BackgroundLayers />` ← NUEVO primer hijo (z-index -1, detrás de todo)
+- `<SkipLink />`
+- `<StickyAvatar />`
+- `<ScrollShell :ref="..." />`
+- `<StickyTimeline />`
+- `<LangToggle />`
+
+<!-- index.html diff: remover background del body (Pitfall 9 + UI-SPEC §7.6) -->
+
+`<style>` block actual líneas 12-20:
+```
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b16;        /* ← REMOVER esta línea */
+  color: #e7e7f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-height: 100vh;
+}
+```
+
+Resultado tras W3:
+```
+html, body {
+  margin: 0;
+  padding: 0;
+  color: #e7e7f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  min-height: 100vh;
+}
+```
+
+NO tocar otras líneas del index.html (NO el `<html lang="es">` línea 2, NO el viewport-fit=cover, NO el `image-rendering: pixelated`).
+</interfaces>
+</context>
+
+<tasks>
+
+<task type="auto" tdd="true">
+  <name>Task 4.1: Crear useBackgroundMorph composable + tests RED→GREEN</name>
+  <files>
+    src/composables/useBackgroundMorph.js,
+    tests/composables/useBackgroundMorph.test.js
+  </files>
+  <read_first>
+    src/components/StickyAvatar.vue líneas 28-77 (analog directo del state machine pattern — PATTERNS.md §useBackgroundMorph líneas 43-103; replicar shape pero adaptar a 2 capas en lugar de una sola con opacity binary 0/1),
+    src/composables/usePRM.js (analog del minimal-wrap pattern — PATTERNS.md §src/i18n/index.js líneas 311-336; replicar comment header con // Source / // Decisions baked in),
+    src/composables/useScrollState.js líneas 101-109 (analog del cleanup pattern onBeforeUnmount — PATTERNS.md líneas 109-119),
+    tests/components/StickyAvatar.test.js Tests 3-6 líneas 92-173 (patrón fake timers + flushPromises + mid-flight recovery — PATTERNS.md §"Pattern: Fake timers + flushPromises para state machine" líneas 866-885),
+    tests/composables/usePRM.test.js líneas 62-72 (makeWrapper/defineComponent pattern para correr composable en lifecycle real — PATTERNS.md §"Pattern: defineComponent wrapper" líneas 845-861),
+    .planning/phases/02-theme-system-i18n/02-RESEARCH.md §Pattern 2 líneas 416-542 (source verbatim del composable — copiar y adaptar),
+    .planning/phases/02-theme-system-i18n/02-UI-SPEC.md §7.4 (initial state + state machine flow + duration constants + PRM mid-flight recovery)
+  </read_first>
+  <behavior>
+    **useBackgroundMorph.test.js (al menos 8 tests):**
+    - T1 initial state: instanciar el composable con `activeChapter = ref(3)` + `prm = { prefersReduced: ref(false) }` → `layerA = { chapter: 3, opacity: 1 }`, `layerB = { chapter: null, opacity: 0 }`, `transitionPhase === 'idle'`
+    - T2 watch fires on chapter change (default motion): vi.useFakeTimers; mutate `activeChapter.value = 4` + flushPromises → `transitionPhase === 'crossfading'`, layer incoming.chapter === 4 + opacity === 1, layer outgoing opacity === 0 (post-binding pero pre-timer); tras `vi.advanceTimersByTime(199)` + flush → outgoing.chapter still 3 (timer pending); tras `vi.advanceTimersByTime(1)` (200ms total) + flush → outgoing.chapter === null, transitionPhase === 'idle'
+    - T3 activeLayer flips: tras un morph 3→4 + 200ms, mutate `activeChapter.value = 5` + flushPromises → layer que era 'B' (incoming previo) ahora es 'outgoing' (porque activeLayer flipped post-timer); verificar que la nueva incoming.chapter === 5
+    - T4 PRM branch — 150ms duration: instanciar con `prefersReduced = ref(true)` (PRM activo desde mount); mutate `activeChapter.value = 4` + flush → tras `advanceTimersByTime(149)` outgoing.chapter aún 3; tras `+1` (150ms) outgoing.chapter === null
+    - T5 PRM mid-flight recovery: `prefersReduced = ref(false)` inicial; mutate `activeChapter.value = 4` + flush → estamos mid-fade (chequear opacity); `prefersReduced.value = true` + flush → snap finaliza inmediatamente (sin esperar al timer): outgoing.chapter === null, transitionPhase === 'idle', incoming.opacity === 1, outgoing.opacity === 0, activeLayer flipped
+    - T6 rapid scroll defensive: dispatch 3 chapter changes back-to-back (3→4→5→6 en mismo tick) + flush; verificar que `pendingTimer` solo tiene el último timer en flight (los anteriores clearTimeout'd); tras advance 200ms, outgoing.chapter === null y el state corresponde al ÚLTIMO morph (chapter 6 in incoming)
+    - T7 cleanup onBeforeUnmount: instanciar dentro de un defineComponent wrapper que se unmount; spy `clearTimeout`; mutate chapter, unmount mid-fade → `clearTimeout` called con el pendingTimer
+    - T8 same-chapter noop: mutate `activeChapter.value` al mismo valor que el current → `transitionPhase` permanece 'idle', layers no cambian (el `if (newCh === oldCh) return` cumple)
+  </behavior>
+  <action>
+    Crear `src/composables/useBackgroundMorph.js` siguiendo RESEARCH §Pattern 2 líneas 456-542 VERBATIM. Notas críticas:
+    - **Comment header bloque** análogo a `usePRM.js` líneas 1-22 — `// Source: derived from StickyAvatar.vue Phase 1 Plan 03`, `// Decisions baked in: D2-04 (2-layer arch), D2-05 (200ms default + 150ms PRM), D-03 cross-cutting, Open-Q2-B locked 200ms`. Mencionar UI-SPEC §7.4 como contrato.
+    - **Imports:** `import { ref, watch, onBeforeUnmount } from 'vue'`. NO `inject` (el composable recibe `activeChapter` y `prm` como args; consumers como App.vue inyectan ellos mismos antes de invocarlo — PATTERNS.md decisión #1).
+    - **Constants:** `const DEFAULT_DURATION_MS = 200` y `const PRM_DURATION_MS = 150` al module top (visible para tests si exportan, o re-declaradas en test — preferir export para que tests verifiquen valores sin duplicación).
+    - **`activeLayer` y `pendingTimer` son closure-level** (let, NOT ref) — son bookkeeping interno que NO debe re-renderizar consumers.
+    - **State machine en `morph(newChapter)`**: clearTimeout primero (defensive contra rapid scroll, T6), compute duration, identify incoming/outgoing por activeLayer, set incoming.chapter ANTES del opacity binding (orden importa — la CSS transition debe leer el data-chapter correcto del incoming), set opacities, programar el setTimeout para limpiar outgoing.chapter + flip activeLayer.
+    - **Main watch sobre activeChapter** sin `immediate: true` (initial state ya construido manualmente arriba; immediate dispararía un morph innecesario en t=0). Guard `if (newCh === oldCh) return` para T8.
+    - **PRM mid-flight recovery watch sobre prefersReduced** — guard `if (isPRM && pendingTimer)`: clear pendingTimer, snap finaliza state (incoming.opacity=1, outgoing.opacity=0, outgoing.chapter=null, transitionPhase='idle', flip activeLayer). PATTERNS.md líneas 89-101 muestra el shape.
+    - **`onBeforeUnmount` cleanup** — defensive contra HMR / unmount mid-fade.
+
+    Crear `tests/composables/useBackgroundMorph.test.js` con los 8 tests del `<behavior>` block:
+    - **Helper `makeWrapper({ initialChapter = 3, initialPRM = false } = {})`** análogo a `tests/composables/usePRM.test.js` líneas 62-72 + `tests/components/StickyAvatar.test.js` líneas 44-56: defineComponent con setup que invoca `useBackgroundMorph(activeChapter, prm)` y retorna el resultado; mount con attachTo document.body; el helper retorna `{ wrapper, activeChapter, prefersReduced, morphState }` para que los tests muten + assert.
+    - **Fake timers** patrón verbatim de `StickyAvatar.test.js` línea 113-134 — `vi.useFakeTimers()` al inicio del test relevante, `vi.advanceTimersByTime(X)` + `flushPromises()` para drain microtasks, `vi.useRealTimers()` en cleanup.
+    - **clearTimeout spy** para T7: `const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout')` (o `globalThis`); assert `expect(clearTimeoutSpy).toHaveBeenCalledWith(expect.any(Number))` tras unmount.
+    - **Test T8 noop**: mutate `activeChapter.value = activeChapter.value` (no-op) + flush → assert ningún state cambió (transitionPhase aún 'idle').
+
+    Tests RED commit (`useBackgroundMorph` no existe aún → import error) → GREEN commit (composable creado, tests pasan). Commits separados para preservar TDD discipline.
+  </action>
+  <verify>
+    <automated>npm run test:run -- tests/composables/useBackgroundMorph</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/composables/useBackgroundMorph.js` existe; exporta función `useBackgroundMorph`
+    - Source contiene `const DEFAULT_DURATION_MS = 200` y `const PRM_DURATION_MS = 150`
+    - Source contiene `watch(activeChapter, ...)` y `watch(prefersReduced, ...)` (2 watchers separados — main + PRM recovery)
+    - Source contiene `onBeforeUnmount(...)` con `clearTimeout(pendingTimer)`
+    - `tests/composables/useBackgroundMorph.test.js` corre ≥8 tests verdes
+    - Suite global no rompe ningún test previo (sigue ≥122 + 8 nuevos = ≥130 verdes)
+    - Composable NO usa `inject` ni `provide` (recibe args, no acopla al provide tree — coherente con PATTERNS.md decisión #1)
+    - NO referencia a `scrollProgress` ni a useScrollState directamente (Pitfall 2 — solo consume `activeChapter` discrete)
+  </acceptance_criteria>
+  <done>useBackgroundMorph composable con state machine + PRM recovery + cleanup, ≥8 tests verdes incluyendo edge cases (rapid scroll, mid-flight recovery, same-chapter noop).</done>
+</task>
+
+<task type="auto" tdd="true">
+  <name>Task 4.2: Crear BackgroundLayers.vue + wire en App.vue + cleanup index.html bg</name>
+  <files>
+    src/components/BackgroundLayers.vue,
+    src/App.vue,
+    index.html,
+    tests/components/BackgroundLayers.test.js
+  </files>
+  <read_first>
+    src/components/StickyAvatar.vue (analog completo del HUD invariante fixed + aria-hidden + opacity reactiva via inject — PATTERNS.md §BackgroundLayers.vue líneas 128-198; replicar shape estructural cambiando solo: 2 hijos en lugar de 1, z-index -1 en lugar de 40, sin pointer-events, sin chapter label visible),
+    src/App.vue (líneas 24-55 setup actual con shellRef/scrollState/prm/locale watcher — añadir `useBackgroundMorph` + `provide('bgMorph', ...)` tras `provide('prm', prm)`; líneas 65-68 template — añadir `<BackgroundLayers />` como PRIMER hijo del template root antes de SkipLink),
+    src/components/LangToggle.vue (creado en W1 — verificar que sigue como último hijo del template post-cambios; orden DOM final: BackgroundLayers → SkipLink → StickyAvatar → ScrollShell → StickyTimeline → LangToggle),
+    index.html líneas 12-20 (style block actual con `background: #0b0b16` en `html, body` — REMOVER esa línea preservando todo lo demás; Pitfall 9 + UI-SPEC §7.6),
+    tests/components/StickyAvatar.test.js Tests 1-2 + 7-10 (DOM contract + readFileSync CSS asserts — patrón para BackgroundLayers test),
+    .planning/phases/02-theme-system-i18n/02-UI-SPEC.md §7 completo (DOM contract §7.1 + CSS contract §7.2 + DOM order §7.3 + State machine §7.4 + future-proof §7.5 + index.html cleanup §7.6 verbatim)
+  </read_first>
+  <behavior>
+    **BackgroundLayers.test.js (al menos 7 tests):**
+    - T1 DOM contract: mount(BackgroundLayers) con provide bgMorph stub (layerA + layerB mutables refs) → wrapper.find('.bg-layers').exists() true; .findAll('.bg-layer') length === 2; primer `.bg-layer.bg-layer-a` y segundo `.bg-layer.bg-layer-b`
+    - T2 aria-hidden: `.bg-layers` tiene `aria-hidden="true"` (HUD decorativo, screen readers skip)
+    - T3 data-chapter binding: provide bgMorph con layerA.chapter=ref(3), layerB.chapter=ref(null) → primer .bg-layer tiene `data-chapter="3"`, segundo `data-chapter=""` o ausente (null bind renderiza como atributo vacío o no presente; verificar shape exacto en el mount)
+    - T4 opacity binding reactive: provide con layerA.opacity=ref(1), layerB.opacity=ref(0) → primer layer style contiene `opacity: 1`, segundo `opacity: 0`; mutar layerB.opacity.value = 1 + nextTick → segundo layer style updates a `opacity: 1`
+    - T5 data-chapter binding reactive: mutate layerA.chapter.value = 5 + nextTick → primer layer `data-chapter` actualiza a "5"
+    - T6 CSS readFileSync — wrapper: source contiene `.bg-layers\s*\{[\s\S]*?position:\s*fixed[\s\S]*?inset:\s*0[\s\S]*?z-index:\s*-1[\s\S]*?pointer-events:\s*none`
+    - T7 CSS readFileSync — layer + PRM: source contiene `.bg-layer\s*\{[\s\S]*?position:\s*absolute[\s\S]*?inset:\s*0[\s\S]*?background:\s*var\(--c-bg\)[\s\S]*?transition:\s*opacity\s*200ms\s*ease`; source contiene `@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?\.bg-layer\s*\{[\s\S]*?transition:\s*opacity\s*150ms\s*ease`
+  </behavior>
+  <action>
+    Crear `src/components/BackgroundLayers.vue` siguiendo UI-SPEC §7.1 + §7.2 VERBATIM:
+    - **Comment header** bloque al inicio del `<script setup>` análogo a otros componentes Phase 1 + 2: anchor del propósito (HUD invariante background morph, no-pointer, consume bgMorph composable, UI-SPEC §7 + D2-04).
+    - **Script setup:** `import { inject } from 'vue'` + `const { layerA, layerB } = inject('bgMorph')` (NO destructure transitionPhase aquí — solo lo necesitan los tests del composable; el componente solo consume las refs de las 2 capas).
+    - **Template:** un `<div class="bg-layers" aria-hidden="true">` wrapper + 2 hijos `<div class="bg-layer bg-layer-a">` y `<div class="bg-layer bg-layer-b">` con `:data-chapter="layerA.chapter.value"` (NOT layerA.chapter — el `.value` es explícito en template binding para refs no auto-unwrapped en composition API setup-not-script-context; verificar comportamiento — si el linter complain, usar shorthand `:data-chapter="layerA.chapter"` que Vue auto-unwraps en template). El `:style="{ opacity: layerA.opacity }"` análogo. SIN contenido dentro de las layers (son divs decorativos puros).
+    - **CSS scoped** VERBATIM de UI-SPEC §7.2:
+      - `.bg-layers { position: fixed; inset: 0; z-index: -1; pointer-events: none; }`
+      - `.bg-layer { position: absolute; inset: 0; background: var(--c-bg); transition: opacity 200ms ease; }`
+      - `@media (prefers-reduced-motion: reduce) { .bg-layer { transition: opacity 150ms ease; } }`
+    - NO declarar `outline:` ni `&:focus` — el componente es no-pointer + aria-hidden, no es focusable.
+    - **NO** declarar `bg-layer-a` ni `bg-layer-b` con estilos diferentes; las clases son discriminantes para tests, no para CSS.
+
+    Modificar `src/App.vue` (PATTERNS.md §App.vue líneas 511-567):
+    - **Imports:** añadir `import BackgroundLayers from './components/BackgroundLayers.vue'` (junto a los imports de componentes existentes) y `import { useBackgroundMorph } from './composables/useBackgroundMorph'` (junto a los imports de composables).
+    - **Setup script (tras `provide('prm', prm)` línea 38 y ANTES del watcher de locale añadido en W0):**
+      ```
+      const bgMorph = useBackgroundMorph(scrollState.activeChapter, prm)
+      provide('bgMorph', bgMorph)
+      ```
+    - **Template:** insertar `<BackgroundLayers />` como PRIMER hijo del template root, antes de `<SkipLink />`. Orden final:
+      ```
+      <BackgroundLayers />
+      <SkipLink />
+      <StickyAvatar />
+      <ScrollShell :ref="el => { shellRef.value = el?.shellEl ?? null }" />
+      <StickyTimeline />
+      <LangToggle />
+      ```
+
+    Modificar `index.html` (UI-SPEC §7.6 + Pitfall 9):
+    - Localizar el `<style>` block dentro del `<head>` (líneas 12-20 actuales).
+    - Remover la línea `background: #0b0b16;` del bloque `html, body { ... }`. Preservar `margin: 0; padding: 0; color: #e7e7f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; min-height: 100vh;` y todas las demás declarations.
+    - NO tocar `<html lang="es">` (línea 2) — sigue como fallback estático antes de JS hidrate; el watcher de App.vue (W0) lo muta reactivamente.
+    - NO tocar el meta viewport ni el `image-rendering: pixelated` (líneas heredadas Phase 1).
+
+    Crear `tests/components/BackgroundLayers.test.js` con los 7 tests del `<behavior>`:
+    - **Mount helper análogo a StickyAvatar.test.js líneas 44-56**: `mountBgLayers({ initialA = { chapter: 3, opacity: 1 }, initialB = { chapter: null, opacity: 0 } } = {})` que provide `bgMorph: { layerA: { chapter: ref(initialA.chapter), opacity: ref(initialA.opacity) }, layerB: { chapter: ref(initialB.chapter), opacity: ref(initialB.opacity) } }`.
+    - **CSS asserts** patrón readFileSync de PATTERNS.md líneas 798-816 — un solo `readFileSync(resolve(process.cwd(), 'src/components/BackgroundLayers.vue'), 'utf8')` al top del file.
+    - **PRM CSS branch** assert: regex multiline para encontrar `@media (prefers-reduced-motion: reduce)` que contiene `.bg-layer` con `transition: opacity 150ms ease` dentro.
+
+    Verificar que tests/composables/useBackgroundMorph.test.js (creado en Task 4.1) sigue verde, y que TODOS los tests existentes (suite global) siguen verdes — el cambio de index.html no debería romper nada (los tests son jsdom, NO leen index.html), pero el wiring de App.vue puede afectar `tests/composables/useScrollState.test.js` si su mount de App como root falla con nuevo provide. Verificar especialmente.
+  </action>
+  <verify>
+    <automated>npm run test:run -- tests/components/BackgroundLayers tests/composables/useBackgroundMorph &amp;&amp; npm run test:run &amp;&amp; npm run build</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/components/BackgroundLayers.vue` existe con script setup + template con 2 layers + style scoped completos
+    - `src/App.vue` contiene: `import BackgroundLayers`, `import { useBackgroundMorph }`, `const bgMorph = useBackgroundMorph(scrollState.activeChapter, prm)`, `provide('bgMorph', bgMorph)`, y `<BackgroundLayers />` como primer elemento del template root
+    - `index.html` ya NO contiene `background: #0b0b16` (verificable con `Select-String -Path index.html -Pattern '#0b0b16' -SimpleMatch -Quiet` returns `False`)
+    - `index.html` SIGUE conteniendo `<html lang="es">`, `image-rendering: pixelated`, `viewport-fit=cover` (regresión check)
+    - `tests/components/BackgroundLayers.test.js` corre ≥7 tests verdes
+    - Suite global `npm run test:run` ≥137 tests verdes (Phase 1 67 + W0 18 + W1 ≥15 + W2 ≥22 + W3 composable 8 + W3 component 7)
+    - `npm run build` verde; bundle CSS ~7-8KB (BackgroundLayers añade ~0.3-0.5KB), JS ~78-80KB (useBackgroundMorph + BackgroundLayers añaden ~1-2KB)
+    - DevTools manual `npm run dev`: scrollear de ch0 a ch6 → el fondo completo (no solo el inside de las sections) crossfade entre los colores de cada chapter en sync con el avatar swap. Mid-fade visible si el scroll es lento (200ms ventana). Bajo PRM (DevTools rendering panel: emulate prefers-reduced-motion: reduce), el crossfade baja a 150ms perceptiblemente más rápido. Toggle PRM mid-fade → el bg snap finaliza sin quedarse atascado en opacidad parcial.
+  </acceptance_criteria>
+  <done>BackgroundLayers.vue funcional con 2 layers + transitions + PRM branch, App.vue wired con composable provide, index.html limpio de body bg, ≥7 tests component verdes, build verde, manual visual verification OK.</done>
+</task>
+
+</tasks>
+
+<verification>
+- Comando: `npm run test:run && npm run build`
+- Esperado: ≥137 tests verdes, build verde, bundle CSS ~7-8KB, JS ~78-80KB
+- DevTools manual: scrollear ch0→ch6 muestra background morph entre eras al unísono con avatar swap; PRM toggle (DevTools rendering panel) reduce duration a 150ms perceptible; PRM mid-flight snap-finaliza sin atasco; rapid scroll back-to-back no produce flicker (defensive clearTimeout cubre)
+- DevTools inspect: el `<body>` ya NO tiene `background-color: rgb(11, 11, 22)` aplicado (Pitfall 9 cumplido); las 2 `.bg-layer` divs son visibles con `z-index: -1` y `pointer-events: none`; el clic en cualquier zona del fondo pasa al elemento debajo (verificable con click en region "vacía" — debe seleccionar el `<main class="scroll-shell">` no las layers)
+</verification>
+
+<success_criteria>
+- useBackgroundMorph composable con state machine + PRM recovery + cleanup defensive
+- BackgroundLayers.vue funcional como HUD invariante no-pointer
+- App.vue wired con provide('bgMorph') + BackgroundLayers como primer hijo del template
+- index.html limpio del body bg legacy (Pitfall 9)
+- Bg morph sincronizado visualmente con avatar swap (D2-05 sync goal)
+- PRM branch verificado (150ms total bajo PRM, mid-flight snap recovery)
+- Suite global ≥137 verdes, build verde
+</success_criteria>
+
+<output>
+After completion, create `.planning/phases/02-theme-system-i18n/02-04-SUMMARY.md` con:
+- useBackgroundMorph composable (LOC, state machine flow, decisiones)
+- BackgroundLayers.vue (LOC, DOM contract)
+- App.vue extends (orden DOM final, provide tree)
+- index.html cleanup (líneas removidas)
+- Tests añadidos (count + mapping a D2-04/D2-05/Pitfall 9)
+- Bundle delta vs W2
+- Pending para W4: fonts pipeline self-hosted + import en main.js
+</output>

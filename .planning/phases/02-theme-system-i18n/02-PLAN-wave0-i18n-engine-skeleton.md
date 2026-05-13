@@ -1,0 +1,328 @@
+---
+phase: 02-theme-system-i18n
+plan: 01
+slug: wave0-i18n-engine-skeleton
+wave: 0
+type: execute
+mode: mvp
+autonomous: true
+gap_closure: false
+requirements: [I18N-01, I18N-02, I18N-04, I18N-06, A11Y-07]
+depends_on: []
+files_modified:
+  - package.json
+  - src/i18n/index.js
+  - src/i18n/es.json
+  - src/i18n/en.json
+  - src/main.js
+  - src/App.vue
+  - tests/i18n/setup.test.js
+  - tests/i18n/parity.test.js
+  - tests/i18n/locale-init.test.js
+  - tests/i18n/html-lang-watcher.test.js
+  - tests/i18n/fallback.test.js
+must_haves:
+  truths:
+    - "vue-i18n@^11.4.2 está instalado y registrado en `main.js` con `app.use(i18n)`"
+    - "`createI18n` se invoca con `legacy: false` (I18N-01 mandatory) + `fallbackLocale: 'en'` (I18N-06)"
+    - "`src/i18n/es.json` y `src/i18n/en.json` existen y tienen paridad exacta de keys (verificado por test programático — I18N-02)"
+    - "Locale inicial se resuelve por orden: `localStorage['portfolio.locale']` > `navigator.language` (startsWith 'es' → 'es') > fallback 'es' (D2-09)"
+    - "`persistLocale(newLocale)` escribe en `localStorage['portfolio.locale']` y es importable por consumidores"
+    - "Al cambiar `locale.value`, `document.documentElement.lang` muta automáticamente vía watcher reactivo en App.vue (I18N-04 / A11Y-07)"
+    - "Missing handler: en `import.meta.env.DEV` retorna `[missing: {keypath}]` y `console.warn`; en prod retorna `key` raw silenciosamente (Open-Q2-D)"
+    - "Cualquier componente puede invocar `useI18n()` y obtener `{ t, locale }` reactivos (i18n plugin globalmente disponible)"
+  artifacts:
+    - path: src/i18n/index.js
+      provides: "Factory + singleton `i18n` con createI18n locked config + helpers `persistLocale` + `resolveInitialLocale`"
+      contains: "createI18n"
+    - path: src/i18n/es.json
+      provides: "Spanish messages jerárquicos (chapters.0-6.title, ui.skipLink, ui.langToggle.aria/label, ui.timeline.navAria/tickAria, avatar.ariaTemplate, avatar.busts.0-6.alt)"
+      contains: "chapters"
+    - path: src/i18n/en.json
+      provides: "English messages jerárquicos con paridad exacta de keys"
+      contains: "chapters"
+    - path: tests/i18n/parity.test.js
+      provides: "Test programático que valida paridad de keys (I18N-02)"
+      contains: "flatten"
+    - path: tests/i18n/html-lang-watcher.test.js
+      provides: "Test del watcher de App.vue que muta document.documentElement.lang al cambiar locale"
+      contains: "documentElement.lang"
+    - path: package.json
+      provides: "Dependencia `vue-i18n: ^11.4.2` añadida a `dependencies`"
+      contains: "vue-i18n"
+  key_links:
+    - from: src/main.js
+      to: src/i18n/index.js
+      via: "import { i18n } + app.use(i18n)"
+      pattern: "\\.use\\(i18n\\)"
+    - from: src/App.vue
+      to: src/i18n/index.js
+      via: "useI18n() de vue-i18n + watch(locale, l => document.documentElement.lang = l, { immediate: true })"
+      pattern: "document\\.documentElement\\.lang"
+    - from: src/i18n/index.js
+      to: localStorage
+      via: "resolveInitialLocale() lee STORAGE_KEY + persistLocale() escribe"
+      pattern: "localStorage\\.(getItem|setItem)"
+---
+
+## Phase Goal (MVP Vertical Slice)
+
+**As a** visitante de cualquier idioma, **I want to** que el sitio detecte mi locale automáticamente la primera vez y respete mi elección en visitas posteriores, **so that** mi experiencia esté en mi idioma sin fricción.
+
+> **Nota MVP:** este Wave 0 entrega el MOTOR i18n end-to-end — la única UI visible que cambia con locale es el atributo `<html lang>` (verificable en DevTools) y el chapter title aria-label de ScrollShell (que ya inyecta `t()`). El toggle visible viene en W1. Después de este plan, abrir DevTools y ejecutar `i18n.global.locale.value = 'en'` muta `<html lang>` y los aria-labels de los componentes Phase 1 (W1 los conecta visualmente).
+
+<objective>
+Wave 0 instala el motor i18n completo (vue-i18n v11 + locales JSON + auto-detect + persist + `<html lang>` reactivo) y los tests scaffolding críticos del phase. Es el primer slice vertical: sin UI visible nueva, pero el motor responde de cabo a rabo — `useI18n()` funciona en cualquier componente, `<html lang>` muta reactivamente, locale persiste en localStorage, missing handler hace marker visible en dev.
+
+**Purpose:** Cubre los 5 REQ-IDs del motor i18n (I18N-01, I18N-02, I18N-04, I18N-06, A11Y-07). Crea los tests stubs (Nyquist W0 requirements según VALIDATION.md) que las waves siguientes dependen para verificar componentes/UI.
+
+**Lo que ESTE plan NO hace:**
+- NO crea el `LangToggle.vue` visible (W1).
+- NO i18nifica los strings de SkipLink/StickyTimeline/StickyAvatar/ScrollShell (W1).
+- NO toca CSS de themes (W2).
+- NO instala BackgroundLayers (W3).
+- NO instala fuentes self-hosted (W4).
+</objective>
+
+<execution_context>
+@$HOME/.claude/get-shit-done/workflows/execute-plan.md
+@$HOME/.claude/get-shit-done/templates/summary.md
+</execution_context>
+
+<context>
+@CLAUDE.md
+@.planning/phases/02-theme-system-i18n/02-CONTEXT.md
+@.planning/phases/02-theme-system-i18n/02-UI-SPEC.md
+@.planning/phases/02-theme-system-i18n/02-RESEARCH.md
+@.planning/phases/02-theme-system-i18n/02-VALIDATION.md
+@.planning/phases/02-theme-system-i18n/02-PATTERNS.md
+@.planning/phases/01-scroll-shell-sticky-anchors/01-06-SUMMARY.md
+@src/App.vue
+@src/main.js
+@src/composables/usePRM.js
+@tests/composables/usePRM.test.js
+@tests/smoke.test.js
+
+<interfaces>
+<!-- src/i18n/index.js — API pública locked (RESEARCH Pattern 3 + UI-SPEC §11.6) -->
+
+Exports:
+- `i18n` — instancia singleton de `createI18n({ legacy: false, locale, fallbackLocale: 'en', messages, missing, missingWarn, fallbackWarn })`
+- `persistLocale(newLocale: 'es'|'en') → void` — escribe en `localStorage[STORAGE_KEY]`
+- `resolveInitialLocale() → 'es'|'en'` — orden de resolución D2-09 (localStorage > navigator.language > 'es')
+
+Internal constants:
+- `STORAGE_KEY = 'portfolio.locale'`
+
+Imports needed:
+- `createI18n` de `vue-i18n`
+- `en` de `./en.json`
+- `es` de `./es.json`
+
+createI18n options locked:
+- `legacy: false` (I18N-01 mandatory)
+- `locale: resolveInitialLocale()` (D2-09)
+- `fallbackLocale: 'en'` (I18N-06)
+- `messages: { en, es }`
+- `missingWarn: import.meta.env.DEV` (silencio en prod)
+- `fallbackWarn: false` (silencio en prod)
+- `missing: (locale, key) => DEV ? '[missing: ' + key + ']' (+ console.warn) : key` (Open-Q2-D)
+
+<!-- src/i18n/es.json + src/i18n/en.json — UI-SPEC §11.2 / §11.3 VERBATIM. -->
+
+Estructura jerárquica (Open-Q2-C locked):
+- `chapters`: { 0..6: { title: string } } — 7 chapter titles bilingues
+- `ui.skipLink`: string — "Saltar al contenido" / "Skip to content"
+- `ui.langToggle`: { aria: string, label: string } — aria bilingüe, label = locale opuesto
+- `ui.timeline`: { navAria: string, tickAria: string } — `tickAria` con interpolación `{era}` + `{year}`
+- `avatar.ariaTemplate`: string — con interpolación `{chapter}`
+- `avatar.busts`: { 0..6: { alt: string } } — placeholders era-accurate
+
+Copy exacto: ver UI-SPEC §11.2 (ES) y §11.3 (EN). Copiar literal.
+
+<!-- src/main.js post-cambios: -->
+
+```javascript
+import { createApp } from 'vue'
+import App from './App.vue'
+import { i18n } from './i18n'
+
+createApp(App).use(i18n).mount('#app')
+```
+
+(NO importes de chapter-themes.css ni fonts.css aún — esos llegan en W2/W4.)
+
+<!-- src/App.vue diff: añadir watch sobre locale -->
+
+```javascript
+import { ref, provide, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+// ... existing imports
+
+const { locale } = useI18n()
+watch(locale, (l) => {
+  document.documentElement.lang = l
+}, { immediate: true })
+```
+
+`{ immediate: true }` garantiza que el `<html lang>` sincroniza desde el primer render (no espera al primer toggle). RESEARCH Pattern 6 verbatim.
+</interfaces>
+</context>
+
+<tasks>
+
+<task type="auto" tdd="true">
+  <name>Task 1.1: Install vue-i18n + create src/i18n/ scaffolding + RED tests</name>
+  <files>
+    package.json,
+    src/i18n/index.js,
+    src/i18n/es.json,
+    src/i18n/en.json,
+    tests/i18n/setup.test.js,
+    tests/i18n/parity.test.js,
+    tests/i18n/locale-init.test.js,
+    tests/i18n/fallback.test.js
+  </files>
+  <read_first>
+    package.json (current dependencies — verificar @vueuse/core@^14.3.0, vue@^3.5.0 ya están instalados),
+    src/composables/usePRM.js (analog para src/i18n/index.js: minimal-wrap + comment header pattern — PATTERNS.md líneas 311-336),
+    tests/composables/usePRM.test.js (analog para mock browser APIs: installMatchMediaMock pattern líneas 33-57 — adaptar para localStorage + navigator.language),
+    tests/smoke.test.js (analog para tests/i18n/parity.test.js que es trivial JSON shape assertion sin DOM — PATTERNS.md líneas 348-370),
+    .planning/phases/02-theme-system-i18n/02-UI-SPEC.md §11.2-11.3 (locales JSON VERBATIM — keys y copy locked, copiar literal sin re-derivar),
+    .planning/phases/02-theme-system-i18n/02-RESEARCH.md §Pattern 3 líneas 612-664 (src/i18n/index.js completo verbatim — createI18n config locked) + §Pattern 4 líneas 706-800 (parity test pattern)
+  </read_first>
+  <behavior>
+    - Test setup.test.js T1: `import.meta.env` accesible; `i18n` instance es truthy; `i18n.global.locale.value` es 'es' o 'en'
+    - Test setup.test.js T2: `i18n` config tiene `legacy: false` (verificable inspeccionando `i18n.mode === 'composition'` — vue-i18n internal)
+    - Test setup.test.js T3: `vue-i18n` está en package.json dependencies con version range `^11.x`
+    - Test parity.test.js T1: `flatten(en).sort()` deep-equals `flatten(es).sort()` (I18N-02)
+    - Test parity.test.js T2: ambos JSON tienen keys `chapters.0.title` ... `chapters.6.title` (7 chapter titles)
+    - Test parity.test.js T3: ambos JSON tienen keys `ui.skipLink`, `ui.langToggle.aria`, `ui.langToggle.label`, `ui.timeline.navAria`, `ui.timeline.tickAria`, `avatar.ariaTemplate`, `avatar.busts.0.alt` ... `avatar.busts.6.alt`
+    - Test locale-init.test.js T1: si `localStorage.getItem('portfolio.locale')` returns `'en'`, `resolveInitialLocale()` returns `'en'`
+    - Test locale-init.test.js T2: si localStorage vacío + `navigator.language === 'es-EC'`, returns `'es'` (D2-09 — startsWith 'es')
+    - Test locale-init.test.js T3: si localStorage vacío + `navigator.language === 'fr-CA'`, returns `'en'` (D2-09 — cualquier otro idioma → EN)
+    - Test locale-init.test.js T4: si localStorage vacío + `navigator.language === ''`, returns `'es'` (D2-09 — fallback final)
+    - Test locale-init.test.js T5: `persistLocale('en')` invoca `localStorage.setItem('portfolio.locale', 'en')` (spy verifiable)
+    - Test fallback.test.js T1: si key existe en EN pero no en ES → `t()` con locale='es' retorna el valor EN (fallbackLocale)
+    - Test fallback.test.js T2: en `import.meta.env.DEV`, missing handler retorna `[missing: foo.bar]` cuando key no existe en ningún locale (Open-Q2-D)
+    - Test fallback.test.js T3: en `import.meta.env.PROD` (simulado), missing handler retorna `'foo.bar'` raw (key), no marker
+  </behavior>
+  <action>
+    Añadir `vue-i18n: ^11.4.2` a `package.json` dependencies (mantener orden alfabético: `@vueuse/core`, `phaser`, `vue`, `vue-i18n`). Ejecutar `npm install` en PowerShell para sincronizar `package-lock.json` y `node_modules`.
+
+    Crear `src/i18n/es.json` y `src/i18n/en.json` copiando VERBATIM las estructuras JSON de UI-SPEC §11.2 y §11.3 (jerárquico, namespaces: `chapters`, `ui`, `avatar`; con interpolación `{era}`, `{year}`, `{chapter}` donde aplique). NO inventar copy — los strings están locked en UI-SPEC y son la fuente de verdad.
+
+    Crear `src/i18n/index.js` siguiendo RESEARCH §Pattern 3 líneas 612-664 verbatim (comment header análogo a usePRM.js líneas 1-22 con `// Source:`, `// Decisions baked in:`). Exports: `i18n` singleton + `persistLocale(newLocale)` helper. Const `STORAGE_KEY = 'portfolio.locale'`. Función `resolveInitialLocale()` con orden D2-09 (localStorage → navigator.language → 'es'). `createI18n` config locked per UI-SPEC §11.6 (legacy: false, fallbackLocale: 'en', missingWarn: import.meta.env.DEV, fallbackWarn: false, missing handler con marker dev + key raw prod).
+
+    Crear los 4 tests RED en `tests/i18n/`:
+    - `setup.test.js`: 3 tests — `i18n` instance truthy, `i18n.mode === 'composition'`, package.json contiene `vue-i18n`.
+    - `parity.test.js`: 3 tests — paridad de keys via flatten helper (copiar verbatim de RESEARCH §Pattern 4 líneas 786-800), presence de los 7 chapter titles, presence de los UI/avatar keys críticos.
+    - `locale-init.test.js`: 5 tests — installar mock de localStorage (vi.spyOn) + Object.defineProperty navigator.language; verificar precedencia D2-09 (T1: localStorage wins, T2: navigator es-EC → es, T3: navigator fr-CA → en, T4: navigator empty → es fallback, T5: persistLocale escribe a localStorage). Cleanup entre tests con `vi.restoreAllMocks()` + reset de defineProperty.
+    - `fallback.test.js`: 3 tests — instanciar un i18n test-only con messages incompletos, verificar fallback EN→ES, verificar marker DEV `[missing: foo.bar]`, verificar key raw en PROD (mockear import.meta.env.DEV con `vi.stubEnv('DEV', false)`).
+
+    Tests deben FALLAR antes de implementación (RED), pasar después (GREEN). Commit RED separado del GREEN para preservar el ciclo TDD.
+  </action>
+  <verify>
+    <automated>npm install &amp;&amp; npm run test:run -- tests/i18n/</automated>
+  </verify>
+  <acceptance_criteria>
+    - `package.json` "dependencies" incluye literal `"vue-i18n": "^11.4.2"` (orden alfabético entre `phaser` y `vue`)
+    - `node_modules/vue-i18n/package.json` existe con `"version": "11.x.x"` (^11 satisfecho)
+    - `src/i18n/es.json` parsea como JSON válido y contiene keys `chapters.0.title` con value `"Pre-carrera: niñez digital"` (UI-SPEC §11.2 VERBATIM)
+    - `src/i18n/en.json` parsea como JSON válido y contiene keys `chapters.0.title` con value `"Pre-career: digital childhood"` (UI-SPEC §11.3 VERBATIM)
+    - `src/i18n/index.js` export `i18n` y `persistLocale`; `i18n.mode === 'composition'` (no Legacy API)
+    - `tests/i18n/setup.test.js` corre 3 tests verdes
+    - `tests/i18n/parity.test.js` corre 3 tests verdes (paridad I18N-02)
+    - `tests/i18n/locale-init.test.js` corre 5 tests verdes (precedencia D2-09 verificada)
+    - `tests/i18n/fallback.test.js` corre 3 tests verdes (I18N-06 + Open-Q2-D)
+    - Total nuevos tests verdes: ≥14 (4 archivos)
+    - `npm run test:run` global no rompe ningún test de Phase 1 (debe seguir 67/67 verdes + nuevos ≥14)
+  </acceptance_criteria>
+  <done>vue-i18n instalado, src/i18n/ scaffolding completo, 14+ tests verdes en tests/i18n/, sin regresiones Phase 1.</done>
+</task>
+
+<task type="auto" tdd="true">
+  <name>Task 1.2: Wire i18n en main.js + watcher `<html lang>` en App.vue</name>
+  <files>
+    src/main.js,
+    src/App.vue,
+    tests/i18n/html-lang-watcher.test.js
+  </files>
+  <read_first>
+    src/main.js (líneas 1-4 — current entrypoint mínimo; PATTERNS.md líneas 490-507 muestra el diff exacto),
+    src/App.vue (líneas 24-38 — current setup con shellRef/scrollState/prm + provide; PATTERNS.md líneas 519-547 muestra dónde insertar el watcher de locale),
+    .planning/phases/02-theme-system-i18n/02-RESEARCH.md §Pattern 6 líneas 872-886 (watcher `{ immediate: true }` verbatim),
+    .planning/phases/02-theme-system-i18n/02-PATTERNS.md §`src/App.vue` líneas 511-567 (diff exacto del setup script extend),
+    tests/composables/usePRM.test.js líneas 62-72 (makeWrapper/defineComponent pattern para test components con i18n plugin)
+  </read_first>
+  <behavior>
+    - Test T1: Mount un componente test que use `useI18n()` con plugin i18n + `watch(locale, l => document.documentElement.lang = l, { immediate: true })`; tras mount + nextTick, `document.documentElement.lang === locale.value` (locale inicial sincronizado)
+    - Test T2: Tras `locale.value = 'en'` + `flushPromises()`, `document.documentElement.lang === 'en'` (mutation propagated)
+    - Test T3: Tras toggle locale → 'es' → 'en' → 'es', el lang attribute sigue cada cambio (3 mutaciones, sin drift)
+    - Test T4 (regression): el watcher NO se ejecuta múltiples veces por render — verificar que `document.documentElement.lang` solo cambia cuando `locale.value` cambia (no en re-renders)
+  </behavior>
+  <action>
+    Modificar `src/main.js`: añadir `import { i18n } from './i18n'`, encadenar `.use(i18n)` antes de `.mount('#app')`. NO añadir imports de `chapter-themes.css` ni `fonts.css` aún (esos vienen en W2/W4). Resultado final (PATTERNS.md líneas 495-507 verbatim):
+
+    ```
+    import { createApp } from 'vue'
+    import App from './App.vue'
+    import { i18n } from './i18n'
+
+    createApp(App).use(i18n).mount('#app')
+    ```
+
+    Modificar `src/App.vue` setup script (PATTERNS.md §App.vue líneas 519-547):
+    - Añadir `import { useI18n } from 'vue-i18n'` y `import { watch } from 'vue'` (extender el import existente de `vue`).
+    - Tras el bloque `provide('scrollState', ...)` + `provide('prm', ...)` (líneas 37-38), añadir:
+      - `const { locale } = useI18n()`
+      - `watch(locale, (l) => { document.documentElement.lang = l }, { immediate: true })`
+    - Comentario inline anchor: `// I18N-04 + A11Y-07 — single source of truth para <html lang> mutation`.
+
+    Crear `tests/i18n/html-lang-watcher.test.js` con 4 tests (ver `<behavior>` block). Helper `makeWrapper()` análogo a `tests/composables/usePRM.test.js` líneas 62-72: defineComponent con setup que use `useI18n()` + watcher; mount con `global: { plugins: [createI18n({ legacy: false, locale: 'es', messages: { es: {}, en: {} } })] }`. Reset `document.documentElement.lang` entre tests (`beforeEach: document.documentElement.lang = ''`).
+
+    NO tocar `<style>` de App.vue (los tokens `:root` neutros se mantienen como fallback; chapter-themes.css en W2 los sobreescribe).
+
+    NO tocar `index.html` (W3 remueve el `background: #0b0b16` del body cuando BackgroundLayers llegue).
+  </action>
+  <verify>
+    <automated>npm run test:run -- tests/i18n/html-lang-watcher &amp;&amp; npm run test:run</automated>
+  </verify>
+  <acceptance_criteria>
+    - `src/main.js` contiene literal `import { i18n } from './i18n'` y `.use(i18n)` antes de `.mount('#app')`
+    - `src/App.vue` script setup contiene literal `import { useI18n } from 'vue-i18n'`, `const { locale } = useI18n()`, y `watch(locale, ... document.documentElement.lang = l, { immediate: true })`
+    - `tests/i18n/html-lang-watcher.test.js` corre 4 tests verdes
+    - Suite completa `npm run test:run` retorna exit 0 (Phase 1 67 + Wave 0 ≥18 = ≥85 tests verdes)
+    - `npm run build` completa sin errores; bundle JS contiene `vue-i18n` (verificable con `Select-String -Path dist/assets/index-*.js -Pattern "createI18n" -Quiet` retorna `True`)
+    - Mount manual en dev: abrir `npm run dev`, DevTools console ejecutar `window.app?._instance` o inspeccionar `<html lang>` — atributo presente y reactivo
+  </acceptance_criteria>
+  <done>main.js usa el plugin i18n, App.vue muta `<html lang>` reactivamente, 4 tests verdes, build verde, suite global verde.</done>
+</task>
+
+</tasks>
+
+<verification>
+- Comando: `npm install &amp;&amp; npm run test:run &amp;&amp; npm run build`
+- Esperado: vue-i18n@^11.4.2 instalado, tests/i18n/ con ≥18 tests verdes, suite global ≥85 verdes, build verde sin warnings.
+- DevTools manual: `npm run dev` → abrir 127.0.0.1:5173 → inspeccionar `<html lang>` en Elements panel; debe estar `"es"` o `"en"` según `navigator.language` del browser.
+- Console manual: con `localStorage.setItem('portfolio.locale', 'en')` + recarga → `<html lang>` debe ser `"en"`.
+</verification>
+
+<success_criteria>
+- vue-i18n@^11.4.2 instalado (I18N-01 mandatory)
+- src/i18n/es.json + en.json con paridad de keys exacta (I18N-02)
+- `<html lang>` reactivamente actualiza con locale (I18N-04 / A11Y-07)
+- `fallbackLocale: 'en'` configurado (I18N-06)
+- Tests scaffolding W0 cubren los 5 REQ-IDs del motor i18n
+- Suite global sin regresiones
+- Build verde
+</success_criteria>
+
+<output>
+After completion, create `.planning/phases/02-theme-system-i18n/02-01-SUMMARY.md` con:
+- Resumen de qué quedó wired (vue-i18n plugin, JSON locales, html lang watcher)
+- Tests añadidos (count + nombres de archivo)
+- Build metrics (CSS/JS bundle size deltas vs Plan 06 baseline)
+- Decisiones tomadas (Open-Q2-D missing handler shape, navigator.language threshold)
+- Pending para W1: LangToggle UI + i18nificar SkipLink/StickyAvatar/StickyTimeline/ScrollShell
+</output>
