@@ -80,11 +80,11 @@ if (typeof window !== 'undefined') {
 // ─────────────────────────────────────────────────────────────────────────────
 // HTMLElement.prototype.scrollIntoView
 // ─────────────────────────────────────────────────────────────────────────────
-// JSDOM no implementa scrollIntoView. Lo declaramos como no-op para que existir
-// en el prototype permita `vi.spyOn(HTMLElement.prototype, 'scrollIntoView')`
-// desde los tests. Los tests que necesiten observar las llamadas hacen su propio spy.
-if (typeof HTMLElement !== 'undefined' && !HTMLElement.prototype.scrollIntoView) {
-  HTMLElement.prototype.scrollIntoView = function () {}
+// JSDOM no implementa scrollIntoView. Lo declaramos como vi.fn() para que los
+// tests puedan inspeccionar las llamadas via mock.calls / toHaveBeenCalledWith.
+// Los tests son responsables de hacer mockClear() en su beforeEach.
+if (typeof HTMLElement !== 'undefined') {
+  HTMLElement.prototype.scrollIntoView = vi.fn()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
