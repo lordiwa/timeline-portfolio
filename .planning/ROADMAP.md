@@ -50,12 +50,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **UI hint**: yes
 
 Plans:
-- [ ] 02-PLAN-wave0-i18n-engine-skeleton.md — Instalar vue-i18n@^11.4.2 + crear `src/i18n/` (locales JSON + index.js con auto-detect + persist) + watcher `<html lang>` reactivo en App.vue + tests scaffolding W0
-- [ ] 02-PLAN-wave1-lang-toggle-vertical-slice.md — Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
-- [ ] 02-PLAN-wave2-chapter-themes-css.md — Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
-- [ ] 02-PLAN-wave3-background-morph-engine.md — Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
-- [ ] 02-PLAN-wave4-fonts-self-hosted-pipeline.md — Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
-- [ ] 02-PLAN-wave5-manual-checklist-and-verification.md — Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
+- [ ] 02-01-PLAN.md — Wave 0: Instalar vue-i18n@^11.4.2 + crear `src/i18n/` (locales JSON + index.js con auto-detect + persist) + watcher `<html lang>` reactivo en App.vue + tests scaffolding
+- [ ] 02-02-PLAN.md — Wave 1: Crear `LangToggle.vue` standalone fixed top-right + i18nificar aria/text de SkipLink, StickyTimeline, StickyAvatar, ScrollShell (Phase 1 components)
+- [ ] 02-03-PLAN.md — Wave 2: Crear `src/styles/chapter-themes.css` con @layer cascade + 7 chapter blocks (ch0/ch1 completos + ch2-6 stubs era-tinted) + tests architectural (theme isolation, focus ring universal preservado)
+- [ ] 02-04-PLAN.md — Wave 3: Crear `useBackgroundMorph` composable + `BackgroundLayers.vue` (2 capas crossfade) + wire en App.vue + remover `background: #0b0b16` del body en index.html (Pitfall 9)
+- [ ] 02-05-PLAN.md — Wave 4: Instalar 6 paquetes @fontsource (VT323/Comic Neue/Lobster/Audiowide/Inter Variable/Press Start 2P) + wire imports en main.js (ch2 system-safe locked sin self-host)
+- [ ] 02-06-PLAN.md — Wave 5: Crear `02-MANUAL-CHECKLIST.md` derivado de VALIDATION.md + UI-SPEC §14 + Rafael ejecuta el checklist + firma sign-off (única wave NO autonomous — checkpoint:human-verify)
 
 ### Phase 3: Chapter 3 End-to-End
 **Goal**: El chapter 3 (Web 2.0 + arte digital) es el landing polished que un recruiter ve al abrir el sitio; tiene avatar, bio, proyectos de la era, contacto persistente, metadatos SEO y funciona impecablemente en ES y EN.

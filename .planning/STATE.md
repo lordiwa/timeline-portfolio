@@ -118,5 +118,5 @@ None yet.
 
 Last session: 2026-05-13T00:00:00.000Z
 Stopped at: Phase 2 planned — ready for execution
-Resume file: .planning/phases/02-theme-system-i18n/02-PLAN-wave0-i18n-engine-skeleton.md
+Resume file: .planning/phases/02-theme-system-i18n/02-01-PLAN.md
 Next command: /gsd-execute-phase 2  (recomendado: /clear primero — fresh context window para wave execution)
