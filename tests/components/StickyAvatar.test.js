@@ -27,7 +27,7 @@
 // el watcher de prefersReduced (HIGH 2) se pueda disparar desde el test.
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -93,7 +93,9 @@ describe('StickyAvatar.vue', () => {
     vi.useFakeTimers()
     const { wrapper, activeChapter } = mountAvatar({ initialChapter: 3, initialPRM: false })
     activeChapter.value = 5
-    await nextTick()
+    // El watch del componente hace await nextTick antes del setTimeout; flush para
+    // garantizar que el timer esté programado antes de advance.
+    await flushPromises()
     // aria-label sigue la verdad inmediatamente (lo provee la reactividad del binding).
     expect(wrapper.find('aside.sticky-avatar').attributes('aria-label'))
       .toBe('Avatar de Rafael — chapter 5 activo')
@@ -101,7 +103,7 @@ describe('StickyAvatar.vue', () => {
     expect(wrapper.find('span.avatar-chapter-label').text()).toBe('ch5')
     // Tras 100ms, opacity vuelve a 1 (fin del crossfade).
     vi.advanceTimersByTime(100)
-    await nextTick()
+    await flushPromises()
     expect(wrapper.find('.avatar-placeholder').attributes('style')).toContain('opacity: 1')
   })
 
@@ -116,16 +118,18 @@ describe('StickyAvatar.vue', () => {
     expect(placeholder().attributes('style')).toContain('opacity: 1')
     // Disparar cambio de chapter.
     activeChapter.value = 4
-    await nextTick()
-    // Inmediatamente después del watch + nextTick, opacity debe estar en 0.
+    // El watcher es async (await nextTick antes del setTimeout). flushPromises drena
+    // todos los microtasks para garantizar que el setTimeout esté registrado.
+    await flushPromises()
+    // Inmediatamente después del watch, opacity debe estar en 0.
     expect(placeholder().attributes('style')).toContain('opacity: 0')
     // Avanzar 99ms — todavía en 0 (el setTimeout(100) no ha disparado).
     vi.advanceTimersByTime(99)
-    await nextTick()
+    await flushPromises()
     expect(placeholder().attributes('style')).toContain('opacity: 0')
     // Avanzar 1ms más (total 100ms) — ahora opacity debe estar en 1.
     vi.advanceTimersByTime(1)
-    await nextTick()
+    await flushPromises()
     expect(placeholder().attributes('style')).toContain('opacity: 1')
   })
 
@@ -154,17 +158,17 @@ describe('StickyAvatar.vue', () => {
     const placeholder = () => wrapper.find('.avatar-placeholder')
     // Disparar cambio de chapter → opacity baja a 0 (mid-flight).
     activeChapter.value = 4
-    await nextTick()
+    await flushPromises()
     expect(placeholder().attributes('style')).toContain('opacity: 0')
     // Activar PRM mid-flight — el watcher dedicado debe recuperar opacity a 1.
     prefersReduced.value = true
-    await nextTick()
+    await flushPromises()
     expect(placeholder().attributes('style')).toContain('opacity: 1')
     // Avanzar el timer más allá del setTimeout(100). Si el timer NO se canceló,
     // un "doble set" volvería a setear opacity=1 sin daño; pero queremos verificar
     // que tras avanzar el tiempo, opacity sigue en 1 sin haber rebotado.
     vi.advanceTimersByTime(150)
-    await nextTick()
+    await flushPromises()
     expect(placeholder().attributes('style')).toContain('opacity: 1')
   })
 
