@@ -21,8 +21,9 @@
 // El "function ref" pattern del template asigna `el.shellEl` (expuesto por
 // ScrollShell vía defineExpose) al shellRef cuando ScrollShell monta.
 
-import { ref, provide } from 'vue'
+import { ref, provide, watch } from 'vue'
 import { useResizeObserver } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
 import SkipLink from './components/SkipLink.vue'
 import ScrollShell from './components/ScrollShell.vue'
 import StickyAvatar from './components/StickyAvatar.vue'
@@ -36,6 +37,13 @@ const prm = usePRM()
 
 provide('scrollState', scrollState)
 provide('prm', prm)
+
+// I18N-04 + A11Y-07 — single source of truth para <html lang> mutation.
+// { immediate: true } garantiza sincronización desde el primer render (RESEARCH Pattern 6).
+const { locale } = useI18n()
+watch(locale, (l) => {
+  document.documentElement.lang = l
+}, { immediate: true })
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ResizeObserver defensive — MOB-03 (UI-SPEC §9, RESEARCH §Área 7).
