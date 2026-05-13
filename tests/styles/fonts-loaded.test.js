@@ -64,24 +64,32 @@ describe('Fonts — source-level (Task 5.1)', () => {
     }
   })
 
-  it('T3: src/main.js importa los 6 paquetes @fontsource*', () => {
-    const expectedImports = [
-      `import '@fontsource/vt323'`,
-      `import '@fontsource/comic-neue'`,
-      `import '@fontsource/lobster'`,
-      `import '@fontsource/audiowide'`,
-      `import '@fontsource-variable/inter'`,
-      `import '@fontsource/press-start-2p'`,
+  it('T3: src/main.js importa los 6 paquetes @fontsource* (latin + latin-ext subsets)', () => {
+    // Verifica que cada font package está referenciado al menos una vez en main.js.
+    // Los imports usan subsets específicos (/latin.css, /latin-ext.css) para mantener
+    // el bundle en el rango 150-350 KB (D2-08). Esto cubre ES/EN (Open-Q2-E).
+    // ch5 (Inter Variable) usa un CSS local selector en src/styles/inter-variable-latin.css.
+    const expectedPackages = [
+      `@fontsource/vt323`,          // ch0
+      `@fontsource/comic-neue`,     // ch1
+      `@fontsource/lobster`,        // ch3
+      `@fontsource/audiowide`,      // ch4
+      `inter-variable-latin`,       // ch5 — selector local apuntando a @fontsource-variable/inter files
+      `@fontsource/press-start-2p`, // ch6
     ]
-    for (const importLine of expectedImports) {
-      expect(mainSource, `Falta import en main.js: ${importLine}`).toContain(importLine)
+    for (const pkg of expectedPackages) {
+      expect(mainSource, `Falta referencia a ${pkg} en main.js`).toContain(pkg)
     }
   })
 
-  it('T4: imports @fontsource* aparecen ANTES de chapter-themes.css en main.js', () => {
-    // Verifica que el bloque de imports de fonts precede al import de chapter-themes
-    const regex = /import '@fontsource[\s\S]*?import.*chapter-themes\.css/
-    expect(mainSource).toMatch(regex)
+  it('T4: imports de fonts aparecen ANTES de chapter-themes.css en main.js', () => {
+    // Verifica que el bloque de imports de fonts precede al import de chapter-themes.
+    // Los imports de fonts usan rutas @fontsource/* o referencias a CSS locales de fonts.
+    const fontsBlockStart = mainSource.indexOf('@fontsource/vt323')
+    const chapterThemesImport = mainSource.indexOf("import './styles/chapter-themes.css'")
+    expect(fontsBlockStart, 'No se encontró el bloque de fonts en main.js').toBeGreaterThan(-1)
+    expect(chapterThemesImport, 'No se encontró el import de chapter-themes.css').toBeGreaterThan(-1)
+    expect(fontsBlockStart, 'Los fonts deben aparecer ANTES de chapter-themes.css').toBeLessThan(chapterThemesImport)
   })
 
   it('T5: chapter-themes.css declara --font-body correcto para cada chapter (incluye ch2 system-safe)', () => {
