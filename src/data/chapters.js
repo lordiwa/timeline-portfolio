@@ -70,8 +70,9 @@ export const chapters = [
     eraKey: 'chapters.5.era',
     titleKey: 'chapters.5.title',
     avatarSrc: '/assets/ch5-bust.png',
-    // PENDING — CONTENT-CHECKLIST §5.4 (Rafael aprueba paleta Modern animated)
-    palette: [],
+    // §5.4 stub Phase 2 (Rafael aprobó "usa stubs" en gate W4 — refresh
+    // real hex post-W5 si Rafael decide ajustar paleta Modern)
+    palette: ['#ffffff', '#1a1a2e', '#6366f1', '#e2e8f0', '#f5f7fb'],
   },
   {
     id: 6,
