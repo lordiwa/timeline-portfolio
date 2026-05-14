@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: phase-closed
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-05-14T02:53:53.387Z"
-last_activity: 2026-05-14 -- Phase 04 execution started
+status: executing
+stopped_at: Phase 04 Plan 02 completed
+last_updated: "2026-05-13T22:10:00Z"
+last_activity: 2026-05-13 -- Phase 04 Plan 02 (ch0/ch1 CSS-only) completed
 progress:
   total_phases: 6
   completed_phases: 2
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 04 (chapters-0-2-4-5) — EXECUTING
-Plan: 1 of 6
+Plan: 2 of 6 completed (04-02 DONE)
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
 Phase 2 status: 6/6 plans ejecutados. Motor programático completo + sign-off manual de Rafael (`02-MANUAL-CHECKLIST.md` §10 firmado, verdict PASS). Phase 2 100% cerrada.
 Last activity: 2026-05-14 -- Phase 04 execution started
@@ -102,6 +102,9 @@ Ver `.planning/phases/02-theme-system-i18n/02-MANUAL-CHECKLIST.md` completo:
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- 2026-05-13 (Phase 4 W1): **TerminalScroll PRM CSS-only** — sin inject('prm'); @media (prefers-reduced-motion: reduce) es suficiente porque no hay JS state. MarqueeBanner usa inject('prm') + v-if porque <marquee> no responde a animation-play-state (D4-10b).
+- 2026-05-13 (Phase 4 W1): **MarqueeBanner v-if (no v-show)** — <marquee> debe salir del DOM para que el browser deje de scrollearlo. v-show solo lo oculta visualmente pero el browser sigue scrolleando internamente.
+- 2026-05-13 (Phase 4 W1): **StarfieldBg independiente** — extraído de MarqueeBanner para posicionarlo absolute detrás de todo el ch1-layout (no solo del banner).
 - 2026-05-13 (Phase 2 W4): **W3 useBackgroundMorph — state machine 2 capas 200ms/150ms PRM** — bgMorph wired via provide/inject desde App.vue. DEFAULT_DURATION_MS=200ms sincronizado con avatar swap Phase 1. PRM_DURATION_MS=150ms (crossfade perceptible ≤150ms, diferente del avatar que es instant bajo PRM). PRM mid-flight recovery watcher dedicado (análogo HIGH 2 Phase 1). Pitfall 9 aplicado: background:#0b0b16 removido de index.html.
 - 2026-05-13 (Phase 2 W3): **chapter-themes.css sin alineación de columnas** — los tests theme-tokens.test.js verifican `--c-bg: #000000` (un espacio); alineación visual rompía T8/T9. Formato CSS estándar elegido. Auto-fix Rule 1 durante RED phase.
 - 2026-05-13 (Phase 2 W2): **A11Y-04 no reclamado en W2** — el axe/Pa11y/Lighthouse external audit es W5 §4 manual. W2 documenta contrast inline (THM-05) pero no audita externamente.
@@ -137,7 +140,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-14T02:02:52.258Z
-Stopped at: Phase 4 UI-SPEC approved
-Resume file: .planning/phases/04-chapters-0-2-4-5/04-UI-SPEC.md
-Next command: (después del sign-off) /gsd-execute-phase 3
+Last session: 2026-05-13T22:10:00Z
+Stopped at: Completed .planning/phases/04-chapters-0-2-4-5/04-02-PLAN.md
+Resume file: .planning/phases/04-chapters-0-2-4-5/04-03-PLAN.md
+Next command: /gsd-execute-phase 4 (continuar con Plan 04-03)

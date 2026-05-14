@@ -86,7 +86,7 @@ Plans:
 
 Plans:
 - [ ] 04-01-PLAN.md — Wave 0: Avatar batch 7 busts (ART-01/ART-04 deferred Plan 03-05 carry-forward) + tests/assets/asset-naming.test.js arquitectural + .gitignore privacy gate D4-02
-- [ ] 04-02-PLAN.md — Wave 1: Ch0 + Ch1 CSS-only (ART-07) — TerminalScroll + MarqueeBanner + StarfieldBg + Chapter{0,1}Content wrappers + ScrollShell wire
+- [x] 04-02-PLAN.md — Wave 1: Ch0 + Ch1 CSS-only (ART-07) — TerminalScroll + MarqueeBanner + StarfieldBg + Chapter{0,1}Content wrappers + ScrollShell wire
 - [ ] 04-03-PLAN.md — Wave 2: Ch2 Flash — pixelforge ch2-bg.png + FlashBanner skeumorphic + Chapter2Content + ProjectCard variant ch2 + projects BlueLizard/Matte/Joju
 - [ ] 04-04-PLAN.md — Wave 3: Ch4 AR/VR multi-layer parallax — 4 pixelforge layers (stars-far/planet-mid/panels-fg/ships-near) + ParallaxLayers (Pitfall 6/7) + FloatingPanel (@supports backdrop-filter)
 - [ ] 04-05-PLAN.md — Wave 4: Ch5 Modern hero — ch5-hero.png + ScrollRevealCard (PRM defensive double JS+CSS) + Chapter5Content staggered + projects BairesDev/number8/VivoEnVivo/RocketSnail/Remoose
@@ -125,6 +125,6 @@ Plans:
 | 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
 | 2. Theme System + i18n | 4/6 | In Progress|  |
 | 3. Chapter 3 End-to-End | 4/5 | In Progress|  |
-| 4. Chapters 0-2 + 4-5 | 0/TBD | Not started | - |
+| 4. Chapters 0-2 + 4-5 | 1/6 | In Progress | - |
 | 5. Phaser Chapter 6 | 0/TBD | Not started | - |
 | 6. Deploy + Polish | 0/TBD | Not started | - |
