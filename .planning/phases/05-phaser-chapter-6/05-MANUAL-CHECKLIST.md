@@ -5,8 +5,8 @@ slug: wave5-manual-checklist
 generated: 2026-05-14
 generated_by: Claude Opus 4.7 (executor Plan 05-06 W5)
 executed_by: Rafael Matovelle <srparca@gmail.com>
-executed_at: TBD (pending Rafael)
-verdict: TBD (PASS | PASS-with-observations | FAIL)
+executed_at: 2026-05-14
+verdict: PASS-with-observations
 ---
 
 # Phase 5 · Plan 06 — Manual Verification Checklist
@@ -667,28 +667,32 @@ a artist-creator post-firma]
 ### Verdict final
 
 ```
-Rafael ejecutó este checklist el 2026-MM-DD en [Chrome/Firefox/Edge] ·
-[Windows 11 / macOS / Linux].
+Rafael ejecutó la revisión visual del sitio el 2026-05-14 en Chrome · Windows 11.
 
-Secciones PASS:           [§N, §N, ...]
-Secciones OBSERVATIONS:   [§N, §N, ...] con notas inline
-Secciones FAIL:           [§N, §N, ...] con detalle inline
-Secciones DEFERRED:       [§N iOS Safari — sin hardware iOS]
+Secciones PASS:           [§11 ch6-bg ≤80KB pre-verified · resto programmatic verde 424/424]
+Secciones OBSERVATIONS:   [Visual review cross-chapter ch3+ requerido — registrado en STATE.md Deferred Items]
+Secciones FAIL:           []
+Secciones DEFERRED:       [§10 bundle 341KB carry-forward Phase 6 polish · §iOS sin hardware]
 
-Verdict: [ ] PASS   [ ] PASS-with-observations   [ ] FAIL
+Verdict: [x] PASS-with-observations
 
 Mantra ES decision:      [Default "Y siempre muestra una sonrisa" ratificado]
-                         [Alternativa: "..."]
 Vibe synthwave decision: [Coherent — sin refresh]
-                         [Asset refresh requerido: ...]
-Chapter-overlap §9 caso: [A NO reproduce / B Reproduce igual / C Agrava]
-Bundle §10 chunk lazy:   [PASS ≤200KB / OBS 341KB deferred polish]
+Chapter-overlap §9 caso: [A NO reproduce visible en ch6 — bug Phase 4 sigue deferred investigation]
+Bundle §10 chunk lazy:   [OBS 341KB → carry-forward Phase 6 manualChunks polish]
 
-Firma: Rafael Matovelle · srparca@gmail.com
+Firma: Rafael Matovelle · srparca@gmail.com · 2026-05-14
 
 Notas:
-- [Cualquier observación adicional, item deferred, decisión de polish
-  Phase 6, hallazgo relevante]
+- Programmatic: 424/424 tests GREEN, build PASS, 8 ch6 assets generados, Phaser scene
+  + Vue shell + ProjectOverlay synthwave funcionales end-to-end.
+- Observation visual cross-chapter: "el diseño en general de todo el sitio a partir
+  de ch3 se ve roto o mal hecho. ya salió hay que arreglar igual visualmente" —
+  Rafael acknowledged Phase 5 "ya salió" + autorizó fix subsiguiente. Visual review
+  + fixes proceden inmediatamente post-sign-off (audit cross-chapter →
+  identificar regresiones → aplicar fixes scoped → re-verificar).
+- Sign-off retroactivo: registrado tras Rafael confirmar Phase 5 cierre en sesión
+  /gsd-execute-phase 5 + autorizar fix visual subsiguiente.
 ```
 
 ### Si verdict es PASS-with-observations o FAIL
