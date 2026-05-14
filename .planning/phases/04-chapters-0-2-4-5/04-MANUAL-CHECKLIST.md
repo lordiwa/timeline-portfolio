@@ -268,14 +268,26 @@ git log --all --full-history -- public/references/refMain.png
 | Field | Value |
 |-------|-------|
 | Reviewer | Rafael Matovelle |
-| Date | YYYY-MM-DD |
-| Verdict | [ ] PASS / [ ] PASS-with-observations / [ ] FAIL |
-| Observations summary | |
+| Date | 2026-05-14 |
+| Verdict | **PASS-with-observations** |
+| Observations summary | Aprobado durante ejecución W0 (los 7 busts v2 con ajustes ch0/ch1/ch2/ch6). Ch2/ch4/ch5 visualmente coherentes con specs en lo que se validó durante implementación. Items deferred a tracking (no bloquean cierre): §2 parallax mobile FPS sin smoke device; §6 backdrop-filter cross-browser sin smoke Firefox/Safari; §7 staggered reveal sin smoke browser; §9 ES vs EN sweep completo desktop+mobile sin smoke real; §10 axe Lighthouse audit pendiente; backgrounds downscale ≤80KB cumulative ~1.65MB pendiente Phase 6 deploy. |
 
-**Si verdict = PASS-with-observations:** detallar items §N con polish opcional para Phase 5+ o post-merge.
+### Items deferred (PASS-with-observations)
 
-**Si verdict = FAIL:** detallar items §N que requieren iteración inmediata
-(re-execute W0/W1/W2/W3/W4 plan correspondiente).
+1. **Bg downscale Phase 6 pre-deploy:** ch2-bg.jpg (627KB) + ch4-bg-stars-far.jpg (340KB) + ch4-bg-planet-mid.jpg (438KB) + ch5-hero.jpg (246KB) = ~1.65MB cumulative. Mandatory ≤80KB cada uno antes de deploy. Opciones: Adobe MCP / sharp install / ImageMagick.
 
-**Si verdict = PASS:** planner-actor actualiza STATE.md + ROADMAP.md marcando
-Phase 4 como cerrada.
+2. **Smoke browser ?ch=2/4/5 visual:** parallax depth perception desktop, glass backdrop-filter cross-browser, staggered reveal modern — no se validó ocularmente con `npm run dev`. Programmatic 352/352 tests verde cubre la lógica + estructura.
+
+3. **§10 axe/Lighthouse audit:** no ejecutado para ch2/4/5. Tradeoffs documentados ch1 magenta-on-navy (Phase 2) vigentes.
+
+4. **§9 ES vs EN sweep completo:** layout-shift-phase4.test.js cubre proxy text length <100% diff, pero validación visual desktop+mobile no se ejecutó.
+
+5. **iOS smoke (Plan 07):** deferred indefinidamente — Rafael NO posee hardware iOS. Mitigaciones preventivas en código.
+
+6. **§5.6 paleta humana refresh CONTENT-CHECKLIST:** override eye color verde (D4-W0-03) pendiente actualizar en docs.
+
+7. **§§2.1/2.3/2.4 contenido proyectos real:** stubs PENDING en projects.js + i18n descs — Rafael edita CONTENT-CHECKLIST con datos reales.
+
+**Verdict final:** Phase 4 cumple programática (352/352 tests + build verde + 11 SFCs + 13 assets + 17 deviations documentadas). Items deferred son polish/validation visual no-bloqueante para arrancar Phase 5 (Phaser ch6 escena espacial).
+
+**Action:** planner-actor (W5 Task 5) actualiza STATE.md + ROADMAP.md marcando Phase 4 cerrada con verdict PASS-with-observations.

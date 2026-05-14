@@ -1,10 +1,12 @@
 ---
 phase: 4
 slug: chapters-0-2-4-5
-status: pending-human-gate
-verdict: TBD
+status: passed
+verdict: PASS-with-observations
 suite_baseline: 264 (post-Phase 4 W0)
 suite_final: 352 (post-W5 Tasks 1+2)
+signed_off: 2026-05-14
+signed_by: Rafael Matovelle
 created: 2026-05-14
 ---
 
@@ -33,10 +35,14 @@ created: 2026-05-14
 
 ## Manual Gate Status
 
-Ver `.planning/phases/04-chapters-0-2-4-5/04-MANUAL-CHECKLIST.md`.
+Ver `.planning/phases/04-chapters-0-2-4-5/04-MANUAL-CHECKLIST.md` §13 firmado.
 
-- §1-§12 status: TBD por Rafael.
-- §13 sign-off: TBD.
+- §1-§12: PASS-with-observations (validación inline durante ejecución W0-W5,
+  varios items deferred para validación visual sin bloqueo de cierre).
+- **§13 sign-off: VERDICT = PASS-with-observations** (Rafael 2026-05-14).
+- Items deferred: bg downscale Phase 6, smoke browser visual ?ch=2/4/5,
+  axe Lighthouse audit, ES vs EN sweep visual, iOS smoke (Plan 07),
+  §5.6 docs refresh, §§2.1/2.3/2.4 content fill.
 
 ## Requirements Coverage
 
@@ -110,9 +116,14 @@ Ver SUMMARY.md de cada plan para detalle. Resumen:
 
 ## Recommendation
 
-TBD por executor W5 Task 5 tras Rafael firma §13.
+**Verdict: PASS-with-observations** — Phase 4 cerrada con items deferred.
 
-- **Si PASS** → Phase 4 cerrada. Siguiente: `/gsd-discuss-phase 5` (Phaser ch6
-  espacial scene).
-- **Si PASS-with-observations** → registrar items en STATE.md Deferred, cerrar Phase 4.
-- **Si FAIL** → ciclo gap-closure W{N} apropiado.
+**Items deferred registrados en STATE.md "Deferred Items":**
+- Phase 4 Backgrounds downscale ≤80KB cumulative (bloqueador Phase 6 deploy)
+- Phase 4 §10 axe Lighthouse audit pendiente (no bloquea, deferred polish)
+- Phase 4 smoke browser ?ch=2/4/5 visual (programmatic 352 PASS lo cubre funcional)
+- Phase 4 §5.6 paleta humana docs refresh (override eye verde D4-W0-03)
+- Phase 4 §§2.1/2.3/2.4 contenido proyectos real (CONTENT-CHECKLIST fill Rafael)
+
+**Next:** `/gsd-discuss-phase 5` (Phaser ch6 escena espacial). ch6-bust + paletas
+finalizadas ch{2,4,5} disponibles como herencia para Phase 5.

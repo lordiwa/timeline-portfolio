@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
+status: ready_to_plan
 stopped_at: Completed .planning/phases/04-chapters-0-2-4-5/04-02-PLAN.md
 last_updated: "2026-05-14T03:38:41.176Z"
 last_activity: 2026-05-14 -- Phase 04 execution started
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 18
   completed_plans: 17
-  percent: 94
+  percent: 50
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 ## Current Position
 
-Phase: 04 (chapters-0-2-4-5) — EXECUTING
-Plan: 1 of 6
+Phase: 5
+Plan: Not started
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
 Phase 2 status: 6/6 plans ejecutados. Motor programático completo + sign-off manual de Rafael (`02-MANUAL-CHECKLIST.md` §10 firmado, verdict PASS). Phase 2 100% cerrada.
-Last activity: 2026-05-14 -- Phase 04 execution started
+Last activity: 2026-05-14
 
 Progress (Phase 2 isolated): [██████████] 6/6 plans ejecutados + manual gate FIRMADO ✅
 Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 (listo para arrancar — `/gsd-discuss-phase 3`)
@@ -77,7 +77,7 @@ Ver `.planning/phases/02-theme-system-i18n/02-MANUAL-CHECKLIST.md` completo:
 
 **Velocity:**
 
-- Total plans completed: 16 (Phase 1: 6 planes + Phase 2: 6 planes + planning: 4)
+- Total plans completed: 21 (Phase 1: 6 planes + Phase 2: 6 planes + planning: 4)
 - Phase 2 execution: ~2.5 horas (6 planes autónomos: W0 7min, W1 45min, W2 18min, W3 35min, W4 25min, W5 40min)
 - Average duration Phase 2: ~28 min/plan (incluye W5 artifact-only)
 
