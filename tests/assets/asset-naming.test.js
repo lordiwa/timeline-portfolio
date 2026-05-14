@@ -32,23 +32,31 @@ import { resolve } from 'node:path'
 const ASSETS_DIR = resolve(process.cwd(), 'public/assets')
 const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 
-// Enum explícito Phase 4 — 13 assets totales esperados al finalizar la fase:
+// Enum explícito Phase 4 + Phase 5 — 21 assets totales esperados al finalizar fase 5:
 //   - 7 busts (PNG con alpha): ch{0..6}-bust.png
 //   - 1 ch2 background (JPEG opaco): ch2-bg.jpg
 //   - 4 ch4 parallax layers: ch4-bg-stars-far.{png|jpg}, ch4-bg-planet-mid.{png|jpg},
 //     ch4-fg-panels.png, ch4-fg-ships.png  (los fg necesitan alpha → png; bg opacos → jpg)
 //   - 1 ch5 hero: ch5-hero.png (alpha needed if used as overlay)
+//   - 8 nuevos Phase 5 — escena Phaser ch6 (D5-04 paleta synthwave + D5-01 3 planets):
+//     · 1 bg full-frame: ch6-bg.png
+//     · 2 opt parallax layers (single-layer fallback si no se generan):
+//       ch6-bg-stars-far.png, ch6-bg-nebulae-mid.png
+//     · 3 planets clickables: ch6-planet-ar-vr.png, ch6-planet-remoose.png, ch6-planet-software-mind.png
+//     · 2 ships decorativos: ch6-ship-1.png, ch6-ship-2.png
 //
 // JPG vs PNG decision (D4-W2-01):
 //   - Sprites/busts/foregrounds que necesitan alpha → .png (forge_sprite output)
 //   - Backgrounds opacos full-frame → .jpg (forge_background output, smaller filesize)
 //   pixelforge.forge_background outputs JPEG bytes naturally — usar .jpg matches the
 //   actual file format, no requiere conversión, mejor compresión para gradients/photos.
+//   ch6-bg.png queda como .png porque pixelforge en Phase 5 outputs PNG con paleta limitada
+//   (D5-04 synthwave 4-color palette → mejor compresión PNG indexada que JPEG).
 //
-// Si Phase 4 añade un descriptor nuevo (p.ej. ch4-particle.png), este regex
+// Si una fase añade un descriptor nuevo (p.ej. ch4-particle.png), este regex
 // debe actualizarse intencionalmente — el rojo guía a la decisión consciente.
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|fg-panels|fg-ships|hero)\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|planet-(ar-vr|remoose|software-mind)|ship-[12])\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).
