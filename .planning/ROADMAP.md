@@ -108,7 +108,7 @@ Plans:
 
 Plans:
 **Wave 1**
-- [ ] 05-01-PLAN.md — Wave 0: Scaffolding (data ch6 palette + 3 projects + theme block + i18n keys ES/EN + asset-naming regex extend + 15 test scaffolds RED para Phaser/Chapter6Content/ProjectOverlay/a11y/chapter-overlap)
+- [x] 05-01-PLAN.md — Wave 0: Scaffolding (data ch6 palette + 3 projects + theme block + i18n keys ES/EN + asset-naming regex extend + 15 test scaffolds RED para Phaser/Chapter6Content/ProjectOverlay/a11y/chapter-overlap)
 - [ ] 05-02-PLAN.md — Wave 1: Asset pipeline pixelforge + Adobe post — 8 assets ch6 (bg + 3 planets + 2 ships + 2 opt parallax) con palette enforced D5-04; ch6-bg.png ≤80KB Phase 6 budget
 
 **Wave 2** *(blocked on Wave 1 completion)*
