@@ -38,8 +38,9 @@ export const chapters = [
     eraKey: 'chapters.2.era',
     titleKey: 'chapters.2.title',
     avatarSrc: '/assets/ch2-bust.png',
-    // PENDING — CONTENT-CHECKLIST §5.1 (Rafael aprueba paleta Flash era)
-    palette: [],
+    // §5.1 stub Phase 2 (Rafael aprobó "usa stubs" en gate W2 — refresh
+    // real hex post-W5 si Rafael decide ajustar paleta Flash era)
+    palette: ['#2a1a4a', '#e0c0ff', '#ff8800', '#8060c0', '#ffaa00'],
   },
   {
     id: 3,

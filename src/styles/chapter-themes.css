@@ -67,9 +67,13 @@
     --c-accent: #ff8800;
     --c-border: #8060c0;
     --c-focus: #ffaa00;
+    --c-surface: #1a0a3a;
+    --bg-image: url('/assets/ch2-bg.jpg');
     --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
-    /* contrast(#e0c0ff, #2a1a4a) = 12.6:1 — chapter 2 stub (Flash era) — Phase 4
-       finaliza paleta + fondos pixel art */
+    /* contrast(#e0c0ff, #2a1a4a) = 12.6:1 — chapter 2 (Flash era) — Phase 4 W2 ✓
+       --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph
+       JPG porque pixelforge.forge_background outputs JPEG opaco (alpha no needed
+       para bg full-frame); ver D4-W2-01 en 04-03-SUMMARY */
   }
 
   /* ──────────────────────────────────────────────────────
