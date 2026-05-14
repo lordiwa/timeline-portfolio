@@ -118,7 +118,7 @@ Plans:
 - [x] 05-04-PLAN.md — Wave 3: Vue integration — Chapter6Content.vue (shallowRef + watch activeChapter lifecycle + HMR dispose + ResizeObserver Pitfall 8 guard + 3 sr-only buttons + mantra v-if + ProjectOverlay v-if stub) + ScrollShell wire + chapter-themes.css @layer components .ch6-layout NO overflow:hidden Pattern 12
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 05-05-PLAN.md — Wave 4: ProjectOverlay synthwave — modal Vue completo con backdrop blur + glow doble cyan+pink + focus trap manual ~30 LOC + ESC + click-outside + restore focus + mobile fullscreen + PRM instant
+- [x] 05-05-PLAN.md — Wave 4: ProjectOverlay synthwave — modal Vue completo con backdrop blur + glow doble cyan+pink + focus trap manual ~30 LOC + ESC + click-outside + restore focus + mobile fullscreen + PRM instant
 
 **Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 05-06-PLAN.md — Wave 5: Manual checklist + Rafael sign-off (única wave human-verify gate, autonomous=no) — 13 sections + §10 verdict; refresh i18n keys ch6 descs si CONTENT-CHECKLIST §2.5 actualizado paralelo
