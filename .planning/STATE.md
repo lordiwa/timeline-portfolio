@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase-closed
-stopped_at: Phase 4 context gathered
-last_updated: "2026-05-14T01:06:24.063Z"
+stopped_at: Phase 4 UI-SPEC approved
+last_updated: "2026-05-14T02:02:52.288Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 6
@@ -137,7 +137,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-14T01:06:24.051Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-chapters-0-2-4-5/04-CONTEXT.md
+Last session: 2026-05-14T02:02:52.258Z
+Stopped at: Phase 4 UI-SPEC approved
+Resume file: .planning/phases/04-chapters-0-2-4-5/04-UI-SPEC.md
 Next command: (después del sign-off) /gsd-execute-phase 3
