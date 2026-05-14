@@ -104,9 +104,12 @@
     --c-accent: #00ffff;
     --c-border: #2050a0;
     --c-focus: #00ffff;
+    --c-surface: #142050;
+    /* NO --bg-image — ch4 es self-contained parallax (D4-07): ParallaxLayers.vue
+       renderiza 4 <img> layers con z-index escalonado; BackgroundLayers.vue
+       global no se usa para ch4. --c-bg sólido sirve de fondo en gap de carga lazy. */
     --font-body: 'Audiowide', 'Eurostile', sans-serif;
-    /* contrast(#b0d0ff, #0a0f2e) = 11.8:1 — chapter 4 stub AR/VR — Phase 4 will
-       add parallax floating panels + ship sprites */
+    /* contrast(#b0d0ff, #0a0f2e) = 11.8:1 — chapter 4 (AR/VR) — Phase 4 W3 ✓ */
   }
 
   /* ──────────────────────────────────────────────────────

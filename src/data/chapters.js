@@ -59,8 +59,9 @@ export const chapters = [
     eraKey: 'chapters.4.era',
     titleKey: 'chapters.4.title',
     avatarSrc: '/assets/ch4-bust.png',
-    // PENDING — CONTENT-CHECKLIST §5.3 (Rafael aprueba paleta AR/VR)
-    palette: [],
+    // §5.3 stub Phase 2 (Rafael aprobó "usa stubs" en gate W3 — refresh
+    // real hex post-W5 si Rafael decide ajustar paleta AR/VR)
+    palette: ['#0a0f2e', '#b0d0ff', '#00ffff', '#2050a0', '#142050'],
   },
   {
     id: 5,
