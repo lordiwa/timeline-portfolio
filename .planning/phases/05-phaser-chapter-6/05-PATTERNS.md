@@ -142,14 +142,14 @@ create() {
   this.cameras.main.setScroll(0, 0)
   if (prefersReduced) {
     this.cameras.main.setScroll(0, ARRIVAL_DESCENT - 135)
-    this.game.events.emit('vue:arrival-complete')
+    this.game.events.emit('arrival-complete')
   } else {
     this.tweens.add({
       targets: this.cameras.main,
       scrollY: ARRIVAL_DESCENT - 135,
       duration: 3500,
       ease: 'Power2.easeOut',
-      onComplete: () => this.game.events.emit('vue:arrival-complete'),
+      onComplete: () => this.game.events.emit('arrival-complete'),
     })
   }
 }
@@ -162,7 +162,7 @@ planet.setInteractive(
   Phaser.Geom.Circle.Contains
 )
 planet.on('pointerdown', () => {
-  this.game.events.emit('vue:show-project', this.projectsData[idx].id)
+  this.game.events.emit('show-project', this.projectsData[idx].id)
 })
 ```
 
@@ -245,8 +245,8 @@ watch(activeChapter, async (v) => {
     if (!canvasHostRef.value) await nextTick()
     const { createGame } = await import('@/phaser')  // PHA-04 lazy
     game.value = createGame(canvasHostRef.value, { prefersReduced: prefersReduced.value })
-    game.value.events.on('vue:show-project', (id) => { activeProject.value = id })
-    game.value.events.on('vue:arrival-complete', () => { arrivalDone.value = true })
+    game.value.events.on('show-project', (id) => { activeProject.value = id })
+    game.value.events.on('arrival-complete', () => { arrivalDone.value = true })
   } else if (v !== 6 && game.value) {
     game.value.destroy(true, false)  // PHA-02
     game.value = null
@@ -894,7 +894,7 @@ describe('SpaceScene PRM behavior', () => {
     // Source-level regex en SpaceScene.js
     const src = readFileSync('src/phaser/SpaceScene.js', 'utf8')
     expect(src).toMatch(/prefersReduced[\s\S]*setScroll[\s\S]*ARRIVAL_DESCENT/)
-    expect(src).toMatch(/this\.game\.events\.emit\(['"]vue:arrival-complete['"]\)/)
+    expect(src).toMatch(/this\.game\.events\.emit\(['"]arrival-complete['"]\)/)
   })
 })
 ```
