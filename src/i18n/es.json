@@ -19,7 +19,13 @@
       "marqueeAria": "Banner decorativo era HTML 90s",
       "tableLabel": "Mis cosas favoritas (1999)"
     },
-    "2": { "title": "Flash era: gameplay programmer", "era": "Flash" },
+    "2": {
+      "title": "Flash era: gameplay programmer",
+      "era": "Flash",
+      "flavor": "Era Flash 2009. ActionScript, banners vector, gameplay arcade.",
+      "bannerTitle": "Era Flash · 2009",
+      "bannerSubtitle": "BlueLizard / Matte CG / Joju Games"
+    },
     "3": { "title": "Web 2.0: UX + dev + líder", "era": "Web 2.0" },
     "4": { "title": "AR/VR: empresa propia + Metrodigi", "era": "AR/VR" },
     "5": { "title": "Modern: streaming, QA, frontend lead", "era": "Modern" },
@@ -56,6 +62,18 @@
     "pp1": {
       "title": "PENDING — CONTENT-CHECKLIST §2.2 (nombre proyecto #1 Pink Parrot ES)",
       "desc": "PENDING — CONTENT-CHECKLIST §2.2 (descripción proyecto #1 ES)"
+    },
+    "ch2-bluelizard": {
+      "title": "BlueLizard Games",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en BlueLizard ES)"
+    },
+    "ch2-matte": {
+      "title": "Matte CG",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en Matte CG ES)"
+    },
+    "ch2-joju": {
+      "title": "Joju Games",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en Joju Games ES)"
     }
   },
   "contact": {

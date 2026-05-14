@@ -1,27 +1,65 @@
 // src/data/projects.js — CON-06 array canonical de proyectos.
 // Shape D3-03 (locked): { id, chapterEra, year, titleKey, descKey, link, imageSrc, role, techStack, planetSprite, planetOrbit, planetColor }.
-// Phase 5 fields (planetSprite, planetOrbit, planetColor): `null` en Phase 3; Phase 5 los pobla para ch6.
-// Phase 3 SCOPE: solo proyectos ch3 Pink Parrot (1-3 desde CONTENT-CHECKLIST §2.2). Phase 4 añade ch2/ch4/ch5; Phase 5 añade ch6 con planet metadata.
+// Phase 5 fields (planetSprite, planetOrbit, planetColor): `null` en Phases 3-4; Phase 5 los pobla para ch6.
 // Convención de IDs: chN-<slug> o ppN (pink parrot N) — string corto único.
 //
-// Estado actual: PENDING — CONTENT-CHECKLIST §2.2 (Rafael llena nombres, descripciones, links ch3 Pink Parrot).
-// Cuando Rafael entregue contenido, el executor añade 1-3 items siguiendo el shape D3-03 locked.
+// Estado actual:
+// - ch3 Pink Parrot (Phase 3 Plan 03-04): PENDING — CONTENT-CHECKLIST §2.2.
+// - ch2 Flash era (Phase 4 Plan 04-03): 3 stubs aprobados por Rafael en gate W2
+//   ("usa stubs"). Refresh con datos reales en CONTENT-CHECKLIST §2.1 + W5 sign-off.
+// - ch4 AR/VR (Phase 4 Plan 04-04): pending §2.3.
+// - ch5 Modern (Phase 4 Plan 04-05): pending §2.4.
+// - ch6 Phaser scene (Phase 5): pending §2.5 + planet metadata.
 
 export const projects = [
-  // PENDING — CONTENT-CHECKLIST §2.2 (proyectos ch3 Pink Parrot — 1 a 3 items)
-  // Ejemplo de shape esperado (descomentar y llenar cuando Rafael entregue contenido):
-  // {
-  //   id: 'pp1',
-  //   chapterEra: 3,
-  //   year: 2013,
-  //   titleKey: 'projects.pp1.title',
-  //   descKey: 'projects.pp1.desc',
-  //   link: null,          // URL del proyecto o null
-  //   imageSrc: null,      // Phase 4 puede añadir
-  //   role: null,          // e.g., 'UX Lead + Web Developer'
-  //   techStack: null,     // e.g., ['CSS3', 'jQuery', 'PHP']
-  //   planetSprite: null,  // Phase 5
-  //   planetOrbit: null,   // Phase 5
-  //   planetColor: null,   // Phase 5
-  // },
+  // ─────────────────────────────────────────────────────────────────
+  // ch2 — Flash era 2009 (BlueLizard / Matte CG / Joju Games)
+  // Stubs Phase 4 W2 (D4-W2-02): titles = nombre estudio, descs = PENDING marker.
+  // Rafael edita CONTENT-CHECKLIST §2.1 → executor refresca i18n keys post-W5.
+  // ─────────────────────────────────────────────────────────────────
+  {
+    id: 'ch2-bluelizard',
+    chapterEra: 2,
+    year: 2009,
+    titleKey: 'projects.ch2-bluelizard.title',
+    descKey: 'projects.ch2-bluelizard.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Gameplay Programmer',
+    techStack: ['ActionScript 3', 'Flash CS5'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch2-matte',
+    chapterEra: 2,
+    year: 2009,
+    titleKey: 'projects.ch2-matte.title',
+    descKey: 'projects.ch2-matte.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Gameplay Programmer',
+    techStack: ['ActionScript 3'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch2-joju',
+    chapterEra: 2,
+    year: 2009,
+    titleKey: 'projects.ch2-joju.title',
+    descKey: 'projects.ch2-joju.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Gameplay Programmer',
+    techStack: ['ActionScript 3', 'Flash CS5'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+
+  // PENDING — ch3 Pink Parrot (CONTENT-CHECKLIST §2.2)
+  // Cuando Rafael entregue contenido, el executor añade 1-3 items shape D3-03.
 ]

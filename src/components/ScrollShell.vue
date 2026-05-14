@@ -23,6 +23,7 @@ import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Chapter0Content from './Chapter0Content.vue'
 import Chapter1Content from './Chapter1Content.vue'
+import Chapter2Content from './Chapter2Content.vue'
 import Chapter3Content from './Chapter3Content.vue'
 
 // Single source of truth para los chapters de Phase 1. Copiado de UI-SPEC §7.1.
@@ -86,6 +87,7 @@ defineExpose({ shellEl })
     >
       <Chapter0Content v-if="ch.id === 0" />
       <Chapter1Content v-else-if="ch.id === 1" />
+      <Chapter2Content v-else-if="ch.id === 2" />
       <Chapter3Content v-else-if="ch.id === 3" />
       <div v-else class="chapter-placeholder">
         <p class="era-title">{{ ch.year }} · {{ ch.era }}</p>

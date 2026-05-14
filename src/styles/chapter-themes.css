@@ -249,6 +249,87 @@
       0 1px 2px rgba(0, 0, 0, 0.25),
       inset 0 2px 3px rgba(0, 0, 0, 0.1);
   }
+
+  /* ─────────────────────────────────────────────────────────
+   * Phase 4 W2 — ch2 Flash era 2009 (Plan 04-03)
+   * FlashBanner skeumorphic header + ProjectCard variant Flash-era
+   * Source: UI-SPEC §6.4 (banner DOM) + §6.9 (project-card variants ch2)
+   * ───────────────────────────────────────────────────────── */
+
+  /* FlashBanner — header skeumorphic 2009 con orange→deep gradient + chrome dots */
+  [data-chapter="2"] .flash-banner {
+    position: relative;
+    border-radius: 8px;
+    padding: var(--sp-lg);
+    background: linear-gradient(to bottom, #ff8800 0%, #cc6600 50%, #883300 100%);
+    border: 2px solid #ffaa00;
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    margin-bottom: var(--sp-md);
+  }
+
+  [data-chapter="2"] .flash-banner-chrome {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 32px;
+    height: 8px;
+    /* 3 dots simulando window controls (red/yellow/green) */
+    background:
+      radial-gradient(circle 4px at 4px center, #ff5f56 0%, #ff5f56 70%, transparent 80%),
+      radial-gradient(circle 4px at 16px center, #ffbd2e 0%, #ffbd2e 70%, transparent 80%),
+      radial-gradient(circle 4px at 28px center, #27c93f 0%, #27c93f 70%, transparent 80%);
+  }
+
+  [data-chapter="2"] .flash-banner-title {
+    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
+    color: #ffffff;
+    text-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.4),
+      0 -1px 0 rgba(255, 255, 255, 0.4);
+    margin: var(--sp-sm) 0 var(--sp-xs) 0;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+  }
+
+  [data-chapter="2"] .flash-banner-subtitle {
+    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  /* ProjectCard variant Flash era 2009 — orange-purple gradient sobre superficie púrpura */
+  [data-chapter="2"] .project-card {
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(255, 136, 0, 0.18) 0%,
+        rgba(128, 96, 192, 0.08) 50%,
+        rgba(0, 0, 0, 0.1) 100%
+      ),
+      var(--c-surface, #1a0a3a);
+    border: 2px solid var(--c-accent);  /* #ff8800 orange */
+    box-shadow:
+      0 6px 16px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  [data-chapter="2"] .project-card-title {
+    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
+    color: var(--c-fg);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  [data-chapter="2"] .project-card-link {
+    background: linear-gradient(
+      to bottom,
+      var(--c-accent),
+      color-mix(in srgb, var(--c-accent) 60%, #000)
+    );
+    border-radius: 4px;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────
