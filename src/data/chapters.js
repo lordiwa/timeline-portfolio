@@ -81,7 +81,9 @@ export const chapters = [
     eraKey: 'chapters.6.era',
     titleKey: 'chapters.6.title',
     avatarSrc: '/assets/ch6-bust.png',
-    // PENDING — CONTENT-CHECKLIST §5.5 (Rafael aprueba paleta Phaser space)
-    palette: [],
+    // §5.5 Phase 5 W0 — paleta synthwave D5-04 locked (deep purple + hot pink + cyan + amber).
+    // Source: 05-CONTEXT §Decisions D5-04. NOTA: este edit extiende artefacto Phase 3 (CON-05);
+    // ownership del req permanece en Phase 3 — Phase 5 sólo pobla el slot reservado.
+    palette: ['#1a0e3d', '#ff3ca6', '#4dffff', '#ffd95c'],
   },
 ]

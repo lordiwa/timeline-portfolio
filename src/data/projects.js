@@ -170,6 +170,59 @@ export const projects = [
     planetColor: null,
   },
 
+  // ─────────────────────────────────────────────────────────────────
+  // ch6 — Convergencia 2026: 3 planetas-proyecto Phaser scene (D5-01 locked)
+  // Mapping vertical descendente (cronológico ascendente):
+  //   ch6-ar-vr (2015-18, founder)       → planetOrbit:0.2 hot pink #ff3ca6
+  //   ch6-remoose (2023+, full stack)     → planetOrbit:0.5 cyan #4dffff
+  //   ch6-software-mind (2023+, QA+AI)    → planetOrbit:0.8 amber #ffd95c
+  // Phase 5 W0 — extiende artefacto Phase 3 (CON-06). Ownership permanece en Phase 3.
+  // titleKey/descKey son stubs (patrón D4-09 ch2/ch4/ch5); Rafael refresca via
+  // CONTENT-CHECKLIST §2.5 post-W5 sign-off si quiere copy real.
+  // ─────────────────────────────────────────────────────────────────
+  {
+    id: 'ch6-ar-vr',
+    chapterEra: 6,
+    year: 2015,
+    titleKey: 'projects.ch6-ar-vr.title',
+    descKey: 'projects.ch6-ar-vr.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Founder / Tech Lead',
+    techStack: ['Unity', 'ARKit', 'Vuforia'],
+    planetSprite: '/assets/ch6-planet-ar-vr.png',
+    planetOrbit: 0.2,
+    planetColor: '#ff3ca6',
+  },
+  {
+    id: 'ch6-remoose',
+    chapterEra: 6,
+    year: 2023,
+    titleKey: 'projects.ch6-remoose.title',
+    descKey: 'projects.ch6-remoose.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Full Stack Engineer',
+    techStack: ['Vue 3', 'Vite', 'TypeScript'],
+    planetSprite: '/assets/ch6-planet-remoose.png',
+    planetOrbit: 0.5,
+    planetColor: '#4dffff',
+  },
+  {
+    id: 'ch6-software-mind',
+    chapterEra: 6,
+    year: 2023,
+    titleKey: 'projects.ch6-software-mind.title',
+    descKey: 'projects.ch6-software-mind.desc',
+    link: null,
+    imageSrc: null,
+    role: 'QA Specialist · AI/Data Science Automation',
+    techStack: ['Python', 'AWS', 'Playwright'],
+    planetSprite: '/assets/ch6-planet-software-mind.png',
+    planetOrbit: 0.8,
+    planetColor: '#ffd95c',
+  },
+
   // PENDING — ch3 Pink Parrot (CONTENT-CHECKLIST §2.2)
   // Cuando Rafael entregue contenido, el executor añade 1-3 items shape D3-03.
 ]

@@ -65,4 +65,29 @@ describe('chapters shape contract (CON-05 + ART-06)', () => {
       expect(Array.isArray(chapters[i].palette)).toBe(true)
     }
   })
+
+  // T6..T8 — Phase 5 W0: paleta synthwave ch6 D5-04 locked.
+  // El array chapters[6].palette debe contener los 4 hex synthwave (deep purple +
+  // hot pink + electric cyan + soft amber). Verde tras Task 2 commit; antes RED.
+
+  it('T6 — chapters[6].palette tiene length >= 4 (D5-04 synthwave 4-color)', () => {
+    expect(chapters[6].palette.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('T7 — chapters[6].palette: cada elemento es hex code válido #RRGGBB', () => {
+    chapters[6].palette.forEach((hex) => {
+      expect(hex).toMatch(/^#[0-9a-fA-F]{6}$/)
+    })
+  })
+
+  it('T8 — chapters[6].palette contiene los 4 hex D5-04 synthwave exactos', () => {
+    // D5-04 locked:
+    //   #1a0e3d deep purple (bg gradient base)
+    //   #ff3ca6 hot pink (accent ships + planet highlights)
+    //   #4dffff electric cyan (planet halos + tooltips + UI)
+    //   #ffd95c soft amber (easter egg mantra + accent secundario)
+    expect(chapters[6].palette).toEqual(
+      expect.arrayContaining(['#1a0e3d', '#ff3ca6', '#4dffff', '#ffd95c'])
+    )
+  })
 })
