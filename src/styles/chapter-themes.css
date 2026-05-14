@@ -132,20 +132,29 @@
   }
 
   /* ──────────────────────────────────────────────────────
-   * ch6 — Phaser/AI (2025+, ~40 años) — STUB Phase 2
-   * Era: gamedev interactivo, IA generativa, pixel art retro-futurista,
-   * deep space black-blue, amber accents.
-   * Phase 5 finaliza la escena Phaser completa + ships + planets.
+   * ch6 — Phaser/AI Convergencia (2026, ~42 años) — Phase 5 W0 finalizado
+   * Era: gamedev interactivo, IA generativa, pixel art lo-fi vaporwave/synthwave,
+   * deep purple gradient, neon hot-pink + cyan + soft amber mantra accents.
+   * Phase 5 W1-W5 finaliza la escena Phaser completa + ships + planets + overlay.
+   * NOTA: este bloque extiende artefacto Phase 2 (THM-01/03/05) — Phase 5 sólo añade el slot
+   * [data-chapter="6"] finalizado con paleta D5-04 synthwave + --bg-image. Ownership del req
+   * permanece en Phase 2.
    * ────────────────────────────────────────────────────── */
   [data-chapter="6"] {
-    --c-bg: #000814;
-    --c-fg: #c0e0ff;
-    --c-accent: #ffaa00;
-    --c-border: #1a4080;
-    --c-focus: #ffaa00;
-    --font-body: 'Press Start 2P', monospace;
-    /* contrast(#c0e0ff, #000814) = 10.8:1 — chapter 6 stub Phaser — Phase 5 owns
-       scene + ships + planets */
+    --c-bg: #1a0e3d;                       /* deep purple D5-04 (bg gradient base) */
+    --c-fg: #c0e0ff;                       /* readable cool-blue sobre deep purple */
+    --c-accent: #4dffff;                   /* electric cyan (planet halos + UI) */
+    --c-accent-2: #ff3ca6;                 /* hot pink (ships + planet highlights) */
+    --c-mantra: #ffd95c;                   /* soft amber (easter egg mantra fade-in) */
+    --c-border: #4dffff;
+    --c-focus: #ffd95c;
+    --c-surface: #0a061f;                  /* near-black starfield contrast */
+    --bg-image: url('/assets/ch6-bg.png'); /* BackgroundLayers crossfade ch5→ch6 (D2-04) */
+    --font-body: 'Audiowide', sans-serif;
+    /* contrast(#c0e0ff, #1a0e3d) ≈ 10.6:1 — chapter 6 (Phaser synthwave) — Phase 5 W0 ✓
+       --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph
+       PNG porque pixelforge.forge_background en Phase 5 outputs PNG indexado con
+       paleta D5-04 4-color (mejor compresión que JPEG para gradients lisos). */
   }
 
 }

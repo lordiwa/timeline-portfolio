@@ -37,7 +37,12 @@
       "era": "Modern",
       "flavor": "Era Modern 2022-23. Frontend lead, QA leadership, streaming, convergencia QA + AI."
     },
-    "6": { "title": "Convergencia: QA + AI", "era": "Convergencia" }
+    "6": {
+      "title": "Convergencia: QA + AI",
+      "era": "Convergencia",
+      "flavor": "2026. Convergencia: dev + QA + AI en un solo espacio. La nave aterriza.",
+      "mantra": "Y siempre muestra una sonrisa"
+    }
   },
   "ui": {
     "skipLink": "Saltar al contenido",
@@ -49,7 +54,8 @@
       "navAria": "Navegación de capítulos por era",
       "tickAria": "Ir a {era} ({year})"
     },
-    "openProject": "Ver proyecto →"
+    "openProject": "Ver proyecto →",
+    "closeOverlay": "Cerrar"
   },
   "avatar": {
     "ariaTemplate": "Avatar de Rafael — capítulo {chapter} activo",
@@ -110,6 +116,18 @@
     "ch5-remoose": {
       "title": "Remoose",
       "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe convergencia QA + Frontend en Remoose ES)"
+    },
+    "ch6-ar-vr": {
+      "title": "Empresa propia AR/VR",
+      "desc": "PENDING — Rafael refresca via CONTENT-CHECKLIST §2.5: empresa AR/VR aplicada a publicidad y entrenamiento corporativo, 2015-18."
+    },
+    "ch6-remoose": {
+      "title": "Remoose Interactive",
+      "desc": "PENDING — Rafael refresca §2.5: full stack remoto Vancouver, 2023-presente."
+    },
+    "ch6-software-mind": {
+      "title": "Software Mind NA",
+      "desc": "PENDING — Rafael refresca §2.5: QA + AI data science automation, 2023-presente."
     }
   },
   "contact": {

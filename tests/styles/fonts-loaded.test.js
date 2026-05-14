@@ -69,13 +69,16 @@ describe('Fonts — source-level (Task 5.1)', () => {
     // Los imports usan subsets específicos (/latin.css, /latin-ext.css) para mantener
     // el bundle en el rango 150-350 KB (D2-08). Esto cubre ES/EN (Open-Q2-E).
     // ch5 (Inter Variable) usa un CSS local selector en src/styles/inter-variable-latin.css.
+    // Phase 5 W0: ch6 reusa @fontsource/audiowide (mismo paquete que ch4) — vibe synthwave D5-04.
+    // @fontsource/press-start-2p sigue presente en deps + main.js como reserva (no eliminado en W0;
+    // ownership de remoción queda fuera scope Phase 5).
     const expectedPackages = [
       `@fontsource/vt323`,          // ch0
       `@fontsource/comic-neue`,     // ch1
       `@fontsource/lobster`,        // ch3
-      `@fontsource/audiowide`,      // ch4
+      `@fontsource/audiowide`,      // ch4 + ch6 (Phase 5 D5-04 synthwave)
       `inter-variable-latin`,       // ch5 — selector local apuntando a @fontsource-variable/inter files
-      `@fontsource/press-start-2p`, // ch6
+      `@fontsource/press-start-2p`, // reserva (Phase 2 stub, no consumido por ningún chapter post-Phase 5)
     ]
     for (const pkg of expectedPackages) {
       expect(mainSource, `Falta referencia a ${pkg} en main.js`).toContain(pkg)
@@ -93,6 +96,8 @@ describe('Fonts — source-level (Task 5.1)', () => {
   })
 
   it('T5: chapter-themes.css declara --font-body correcto para cada chapter (incluye ch2 system-safe)', () => {
+    // Phase 5 W0: ch6 cambia de 'Press Start 2P' (Phase 2 stub) a 'Audiowide'
+    // (D5-04 synthwave-friendly: vapor/vaporwave aesthetic).
     const fontMappings = [
       { chapter: 'ch0', pattern: /\[data-chapter="0"\][\s\S]*?--font-body\s*:\s*['"]VT323['"]/ },
       { chapter: 'ch1', pattern: /\[data-chapter="1"\][\s\S]*?--font-body\s*:\s*['"]Comic Neue['"]/ },
@@ -100,7 +105,7 @@ describe('Fonts — source-level (Task 5.1)', () => {
       { chapter: 'ch3', pattern: /\[data-chapter="3"\][\s\S]*?--font-body\s*:\s*['"]Lobster['"]/ },
       { chapter: 'ch4', pattern: /\[data-chapter="4"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },
       { chapter: 'ch5', pattern: /\[data-chapter="5"\][\s\S]*?--font-body\s*:\s*['"]Inter Variable['"]/ },
-      { chapter: 'ch6', pattern: /\[data-chapter="6"\][\s\S]*?--font-body\s*:\s*['"]Press Start 2P['"]/ },
+      { chapter: 'ch6', pattern: /\[data-chapter="6"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },
     ]
     for (const { chapter, pattern } of fontMappings) {
       expect(themesSource, `chapter-themes.css: ${chapter} --font-body no matchea`).toMatch(pattern)
