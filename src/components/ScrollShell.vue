@@ -26,6 +26,7 @@ import Chapter1Content from './Chapter1Content.vue'
 import Chapter2Content from './Chapter2Content.vue'
 import Chapter3Content from './Chapter3Content.vue'
 import Chapter4Content from './Chapter4Content.vue'
+import Chapter5Content from './Chapter5Content.vue'
 
 // Single source of truth para los chapters de Phase 1. Copiado de UI-SPEC §7.1.
 const chapters = [
@@ -91,6 +92,7 @@ defineExpose({ shellEl })
       <Chapter2Content v-else-if="ch.id === 2" />
       <Chapter3Content v-else-if="ch.id === 3" />
       <Chapter4Content v-else-if="ch.id === 4" />
+      <Chapter5Content v-else-if="ch.id === 5" />
       <div v-else class="chapter-placeholder">
         <p class="era-title">{{ ch.year }} · {{ ch.era }}</p>
       </div>

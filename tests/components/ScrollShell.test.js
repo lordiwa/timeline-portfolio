@@ -112,23 +112,15 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: 2 non-ch{0,1,2,3,4} sections tienen <p class="era-title"> (UI-SPEC §7.1)
-  // NOTA: Plan 04-02 (W1) wire ch0+ch1; Plan 04-03 (W2) wire ch2; Plan 04-04 (W3) wire ch4.
-  // Por eso solo 2 sections mantienen el placeholder (ch5, ch6).
+  // Test 4: 1 non-ch{0..5} section tiene <p class="era-title"> (UI-SPEC §7.1)
+  // Plan 04-02 (W1) wire ch0+ch1; Plan 04-03 (W2) wire ch2; Plan 04-04 (W3) wire ch4;
+  // Plan 04-05 (W4) wire ch5. Solo ch6 mantiene placeholder (Phase 5 lo wire).
   // ─────────────────────────────────────────────────────────────────────────
-  it('2 non-ch{0,1,2,3,4} sections contain era-title with "YYYY · {era}" copy (ch0/1/2/3/4 use ChapterNContent)', () => {
+  it('1 non-ch{0..5} section contain era-title with "YYYY · {era}" copy (ch0..ch5 use ChapterNContent)', () => {
     const wrapper = mountBasic()
-    const expected = [
-      // '1995 · Terminal' → ch0 usa Chapter0Content
-      // '2001 · HTML 90s' → ch1 usa Chapter1Content
-      // '2009 · Flash'    → ch2 usa Chapter2Content (Plan 04-03)
-      // '2013 · Web 2.0'  → ch3 usa Chapter3Content
-      // '2015 · AR/VR'    → ch4 usa Chapter4Content (Plan 04-04)
-      '2022 · Modern',
-      '2026 · Phaser',
-    ]
+    const expected = ['2026 · Phaser']
     const titles = wrapper.findAll('.era-title')
-    expect(titles.length).toBe(2)
+    expect(titles.length).toBe(1)
     titles.forEach((t, idx) => {
       expect(t.text()).toBe(expected[idx])
     })
@@ -328,11 +320,11 @@ describe('ScrollShell ch3 integration (Plan 03-03)', () => {
     expect(ch1Section.find('.chapter-placeholder').exists()).toBe(false)
   })
 
-  // T3: sections data-chapter 5,6 mantienen el .era-title placeholder
-  // (Plan 04-04 Wave 3 wire ch4 → ahora solo ch5/6 en placeholder)
-  it('sections data-chapter 5,6 mantienen .era-title placeholder (ch0..ch4 wired)', () => {
+  // T3: section data-chapter 6 mantiene el .era-title placeholder
+  // (Plan 04-05 Wave 4 wire ch5 → ahora solo ch6 en placeholder; Phase 5 lo wire)
+  it('section data-chapter 6 mantiene .era-title placeholder (ch0..ch5 wired)', () => {
     const { wrapper } = mountShell()
-    const nonWiredIds = [5, 6]
+    const nonWiredIds = [6]
     nonWiredIds.forEach((id) => {
       const section = wrapper.find(`section[data-chapter="${id}"]`)
       expect(section.find('.era-title').exists()).toBe(true)

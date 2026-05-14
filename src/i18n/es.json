@@ -32,7 +32,11 @@
       "era": "AR/VR",
       "flavor": "Era AR/VR 2015-18. Paneles holográficos, profundidad espacial, AR aplicado a publicidad y entrenamiento."
     },
-    "5": { "title": "Modern: streaming, QA, frontend lead", "era": "Modern" },
+    "5": {
+      "title": "Modern: streaming, QA, frontend lead",
+      "era": "Modern",
+      "flavor": "Era Modern 2022-23. Frontend lead, QA leadership, streaming, convergencia QA + AI."
+    },
     "6": { "title": "Convergencia: QA + AI", "era": "Convergencia" }
   },
   "ui": {
@@ -86,6 +90,26 @@
     "ch4-metrodigi": {
       "title": "Metrodigi",
       "desc": "PENDING — CONTENT-CHECKLIST §2.3 (Rafael describe role Frontend Engineer en Metrodigi ES)"
+    },
+    "ch5-bairesdev": {
+      "title": "BairesDev",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role Frontend Lead en BairesDev ES)"
+    },
+    "ch5-number8": {
+      "title": "number8",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role en number8 ES)"
+    },
+    "ch5-vivoenvivo": {
+      "title": "VivoEnVivo",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe streaming Vue + WebRTC en VivoEnVivo ES)"
+    },
+    "ch5-rocketsnail": {
+      "title": "RocketSnail",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role en RocketSnail ES)"
+    },
+    "ch5-remoose": {
+      "title": "Remoose",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe convergencia QA + Frontend en Remoose ES)"
     }
   },
   "contact": {

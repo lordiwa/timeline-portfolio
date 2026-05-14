@@ -94,6 +94,82 @@ export const projects = [
     planetColor: null,
   },
 
+  // ─────────────────────────────────────────────────────────────────
+  // ch5 — Modern 2022-23 (BairesDev / number8 / VivoEnVivo / RocketSnail / Remoose)
+  // 5 stubs Phase 4 W4 (D4-W4-01): titles=nombre empresa, descs=PENDING marker.
+  // Rafael edita CONTENT-CHECKLIST §2.4 → executor refresca i18n keys post-W5.
+  // ─────────────────────────────────────────────────────────────────
+  {
+    id: 'ch5-bairesdev',
+    chapterEra: 5,
+    year: 2022,
+    titleKey: 'projects.ch5-bairesdev.title',
+    descKey: 'projects.ch5-bairesdev.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Frontend Lead',
+    techStack: ['Vue 3', 'TypeScript', 'Vitest'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch5-number8',
+    chapterEra: 5,
+    year: 2022,
+    titleKey: 'projects.ch5-number8.title',
+    descKey: 'projects.ch5-number8.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Senior Frontend Engineer',
+    techStack: ['React', 'TypeScript'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch5-vivoenvivo',
+    chapterEra: 5,
+    year: 2022,
+    titleKey: 'projects.ch5-vivoenvivo.title',
+    descKey: 'projects.ch5-vivoenvivo.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Frontend Engineer',
+    techStack: ['Vue', 'WebRTC'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch5-rocketsnail',
+    chapterEra: 5,
+    year: 2023,
+    titleKey: 'projects.ch5-rocketsnail.title',
+    descKey: 'projects.ch5-rocketsnail.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Frontend Engineer',
+    techStack: ['Vue 3', 'Pinia'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch5-remoose',
+    chapterEra: 5,
+    year: 2023,
+    titleKey: 'projects.ch5-remoose.title',
+    descKey: 'projects.ch5-remoose.desc',
+    link: null,
+    imageSrc: null,
+    role: 'QA + Frontend',
+    techStack: ['Vue', 'Playwright'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+
   // PENDING — ch3 Pink Parrot (CONTENT-CHECKLIST §2.2)
   // Cuando Rafael entregue contenido, el executor añade 1-3 items shape D3-03.
 ]
