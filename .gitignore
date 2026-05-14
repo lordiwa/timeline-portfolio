@@ -7,3 +7,8 @@ dist
 
 # Documentos personales fuera del repo
 Profile.pdf
+
+# Fotos de referencia para pixelforge (privacy gate Phase 4 D4-02)
+# Vite las sirve en dev local pero NO deben commitearse al repo.
+# Phase 6 deploy gate añadirá exclusión en firebase.json para que no se deployen.
+public/references/
