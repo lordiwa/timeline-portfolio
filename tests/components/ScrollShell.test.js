@@ -33,6 +33,17 @@ import Chapter1Content from '@/components/Chapter1Content.vue'
 import Chapter3Content from '@/components/Chapter3Content.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
+// Phase 5 W3 (Plan 05-04): ScrollShell monta Chapter6Content para data-chapter=6.
+// Mock del factory @/phaser previene unhandled rejection cuando algún test (Test 9
+// bounds activeChapter=6) dispara el lazy import dinámico durante el watch immediate.
+vi.mock('@/phaser', () => ({
+  createGame: vi.fn(() => ({
+    events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+    scale: { zoom: 3, setZoom: vi.fn() },
+    destroy: vi.fn(),
+  })),
+}))
+
 // Helper para los tests de keyboard navigation: monta ScrollShell con provides
 // mutables + plugin i18n. Retorna { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }.
 function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es' } = {}) {
@@ -112,18 +123,15 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: 1 non-ch{0..5} section tiene <p class="era-title"> (UI-SPEC §7.1)
+  // Test 4: TODAS las sections wired post-Phase 5 W3 — NO .era-title visible.
   // Plan 04-02 (W1) wire ch0+ch1; Plan 04-03 (W2) wire ch2; Plan 04-04 (W3) wire ch4;
-  // Plan 04-05 (W4) wire ch5. Solo ch6 mantiene placeholder (Phase 5 lo wire).
+  // Plan 04-05 (W4) wire ch5; Plan 05-04 (Phase 5 W3) wire ch6 con Chapter6Content.
+  // El <div v-else class="chapter-placeholder"> queda como dead-branch defensive.
   // ─────────────────────────────────────────────────────────────────────────
-  it('1 non-ch{0..5} section contain era-title with "YYYY · {era}" copy (ch0..ch5 use ChapterNContent)', () => {
+  it('NO .era-title visible — todos los 7 chapters wired post-Phase 5 W3 (placeholder dead-branch)', () => {
     const wrapper = mountBasic()
-    const expected = ['2026 · Phaser']
     const titles = wrapper.findAll('.era-title')
-    expect(titles.length).toBe(1)
-    titles.forEach((t, idx) => {
-      expect(t.text()).toBe(expected[idx])
-    })
+    expect(titles.length).toBe(0)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -320,14 +328,12 @@ describe('ScrollShell ch3 integration (Plan 03-03)', () => {
     expect(ch1Section.find('.chapter-placeholder').exists()).toBe(false)
   })
 
-  // T3: section data-chapter 6 mantiene el .era-title placeholder
-  // (Plan 04-05 Wave 4 wire ch5 → ahora solo ch6 en placeholder; Phase 5 lo wire)
-  it('section data-chapter 6 mantiene .era-title placeholder (ch0..ch5 wired)', () => {
+  // T3: section data-chapter 6 monta Chapter6Content post-Phase 5 W3 (Plan 05-04).
+  // El placeholder queda como dead-branch defensive (no afecta render).
+  it('section[data-chapter="6"] monta Chapter6Content (.ch6-layout visible, no placeholder)', () => {
     const { wrapper } = mountShell()
-    const nonWiredIds = [6]
-    nonWiredIds.forEach((id) => {
-      const section = wrapper.find(`section[data-chapter="${id}"]`)
-      expect(section.find('.era-title').exists()).toBe(true)
-    })
+    const ch6Section = wrapper.find('section[data-chapter="6"]')
+    expect(ch6Section.find('.ch6-layout').exists()).toBe(true)
+    expect(ch6Section.find('.era-title').exists()).toBe(false)
   })
 })

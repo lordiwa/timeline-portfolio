@@ -458,6 +458,86 @@
   [data-chapter="5"] .project-card-link:hover {
     text-decoration: underline;
   }
+
+  /* ─────────────────────────────────────────────────────────
+   * Phase 5 W3 — ch6 canvas Phaser + mantra HTML (Plan 05-04)
+   *
+   * D5-09 — canvas full-bleed: .ch6-layout SIN overflow:hidden (Pattern 12
+   *   mitigation chapter-overlap bug Phase 4 deferred). overflow:hidden creaba
+   *   stacking context problemático en .ch4-layout — ch6 lo evita explícitamente.
+   * D5-03 + CON-04 — mantra HTML/Vue (no render dentro de Phaser): mejor
+   *   crispness + i18n directo + screen-reader accessible.
+   * D5-08 + A11Y-05 — bajo PRM, mantra aparece sin fade (animation:none).
+   *
+   * NOTA: el bloque .ch6-canvas-host canvas establece display:block para
+   * eliminar el inline-baseline gap default; image-rendering: pixelated ya
+   * está declarado global en index.html (CLAUDE.md §1).
+   * ───────────────────────────────────────────────────────── */
+
+  [data-chapter="6"] .ch6-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Deliberadamente SIN clipping aquí — Pattern 12 mitigation del chapter-overlap
+       bug Phase 4 deferred 2026-05-14. En .ch4-layout, la combinación
+       `position:relative` + clipping creaba un stacking context que dejaba a ch5
+       filtrarse durante scroll-snap. ch6 NO repite el patrón: el canvas Phaser
+       ocupa inset:0 con su propio z-index implícito (auto = layout flow), sin
+       necesidad de cortar el contenido del contenedor. */
+  }
+
+  [data-chapter="6"] .ch6-canvas-host {
+    position: absolute;
+    inset: 0;
+  }
+
+  [data-chapter="6"] .ch6-canvas-host canvas {
+    display: block;
+    /* image-rendering: pixelated ya global en index.html (CLAUDE.md §1). */
+  }
+
+  /* D5-03 — mantra HTML fade-in al fin del arrival (D5-02).
+     Position absolute bottom 80px + safe-area-inset-bottom (iOS notch).
+     z-index 40 — encima del canvas (auto) pero debajo de LangToggle/SkipLink (50+). */
+  [data-chapter="6"] .ch6-mantra {
+    position: absolute;
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Audiowide', sans-serif;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: var(--c-mantra, #ffd95c);
+    text-shadow: 0 0 12px rgba(255, 217, 92, 0.6);
+    opacity: 0;
+    animation: mantra-fade-in 400ms ease-out forwards;
+    pointer-events: none;
+    text-align: center;
+    white-space: nowrap;
+    z-index: 40;
+    margin: 0;
+  }
+
+  @keyframes mantra-fade-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 8px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  /* D5-08 + A11Y-05 — bajo PRM, mantra aparece sin fade (instant).
+     Cinturón de seguridad CSS-side; el JS-side ya pasa prefersReduced al
+     factory pero esto garantiza render correcto incluso si JS no corre. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-chapter="6"] .ch6-mantra {
+      animation: none;
+      opacity: 1;
+      transform: translateX(-50%);
+    }
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────

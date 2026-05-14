@@ -8,6 +8,17 @@ import { ref } from 'vue'
 import ScrollShell from '@/components/ScrollShell.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
+// Phase 5 W3 (Plan 05-04): ScrollShell ahora monta Chapter6Content para data-chapter=6.
+// Chapter6Content hace `await import('@/phaser')` lazy cuando activeChapter===6 (PHA-04).
+// En jsdom, cargar Phaser real crashea por canvas API faltante — mockear el factory.
+vi.mock('@/phaser', () => ({
+  createGame: vi.fn(() => ({
+    events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
+    scale: { zoom: 3, setZoom: vi.fn() },
+    destroy: vi.fn(),
+  })),
+}))
+
 function mountShell({ initialChapter = 3 } = {}) {
   const activeChapter = ref(initialChapter)
   const prefersReduced = ref(false)
@@ -65,10 +76,13 @@ describe('ScrollShell theme isolation — Phase 4 cross-chapter', () => {
     expect(ch4.find('.scroll-reveal-card').exists()).toBe(false)
   })
 
-  // T6: section ch6 renderea placeholder (no Chapter6Content — Phase 5)
-  it('T6: section[data-chapter="6"] renderea .chapter-placeholder (Phase 5 wire)', () => {
+  // T6: section ch6 monta Chapter6Content (Phase 5 W3 — Plan 05-04 wire)
+  // Antes de Phase 5 W3: .chapter-placeholder visible. Post-wire: .ch6-layout
+  // renderizado por Chapter6Content; el placeholder queda como dead-branch defensive.
+  it('T6: section[data-chapter="6"] monta Chapter6Content (no .chapter-placeholder, Phase 5 W3)', () => {
     const wrapper = mountShell()
     const ch6 = wrapper.find('section[data-chapter="6"]')
-    expect(ch6.find('.chapter-placeholder').exists()).toBe(true)
+    expect(ch6.find('.ch6-layout').exists()).toBe(true)
+    expect(ch6.find('.chapter-placeholder').exists()).toBe(false)
   })
 })
