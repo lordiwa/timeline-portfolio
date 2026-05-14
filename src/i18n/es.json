@@ -1,7 +1,24 @@
 {
   "chapters": {
-    "0": { "title": "Pre-carrera: niñez digital", "era": "Terminal" },
-    "1": { "title": "Pre-carrera tardío: HTML 90s", "era": "HTML 90s crudo" },
+    "0": {
+      "title": "Pre-carrera: niñez digital",
+      "era": "Terminal",
+      "flavor": "1995. Monitor CRT phosphor. Mi primer prompt de comandos.",
+      "terminal": {
+        "line1": "$ whoami",
+        "line2": "Rafael Matovelle, 10 años, 1995",
+        "line3": "$ cat about.txt",
+        "line4": "Mi primera computadora. Mi primer 'Hello World'."
+      }
+    },
+    "1": {
+      "title": "Pre-carrera tardío: HTML 90s",
+      "era": "HTML 90s crudo",
+      "flavor": "GeoCities, Angelfire, tablas anidadas y marquees por doquier.",
+      "marqueeText": "★ Bienvenido a mi página web!! ★ 🚧 En construcción 🚧",
+      "marqueeAria": "Banner decorativo era HTML 90s",
+      "tableLabel": "Mis cosas favoritas (1999)"
+    },
     "2": { "title": "Flash era: gameplay programmer", "era": "Flash" },
     "3": { "title": "Web 2.0: UX + dev + líder", "era": "Web 2.0" },
     "4": { "title": "AR/VR: empresa propia + Metrodigi", "era": "AR/VR" },

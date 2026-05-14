@@ -1,7 +1,24 @@
 {
   "chapters": {
-    "0": { "title": "Pre-career: digital childhood", "era": "Terminal" },
-    "1": { "title": "Pre-career late: 90s HTML", "era": "90s HTML" },
+    "0": {
+      "title": "Pre-career: digital childhood",
+      "era": "Terminal",
+      "flavor": "1995. CRT phosphor monitor. My first command prompt.",
+      "terminal": {
+        "line1": "$ whoami",
+        "line2": "Rafael Matovelle, age 10, 1995",
+        "line3": "$ cat about.txt",
+        "line4": "My first computer. My first 'Hello World'."
+      }
+    },
+    "1": {
+      "title": "Pre-career late: 90s HTML",
+      "era": "90s HTML",
+      "flavor": "GeoCities, Angelfire, nested tables and marquees everywhere.",
+      "marqueeText": "★ Welcome to my website!! ★ 🚧 Under construction 🚧",
+      "marqueeAria": "Decorative banner — 90s HTML era",
+      "tableLabel": "My favorite things (1999)"
+    },
     "2": { "title": "Flash era: gameplay programmer", "era": "Flash" },
     "3": { "title": "Web 2.0: UX + dev + lead", "era": "Web 2.0" },
     "4": { "title": "AR/VR: own company + Metrodigi", "era": "AR/VR" },
