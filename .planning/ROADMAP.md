@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real. **Cerrada 2026-05-13:** 6/6 plans + manual gate firmado por Rafael verdict PASS. Caveats: panel del StickyTimeline (rediseñado vertical-left ese mismo día) usa tokens :root estáticos — opcional override por theme en Phase 3.
 - [~] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas. **Cerrada 2026-05-13 con deferred art:** 4/5 plans ejecutados (W0 data + W1 ContactHUD + W1 SEO @unhead/vue + W2 Chapter3Content/ProjectCard). Plan 03-05 (avatar pixel art batch 7 busts) deferred — Task 5.1 gate BLOCKED pending Rafael CONTENT-CHECKLIST + foto ~30 años en `public/assets/.refs/` + `.gitignore` entry. 216 tests verdes, build verde. Placeholder mode activo.
 - [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
-- [ ] **Phase 5: Phaser Chapter 6** - Escena espacial explorable en Phaser con parallax, naves y planetas-proyecto
+- [~] **Phase 5: Phaser Chapter 6** - Escena espacial explorable en Phaser con parallax, naves y planetas-proyecto. **Cerrada 2026-05-14 con observations:** 6/6 plans ejecutados (W0 scaffolding + W1 8 ch6 assets vía artist-creator/editor + W2 Phaser factory/SpaceScene + W3 Chapter6Content shell + W4 ProjectOverlay synthwave + W5 manual checklist artifact). Programmatic 424/424 GREEN, build PASS. Rafael verdict efectivo **PASS-with-observations 2026-05-14** ("ya salió hay que arreglar igual visualmente"). §10 sign-off formal pendiente. Deferred: visual review cross-chapter (ch3+ visual errors) + lazy chunk Phaser 341 KB gzip excede target 200 KB.
 - [ ] **Phase 6: Deploy + Polish** - Build de producción, Firebase Hosting configurado y cache headers correctos
 
 ## Phase Details
@@ -143,5 +143,5 @@ Plans:
 | 2. Theme System + i18n | 4/6 | In Progress|  |
 | 3. Chapter 3 End-to-End | 4/5 | In Progress|  |
 | 4. Chapters 0-2 + 4-5 | 1/6 | In Progress | - |
-| 5. Phaser Chapter 6 | 0/6 | Planned (ready to execute) | - |
+| 5. Phaser Chapter 6 | 6/6 | ✓ Closed PASS-with-observations (programmatic 424/424 + build PASS; visual review cross-chapter + §10 formal sign-off deferred — ver STATE.md Deferred Items) | 2026-05-14 |
 | 6. Deploy + Polish | 0/TBD | Not started | - |

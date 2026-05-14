@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 5 context gathered
-last_updated: "2026-05-14T18:18:07.998Z"
-last_activity: 2026-05-14 -- Phase 05 execution started
+status: phase_executed_pass_with_observations
+stopped_at: Phase 5 executed — visual review cross-chapter pending
+last_updated: "2026-05-14T20:00:00.000Z"
+last_activity: 2026-05-14 -- Phase 5 executed 6/6 plans (verdict PASS-with-observations; visual review pendiente)
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 24
-  completed_plans: 22
-  percent: 92
+  completed_phases: 4
+  total_plans: 30
+  completed_plans: 28
+  percent: 93
 ---
 
 # Project State
@@ -25,14 +25,17 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 ## Current Position
 
-Phase: 05 (phaser-chapter-6) — EXECUTING
-Plan: 1 of 6
+Phase: 05 (phaser-chapter-6) — EXECUTED (verdict PASS-with-observations)
+Plan: 6 of 6 (W5 artifact complete, formal §10 sign-off pending)
 Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
 Phase 2 status: 6/6 plans ejecutados. Motor programático completo + sign-off manual de Rafael (`02-MANUAL-CHECKLIST.md` §10 firmado, verdict PASS). Phase 2 100% cerrada.
-Last activity: 2026-05-14 -- Phase 05 execution started
+Phase 3 status: 4/5 plans + Plan 03-05 avatar art gate BLOCKED (CONTENT-CHECKLIST + foto pending Rafael).
+Phase 4 status: PASS-with-observations cerrada (4 deferred items registrados).
+Phase 5 status: **6/6 plans ejecutados. Programmatic 424/424 GREEN + build PASS + 8 ch6 assets generados + Phaser scene + Vue shell + ProjectOverlay + manual checklist artifact.** Rafael acknowledged "ya salió" 2026-05-14 con observation: "el diseño en general de todo el sitio a partir de ch3 se ve roto o mal hecho" → registrado como deferred item "Visual review cross-chapter".
+Last activity: 2026-05-14 -- Phase 5 executed 6/6 plans (verdict PASS-with-observations)
 
-Progress (Phase 2 isolated): [██████████] 6/6 plans ejecutados + manual gate FIRMADO ✅
-Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 (listo para arrancar — `/gsd-discuss-phase 3`)
+Progress (Phase 5 isolated): [██████████] 6/6 plans ejecutados (W0-W5) · programmatic PASS · visual polish pending
+Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 ✓(deferred art) → Phase 4 ✓(deferred polish) → Phase 5 ✓(deferred visual review) → Phase 6 deploy
 
 ## Phase 2 Verification Results (2026-05-13)
 
@@ -142,10 +145,13 @@ Recent decisions affecting current work:
 | Polish | Phase 4 — §10 axe Lighthouse audit ch2/ch4/ch5 contrast 4.5:1 pendiente. | Optional polish | 2026-05-14 |
 | Docs | Phase 4 — §5.6 paleta humana refresh CONTENT-CHECKLIST: override eye color verde (#4a7c4a) sobre brown hazel (#5a3a1f) ratificado durante W0. | Pending docs update | 2026-05-14 |
 | Content | Phase 4 — §§2.1/2.3/2.4 contenido proyectos real: stubs PENDING en projects.js + i18n descs (ch2 BlueLizard/Matte/Joju, ch4 ARVR/Metrodigi, ch5 BairesDev/number8/VivoEnVivo/RocketSnail/Remoose). Rafael edita CONTENT-CHECKLIST con titles/descs ES+EN reales. | Pending Rafael content | 2026-05-14 |
+| Bug visual | Phase 5 — Visual review cross-chapter requerido (reportado Rafael 2026-05-14 post-execute): "el diseño en general de todo el sitio a partir de ch3 se ve roto o mal hecho o no hay nada como en el de phaser". Phaser sale en ch6 pero hay errores visuales en varios chapters (ch3+). Pendiente: auditar cada Chapter{N}Content.vue + chapter-themes.css [data-chapter=N] vs intent original de cada Phase (mock/preview), identificar regresiones específicas, priorizar fixes. Probable: nueva phase "Visual Polish & Chapter Review" o batch de gap-closure plans 06-XX. | Pending audit | 2026-05-14 |
+| Verification | Phase 5 / Plan 06 — Manual checklist visual 13 items (HiDPI / arrival timing / ships loop / locale tooltips / overlay UX / keyboard nav / PRM / ch5↔ch6 transitions / chapter-overlap vigilancia / bundle size / mantra ratification / vibe synthwave). Programmatic 424/424 GREEN + build PASS. Rafael acknowledged Phase 5 "ya salió" 2026-05-14, verdict efectivo PASS-with-observations (errores visuales registrados arriba). §10 sign-off formal pendiente si Rafael decide firmar el archivo. | Pending human sign-off | 2026-05-14 |
+| Polish | Phase 5 — Lazy chunk Phaser 341 KB gzip excede target 200 KB W3. Mitigation: Vite `build.rollupOptions.output.manualChunks` para separar Phaser engine de SpaceScene. Carry-forward a Phase 6 deploy budget. | Optional polish | 2026-05-14 |
 
 ## Session Continuity
 
-Last session: 2026-05-14T16:41:40.767Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-phaser-chapter-6/05-CONTEXT.md
-Next command: /gsd-execute-phase 4 (continuar con Plan 04-03)
+Last session: 2026-05-14T20:00:00.000Z
+Stopped at: Phase 5 executed (verdict PASS-with-observations) — visual review cross-chapter pending
+Resume file: .planning/phases/05-phaser-chapter-6/05-MANUAL-CHECKLIST.md (read §10 instructions if Rafael wants to sign formally)
+Next command: investigar y fixear los visual errors cross-chapter reportados (nueva phase "Visual Polish & Chapter Review" o gap-closure plans 06-XX según prioridad)
