@@ -333,6 +333,56 @@
     );
     border-radius: 4px;
   }
+
+  /* ─────────────────────────────────────────────────────────
+   * Phase 4 W3 — ch4 AR/VR FloatingPanel (Plan 04-04)
+   * Glass holographic con backdrop-filter blur + @supports fallback (Pitfall 3)
+   * Source: RESEARCH §Pattern 7
+   * ───────────────────────────────────────────────────────── */
+
+  /* Fallback opaco — outside @supports (Pitfall 3 compliance: navegadores sin
+     backdrop-filter ven un panel sólido oscuro pero LEGIBLE). z-index: 4
+     garantiza encima de las parallax layers (z-index 0..3). */
+  [data-chapter="4"] .floating-panel {
+    position: relative;
+    z-index: 4;
+    padding: var(--sp-lg);
+    background-color: rgba(10, 15, 46, 0.4);
+    border: 1px solid var(--c-accent);
+    border-radius: 8px;
+    box-shadow:
+      0 0 20px rgba(0, 255, 255, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: var(--c-fg);
+    margin-bottom: var(--sp-md);
+  }
+
+  /* Glass blur — solo navegadores con backdrop-filter support */
+  @supports ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+    [data-chapter="4"] .floating-panel {
+      background-color: rgba(10, 15, 46, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+  }
+
+  /* Mobile <600px: reduce blur a 6px (Pitfall 3 perf budget) */
+  @media (max-width: 599px) {
+    @supports ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+      [data-chapter="4"] .floating-panel {
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+    }
+  }
+
+  [data-chapter="4"] .floating-panel__title {
+    font-family: 'Audiowide', 'Eurostile', sans-serif;
+    color: var(--c-accent);
+    margin: 0 0 var(--sp-sm) 0;
+    font-size: 1.25rem;
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────
