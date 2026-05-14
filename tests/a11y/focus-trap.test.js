@@ -45,10 +45,12 @@ async function mountOverlay() {
   const i18n = createTestI18n({ locale: 'es' })
   const wrapper = mount(ProjectOverlay, {
     props: { projectId: 'ch6-ar-vr' },
+    // attachTo at top-level (NOT inside global) — Vue Test Utils v2 contract.
+    // Permite document.activeElement asserts + focus() funcional en jsdom.
+    attachTo: document.body,
     global: {
       plugins: [i18n],
       provide: { prm: { prefersReduced: { value: false } } },
-      attachTo: document.body,
     },
   })
   return { wrapper, importFailed: false }
