@@ -38,18 +38,19 @@ import { createTestI18n } from '../i18n/test-helpers.js'
 function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es' } = {}) {
   const activeChapter = ref(initialChapter)
   const prefersReduced = ref(initialPRM)
+  const scrollProgress = ref(initialChapter / 7)  // Plan 04-04: ParallaxLayers (Chapter4Content child) requires
   const scrollToChapter = vi.fn()
   const i18n = createTestI18n({ locale })
   const wrapper = mount(ScrollShell, {
     global: {
       plugins: [i18n],
       provide: {
-        scrollState: { activeChapter, scrollToChapter },
+        scrollState: { activeChapter, scrollProgress, scrollToChapter },
         prm: { prefersReduced },
       },
     },
   })
-  return { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }
+  return { wrapper, activeChapter, prefersReduced, scrollProgress, scrollToChapter, i18n }
 }
 
 // Lee el archivo .vue como string para asserts de CSS estático en el bloque <style>.
@@ -111,24 +112,23 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: 3 non-ch{0,1,2,3} sections tienen <p class="era-title"> (UI-SPEC §7.1)
-  // NOTA: chapters 0, 1, 2, 3 ya usan Chapter{N}Content en lugar del placeholder.
-  // Plan 04-02 (Wave 1) wire ch0 + ch1; Plan 04-03 (Wave 2) wire ch2.
-  // Por eso solo 3 sections mantienen el placeholder (ch4, ch5, ch6).
+  // Test 4: 2 non-ch{0,1,2,3,4} sections tienen <p class="era-title"> (UI-SPEC §7.1)
+  // NOTA: Plan 04-02 (W1) wire ch0+ch1; Plan 04-03 (W2) wire ch2; Plan 04-04 (W3) wire ch4.
+  // Por eso solo 2 sections mantienen el placeholder (ch5, ch6).
   // ─────────────────────────────────────────────────────────────────────────
-  it('3 non-ch{0,1,2,3} sections contain era-title with "YYYY · {era}" copy (ch0/ch1/ch2/ch3 use ChapterNContent)', () => {
+  it('2 non-ch{0,1,2,3,4} sections contain era-title with "YYYY · {era}" copy (ch0/1/2/3/4 use ChapterNContent)', () => {
     const wrapper = mountBasic()
     const expected = [
       // '1995 · Terminal' → ch0 usa Chapter0Content
       // '2001 · HTML 90s' → ch1 usa Chapter1Content
       // '2009 · Flash'    → ch2 usa Chapter2Content (Plan 04-03)
       // '2013 · Web 2.0'  → ch3 usa Chapter3Content
-      '2015 · AR/VR',
+      // '2015 · AR/VR'    → ch4 usa Chapter4Content (Plan 04-04)
       '2022 · Modern',
       '2026 · Phaser',
     ]
     const titles = wrapper.findAll('.era-title')
-    expect(titles.length).toBe(3)
+    expect(titles.length).toBe(2)
     titles.forEach((t, idx) => {
       expect(t.text()).toBe(expected[idx])
     })
@@ -328,11 +328,11 @@ describe('ScrollShell ch3 integration (Plan 03-03)', () => {
     expect(ch1Section.find('.chapter-placeholder').exists()).toBe(false)
   })
 
-  // T3: sections data-chapter 4,5,6 mantienen el .era-title placeholder
-  // (Plan 04-03 Wave 2 wire ch2 → ahora solo ch4/5/6 en placeholder)
-  it('sections data-chapter 4,5,6 mantienen .era-title placeholder (ch0/ch1/ch2/ch3 wired)', () => {
+  // T3: sections data-chapter 5,6 mantienen el .era-title placeholder
+  // (Plan 04-04 Wave 3 wire ch4 → ahora solo ch5/6 en placeholder)
+  it('sections data-chapter 5,6 mantienen .era-title placeholder (ch0..ch4 wired)', () => {
     const { wrapper } = mountShell()
-    const nonWiredIds = [4, 5, 6]
+    const nonWiredIds = [5, 6]
     nonWiredIds.forEach((id) => {
       const section = wrapper.find(`section[data-chapter="${id}"]`)
       expect(section.find('.era-title').exists()).toBe(true)

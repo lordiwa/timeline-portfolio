@@ -8,7 +8,7 @@
 //
 // Cobertura: THM-04 (theme isolation — per-section data-chapter, no ancestor).
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import ScrollShell from '@/components/ScrollShell.vue'
@@ -18,18 +18,19 @@ import { createTestI18n } from '../i18n/test-helpers.js'
 function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es' } = {}) {
   const activeChapter = ref(initialChapter)
   const prefersReduced = ref(initialPRM)
+  const scrollProgress = ref(initialChapter / 7)  // Plan 04-04: ParallaxLayers requires
   const scrollToChapter = vi.fn()
   const i18n = createTestI18n({ locale })
   const wrapper = mount(ScrollShell, {
     global: {
       plugins: [i18n],
       provide: {
-        scrollState: { activeChapter, scrollToChapter },
+        scrollState: { activeChapter, scrollProgress, scrollToChapter },
         prm: { prefersReduced },
       },
     },
   })
-  return { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }
+  return { wrapper, activeChapter, prefersReduced, scrollProgress, scrollToChapter, i18n }
 }
 
 describe('ScrollShell.theme-isolation.test.js — THM-04 architectural (DOM markup only)', () => {

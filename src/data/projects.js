@@ -60,6 +60,40 @@ export const projects = [
     planetColor: null,
   },
 
+  // ─────────────────────────────────────────────────────────────────
+  // ch4 — AR/VR 2015-18 (Empresa propia AR/VR + Metrodigi)
+  // Stubs Phase 4 W3 (D4-W3-01): titles=nombre estudio, descs=PENDING marker.
+  // Rafael edita CONTENT-CHECKLIST §2.3 → executor refresca i18n keys post-W5.
+  // ─────────────────────────────────────────────────────────────────
+  {
+    id: 'ch4-arvr-own',
+    chapterEra: 4,
+    year: 2015,
+    titleKey: 'projects.ch4-arvr-own.title',
+    descKey: 'projects.ch4-arvr-own.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Founder / Tech Lead',
+    techStack: ['Unity', 'ARKit', 'Vuforia'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+  {
+    id: 'ch4-metrodigi',
+    chapterEra: 4,
+    year: 2018,
+    titleKey: 'projects.ch4-metrodigi.title',
+    descKey: 'projects.ch4-metrodigi.desc',
+    link: null,
+    imageSrc: null,
+    role: 'Frontend Engineer',
+    techStack: ['React', 'WebGL'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+
   // PENDING — ch3 Pink Parrot (CONTENT-CHECKLIST §2.2)
   // Cuando Rafael entregue contenido, el executor añade 1-3 items shape D3-03.
 ]

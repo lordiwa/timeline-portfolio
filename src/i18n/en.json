@@ -27,7 +27,11 @@
       "bannerSubtitle": "BlueLizard / Matte CG / Joju Games"
     },
     "3": { "title": "Web 2.0: UX + dev + lead", "era": "Web 2.0" },
-    "4": { "title": "AR/VR: own company + Metrodigi", "era": "AR/VR" },
+    "4": {
+      "title": "AR/VR: own company + Metrodigi",
+      "era": "AR/VR",
+      "flavor": "AR/VR era 2015-18. Holographic panels, spatial depth, AR applied to advertising and training."
+    },
     "5": { "title": "Modern: streaming, QA, frontend lead", "era": "Modern" },
     "6": { "title": "Convergence: QA + AI", "era": "Convergence" }
   },
@@ -74,6 +78,14 @@
     "ch2-joju": {
       "title": "Joju Games",
       "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describes Flash gameplay role at Joju Games EN)"
+    },
+    "ch4-arvr-own": {
+      "title": "ARVR Studio (own company)",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.3 (Rafael describes own AR/VR company, Founder/Tech Lead role, EN)"
+    },
+    "ch4-metrodigi": {
+      "title": "Metrodigi",
+      "desc": "PENDING — CONTENT-CHECKLIST §2.3 (Rafael describes Frontend Engineer role at Metrodigi EN)"
     }
   },
   "contact": {
