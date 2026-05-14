@@ -115,7 +115,7 @@ Plans:
 - [x] 05-03-PLAN.md — Wave 2: Phaser core — src/phaser/index.js factory (Scale.NONE + integer zoom + registry PRM + stay-on-3.x comment) + src/phaser/SpaceScene.js (preload + 3 planets + 2 ships + parallax + arrival camera tween + locale listener + PRM heuristic + cero character animation)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 05-04-PLAN.md — Wave 3: Vue integration — Chapter6Content.vue (shallowRef + watch activeChapter lifecycle + HMR dispose + ResizeObserver Pitfall 8 guard + 3 sr-only buttons + mantra v-if + ProjectOverlay v-if stub) + ScrollShell wire + chapter-themes.css @layer components .ch6-layout NO overflow:hidden Pattern 12
+- [x] 05-04-PLAN.md — Wave 3: Vue integration — Chapter6Content.vue (shallowRef + watch activeChapter lifecycle + HMR dispose + ResizeObserver Pitfall 8 guard + 3 sr-only buttons + mantra v-if + ProjectOverlay v-if stub) + ScrollShell wire + chapter-themes.css @layer components .ch6-layout NO overflow:hidden Pattern 12
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 05-05-PLAN.md — Wave 4: ProjectOverlay synthwave — modal Vue completo con backdrop blur + glow doble cyan+pink + focus trap manual ~30 LOC + ESC + click-outside + restore focus + mobile fullscreen + PRM instant
