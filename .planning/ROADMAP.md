@@ -103,8 +103,16 @@ Plans:
   3. Navegar a otro chapter y volver al chapter 6 recrea la escena limpiamente; navegar hacia afuera y volver dos veces no produce canvas duplicados ni errores de WebGL en la consola del navegador.
   4. En una pantalla HiDPI (Retina), los sprites pixel art en la escena Phaser se renderizan con bordes nítidos pixel-perfect (sin blur); el zoom es un entero calculado con `Math.floor`.
   5. Con `prefers-reduced-motion` activo, las naves y el parallax de la escena Phaser están estáticos o moviéndose a velocidad mínima; no hay animación automática agresiva.
-**Plans**: TBD
+**Plans**: 6
 **UI hint**: yes
+
+Plans:
+- [ ] 05-01-PLAN.md — Wave 0: Scaffolding (data ch6 palette + 3 projects + theme block + i18n keys ES/EN + asset-naming regex extend + 15 test scaffolds RED para Phaser/Chapter6Content/ProjectOverlay/a11y/chapter-overlap)
+- [ ] 05-02-PLAN.md — Wave 1: Asset pipeline pixelforge + Adobe post — 8 assets ch6 (bg + 3 planets + 2 ships + 2 opt parallax) con palette enforced D5-04; ch6-bg.png ≤80KB Phase 6 budget
+- [ ] 05-03-PLAN.md — Wave 2: Phaser core — src/phaser/index.js factory (Scale.NONE + integer zoom + registry PRM + stay-on-3.x comment) + src/phaser/SpaceScene.js (preload + 3 planets + 2 ships + parallax + arrival camera tween + locale listener + PRM heuristic + cero character animation)
+- [ ] 05-04-PLAN.md — Wave 3: Vue integration — Chapter6Content.vue (shallowRef + watch activeChapter lifecycle + HMR dispose + ResizeObserver Pitfall 8 guard + 3 sr-only buttons + mantra v-if + ProjectOverlay v-if stub) + ScrollShell wire + chapter-themes.css @layer components .ch6-layout NO overflow:hidden Pattern 12
+- [ ] 05-05-PLAN.md — Wave 4: ProjectOverlay synthwave — modal Vue completo con backdrop blur + glow doble cyan+pink + focus trap manual ~30 LOC + ESC + click-outside + restore focus + mobile fullscreen + PRM instant
+- [ ] 05-06-PLAN.md — Wave 5: Manual checklist + Rafael sign-off (única wave human-verify gate, autonomous=no) — 13 sections + §10 verdict; refresh i18n keys ch6 descs si CONTENT-CHECKLIST §2.5 actualizado paralelo
 
 ### Phase 6: Deploy + Polish
 **Goal**: El sitio tiene un build de producción válido, está configurado para Firebase Hosting con cache headers correctos, y puede desplegarse con una sola instrucción cuando Rafael dé la orden.
@@ -126,5 +134,5 @@ Plans:
 | 2. Theme System + i18n | 4/6 | In Progress|  |
 | 3. Chapter 3 End-to-End | 4/5 | In Progress|  |
 | 4. Chapters 0-2 + 4-5 | 1/6 | In Progress | - |
-| 5. Phaser Chapter 6 | 0/TBD | Not started | - |
+| 5. Phaser Chapter 6 | 0/6 | Planned (ready to execute) | - |
 | 6. Deploy + Polish | 0/TBD | Not started | - |
