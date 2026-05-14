@@ -385,6 +385,70 @@
     font-size: 1.25rem;
     text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
   }
+
+  /* ─────────────────────────────────────────────────────────
+   * Phase 4 W4 — ch5 Modern 2022-23 (Plan 04-05)
+   * ScrollRevealCard reveal animation + .project-card modern flat variant
+   * Source: RESEARCH §Pattern 6 + UI-SPEC §6.7 + §6.9
+   * ───────────────────────────────────────────────────────── */
+
+  /* ScrollRevealCard — fade+slide-in al entrar viewport */
+  [data-chapter="5"] .scroll-reveal-card {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 300ms ease,
+      transform 300ms ease;
+    margin-bottom: var(--sp-md);
+  }
+
+  [data-chapter="5"] .scroll-reveal-card--revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* PRM defensive CSS-side — instant render aunque JS no corra (D4-10d).
+     Pareja del PRM defensive JS-side en ScrollRevealCard.vue (isRevealed init). */
+  @media (prefers-reduced-motion: reduce) {
+    [data-chapter="5"] .scroll-reveal-card {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+  /* ProjectCard variant ch5 modern flat — light shadow, no skeumorphic gradient */
+  [data-chapter="5"] .project-card {
+    background: var(--c-surface, #ffffff);
+    border: 1px solid var(--c-border, #e2e8f0);
+    border-radius: 6px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.06),
+      0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  [data-chapter="5"] .project-card-title {
+    font-family: 'Inter Variable', system-ui, sans-serif;
+    color: var(--c-fg);
+    border-bottom: 2px solid var(--c-accent);
+    padding-bottom: var(--sp-xs);
+    display: inline-block;
+    text-shadow: none;
+  }
+
+  [data-chapter="5"] .project-card-link {
+    background: none;
+    box-shadow: none;
+    color: var(--c-accent);
+    text-decoration: none;
+    text-shadow: none;
+    padding: 4px 0;
+    /* Modern minimal: text-only link, NO botón skeumorphic */
+  }
+
+  [data-chapter="5"] .project-card-link:hover {
+    text-decoration: underline;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────
