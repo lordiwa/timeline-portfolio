@@ -24,7 +24,7 @@ Cinco hallazgos críticos: **(1)** `<marquee>` sigue funcionando en Chrome/Firef
 **Avatar Pipeline**
 - D4-01: Batch 7 busts completo en Phase 4 Wave 0 (consolida Plan 03-05 deferred de Phase 3, incluye ch3 y ch6).
 - D4-02: Fotos de referencia viven en `public/references/` + entry en `.gitignore`. Vite las sirve en dev local. **Caveat Phase 6:** firebase.json `ignore` glob para `public/references/` o deploy script borra `dist/references/` antes de subir.
-- D4-03: Foto→bust por proximidad de edad — ch0 (1995, ~10): aging-down de 2011.jpg; ch1 (2001-04, ~15-18): aging-down de 2011.jpg; ch2 (2009, ~22): 2011.jpg leve aging-down; ch3 (2013, ~26): interpolación 2011↔2016 anchor 2011; ch4 (2015-18, ~30): 2016.jpeg/jpg anchor casi exacto; ch5 (2022-23, ~36): 2022.jpeg anchor exacto; ch6 (2026, ~40): 2026.jpg anchor exacto. 2019.jpg + 2024.jpg como identity-anchors auxiliares en cada call.
+- D4-03: Foto→bust por proximidad de edad (Rafael nacido 1984) — ch0 (1995, ~11): aging-down de 2011.jpg (~27); ch1 (2001, ~17): aging-down de 2011.jpg (~27); ch2 (2009, ~25): 2011.jpg leve aging-down; ch3 (2013, ~29): anchor 2011 + slight aging-up; ch4 (2015-18, ~32): 2016.jpg (~32) anchor casi exacto; ch5 (2022-23, ~38): 2022.jpeg (~38) anchor exacto; ch6 (2026, ~42): 2026.jpg (~42) anchor exacto. 2019.jpg (~35) + 2024.jpg (~40) como identity-anchors auxiliares en cada call.
 
 **Era-Authentic UI Components**
 - D4-04: High fidelity per chapter — components dedicados: `TerminalScroll.vue` (ch0), `MarqueeBanner.vue` (ch1), `FlashBanner.vue` (ch2), `FloatingPanel.vue` (ch4), `ParallaxLayers.vue` (ch4 wrapper 3-4 capas), `ScrollRevealCard.vue` (ch5). ProjectCard shared con variants `[data-chapter="N"] .project-card` per era.
@@ -147,7 +147,7 @@ Rafael (CONTENT-CHECKLIST + 6 fotos en public/references/)
   ├── §2.1 proyectos ch2 (1-3) ─→ src/data/projects.js + src/i18n/{es,en}.json projects.{id}.{title,desc}
   ├── §2.3 proyectos ch4 (1-3) ─→ idem
   ├── §2.4 proyectos ch5 (1-3) ─→ idem
-  ├── 2011.jpg / 2016.jpeg / 2019.jpg / 2022.jpeg / 2024.jpg / 2026.jpg
+  ├── 2011.jpg / 2016.jpg / 2019.jpg / 2022.jpeg / 2024.jpg / 2026.jpg
   │   └── public/references/ (gitignored — privacy gate D4-02)
   └── ratifica W5 alt-text bilingüe (avatar.busts.N.alt)
 
@@ -157,13 +157,13 @@ artist-creator agent (W0) — pixelforge batch 7 busts
   │   ["public/references/2011.jpg"], palette: chapter.palette,           │
   │   verify output coherent con foto antes de batch                      │
   │ Step 1..7 — secuencial con identity-anchors:                          │
-  │   ch0 → references: [2011.jpg, ch3-bust.png], DIFF aging-down ~10     │
-  │   ch1 → references: [2011.jpg, ch3-bust.png], DIFF teen ~15-18        │
-  │   ch2 → references: [2011.jpg, ch3-bust.png], DIFF ~22 Flash era      │
-  │   ch3 (ya hecho en Step 0)                                            │
-  │   ch4 → references: [2016.jpeg, ch3-bust.png, 2019.jpg], DIFF ~30     │
-  │   ch5 → references: [2022.jpeg, 2019.jpg, 2024.jpg], DIFF ~36         │
-  │   ch6 → references: [2026.jpg, 2024.jpg], DIFF ~40 distinguished      │
+  │   ch0 → references: [2011.jpg, ch3-bust.png], DIFF aging-down ~11     │
+  │   ch1 → references: [2011.jpg, ch3-bust.png], DIFF teen ~17           │
+  │   ch2 → references: [2011.jpg, ch3-bust.png], DIFF ~25 Flash era      │
+  │   ch3 (ya hecho en Step 0 — anchor ~29 = 2011 +slight aging-up)       │
+  │   ch4 → references: [2016.jpg, ch3-bust.png, 2019.jpg], DIFF ~32      │
+  │   ch5 → references: [2022.jpeg, 2019.jpg, 2024.jpg], DIFF ~38         │
+  │   ch6 → references: [2026.jpg, 2024.jpg], DIFF ~42 distinguished      │
   │ Adobe MCP post: crop 80×96 (or 96×96) + palette HSL adjust si drift   │
   │ Outputs → public/assets/ch{N}-bust.png (committed)                    │
   └──────────────────────────────────────────────────────────────────────┘
@@ -535,7 +535,7 @@ const { prefersReduced } = inject('prm')
 
 **Por qué secuencial y no batch único:** pixelforge no garantiza consistencia perfecta cross-call (CLAUDE.md §6.4 documentado). Secuencial permite (a) validar el primer bust antes de batch, (b) re-generar si un bust drifteó, (c) usar el output de un bust como reference del siguiente.
 
-**Por qué ch3 primero (D4-03 mapping):** ch3 está cerca de la edad ~26 que es interpolación 2011↔2016 — el anchor visual más estable. Una vez locked, sirve como reference bidirectional (aging-down para ch0/1/2 y aging-up para ch4/5/6).
+**Por qué ch3 primero (D4-03 mapping):** ch3 está cerca de la edad ~29 (2013 - 1984), foto 2011.jpg (~27) + slight aging-up — el anchor visual más estable. Una vez locked, sirve como reference bidirectional (aging-down para ch0/1/2 y aging-up para ch4/5/6).
 
 **Pre-requisitos antes de ejecutar W0:**
 - `chapters[N].palette` poblada para los 7 chapters (§5.6 paleta avatar humana — paleta base skin/hair/clothing).
@@ -552,20 +552,20 @@ BASE_PROMPT_AVATAR (template — planner finaliza con §5.6 humana):
    pixelated clean edges, 96x96 px output, transparent background applied,
    consistent character identity — same person aging through different eras"
 
-DIFFS per chapter (D4-03 mapping):
-  ch0 (1995, ~10): "age ~10 years old, short dark hair, simple childhood
+DIFFS per chapter (D4-03 mapping — Rafael nacido 1984):
+  ch0 (1995, ~11): "age ~11 years old, short dark hair, simple childhood
                     clothing (striped t-shirt), wide curious eyes, slight baby face"
-  ch1 (2001-04, ~15-18): "age ~17 years old, slightly longer hair, casual 2000s
-                          teen clothing (band tee or hoodie), faint adolescent features"
-  ch2 (2009, ~22): "age ~22 years old, casual programmer clothing 2009 era
-                    (graphic tee, jeans), clean shaven, young adult"
-  ch3 (2013, ~26): "age ~26 years old, semi-professional Web 2.0 era clothing,
+  ch1 (2001, ~17): "age ~17 years old, slightly longer hair, casual 2000s
+                    teen clothing (band tee or hoodie), faint adolescent features"
+  ch2 (2009, ~25): "age ~25 years old, casual programmer clothing 2009 era
+                    (graphic tee, jeans), clean shaven or light stubble, young adult"
+  ch3 (2013, ~29): "age ~29 years old, semi-professional Web 2.0 era clothing,
                     light beard or clean shaven, confident expression"  ← ANCHOR
-  ch4 (2015-18, ~30): "age ~30 years old, professional attire (button-down or polo),
+  ch4 (2015-18, ~32): "age ~32 years old, professional attire (button-down or polo),
                        short beard, mature expression"
-  ch5 (2022-23, ~36): "age ~36 years old, slightly grayed temples, modern professional
-                       attire, well-groomed beard"
-  ch6 (2026, ~40): "age ~40 years old, distinguished, some gray hair,
+  ch5 (2022-23, ~38): "age ~38 years old, well-groomed beard, modern professional
+                       attire"
+  ch6 (2026, ~42): "age ~42 years old, distinguished, full beard,
                     confident leadership expression"
 
 EXECUTION FLOW (W0):
@@ -574,7 +574,7 @@ Step 0 — Validation bust (ch3 anchor):
   forge_sprite(
     description: BASE_PROMPT_AVATAR + " " + DIFF_ch3,
     background: "sky",        // preset nombrado (NO "black"/"white" — CLAUDE.md §6.2)
-    references: ["public/references/2011.jpg"],  // foto principal anchor edad ~24
+    references: ["public/references/2011.jpg"],  // foto principal anchor edad ~27
     palette: chapters[3].palette,   // §5.6 humana
     outputPath: "public/assets/ch3-bust.png",
     size: 96  // pixelforge default
@@ -603,7 +603,7 @@ Step 1 — ch0:
   process_sprite(bg_remove) + optimize_sprite + Adobe crop
 
 Steps 2-7: idem con references escalonadas según D4-03.
-  ch4 → references: [2016.jpeg, ch3-bust.png, 2019.jpg]  (anchor primario + ch3 + auxiliar)
+  ch4 → references: [2016.jpg, ch3-bust.png, 2019.jpg]   (anchor primario + ch3 + auxiliar)
   ch5 → references: [2022.jpeg, 2019.jpg, 2024.jpg]      (anchor + 2 auxiliares)
   ch6 → references: [2026.jpg, 2024.jpg]                  (anchor + auxiliar)
 ```

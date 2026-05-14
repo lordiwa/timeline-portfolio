@@ -10,7 +10,7 @@ Phase 4 entrega los **5 chapters restantes** (ch0, ch1, ch2, ch4, ch5) con conte
 
 **Entregables canónicos de Phase 4:**
 
-- **Wave 0 — Avatar batch 7 busts.** Reactivar Plan 03-05 deferred dentro de Phase 4 (D4-01). Generación con `forge_sprite` (palette-locked vía `chapters[N].palette`) usando las 6 fotos de referencia que Rafael ya entregó (`public/references/{2011,2016,2019,2022,2024,2026}.{jpg,jpeg}`). Mapping derivado por proximidad de edad: ch0 (1995, ~10) y ch1 (2001-04, ~15-18) **aging-down** de 2011 (~24); ch2 (2009, ~22) ≈ 2011; ch3 (2013, ~26) interpolación 2011↔2016; ch4 (2015-18, ~30) ≈ 2016 (~29); ch5 (2022-23, ~36) ≈ 2022; ch6 (2026, ~40) ≈ 2026. 2019 y 2024 sirven como identity-anchor extra para mantener look-consistency entre busts.
+- **Wave 0 — Avatar batch 7 busts.** Reactivar Plan 03-05 deferred dentro de Phase 4 (D4-01). Generación con `forge_sprite` (palette-locked vía paleta humana §5.6, NO `chapters[N].palette` — ver Pitfall 1 RESEARCH) usando las 6 fotos de referencia que Rafael ya entregó (`public/references/{2011,2016,2019,2022,2024,2026}.{jpg,jpeg}`). **Rafael nació en 1984**; mapping derivado por proximidad de edad: ch0 (1995, ~11) y ch1 (2001, ~17) **aging-down** de 2011 (~27); ch2 (2009, ~25) ≈ 2011 leve aging-down; ch3 (2013, ~29) anchor 2011 + slight aging-up; ch4 (2015-18, ~32) ≈ 2016 (~32) anchor casi exacto; ch5 (2022-23, ~38) ≈ 2022 (~38) anchor exacto; ch6 (2026, ~42) ≈ 2026 (~42) anchor exacto. 2019 (~35) y 2024 (~40) sirven como identity-anchor extra para mantener look-consistency entre busts.
 
 - **Wave 1 — Ch0 + ch1 completos en paralelo (CSS-only).** Ambos chapters cero pixel art (ART-07 locked). Components dedicados era-auténticos (D4-03 high fidelity):
   - **Ch0 (Terminal 1995):** scroll de output tipo CRT con cursor parpadeante, output simulando comandos `ls/cat` revelando bio en stages; estética verde fósforo sobre negro (palette ya locked en chapters.js + chapter-themes.css).
@@ -54,15 +54,15 @@ Si Rafael no completó al momento de execute de una wave, ESA wave entra en chec
 
 - **D4-02:** **Fotos de referencia viven en `public/references/` + entry en `.gitignore`** (NO se mueven a `references/` raíz). Trade-off aceptado: Vite las sirve localmente en dev (`http://localhost:5173/references/2011.jpg`) — hueco aceptable porque solo Rafael corre dev. Para producción: `git clean` checkout del Firebase deploy NO incluye las fotos (no están commiteadas). **Caveat para Phase 6:** si Rafael despliega desde su working tree con las fotos presentes, Vite las copiará a `dist/`. Mitigación a aplicar en Phase 6: añadir glob de exclusión en `firebase.json` (`"ignore": ["references/**"]`) o el deploy script borra `dist/references/` antes de subir.
 
-- **D4-03 (avatar mapping):** **Foto-a-bust por proximidad de edad** (derivable, no requiere discusión adicional con Rafael):
-  - ch0 (1995, ~10): aging-down de `2011.jpg` (~24) — pixelforge simula edad menor manteniendo identity anchors (skin tone, eye shape).
-  - ch1 (2001-2004, ~15-18): aging-down de `2011.jpg` — adolescente.
-  - ch2 (2009, ~22): proximidad con `2011.jpg` (~24) — leve aging-down.
-  - ch3 (2013, ~26): interpolación 2011↔2016 — usar 2011 como anchor principal.
-  - ch4 (2015-2018, ~30): `2016.jpeg`/`.jpg` (~29) — anchor casi exacto.
-  - ch5 (2022-2023, ~36): `2022.jpeg` (~36) — anchor exacto.
-  - ch6 (2026, ~40): `2026.jpg` (~40) — anchor exacto.
-  - `2019.jpg` (~32) + `2024.jpg` (~38) usados como identity-anchors auxiliares en cada call de pixelforge para forzar consistency entre busts.
+- **D4-03 (avatar mapping):** **Foto-a-bust por proximidad de edad** (Rafael nacido 1984; derivable, no requiere discusión adicional):
+  - ch0 (1995, ~11): aging-down de `2011.jpg` (~27) — pixelforge simula edad menor manteniendo identity anchors (skin tone, eye shape).
+  - ch1 (2001, ~17): aging-down de `2011.jpg` (~27) — adolescente.
+  - ch2 (2009, ~25): proximidad con `2011.jpg` (~27) — leve aging-down.
+  - ch3 (2013, ~29): anchor `2011.jpg` (~27) con slight aging-up — bust de validación primaria.
+  - ch4 (2015-2018, ~32): `2016.jpg` (~32) — anchor casi exacto.
+  - ch5 (2022-2023, ~38): `2022.jpeg` (~38) — anchor exacto.
+  - ch6 (2026, ~42): `2026.jpg` (~42) — anchor exacto.
+  - `2019.jpg` (~35) + `2024.jpg` (~40) usados como identity-anchors auxiliares en cada call de pixelforge para forzar consistency entre busts.
 
 ### Era-Authentic UI Components
 
@@ -175,13 +175,13 @@ Si Rafael no completó al momento de execute de una wave, ESA wave entra en chec
 - `.claude/skills/crear-arte-pixelforge.md` — protocolo pixelforge (palette governance, prompt structure, error cases known)
 - `.claude/skills/editar-arte-adobe.md` — Adobe MCP commands
 
-### Photo references (Rafael — ya entregadas)
-- `public/references/2011.jpg` (~24) — anchor ch2/ch3 + aging-down para ch0/ch1
-- `public/references/2016.jpg` (~29) — anchor ch4
-- `public/references/2019.jpg` (~32) — identity anchor auxiliar
-- `public/references/2022.jpeg` (~36) — anchor ch5
-- `public/references/2024.jpg` (~38) — identity anchor auxiliar
-- `public/references/2026.jpg` (~40) — anchor ch6
+### Photo references (Rafael — ya entregadas; Rafael nacido 1984)
+- `public/references/2011.jpg` (~27) — anchor ch2 (~25) / ch3 (~29) + aging-down para ch0 (~11) / ch1 (~17)
+- `public/references/2016.jpg` (~32) — anchor ch4
+- `public/references/2019.jpg` (~35) — identity anchor auxiliar
+- `public/references/2022.jpeg` (~38) — anchor ch5
+- `public/references/2024.jpg` (~40) — identity anchor auxiliar
+- `public/references/2026.jpg` (~42) — anchor ch6
 
 **Privacy gate (D4-02):** estas rutas DEBEN entrar en `.gitignore` antes de W0 execute. Phase 6 deploy gate añade exclusión en `firebase.json`.
 
@@ -231,7 +231,7 @@ Si Rafael no completó al momento de execute de una wave, ESA wave entra en chec
 <specifics>
 ## Specific Ideas
 
-- **6 fotos de referencia ya entregadas** en `public/references/{2011,2016,2019,2022,2024,2026}.{jpg,jpeg}` — esto cambia el pipeline original (D3-08 "1 foto ~30 derive 7 busts") a un pipeline mucho más constrained con anchors near-exactos para ch2-ch6 y aging-down simulado para ch0/ch1 (D4-03).
+- **6 fotos de referencia ya entregadas** en `public/references/{2011,2016,2019,2022,2024,2026}.{jpg,jpeg}` — esto cambia el pipeline original (D3-08 "1 foto ~30 derive 7 busts") a un pipeline mucho más constrained con anchors near-exactos para ch4-ch6 y aging-down/up de 2011.jpg (~27) para ch0-ch3 (D4-03). **Rafael nacido 1984.**
 - **`<marquee>` real en ch1** — usar el tag deprecated a propósito. Era-accuracy gana sobre purismo HTML5 (D4-05).
 - **Multi-layer parallax ch4** — vibe "AR/VR immersive" del PROJECT.md justifica el extra effort. 3-4 capas con factor escalonado (0.2/0.5/0.8/1.0) crea la sensación de profundidad espacial sin necesidad de WebGL.
 - **Ch5 scroll-driven cards** — scroll-reveal con `IntersectionObserver` (no librería externa AOS/GSAP; ya hay anti-Lenis/Locomotive en REQUIREMENTS.md OUT OF SCOPE).

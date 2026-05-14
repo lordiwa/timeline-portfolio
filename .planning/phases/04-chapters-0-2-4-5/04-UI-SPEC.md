@@ -770,13 +770,13 @@ pixelforge: `palette: chapter.palette` explícito (ART-06).
 
 | Bust | Edad | Era-specific identity markers | Photo anchor (D4-03) |
 |------|------|------------------------------|----------------------|
-| ch0-bust | ~10 (1995) | Cara infantil, pelo corto naturalmente desordenado, ropa casual años 90 (camiseta liso, sin marcas), expresión curiosa | aging-down 2011.jpg |
-| ch1-bust | ~17 (2001) | Adolescente, pelo medio largo (era nu-metal/gamer adolescente), camiseta gráfica o solid color, expresión bromista | aging-down 2011.jpg |
-| ch2-bust | ~22 (2009) | Joven adulto, pelo más definido, ojos un poco más maduros, posible polo o camiseta dev | leve aging-down 2011.jpg |
-| ch3-bust | ~26 (2013) | Adulto profesional joven, expresión confiada, ropa profesional-casual | anchor 2011.jpg + 2016.jpeg |
-| ch4-bust | ~30 (2015-18) | Adulto, gestualidad un poco más asentada, posible barba ligera o stubble | anchor 2016.jpeg + 2019.jpg |
-| ch5-bust | ~36 (2022-23) | Madurez visible, primeras canas posibles, expresión reflexiva | anchor 2022.jpeg + 2024.jpg |
-| ch6-bust | ~40 (2026) | Canas livianas visibles, expresión calma + maestría, ropa pixel art retro-futurista | anchor 2026.jpg + 2024.jpg |
+| ch0-bust | ~11 (1995) | Cara infantil, pelo corto naturalmente desordenado, ropa casual años 90 (camiseta liso, sin marcas), expresión curiosa | aging-down 2011.jpg (~27) |
+| ch1-bust | ~17 (2001) | Adolescente, pelo medio largo (era nu-metal/gamer adolescente), camiseta gráfica o solid color, expresión bromista | aging-down 2011.jpg (~27) |
+| ch2-bust | ~25 (2009) | Joven adulto, pelo más definido, ojos un poco más maduros, posible polo o camiseta dev | leve aging-down 2011.jpg (~27) |
+| ch3-bust | ~29 (2013) | Adulto profesional joven, expresión confiada, ropa profesional-casual | anchor 2011.jpg (~27) + slight aging-up |
+| ch4-bust | ~32 (2015-18) | Adulto, gestualidad asentada, barba ligera/stubble visible | anchor 2016.jpg (~32) + 2019.jpg (~35) |
+| ch5-bust | ~38 (2022-23) | Madurez visible, barba mantenida, expresión reflexiva | anchor 2022.jpeg (~38) + 2024.jpg (~40) |
+| ch6-bust | ~42 (2026) | Barba completa, expresión calma + maestría, ropa pixel art retro-futurista | anchor 2026.jpg (~42) + 2024.jpg (~40) |
 
 **Style consistency markers (across the 7)**:
 - Mismo estilo pixel art: 16-bit chunky, edges definidos, no antialiasing.
@@ -1128,7 +1128,7 @@ Lo que el usuario debe ver al abrir `http://127.0.0.1:5173/` tras completar Phas
 - [ ] Fondo `#000000`, foreground `#00ff41` phosphor green, font VT323 monoespaciada
 - [ ] `TerminalScroll` renderiza 6-8 lines de flavor text con prompt `$ ` antes de cada
 - [ ] Cursor parpadeante visible al final del output (1s blink default; estático PRM)
-- [ ] Avatar in-content `ch0-bust.png` ~10 años visible (cuando W0 entregue asset)
+- [ ] Avatar in-content `ch0-bust.png` ~11 años visible (cuando W0 entregue asset)
 - [ ] Heading "1995 · Terminal" en VT323
 
 ### 15.2 Ch1 — HTML 90s (2001)
@@ -1144,14 +1144,14 @@ Lo que el usuario debe ver al abrir `http://127.0.0.1:5173/` tras completar Phas
 - [ ] `FlashBanner` header skeumorphic orange→purple gradient con chrome dots window mock
 - [ ] 1-3 ProjectCards (BlueLizard/Matte/Joju) con variant `[data-chapter="2"]` orange-bordered Flash skeumorphic
 - [ ] Verdana/Trebuchet font visible en body
-- [ ] Avatar in-content `ch2-bust.png` ~22 años visible
+- [ ] Avatar in-content `ch2-bust.png` ~25 años visible
 - [ ] Focus ring `#ffaa00` amber sobre dark purple
 
 ### 15.4 Ch4 — AR/VR (2015-18)
 - [ ] `ParallaxLayers` con 3-4 capas en movimiento diferencial al scroll (PRM: factor 1.0 uniforme)
 - [ ] 1-3 `FloatingPanel` glass holográfico con `backdrop-filter: blur(12px)` + cyan border `#00ffff` + glow inset+outer
 - [ ] Audiowide font visible en headings (weight 400 only)
-- [ ] Avatar in-content `ch4-bust.png` ~30 años visible
+- [ ] Avatar in-content `ch4-bust.png` ~32 años visible
 - [ ] Tech-stack chips dentro de FloatingPanel con cyan border
 - [ ] Focus ring `#00ffff` cyan visible al tab
 
@@ -1160,12 +1160,12 @@ Lo que el usuario debe ver al abrir `http://127.0.0.1:5173/` tras completar Phas
 - [ ] 1-3 `ScrollRevealCard` modern flat (NO skeumorphic depth) que fade+slide-in al entrar viewport (PRM: instant)
 - [ ] Card titles con indigo `#6366f1` underline accent (Inter Variable weight 600)
 - [ ] Inter Variable font visible (weights 400/600 en diferentes roles; microcopy diferenciada via `letter-spacing: 0.02em`, NO weight extra)
-- [ ] Avatar in-content `ch5-bust.png` ~36 años visible
+- [ ] Avatar in-content `ch5-bust.png` ~38 años visible
 - [ ] Box-shadow subtle modern minimal — NO embossed text shadows
 
 ### 15.6 Avatar batch (W0 — todos los 7 busts)
 - [ ] StickyAvatar top-left swappea correctamente entre los 7 busts según `activeChapter`
-- [ ] Cada bust muestra envejecimiento coherente (~10/17/22/26/30/36/40 reconocibles)
+- [ ] Cada bust muestra envejecimiento coherente (~11/17/25/29/32/38/42 reconocibles — Rafael nacido 1984)
 - [ ] Estilo pixel art consistente across los 7 (mismo skin tone base + identity invariante)
 - [ ] Alt text ES/EN descriptivo era-accurate visible en DevTools accessibility tree
 

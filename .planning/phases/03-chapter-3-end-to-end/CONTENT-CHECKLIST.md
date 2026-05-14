@@ -150,7 +150,7 @@ Para cada chapter con pixel art (2, 3, 4, 5, 6), Rafael aprueba una paleta de ~5
 - [ ] Referencia: __________
 
 ### 5.6 Avatar busts — paleta de skin/cabello/ropa
-Los 7 busts del avatar comparten lectura coherente del personaje (es la misma persona envejeciendo). Paleta humana base derivada del análisis multimodal de las 6 fotos referencia (2011 ~24 → 2026 ~40) y aprobada por Rafael 2026-05-14:
+Los 7 busts del avatar comparten lectura coherente del personaje (es la misma persona envejeciendo). Paleta humana base derivada del análisis multimodal de las 6 fotos referencia (Rafael nacido 1984 → 2011 ~27, 2016 ~32, 2019 ~35, 2022 ~38, 2024 ~40, 2026 ~42) y aprobada por Rafael 2026-05-14:
 
 - [x] **Skin tones (2 shades + line-art warmth):**
   - `skin-base`:   `#e8b894`  — Peach mid-light (mejilla bajo luz neutra; 2011/2016/2019/2026)
