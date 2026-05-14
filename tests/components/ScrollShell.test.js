@@ -28,6 +28,8 @@ import { ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import ScrollShell from '@/components/ScrollShell.vue'
+import Chapter0Content from '@/components/Chapter0Content.vue'
+import Chapter1Content from '@/components/Chapter1Content.vue'
 import Chapter3Content from '@/components/Chapter3Content.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
@@ -109,23 +111,23 @@ describe('ScrollShell.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: 6 non-ch3 sections tienen <p class="era-title"> con "YYYY · {era}" (UI-SPEC §7.1)
-  // NOTA: chapter 3 (2013 · Web 2.0) ya usa Chapter3Content en lugar del placeholder —
-  // por eso solo 6 sections mantienen el .era-title Phase 1 (Plan 03-03 Wave 2).
+  // Test 4: 4 non-ch{0,1,3} sections tienen <p class="era-title"> (UI-SPEC §7.1)
+  // NOTA: chapters 0, 1, 3 ya usan Chapter{N}Content en lugar del placeholder.
+  // Plan 04-02 (Wave 1) wire ch0 + ch1. Por eso solo 4 sections mantienen el placeholder.
   // ─────────────────────────────────────────────────────────────────────────
-  it('6 non-ch3 sections contain era-title with "YYYY · {era}" copy (ch3 uses Chapter3Content)', () => {
+  it('4 non-ch{0,1,3} sections contain era-title with "YYYY · {era}" copy (ch0/ch1/ch3 use ChapterNContent)', () => {
     const wrapper = mountBasic()
     const expected = [
-      '1995 · Terminal',
-      '2001 · HTML 90s',
+      // '1995 · Terminal' → ch0 usa Chapter0Content
+      // '2001 · HTML 90s' → ch1 usa Chapter1Content
       '2009 · Flash',
-      // '2013 · Web 2.0' → ch3 usa Chapter3Content, NO placeholder
+      // '2013 · Web 2.0' → ch3 usa Chapter3Content
       '2015 · AR/VR',
       '2022 · Modern',
       '2026 · Phaser',
     ]
     const titles = wrapper.findAll('.era-title')
-    expect(titles.length).toBe(6)
+    expect(titles.length).toBe(4)
     titles.forEach((t, idx) => {
       expect(t.text()).toBe(expected[idx])
     })
@@ -295,9 +297,10 @@ describe('ScrollShell keyboard navigation', () => {
 })
 
 // ───────────────────────────────────────────────────────────────────────────
-// Plan 03-03 (Wave 2): Chapter3Content integration test
-// Verifica que section[data-chapter="3"] monta <Chapter3Content />,
-// y que las otras 6 sections mantienen el placeholder Phase 1.
+// Plan 03-03 / Plan 04-02: Chapter content integration tests
+// Verifica que sections wired usan ChapterNContent y que el resto mantiene placeholder.
+// Plan 04-02 wire ch0 (Chapter0Content) + ch1 (Chapter1Content).
+// Plan 03-03 wire ch3 (Chapter3Content).
 // ───────────────────────────────────────────────────────────────────────────
 describe('ScrollShell ch3 integration (Plan 03-03)', () => {
   // T1: section[data-chapter=3] contiene el componente Chapter3Content
@@ -308,19 +311,27 @@ describe('ScrollShell ch3 integration (Plan 03-03)', () => {
     expect(ch3Section.findComponent(Chapter3Content).exists()).toBe(true)
   })
 
-  // T2: section[data-chapter=0] NO monta Chapter3Content — mantiene placeholder
-  it('section[data-chapter="0"] mantiene .chapter-placeholder (no Chapter3Content)', () => {
+  // T2: section[data-chapter=0] monta Chapter0Content (Plan 04-02 wire)
+  it('section[data-chapter="0"] monta Chapter0Content (v-if ch.id===0, Plan 04-02)', () => {
     const { wrapper } = mountShell()
     const ch0Section = wrapper.find('section[data-chapter="0"]')
-    expect(ch0Section.findComponent(Chapter3Content).exists()).toBe(false)
-    expect(ch0Section.find('.chapter-placeholder').exists()).toBe(true)
+    expect(ch0Section.findComponent(Chapter0Content).exists()).toBe(true)
+    expect(ch0Section.find('.chapter-placeholder').exists()).toBe(false)
   })
 
-  // T3: seis sections non-ch3 tienen .era-title placeholder (Phase 1 verbatim)
-  it('sections data-chapter 0,1,2,4,5,6 todas mantienen .era-title placeholder', () => {
+  // T2b: section[data-chapter=1] monta Chapter1Content (Plan 04-02 wire)
+  it('section[data-chapter="1"] monta Chapter1Content (v-else-if ch.id===1, Plan 04-02)', () => {
     const { wrapper } = mountShell()
-    const nonCh3Ids = [0, 1, 2, 4, 5, 6]
-    nonCh3Ids.forEach((id) => {
+    const ch1Section = wrapper.find('section[data-chapter="1"]')
+    expect(ch1Section.findComponent(Chapter1Content).exists()).toBe(true)
+    expect(ch1Section.find('.chapter-placeholder').exists()).toBe(false)
+  })
+
+  // T3: sections data-chapter 2,4,5,6 mantienen el .era-title placeholder
+  it('sections data-chapter 2,4,5,6 mantienen .era-title placeholder (ch0/ch1/ch3 wired)', () => {
+    const { wrapper } = mountShell()
+    const nonWiredIds = [2, 4, 5, 6]
+    nonWiredIds.forEach((id) => {
       const section = wrapper.find(`section[data-chapter="${id}"]`)
       expect(section.find('.era-title').exists()).toBe(true)
     })
