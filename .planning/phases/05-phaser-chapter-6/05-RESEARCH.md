@@ -1886,62 +1886,75 @@ describe('Chapter6Content lifecycle architecture (PHA-01/02/04/09)', () => {
 
 ---
 
-## Open Questions for Planner
+## Open Questions for Planner (RESOLVED)
+
+> All 11 questions resolved during planning step 8 (2026-05-14). Decisions adopted per Recommendations below, with Q5 explicit override documented inline.
 
 1. **Component split: `Chapter6Content.vue` only, OR + separate `PhaserChapter.vue`?**
    - What we know: D5-11 shows the watch pattern in Chapter6Content directly. Separating PhaserChapter would isolate the canvas+lifecycle from the overlay+mantra logic.
    - What's unclear: Is the separation worth the cross-component wiring (props + emits)? Phase 4 separated ParallaxLayers from Chapter4Content because parallax was reusable conceptually; ch6 Phaser is uniquely ch6.
    - Recommendation: Single `Chapter6Content.vue` for v1. Less indirection, fewer files. Split only if PhaserChapter becomes reusable in a future v2 chapter.
+   - **RESOLVED:** Adopted recommendation — single `Chapter6Content.vue` (no separate `PhaserChapter.vue`). Codified in Plan 05-04 frontmatter `files_modified`.
 
 2. **Tooltip styling in-Phaser: Text + Rectangle Container, OR custom sprite?**
    - What we know: Locked discretion in D5. Recommended `Phaser.GameObjects.Container` with `Rectangle` (bg) + `Text` (label).
    - What's unclear: Whether a custom sprite asset (pre-rendered tooltip background) would look more polished vs procedural. Custom sprite adds 1 more pixelforge generation.
    - Recommendation: Procedural Container — cyan rect + glow stroke + Text. Pixel-art consistency via `Phaser.Display.Color` palette tokens. 0 extra assets.
+   - **RESOLVED:** Adopted recommendation — procedural `Phaser.GameObjects.Container` (Rectangle + Text). 0 extra pixelforge generations. Codified in Plan 05-03 Task 2.
 
 3. **Manual focus trap (~30 LOC) vs `@vueuse/integrations` useFocusTrap (+`focus-trap` peer ~8KB)?**
    - What we know: Both work for D5-07. Manual is documented in Pattern 10.
    - What's unclear: How much variance the project has tolerated for adding deps (Phase 2 added 6 fontsource packages; package philosophy seems neutral).
    - Recommendation: Manual implementation — single overlay with 4-5 focusables, easy enough to write inline. Avoid dep churn. Plan can pivot to dep if implementation gets brittle.
+   - **RESOLVED:** Adopted recommendation — manual focus trap (~30 LOC) over `@vueuse/integrations` useFocusTrap. Codified in Plan 05-05 Task 1 + Don't Hand-Roll §10 rationale.
 
 4. **3-layer parallax (stars-far + nebulae-mid + bg) vs 1-layer simple bg?**
    - What we know: Recommended 3-layer. 1-layer is fallback if asset generation budget is tight.
    - What's unclear: Whether Rafael's "wow ~3-4s" arrival impression depends on multi-layer depth or single rich bg is sufficient.
    - Recommendation: Plan with 3-layer as default; W2 generates `ch6-bg.png` first, visual review, then decides whether to generate additional layers. If `ch6-bg.png` alone with subtle starfield baked-in feels rich enough, skip the extra 2.
+   - **RESOLVED:** Adopted recommendation — 3-layer default with single-layer fallback. Plan 05-02 Task 3 makes parallax layers conditional; SpaceScene loaderror handler enables fallback. Plan 05-01 ch6-assets.test.js T5/T6 verify size ≤80KB conditionally if generated.
 
 5. **Bridge event naming: `locale-changed` and `vue:show-project` — do they collide with Phaser internals?**
    - What we know: Phaser internal events use namespaced names (`Phaser.Scenes.Events.START`, `Phaser.Cameras.Scene2D.Events.POST_RENDER`, etc.). Custom strings unlikely to collide.
    - What's unclear: Whether `locale-changed` matches any third-party plugin we might add. Safe to verify via grep on Phaser source.
    - Recommendation: Use `vue:locale-changed` and `vue:show-project` (prefix `vue:`) to make the cross-boundary intent explicit and namespace-safe. Update Pattern 5 and 6 source accordingly.
+   - **RESOLVED:** Event names used are `locale-changed`, `show-project`, `arrival-complete` (WITHOUT `vue:` prefix). The initial RESEARCH recommendation proposed `vue:` prefix for cross-boundary clarity, but D5-10 in CONTEXT.md (locked) uses non-prefixed names, and CONTEXT.md takes precedence over RESEARCH recommendations. The project internal bridge only emits/listens to these 3 names — no collision risk with current Phaser plugins. If a future phase introduces a plugin using these generic names, refactor to `vue:` prefix is feasible (single-place change in SpaceScene listener + Chapter6Content emit watch). Codified in Plan 05-03 Task 2 SpaceScene listener registration + Plan 05-04 Task 1 Chapter6Content emit.
 
 6. **Default arrival duration: 3000ms vs 3500ms vs 4000ms?**
    - What we know: D5 says "~3-4s default; planner ajusta". 3500ms (Pattern 7) is a midpoint.
    - What's unclear: Without user testing, hard to predict perceived friction. 800ms = rushed; 5s+ = lazy.
    - Recommendation: Start at 3500ms; document the value as a constant `ARRIVAL_DURATION_MS = 3500` in SpaceScene so it's tunable by single edit if Rafael feels it. PRM branch already bypasses entirely.
+   - **RESOLVED:** Adopted recommendation — 3500ms ease Power2.easeOut default; constant `ARRIVAL_DURATION_MS` in SpaceScene. W5 manual checklist §2 ratifies; single-edit tunable. Codified in Plan 05-03 Task 2.
 
 7. **`ProjectOverlay` close-on-route-change: who owns it?**
    - What we know: D5 Claude's discretion — overlay closes when activeChapter !== 6.
    - What's unclear: Could be in Chapter6Content (watch activeChapter, set activeProject=null) OR in ProjectOverlay (its own watch).
    - Recommendation: Chapter6Content owns it (single source of truth — same watcher that destroys game also resets activeProject). Pattern 1 source already does this implicitly.
+   - **RESOLVED:** Adopted recommendation — Chapter6Content owns close-on-route-change. Single watcher resets activeProject and arrivalDone when activeChapter !== 6. Codified in Plan 05-04 Task 1 + tests/components/Chapter6Content-bridge.test.js T3.
 
 8. **HMR dispose: also reset `arrivalDone` and `activeProject` to prevent UI inconsistency post-HMR?**
    - What we know: `import.meta.hot.dispose` destroys game. But `arrivalDone = true` ref persists — new game instance starts fresh but mantra still showing.
    - What's unclear: Visual edge case in dev only. Probably not blocking.
    - Recommendation: Reset both in the dispose handler. 2 extra lines, cleaner dev experience. Pattern 1 source already does this.
+   - **RESOLVED:** Adopted recommendation — HMR dispose handler resets game.value=null AND arrivalDone=false AND activeProject=null. The HMR guard lives in Chapter6Content.vue (Plan 05-04), NOT in the factory module (by design: lifecycle ownership is the component's, not the module's). Codified in Plan 05-04 Task 1.
 
 9. **Asset commit strategy: 6 assets in one commit, or 1 commit per asset?**
    - What we know: Convention in Phase 4 was 1 commit per asset (`art(04-NN): ch4-bg-stars-far`).
    - What's unclear: Plan can decide either pattern.
    - Recommendation: 1 commit per asset for granular git history, easier rollback if a specific asset turns out bad.
+   - **RESOLVED:** Adopted recommendation — 1 commit per asset (`art(05-02): ch6-{asset}`). Codified in Plan 05-02 task done criteria.
 
 10. **Tests for `--bg-image` URL declaration in ch6 chapter-themes.css?**
     - What we know: D2-04 BackgroundLayers consumes `--bg-image: url('/assets/ch6-bg.png')` for crossfade ch5→ch6. ch6 ALSO has its own bg INSIDE Phaser canvas.
     - What's unclear: Do we want the HTML BackgroundLayers crossfade DURING the moment Phaser is loading + mounting? It might look weird (HTML bg visible briefly, then canvas replaces it).
     - Recommendation: YES, declare `--bg-image` for ch6 — covers the preload window (~200ms) gracefully. The Phaser canvas opaque bg (`backgroundColor: '#1a0e3d'`) takes over once mounted. Add architectural test verifying the declaration matches `/assets/ch6-bg.png`.
+    - **RESOLVED:** Adopted recommendation — Plan 05-01 Task 3 declares `--bg-image: url('/assets/ch6-bg.png')` in `[data-chapter="6"]`. Verified by tests/styles/themes-file.test.js T4 (Phase 2) auto-extending to ch6.
 
 11. **Phaser 4.x upgrade — out of scope confirmed, but document the decision somewhere?**
     - What we know: Phaser 4.1.0 published 2026-04-30. Our package.json pin `^3.86.0` blocks it. Phase 5 stays on 3.86.
     - What's unclear: Where to document the deliberate stay-on-3.x decision so a future executor doesn't accidentally upgrade.
     - Recommendation: Add comment in `src/phaser/index.js` factory: `// Phaser locked to 3.86.x range — Phaser 4.x upgrade out-of-scope per Phase 5 plan. Re-evaluate if v2 demand surfaces.` Mention in `05-PLAN` summary.
+    - **RESOLVED:** Adopted recommendation — comment in src/phaser/index.js documents stay-on-3.x decision (Pitfall 14 mitigation). Codified in Plan 05-03 Task 1 behavior + done criteria.
 
 ---
 
