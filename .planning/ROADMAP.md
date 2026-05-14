@@ -81,8 +81,16 @@ Plans:
   2. Los chapters 0 y 1 son 100% CSS puro (sin pixel art); los chapters 2, 4 y 5 tienen fondos full-frame pixel art con naming `ch{N}-{descriptor}.png`; ningún asset con nombre incorrecto llega a producción.
   3. El avatar en los 7 chapters muestra un envejecimiento reconocible: cara infantil en ch0, adolescente en ch1, veintitantos en ch2-3, treinta y tantos en ch4-5 (el ch6 es en Phase 5); el estilo pixel art es consistente entre todos los busts generados.
   4. Todos los alt texts de los avatar busts están escritos en ES y EN con descripción era-accurate ("Rafael a los 10 años frente a un monitor CRT", etc.) y son leíbles por lectores de pantalla.
-**Plans**: TBD
+**Plans**: 6
 **UI hint**: yes
+
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0: Avatar batch 7 busts (ART-01/ART-04 deferred Plan 03-05 carry-forward) + tests/assets/asset-naming.test.js arquitectural + .gitignore privacy gate D4-02
+- [ ] 04-02-PLAN.md — Wave 1: Ch0 + Ch1 CSS-only (ART-07) — TerminalScroll + MarqueeBanner + StarfieldBg + Chapter{0,1}Content wrappers + ScrollShell wire
+- [ ] 04-03-PLAN.md — Wave 2: Ch2 Flash — pixelforge ch2-bg.png + FlashBanner skeumorphic + Chapter2Content + ProjectCard variant ch2 + projects BlueLizard/Matte/Joju
+- [ ] 04-04-PLAN.md — Wave 3: Ch4 AR/VR multi-layer parallax — 4 pixelforge layers (stars-far/planet-mid/panels-fg/ships-near) + ParallaxLayers (Pitfall 6/7) + FloatingPanel (@supports backdrop-filter)
+- [ ] 04-05-PLAN.md — Wave 4: Ch5 Modern hero — ch5-hero.png + ScrollRevealCard (PRM defensive double JS+CSS) + Chapter5Content staggered + projects BairesDev/number8/VivoEnVivo/RocketSnail/Remoose
+- [ ] 04-06-PLAN.md — Wave 5: Integración + a11y — i18n alt-text refresh era-accurate + parity T4 guard + theme-isolation tests + 04-MANUAL-CHECKLIST.md + Rafael firma §13 sign-off
 
 ### Phase 5: Phaser Chapter 6
 **Goal**: El chapter 6 carga una escena Phaser explorable con **parallax vertical descendente**, naves cruzando y 3 planetas-proyecto clicables distribuidos verticalmente; el locale bridge funciona; la instancia de Phaser no produce memory leaks al navegar a otros chapters y volver.

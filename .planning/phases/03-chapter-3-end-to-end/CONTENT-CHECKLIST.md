@@ -150,10 +150,23 @@ Para cada chapter con pixel art (2, 3, 4, 5, 6), Rafael aprueba una paleta de ~5
 - [ ] Referencia: __________
 
 ### 5.6 Avatar busts — paleta de skin/cabello/ropa
-Los 7 busts del avatar comparten lectura coherente del personaje (es la misma persona envejeciendo). Definir paleta base humana:
-- [ ] Skin tones (2–3 shades): __________
-- [ ] Hair color base + variantes por edad (cabello más oscuro joven, posibles canas adulto): __________
-- [ ] Ropa: ¿free per chapter o consistente?
+Los 7 busts del avatar comparten lectura coherente del personaje (es la misma persona envejeciendo). Paleta humana base derivada del análisis multimodal de las 6 fotos referencia (2011 ~24 → 2026 ~40) y aprobada por Rafael 2026-05-14:
+
+- [x] **Skin tones (2 shades + line-art warmth):**
+  - `skin-base`:   `#e8b894`  — Peach mid-light (mejilla bajo luz neutra; 2011/2016/2019/2026)
+  - `skin-shadow`: `#b58263`  — Warm tan (sombra bajo mandíbula/cuello)
+- [x] **Hair color:**
+  - `hair-base`:      `#2a1810`  — Marrón muy oscuro warm (lectura "negro" con calidez; consistente todas las eras)
+  - `hair-highlight`: `#5c3e2a`  — Cobre-marrón medio para volumen pixel-art chunky
+  - **Decisión:** sin canas explícitas en ch6 — Rafael 2026 sigue mostly dark; el aging sale de proporciones de cara/barba + pixel layout (Pitfall 1 RESEARCH).
+- [x] **Ropa: paleta consistente, NO free per chapter** (lectura humana coherente):
+  - `clothing-1`: `#2a3540`  — Dark navy/slate (prenda recurrente: camiseta 2011, sudadera 2019, mochila 2026)
+  - `clothing-2`: `#d4a447`  — Amarillo mostaza warm (acento contrast — jacket 2024)
+- [x] **Eye + line-art (completan los 8 slots para `forge_sprite` palette argument):**
+  - `eye`:      `#5a3a1f`  — Brown hazel medio cálido (close-ups 2016/2019)
+  - `line-art`: `#1a0f08`  — Casi negro warm (silueta limpia sin frío sobre skin)
+
+**Uso operativo:** los 8 hex codes anteriores se pasan como `palette:` argument a las 7 calls de `forge_sprite` en Plan 04-01 Task 4. NO confundir con `chapters[N].palette` (ambient era-tinted, distinta — Pitfall 1).
 
 ---
 
