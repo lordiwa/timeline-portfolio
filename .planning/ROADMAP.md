@@ -107,11 +107,20 @@ Plans:
 **UI hint**: yes
 
 Plans:
+**Wave 1**
 - [ ] 05-01-PLAN.md — Wave 0: Scaffolding (data ch6 palette + 3 projects + theme block + i18n keys ES/EN + asset-naming regex extend + 15 test scaffolds RED para Phaser/Chapter6Content/ProjectOverlay/a11y/chapter-overlap)
 - [ ] 05-02-PLAN.md — Wave 1: Asset pipeline pixelforge + Adobe post — 8 assets ch6 (bg + 3 planets + 2 ships + 2 opt parallax) con palette enforced D5-04; ch6-bg.png ≤80KB Phase 6 budget
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 05-03-PLAN.md — Wave 2: Phaser core — src/phaser/index.js factory (Scale.NONE + integer zoom + registry PRM + stay-on-3.x comment) + src/phaser/SpaceScene.js (preload + 3 planets + 2 ships + parallax + arrival camera tween + locale listener + PRM heuristic + cero character animation)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 05-04-PLAN.md — Wave 3: Vue integration — Chapter6Content.vue (shallowRef + watch activeChapter lifecycle + HMR dispose + ResizeObserver Pitfall 8 guard + 3 sr-only buttons + mantra v-if + ProjectOverlay v-if stub) + ScrollShell wire + chapter-themes.css @layer components .ch6-layout NO overflow:hidden Pattern 12
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 05-05-PLAN.md — Wave 4: ProjectOverlay synthwave — modal Vue completo con backdrop blur + glow doble cyan+pink + focus trap manual ~30 LOC + ESC + click-outside + restore focus + mobile fullscreen + PRM instant
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 05-06-PLAN.md — Wave 5: Manual checklist + Rafael sign-off (única wave human-verify gate, autonomous=no) — 13 sections + §10 verdict; refresh i18n keys ch6 descs si CONTENT-CHECKLIST §2.5 actualizado paralelo
 
 ### Phase 6: Deploy + Polish
