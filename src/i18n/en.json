@@ -54,13 +54,13 @@
   "avatar": {
     "ariaTemplate": "Rafael's avatar — chapter {chapter} active",
     "busts": {
-      "0": { "alt": "Placeholder — digital childhood (~10 years old, 1995)" },
-      "1": { "alt": "Placeholder — late pre-career (~17 years old, 2001)" },
-      "2": { "alt": "Placeholder — Flash era (~22 years old, 2009)" },
-      "3": { "alt": "Placeholder — Web 2.0 (~26 years old, 2013)" },
-      "4": { "alt": "Placeholder — AR/VR (~30 years old, 2015)" },
-      "5": { "alt": "Placeholder — Modern (~36 years old, 2022)" },
-      "6": { "alt": "Placeholder — Convergence (~40 years old, 2026)" }
+      "0": { "alt": "Rafael at 11 wearing a Jurassic Park cap, in front of a CRT monitor, command-line era (1995)" },
+      "1": { "alt": "Rafael as a shaved-head teenager at 17, on a 90s HTML page with marquees and starry background (2001)" },
+      "2": { "alt": "Rafael at 25 with a shaved head, gameplay programmer in the Flash era, colorful vector banner (2009)" },
+      "3": { "alt": "Rafael at 29 with a full beard and tousled hair, web 2.0 era designer and team lead (2013)" },
+      "4": { "alt": "Rafael at 32 with a full beard, AR/VR era with floating cyan holographic panels (2015-2018)" },
+      "5": { "alt": "Rafael at 38 with a medium beard, modern minimalist era, frontend lead (2022-2023)" },
+      "6": { "alt": "Rafael at 42 with a distinguished beard, QA + AI convergence era, pixel art space ambient (2026)" }
     }
   },
   "bio": {

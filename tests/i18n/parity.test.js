@@ -55,4 +55,20 @@ describe('i18n key parity (I18N-02)', () => {
       expect(es.avatar?.busts[String(i)]?.alt).toBeDefined()
     }
   })
+
+  // T4 (Plan 04-06 W5 sign-off guard): A11Y-06 + D4-11 — alt-text era-accurate
+  // ratificado por Rafael, NO contiene placeholder/PENDING/Placeholder text.
+  // Bloquea contra reintroducción accidental en commits futuros.
+  it('T4 — avatar.busts.N.alt NO contiene placeholder text (W5 sign-off guard)', () => {
+    for (let i = 0; i <= 6; i++) {
+      const altEs = es.avatar?.busts?.[String(i)]?.alt || ''
+      const altEn = en.avatar?.busts?.[String(i)]?.alt || ''
+      expect(altEs, `ES alt avatar.busts.${i} no debe ser Placeholder`).not.toMatch(/^Placeholder/i)
+      expect(altEs, `ES alt avatar.busts.${i} no debe contener PENDING`).not.toMatch(/PENDING/i)
+      expect(altEn, `EN alt avatar.busts.${i} no debe ser Placeholder`).not.toMatch(/^Placeholder/i)
+      expect(altEn, `EN alt avatar.busts.${i} no debe contener PENDING`).not.toMatch(/PENDING/i)
+      expect(altEs.length, `ES alt avatar.busts.${i} debe ser >20 chars (era-accurate description)`).toBeGreaterThan(20)
+      expect(altEn.length, `EN alt avatar.busts.${i} debe ser >20 chars (era-accurate description)`).toBeGreaterThan(20)
+    }
+  })
 })
