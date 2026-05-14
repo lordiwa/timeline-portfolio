@@ -89,7 +89,7 @@ Plans:
 - [x] 04-02-PLAN.md — Wave 1: Ch0 + Ch1 CSS-only (ART-07) — TerminalScroll + MarqueeBanner + StarfieldBg + Chapter{0,1}Content wrappers + ScrollShell wire
 - [x] 04-03-PLAN.md — Wave 2: Ch2 Flash — pixelforge ch2-bg.png + FlashBanner skeumorphic + Chapter2Content + ProjectCard variant ch2 + projects BlueLizard/Matte/Joju
 - [x] 04-04-PLAN.md — Wave 3: Ch4 AR/VR multi-layer parallax — 4 pixelforge layers (stars-far/planet-mid/panels-fg/ships-near) + ParallaxLayers (Pitfall 6/7) + FloatingPanel (@supports backdrop-filter)
-- [ ] 04-05-PLAN.md — Wave 4: Ch5 Modern hero — ch5-hero.png + ScrollRevealCard (PRM defensive double JS+CSS) + Chapter5Content staggered + projects BairesDev/number8/VivoEnVivo/RocketSnail/Remoose
+- [x] 04-05-PLAN.md — Wave 4: Ch5 Modern hero — ch5-hero.png + ScrollRevealCard (PRM defensive double JS+CSS) + Chapter5Content staggered + projects BairesDev/number8/VivoEnVivo/RocketSnail/Remoose
 - [ ] 04-06-PLAN.md — Wave 5: Integración + a11y — i18n alt-text refresh era-accurate + parity T4 guard + theme-isolation tests + 04-MANUAL-CHECKLIST.md + Rafael firma §13 sign-off
 
 ### Phase 5: Phaser Chapter 6
