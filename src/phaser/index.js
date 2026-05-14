@@ -19,7 +19,7 @@
 // Verified contracts: tests/phaser/factory.test.js (T1-T6) + tests/phaser/scale.test.js (T1-T3).
 
 import Phaser from 'phaser'
-import { SpaceScene } from './SpaceScene'
+import { SpaceScene } from './SpaceScene.js'
 
 // Resolución virtual base — CLAUDE.md §1 (480×270 = 16:9 zoom×3 default).
 const BASE_W = 480
