@@ -85,7 +85,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0: Avatar batch 7 busts (ART-01/ART-04 deferred Plan 03-05 carry-forward) + tests/assets/asset-naming.test.js arquitectural + .gitignore privacy gate D4-02
+- [x] 04-01-PLAN.md — Wave 0: Avatar batch 7 busts (ART-01/ART-04 deferred Plan 03-05 carry-forward) + tests/assets/asset-naming.test.js arquitectural + .gitignore privacy gate D4-02
 - [x] 04-02-PLAN.md — Wave 1: Ch0 + Ch1 CSS-only (ART-07) — TerminalScroll + MarqueeBanner + StarfieldBg + Chapter{0,1}Content wrappers + ScrollShell wire
 - [ ] 04-03-PLAN.md — Wave 2: Ch2 Flash — pixelforge ch2-bg.png + FlashBanner skeumorphic + Chapter2Content + ProjectCard variant ch2 + projects BlueLizard/Matte/Joju
 - [ ] 04-04-PLAN.md — Wave 3: Ch4 AR/VR multi-layer parallax — 4 pixelforge layers (stars-far/planet-mid/panels-fg/ships-near) + ParallaxLayers (Pitfall 6/7) + FloatingPanel (@supports backdrop-filter)
