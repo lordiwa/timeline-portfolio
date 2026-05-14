@@ -216,17 +216,20 @@ uppercase` + `letter-spacing: 0.05em` en el display.
 |-----|--------|--------|-------------|-----|
 | Display | `clamp(2.5rem, 6vw, 4rem)` | 600 (semibold) | 1.1 | Heading "Modern Era — 2022-23" minimal flat |
 | Body | `17px` | 400 | 1.6 (extra para modern minimalist breathing room) | Bio + project description |
-| Microcopy | `13px` | 500 (medium) | 1.4 | Tech-stack pills, captions, year labels |
+| Microcopy | `13px` | 400 (regular) | 1.4 | Tech-stack pills, captions, year labels — diferenciación visual vs body via `letter-spacing: 0.02em` (NO weight extra, mantiene ≤2 weights) |
 
 **Inter Variable advantage**: weight axis 100-900 continuo. Phase 4 ch5 usa solo
-400/500/600 — 3 valores en el variable axis, 1 archivo woff2.
+**2 weights**: 400 (body + microcopy) y 600 (display). Microcopy se diferencia del
+body via `letter-spacing: 0.02em` (subtle tracking) en lugar de añadir un tercer
+peso — cumple Dimension 4 contract estricto ≤2 weights/chapter sin sacrificar
+jerarquía visual.
 
 ### 4.3 Tabla resumen — sizes/weights declarados Phase 4
 
 **Total sizes/weights únicos en Phase 4 (no contando heredados Phase 1 era-title clamp):**
 
 - Sizes: 8 únicos (13, 14, 16, 17, 18, 20px + clamp display + clamp ch5 display) — DENTRO del rango 3-4 sizes per chapter como exige el contrato de calidad UI.
-- Weights: ≤2 por chapter (400/700 default; ch4 solo 400; ch5 400/500/600 via variable axis).
+- Weights: ≤2 por chapter (400/700 default; ch4 solo 400; ch5 400/600 — display 600, body + microcopy 400, microcopy diferencia via `letter-spacing: 0.02em`).
 
 **Por chapter cumple 3 sizes × ≤2 weights** (Dimensión 4 Typography pass).
 
@@ -1156,7 +1159,7 @@ Lo que el usuario debe ver al abrir `http://127.0.0.1:5173/` tras completar Phas
 - [ ] Background `ch5-hero.png` pixel art abstract/minimal visible
 - [ ] 1-3 `ScrollRevealCard` modern flat (NO skeumorphic depth) que fade+slide-in al entrar viewport (PRM: instant)
 - [ ] Card titles con indigo `#6366f1` underline accent (Inter Variable weight 600)
-- [ ] Inter Variable font visible (weights 400/500/600 en diferentes roles)
+- [ ] Inter Variable font visible (weights 400/600 en diferentes roles; microcopy diferenciada via `letter-spacing: 0.02em`, NO weight extra)
 - [ ] Avatar in-content `ch5-bust.png` ~36 años visible
 - [ ] Box-shadow subtle modern minimal — NO embossed text shadows
 
