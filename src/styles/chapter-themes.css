@@ -26,18 +26,19 @@
 @layer themes {
 
   /* ──────────────────────────────────────────────────────
-   * ch0 — Terminal (1995, ~10 años) — COMPLETO Phase 2
-   * Era: CRT monitor monocromático, phosphor green P1,
-   * línea de comando, BBS, MS-DOS prompt.
+   * ch0 — Terminal (1995, ~11 años) — Phase 6 refresh 2026-05-14
+   * Era: MS-DOS prompt, COMMAND.COM, VGA 16 colors, BBS.
+   * Rafael 2026-05-14: "el terminal debería ser DOS blanco negro no linux"
+   * → migración de phosphor green CRT Unix-style a DOS bright-white-on-black.
    * ────────────────────────────────────────────────────── */
   [data-chapter="0"] {
-    --c-bg: #000000;
-    --c-fg: #00ff41;
-    --c-accent: #00ff41;
-    --c-border: #003311;
-    --c-focus: #00ff41;
+    --c-bg: #000000;           /* DOS black */
+    --c-fg: #ffffff;           /* DOS bright white (VGA color 15) */
+    --c-accent: #aaaaaa;       /* VGA light gray (color 7) — DOS default text reading */
+    --c-border: #555555;       /* mid gray border */
+    --c-focus: #ffffff;
     --font-body: 'VT323', ui-monospace, monospace;
-    /* contrast(#00ff41, #000000) = 15.3:1 — WCAG AAA passes naturally for ch0 (CRT terminal green-on-black era-authentic). No tradeoff documentation required. */
+    /* contrast(#ffffff, #000000) = 21:1 — WCAG AAA passes naturally for ch0 (DOS white-on-black era-authentic). No tradeoff documentation required. */
   }
 
   /* ──────────────────────────────────────────────────────

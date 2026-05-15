@@ -8,10 +8,12 @@
   ART-07: cero pixel art — 100% CSS.
   D4-10a: cursor parpadeante → animation: none bajo PRM.
 
-  Tokens CSS heredados del [data-chapter="0"] cascade:
-  - --c-fg: #00ff41 (phosphor green)
-  - --c-bg: #000000 (CRT black)
+  Tokens CSS heredados del [data-chapter="0"] cascade (Phase 6 refresh 2026-05-14):
+  - --c-fg: #ffffff (DOS bright white, VGA color 15)
+  - --c-bg: #000000 (DOS black)
   - --font-body: 'VT323', ui-monospace, monospace (self-hosted Phase 2 W4)
+  Rafael 2026-05-14: "el terminal debería ser DOS blanco negro no linux"
+  → migración desde phosphor green CRT a DOS COMMAND.COM style.
 -->
 <script setup>
 import { useI18n } from 'vue-i18n'
@@ -43,8 +45,9 @@ const lines = [
 
 <style scoped>
 /* ─────────────────────────────────────────────────────────────────────────
- * TerminalScroll — CRT monochrome terminal, era ch0 (1995)
- * Tokens via cascade [data-chapter="0"]: --c-fg #00ff41, --c-bg #000000
+ * TerminalScroll — DOS COMMAND.COM monochrome terminal, era ch0 (1995)
+ * Tokens via cascade [data-chapter="0"]: --c-fg #ffffff (DOS white),
+ * --c-bg #000000 (DOS black). Refresh Rafael 2026-05-14.
  * Font: 'VT323' ya self-hosted Phase 2 W4 (declarado en [data-chapter="0"])
  * ───────────────────────────────────────────────────────────────────────── */
 .terminal-scroll {

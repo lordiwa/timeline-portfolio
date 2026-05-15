@@ -36,11 +36,11 @@ describe('theme-tokens.test.js — per-chapter token completeness (THM-03)', () 
     })
   }
 
-  // T8: ch0 verbatim — valores exactos de UI-SPEC §4.2
-  it('T8: ch0 has verbatim token values from UI-SPEC §4.2', () => {
+  // T8: ch0 verbatim — DOS white-on-black (refresh Rafael 2026-05-14, supersede UI-SPEC §4.2 phosphor green)
+  it('T8: ch0 has DOS white-on-black token values', () => {
     const block = extractBlock(source, 0)
     expect(block).toContain('--c-bg: #000000')
-    expect(block).toContain('--c-fg: #00ff41')
+    expect(block).toContain('--c-fg: #ffffff')
     expect(block).toContain("--font-body: 'VT323', ui-monospace, monospace")
   })
 

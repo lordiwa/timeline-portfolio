@@ -31,8 +31,9 @@ describe('contrast-docs.test.js — ch1 tradeoff comment + no tradeoff on AAA ch
     )
   })
 
-  // T2: ch0 NO tiene la frase tradeoff (15.3:1 pasa AAA sin tradeoff)
-  it('T2: ch0 block does NOT contain era-authentic tradeoff phrase (15.3:1 = WCAG AAA)', () => {
+  // T2: ch0 NO tiene la frase tradeoff (21:1 white-on-black pasa AAA sin tradeoff,
+  // refresh Rafael 2026-05-14 DOS white supersede phosphor green 15.3:1)
+  it('T2: ch0 block does NOT contain era-authentic tradeoff phrase (21:1 = WCAG AAA)', () => {
     const block = extractBlock(source, 0)
     expect(block).not.toContain(TRADEOFF_PHRASE)
   })
