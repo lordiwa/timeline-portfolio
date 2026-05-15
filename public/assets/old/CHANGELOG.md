@@ -296,7 +296,7 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-15-green-shirt-prefinal.png` (commit `7df20c5`)
 - **Razón del cambio:** Rafael 2026-05-15: "haz de nuevo con todas las cosas que sabemos ahora para regenerar 5 y 6 ... planifiquemos ambas fotos bien". Plan aprobado: crecimiento de pelo notorio (a la mandibula), camisa verde (vía Adobe post-fix), hex REALES pixel-sampled con PowerShell.
 - **Qué se intentará diferente:** pixelforge banana-2 pro + ch3-bust.png ref directa + hex REALES (#FBB782 piel, #1A0805 pelo casi-negro, #8A9E86 ojos sage) + pelo a la mandibula notorio + ropa NAVY #131D2A intermedia (Adobe la convertirá a verde después).
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `534e6f2`
 
 ---
 
