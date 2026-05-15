@@ -208,7 +208,7 @@ Formato per entry:
 - **Razón del cambio:** banana-2 generó banda blanca/gris en zona cuello/hombros ignorando #131D2A navy. Resto del bust OK (piel peach, pelo casi-negro, ojos sage, sin canas — Rafael lo aprobó).
 - **Qué se intentó diferente:** Adobe MCP selective edit — `image_select_by_prompt` bodyParts: ["Neck", "Upper Clothes"] + excludedBodyParts: ["Face", "Hair", "Beard", "Eyes"] → `image_fill_area` color #131D2A (red:19, green:29, blue:42) opacity 100. 1 intento — exitoso en primer intento.
 - **Resultado:** DONE — banda blanca eliminada, ropa navy uniforme #131D2A, cara/pelo/ojos/barba intactos. Dimensiones 96×96 mantenidas.
-- **Commit hash post-fix:** `{pending}`
+- **Commit hash post-fix:** `3b0dbc1`
 
 ---
 
