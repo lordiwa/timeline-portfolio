@@ -258,4 +258,4 @@ Formato per entry:
 - **Razón del cambio:** real-iter2 corrigió canas en scalp (era el problema crítico) pero banda blanca cuello/hombros persistió — banana-2 problema sistemático en esa zona.
 - **Qué se intentó diferente:** Adobe MCP selective fill mismo pipeline exitoso ch5 (commits `3b0dbc1` + `61754ba`). image_select_by_prompt bodyParts ["Neck","Upper Clothes"] + excludedBodyParts ["Face","Hair","Beard","Eyes"] + image_fill_area #131D2A (red:19, green:29, blue:42) opacity 100 blendMode normal. 1 intento — exitoso en primer intento.
 - **Resultado:** DONE — banda blanca eliminada, ropa y cuello navy uniforme #131D2A, cara/pelo/barba/ojos intactos. Dimensiones 96×96 mantenidas.
-- **Commit hash post-fix:** `{pending}`
+- **Commit hash post-fix:** `0b5abb9`
