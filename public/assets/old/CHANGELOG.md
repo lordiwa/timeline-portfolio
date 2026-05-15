@@ -341,4 +341,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-15-adobe-green-blob.png` (13,303 bytes — commit `e90b8e5`)
 - **Razón del cambio:** Rafael 2026-05-15: "quita ese adobe verde o como se llame necesito una camista". Mismo problema que ch5 — Adobe fill plano no genera estructura de camisa.
 - **Qué se intentó diferente:** pixelforge banana-2 pro + ch5 recién generado como referencia multimodal. 2 intentos: intento 1 (grey-scalp-retry) tenía highlights azul-grisáceos en scalp — descartado. Intento 2: prompt más enfático ("PITCH BLACK to VERY DARK BROWN ONLY, ZERO grey pixels") — scalp predominantemente oscuro OK, pelo a hombros OK, camisa verde #1A3D24 con cuello-V visible.
-- **Commit hash post-regen:** `{pending-ch6}`
+- **Commit hash post-regen:** `fd7bf3b`
