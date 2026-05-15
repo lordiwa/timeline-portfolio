@@ -172,6 +172,16 @@ Formato per entry:
 
 ---
 
+## ch5-bust.png — iter8-restored → iter13 (2026-05-15, model banana-2 pro)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-iter8-pre13.png` (restaurada por commit `852e18a` tras cascada iter9/10/11 + intento iter12 con nano-banana-2)
+- **Razón del cambio:** iter12 con `model: nano-banana-2` (default) falló — ropa celeste + pelo marrón medio. Rafael 2026-05-15 eligió Opción 2: reintentar con model "banana-2" (pro, más fiel a referencia, +$0.04/img).
+- **Qué se intentó diferente:** model: "banana-2" pro. 2 intentos: retry1 ropa beige/marrón (descartado), retry2 con hex #1B2A4A explícito en prompt → ropa azul denim/medio aceptable. Piel/pelo/ojos/barba correctos ambos intentos. Pelo sutil más largo que ch4 (pasa orejas).
+- **Resultado:** ACEPTADO — piel morena cálida OK, pelo oscuro rizado OK, ojos teal OK, barba sin canas OK, ropa azul (no navy exacto pero distinguiblemente azul frío). optimize_sprite aplicado (12% savings, 14,112 bytes).
+- **Commit hash post-regen:** {pending}
+
+---
+
 ## ch6-bust.png — iter10 → iter11 (2026-05-15)
 
 - **Versión guardada:** `old/ch6-bust-2026-05-15-iter10-overcorrected.png` (17,283 bytes — commit `8f065a8`)
