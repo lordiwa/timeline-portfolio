@@ -70,7 +70,31 @@
     }
   },
   "bio": {
-    "core": "PENDING — CONTENT-CHECKLIST §1.1 (Rafael escribe bio ES: 1-2 párrafos, tono cálido-juguetón, convergencia dev+QA+líder+AI)"
+    "core": "Rafael Matovelle — full stack + QA, base gamedev, tres décadas de tecnología. Y siempre con una sonrisa. 😄",
+    "mantra": "Y siempre con una sonrisa. 😄",
+    "eras": {
+      "0": {
+        "text": "Todo empezó con un DOS y siete años de edad. Mientras otros niños descubrían los dibujos animados, yo descubría California Games, Stunts y Out of This World. Esos píxeles fueron mi primer amor. Después vinieron Warcraft, StarCraft y Magic: The Gathering, que me enseñaron que detrás de cada mundo digital había alguien construyéndolo. Y yo quería ser ese alguien."
+      },
+      "1": {
+        "text": "A los 14 agarré un libro, abrí un editor de texto y aprendí a programar solo. Empecé con HTML, JavaScript y CSS armando mis propios sitios web. Después salté a Perl, y de ahí me clavé con C++. Cada lenguaje era un mundo nuevo, otra forma de pensar. Para mí, programar siempre fue otro sabor de Legos: piezas que encajan, mundos que aparecen de la nada.\n\nEn paralelo (2002–2006), viví otra vida: la de jugador profesional de StarCraft y Warcraft III. Cuatro años compitiendo en serio me enseñaron cosas que ningún curso enseña: leer sistemas en tiempo real, encontrar el patrón antes que el rival, manejar la presión.\n\nY ese mundo me abrió la primera puerta laboral: entré como Game Tester en BlueLizard Games (BLG). Mi primera chamba fue, literalmente, hacer QA."
+      },
+      "2": {
+        "text": "De tester pasé a programador. En BlueLizard, Matte CG y Joju Games fui gameplay programmer en plena época dorada del Flash. Trabajé en títulos como Spamania 2, Club Paradise 2, Lost Realms 2, Megamind Amazing Machine y Nanoland. Después vino Bingo Blingo en Facebook, y un montón de advergames para Coca-Cola, Marlboro y Mulgatol.\n\nFue una escuela brutal. Aprendí que hacer juegos es 10% magia y 90% revisar por qué el personaje atraviesa la pared otra vez. Y los advergames me enseñaron algo extra: cómo meter una marca dentro de una mecánica sin matar la diversión."
+      },
+      "3": {
+        "text": "En Pink Parrot di el salto a UX, liderazgo de equipo y desarrollo web. Aquí pasaron dos cosas grandes: descubrí que diseñar para personas reales era otro tipo de juego, con sus propias reglas y sus propios «bugs» humanos, y aprendí metodología ágil de verdad, no de slides. Sprints, retros, planning, ceremonias, todo el ritmo. Lo fui puliendo proyecto tras proyecto hasta que dejó de ser proceso y se volvió forma de pensar. Aquí aprendí a escuchar antes de codear."
+      },
+      "4": {
+        "text": "Monté un proyecto independiente de Realidad Virtual y Realidad Aumentada aplicadas a publicidad BTL. Fueron tres años haciendo cosas que casi nadie estaba haciendo todavía en Ecuador: experiencias de marca donde el usuario era parte del juego, no espectador.\n\nDespués llegó Metrodigi, y con ella mi primera fase real como líder. Priorizar, desbloquear, proteger al equipo del ruido, y todavía codear. Esta etapa me enseñó algo clave: me encanta el momento en que una idea pasa de «¿y si...?» a «mira, funciona», y me encanta todavía más cuando es el equipo entero el que llega ahí."
+      },
+      "5": {
+        "text": "En number8 lideré QA como Lead Software QA Engineer durante casi tres años, trabajando con AWS y armando procesos desde cero. Después, en BairesDev, entré al equipo de R&D para automatizar herramientas de QA con Python. Aquí descubrí algo que cambió cómo veo el software: la calidad no es algo que se revisa al final, es algo que se construye desde el inicio.\n\nEn paralelo (2019–2024) fui copropietario de VivoEnVivo, una plataforma de streaming de eventos y deportes de contacto en Ecuador. Cinco años aprendiendo lo que es construir algo tuyo de cero.\n\nEn RocketSnail lideré el frontend creando un framework custom con Vue y Lottie. Después, en Remoose Interactive, trabajé como Full Stack Engineer y rapid prototyper en el equipo de R&D. Vue, Node.js, WebGL, todo el stack."
+      },
+      "6": {
+        "text": "Y desde finales de 2023 sigo en Software Mind aplicando automatización y herramientas a data science. Y ahora la IA y los agentes me dan algo que llevo esperando desde que tenía siete años jugando en DOS: la capacidad de construir todo lo que siempre quise, automatizarlo, y prototipar a la velocidad de la imaginación.\n\nMirando para atrás, todo encaja raro de bien. Los años de competitivo me dieron la cabeza de sistemas. Los juegos Flash me dieron la velocidad de iterar. Los advergames me enseñaron a contar historias dentro del código. La web me dio el lienzo y el ágil. AR/VR me enseñó a prototipar lo imposible. Liderar equipos me enseñó que el código solo no construye nada grande. QA me dio el rigor. Data science me dio los datos.\n\nCada etapa parecía un salto. Vista de lejos, era una sola línea."
+      }
+    }
   },
   "projects": {
     "pp1": {
