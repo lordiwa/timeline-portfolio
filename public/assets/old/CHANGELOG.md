@@ -305,4 +305,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-15-green-blob-prefinal.png` (commit `7df20c5`)
 - **Razón del cambio:** Rafael 2026-05-15: mismo plan aprobado — pelo a los hombros (paso del tiempo visible vs ch5), scalp uniformemente casi-negro sin canas, EXACTAMENTE 2 canas en barba (mentón), hex REALES, ropa navy #131D2A.
 - **Qué se intentará diferente:** pixelforge banana-2 pro + ch5 recién regenerado como referencia multimodal directa + pelo significativamente más largo que ch5 (a los hombros) + 2 canas individuales en barba (mentón) + 0 canas en scalp.
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `569a80d`
