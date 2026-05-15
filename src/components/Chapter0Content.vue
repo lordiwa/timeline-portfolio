@@ -48,15 +48,17 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
       <p class="ch0-era">{{ t(chapter.eraKey) }}</p>
     </aside>
 
-    <!-- Columna derecha: TerminalScroll hero + bio + flavor era -->
+    <!-- Columna derecha: bio (protagonista) + TerminalScroll (signature) + flavor (sutil) -->
     <div class="ch0-content">
-      <!-- Era-signature: terminal CRT arriba del bio para máximo impacto visual -->
-      <TerminalScroll />
-
+      <!-- Bio era-specific: protagonista visual del chapter (Rafael 2026-05-14 — "el texto
+           de historia debería tener más protagonismo"). ch0 muestra DOS + California Games
+           + Warcraft/SC/Magic. -->
       <div class="ch0-bio">
-        <!-- bio era-specific: ch0 muestra DOS + California Games + Warcraft/SC/Magic. -->
         <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
+
+      <!-- Era-signature: terminal CRT como complemento visual debajo del bio. -->
+      <TerminalScroll />
 
       <p class="ch0-flavor">{{ t('chapters.0.flavor') }}</p>
 
@@ -120,22 +122,33 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-md);
+  gap: var(--sp-lg);
+}
+
+/* Bio protagonista — font más grande + line-height generoso + DOS white pleno
+   (Rafael 2026-05-14: "el texto de historia debería tener más protagonismo"). */
+.ch0-bio {
+  max-width: 65ch;
 }
 
 .ch0-bio p {
   font-family: 'VT323', ui-monospace, monospace;
-  font-size: 1.1rem;
-  line-height: 1.6;
+  font-size: clamp(1.15rem, 1.6vw, 1.45rem);
+  line-height: 1.75;
   color: var(--c-fg);
   margin: 0 0 var(--sp-md) 0;
+  letter-spacing: 0.01em;
+}
+
+.ch0-bio p:last-child {
+  margin-bottom: 0;
 }
 
 .ch0-flavor {
   font-family: 'VT323', ui-monospace, monospace;
   font-size: 1rem;
   color: var(--c-fg);
-  opacity: 0.75;
+  opacity: 0.6;
   margin: 0;
   font-style: italic;
 }
