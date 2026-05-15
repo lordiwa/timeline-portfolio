@@ -93,4 +93,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-15-iter6.png` (generado por commit `5834917`)
 - **Razón del cambio:** Rafael 2026-05-15: "ch5 y ch6 menos canas y menos arrugas en ch5" — iter6 generó highlights claros en pelo/barba que leen como canas, y líneas sutiles leídas como arrugas. ch5 debe ser ~38 años sin signos de aging visibles.
 - **Qué se intentará diferente:** prompt reforzado con anti-patrones repetidos múltiples veces ("ABSOLUTELY NO grey hairs ABSOLUTELY NO white strands ABSOLUTELY NO silver pixels") + "completely youthful" + "completely smooth flawless skin NO wrinkles NO forehead lines NO crow's feet NO eye bags NO age lines anywhere even pixel-level". Estrategia: redundancia de anti-patrones porque pixelforge ignoró el primer NO.
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `d97c7e7`
