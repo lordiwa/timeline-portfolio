@@ -332,4 +332,13 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-15-adobe-green-blob.png` (17,491 bytes — commit `1a1d46f`)
 - **Razón del cambio:** Rafael 2026-05-15: "quita ese adobe verde o como se llame necesito una camista". El Adobe fill_area plano en zona Upper Clothes generaba un blob de color uniforme sin estructura — no se leía como camisa.
 - **Qué se intentó diferente:** pixelforge banana-2 pro dibuja la camisa directamente con cuello-V/hombros/textura pixel art. Verde #1A3D24 especificado en prompt. 1 intento — exitoso. Camisa con cuello-V claramente visible, forma de hombros definida, shading natural.
-- **Commit hash post-regen:** `{pending-ch5}`
+- **Commit hash post-regen:** `ae91f59`
+
+---
+
+## ch6-bust.png — adobe-green-blob → drawn-green-shirt (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-adobe-green-blob.png` (13,303 bytes — commit `e90b8e5`)
+- **Razón del cambio:** Rafael 2026-05-15: "quita ese adobe verde o como se llame necesito una camista". Mismo problema que ch5 — Adobe fill plano no genera estructura de camisa.
+- **Qué se intentó diferente:** pixelforge banana-2 pro + ch5 recién generado como referencia multimodal. 2 intentos: intento 1 (grey-scalp-retry) tenía highlights azul-grisáceos en scalp — descartado. Intento 2: prompt más enfático ("PITCH BLACK to VERY DARK BROWN ONLY, ZERO grey pixels") — scalp predominantemente oscuro OK, pelo a hombros OK, camisa verde #1A3D24 con cuello-V visible.
+- **Commit hash post-regen:** `{pending-ch6}`
