@@ -139,3 +139,23 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15 (verbatim): "why are you changing the eyes and hair color, i explicitly told you not to change that and use the base skin and hair color as well as eyes, why are you making this mistake over and over again? fix that". Pixelforge drifteó colores piel/pelo/ojos en iter8: cabello más claro que ch3 (drift a marrón medio), ojos marrón en lugar de teal #4A7A6B.
 - **Qué se intentará diferente:** NO regenerar con pixelforge. Adobe MCP HSL zonal para alinear piel/pelo/ojos al hex de ch3 (piel: #D4956A/#B87A50/#8B5A35; cabello: #3D2B1A/#5C3D22; ojos: #4A7A6B). Preservar pelo largo a hombros iter8 + sin canas + ropa navy + dimensiones 96x96.
 - **Commit hash post-edit:** `283af76`
+
+---
+
+## ch5-bust.png — iter9 → iter10 (2026-05-15)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-iter9-cyan-eyes.png` (commit `a48181c`)
+- **Razón del cambio:** Rafael 2026-05-15 angry: iter9 OVER-CORRIGIÓ — los ojos quedaron CYAN BRILLANTE (colorize:true en HSL ignoró el color original y pintó cyan plano). La piel quedó over-saturada/amarillenta (+18 sat fue demasiado). Drift recurrente inaceptable.
+- **Qué se intentará diferente:** image_apply_color_overlay (NO colorize HSL) en ojos con #4A7A6B y opacity 60-70, blendMode "color" para preservar luminance original y obtener teal grey-green oscuro sutil. HSL en piel con sat:-12 hue:-3 lightness:-2 para revertir over-saturation. Cabello sin tocar (iter9 OK).
+- **Resultado:** ch5 ojos MATCH ch3 (teal oscuro sutil). Piel MATCH. Cabello OK. Params: ojos HSL ronda1 (cyan: hue-20 sat-35 light-15) + ronda2 (sat-25 light-20) + ronda3 (sat-40 light-30) + ronda4 (sat-20 light-25). Piel: hue-3 sat-12 light-2.
+- **Commit hash post-edit:** `9af8a15`
+
+---
+
+## ch6-bust.png — iter9 → iter10 (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-iter9-cyan-eyes.png` (commit `283af76`)
+- **Razón del cambio:** Rafael 2026-05-15 angry: iter9 OVER-CORRIGIÓ — los ojos quedaron CYAN BRILLANTE (mismo error que ch5: colorize:true ignoró el color original). La piel over-saturada.
+- **Qué se intentará diferente:** HSL zonal + brightness zonal acumulados en ojos. Piel: sat-12 hue-3 light-2.
+- **Resultado:** ch6 ojos PARCIAL — mejoraron sustancialmente respecto al cyan brillante iter9 pero no llegan al nivel de oscuridad de ch3. Resistencia atribuida a alta saturación base de pixelforge en sprites pequeños (96x96). Piel MATCH. Cabello OK. 5 rondas de ajuste sin alcanzar el match exacto de ojos.
+- **Commit hash post-edit:** `8f065a8`
