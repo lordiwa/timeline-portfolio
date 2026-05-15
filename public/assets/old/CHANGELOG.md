@@ -21,6 +21,15 @@ Formato per entry:
 - **Versión guardada:** `old/ch4-bust-2026-05-14-iter3.png` (12,672 bytes — generado por commit `1f86ab6`)
 - **Razón del cambio:** Rafael 2026-05-14: "no, deben tener el mismo exacto color de piel y los ojos deben parecerse mas, sigue intentando". El iter3 tenía colores aproximados pero no exactos al ch3 — drift sutil de tono.
 - **Qué se intentará diferente:** read pixel-by-pixel ch3-bust.png para extraer hex codes dominantes, pasar palette más constreñida + post-process con Adobe MCP `image_adjust_hsl` si pixelforge drifteea. Considerar bajar tolerancia del prompt a "EXACT same skin tone" enforced via palette argument.
+- **Commit hash post-regen:** `ef51f16`
+
+---
+
+## ch4-bust.png — iter4 → iter5 (2026-05-14)
+
+- **Versión guardada:** `old/ch4-bust-2026-05-14-iter4-HSL.png` (generado por commit `ef51f16`)
+- **Razón del cambio:** Rafael 2026-05-14: "pésimo" — pelo drifteo a rubio/castaño claro, highlights blanquecinos en cara, no matchea ch3 (la referencia ratificada). HSL post-process de iter4 no corrigió el drift de highlights especulares.
+- **Qué se intentará diferente:** prompt con "flat lit face, no specular highlights, even illumination matching ch3 reference, NO white highlights on skin" para evitar drift. Pixel-sampled palette desde ch3 directamente. Misma cara que ch3 + apenas 3 años más (~33 años), barba apenas más definida, mismos colores piel/cabello/ojos. ch3-bust.png como referencia multimodal directa.
 - **Commit hash post-regen:** {pending}
 
 ### Historial previo (no preservado en old/, ver git log):
@@ -35,6 +44,15 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-14-iter4.png` (15,626 bytes — generado por commit `ae07e13`)
 - **Razón del cambio:** Mismo feedback Rafael que ch4 — colores piel/ojos no matchean ch3 exactamente.
 - **Qué se intentará diferente:** mismo approach que ch4 iter4 — pixel sampling ch3 + palette constrained + posible Adobe HSL post-process. ch5 además debe mantener pelo apenas más largo que ch4 sin canas.
+- **Commit hash post-regen:** `123ea2c`
+
+---
+
+## ch5-bust.png — iter5 → iter6 (2026-05-14)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-14-iter5-HSL.png` (generado por commit `123ea2c`)
+- **Razón del cambio:** Rafael 2026-05-14: "pésimo" — piel hipersaturada/anaranjada vs ch3, drift de rasgos. HSL post-process de iter5 no corrigió saturación excesiva de piel.
+- **Qué se intentará diferente:** prompt con "flat lit face, no specular highlights, muted warm brown skin tones, NOT orange NOT oversaturated skin, even illumination". Palette pixel-sampled de ch3. Misma cara que ch3 + apenas 6 años más (~38 años), pelo apenas más largo que ch4, SIN canas, SIN arrugas extras. ch3-bust.png como referencia multimodal directa.
 - **Commit hash post-regen:** {pending}
 
 ### Historial previo:
