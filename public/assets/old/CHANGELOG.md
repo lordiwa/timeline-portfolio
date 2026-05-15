@@ -168,7 +168,7 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15: "mejoraron ambos pero no estan bien, el color de pelo casi negro en ambos, ademas copia el color de piel de ch4 o ch3 que estan bien copialo exacto, los ojos estan bien el color peor hazlos mas abiertos o copia los ojos de ch4". Iters 9+10 layerearon HSL sobre HSL → pelo casi negro, piel no era exact match de ch4, ojos cerrados geométricamente.
 - **Qué se intentó diferente:** Rollback a iter8-drift de pixelforge (output original, pelo largo, sin manipulaciones previas). HSL zonal en cadena: piel (hue+8, sat-25, light+55) → pelo sin barba (hue+12, sat-35, light+35) → piel fine-tune (hue+5, sat-15, light+20) → ojos brightness+60 contrast+40. Referencia visual: ch4-bust.png (gris-rubio platino para pelo, beige-claro para piel).
 - **Resultado:** Pelo ya NO casi negro — gris-rubio claro distinguible. Piel más clara y cercana a ch4 aunque no IDÉNTICA (drift residual: piel ch5/ch6 levemente más oscura que ch4). Ojos: zona más brillante pero geometría pixel art no cambia (generative AI no disponible). Retries: piel x2, pelo x1.
-- **Commit hash post-edit:** `{pending}`
+- **Commit hash post-edit:** `6d4fc35`
 
 ---
 
@@ -178,4 +178,4 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15: mismo feedback que ch5 — pelo casi negro, piel no exact match ch4, ojos cerrados.
 - **Qué se intentó diferente:** Mismo pipeline que ch5 iter11. Pelo largo a hombros preservado (silueta iter8 mantenida — solo color interno afectado por máscara zonal). Rollback a iter8-drift → HSL zonal mismo approach ch5.
 - **Resultado:** Pelo ya NO casi negro — gris-rubio claro, pelo largo a hombros preservado. Piel más clara, cercana a ch4. Barba marrón oscura preservada. Ojos: brightness zonal aplicado. Retries: piel x2, pelo x1.
-- **Commit hash post-edit:** `{pending}`
+- **Commit hash post-edit:** `ba5874b`
