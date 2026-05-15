@@ -189,3 +189,13 @@ Formato per entry:
 - **Qué se intentó diferente:** Mismo pipeline que ch5 iter11. Pelo largo a hombros preservado (silueta iter8 mantenida — solo color interno afectado por máscara zonal). Rollback a iter8-drift → HSL zonal mismo approach ch5.
 - **Resultado:** Pelo ya NO casi negro — gris-rubio claro, pelo largo a hombros preservado. Piel más clara, cercana a ch4. Barba marrón oscura preservada. Ojos: brightness zonal aplicado. Retries: piel x2, pelo x1.
 - **Commit hash post-edit:** `ba5874b`
+
+---
+
+## ch6-bust.png — iter8-restored → iter13 (2026-05-15, model banana-2 pro)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-iter8-pre13.png` (restaurada por commit `852e18a` tras cascada iter9/10/11)
+- **Razón del cambio:** Mismo motivo que ch5 — nano-banana-2 drifteó colores. Rafael eligió banana-2 pro.
+- **Qué se intentó diferente:** model: "banana-2" pro. Referencias: ch5 iter13 recién generado. Pelo un poco más largo que ch5 (sutil adicional). EXACTAMENTE 2 canas en barba (strands individuales en mentón). Ropa dark navy blue hex #1B2A4A. Sin canas en cabeza. Sin arrugas extra.
+- **Resultado:** ACEPTADO — 1 intento. Piel morena OK, pelo oscuro rizado levemente más largo que ch5 OK, ojos teal OK, 2 pixels claros en mentón (canas presentes sutiles) OK, ropa azul oscuro navy OK. optimize_sprite aplicado (13% savings, 16,097 bytes).
+- **Commit hash post-regen:** {pending}
