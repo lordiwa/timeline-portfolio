@@ -287,4 +287,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-15-green-partial.png` (18,899 bytes — commit `15f11c3`)
 - **Razón del cambio:** Rafael 2026-05-15: "extiende el verde hasta el cuello en ch6 y que no quede nada transparente o mas facil copia la camisa de ch4 y listo pero de otro color". El fix de outlines anterior dejó el cuello con skin midtone plano (para tapar outline blanco), pero Rafael quiere la zona completa debajo de mandíbula en verde uniforme #1A3D24. Sin skin midtone, sin transparencias en zona inferior.
 - **Qué se intentó diferente:** Pipeline 2 pasos: (1) Adobe MCP image_select_by_prompt bodyParts ["Neck","Upper Clothes"] + image_fill_area #1A3D24 opacity 100 × 2 intentos (SAM cubrió ropa pero no skin midtone del cuello). (2) Script Python Pillow pixel-by-pixel: pintar verde todo píxel opaco (alpha>=30) en y>=48 que no sea verde ni pelo/barba oscuro. 1627 píxeles modificados. Verificación PowerShell: skin=0, verde=3109, transparentes=1286 (solo borde externo sprite), otro=0.
-- **Commit hash post-fix:** {pending}
+- **Commit hash post-fix:** `473a726`
