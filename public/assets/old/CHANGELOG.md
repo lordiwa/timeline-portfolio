@@ -239,3 +239,13 @@ Formato per entry:
 - **Qué se intentó diferente:** model: "banana-2" pro + hex REALES (#FBB782 piel, #1A0805 pelo casi-negro) + ch3-bust.png ref multimodal + descriptores infantiles explícitos (pelo corto boyish, NO barba, cara redondeada, ropa 90s colorida). 1 intento — resultado excelente en primer intento.
 - **Resultado:** DONE — piel peach cálida OK, pelo casi-negro corto boyish EXCELENTE, sin barba PASS, cara juvenil redondeada OK, ojos sage coherentes, ropa colorida 90s OK. optimize_sprite aplicado (13% savings, 13,375 bytes).
 - **Commit hash post-regen:** `5149656`
+
+---
+
+## ch6-bust.png — real-iter → real-iter2 (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-real-iter-grey-scalp.png` (16,586 bytes — commit `fe03223`)
+- **Razón del cambio:** real-iter tenía canas/highlights claros en TODO el pelo de la cabeza (scalp), Rafael quiere ABSOLUTAMENTE 0 canas en scalp y SOLO 2 strands individuales en barba (mentón). También tenía banda blanca difusa en zona cuello/ropa.
+- **Qué se intentará diferente:** ch5-bust.png (recién fixed con Adobe — piel peach cálido, pelo casi-negro, ojos sage, ropa navy #131D2A, sin canas) como referencia multimodal directa. Prompt con reglas SEPARADAS: "CRITICAL HAIR RULE" (scalp uniformemente casi-negro #1A0805, SIN grey pixels) y "CRITICAL BEARD RULE" (exactamente 2 strands individuales en mentón). Navy completo hasta hombros sin banda blanca.
+- **Resultado:** PASS-PARCIAL — scalp oscuro casi-negro uniforme OK (0 canas en scalp), piel peach cálida OK, ojos sage OK. Canas barba: pixels claros presentes pero difusos (banana-2 no genera exactamente 2 strands individuales — genera área difusa sutil). Ropa: banda blanca en cuello/hombros persistente (problema recurrente banana-2 documentado). 2 intentos: intento 1 falló scalp (highlights azul-gris). Intento 2: scalp OK, ropa requiere fix Adobe MCP posterior. optimize_sprite aplicado (17% savings, 13,830 bytes).
+- **Commit hash post-regen:** {pending}
