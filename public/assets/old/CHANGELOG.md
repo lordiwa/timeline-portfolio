@@ -178,7 +178,7 @@ Formato per entry:
 - **Razón del cambio:** iter12 con `model: nano-banana-2` (default) falló — ropa celeste + pelo marrón medio. Rafael 2026-05-15 eligió Opción 2: reintentar con model "banana-2" (pro, más fiel a referencia, +$0.04/img).
 - **Qué se intentó diferente:** model: "banana-2" pro. 2 intentos: retry1 ropa beige/marrón (descartado), retry2 con hex #1B2A4A explícito en prompt → ropa azul denim/medio aceptable. Piel/pelo/ojos/barba correctos ambos intentos. Pelo sutil más largo que ch4 (pasa orejas).
 - **Resultado:** ACEPTADO — piel morena cálida OK, pelo oscuro rizado OK, ojos teal OK, barba sin canas OK, ropa azul (no navy exacto pero distinguiblemente azul frío). optimize_sprite aplicado (12% savings, 14,112 bytes).
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `e0c0c11`
 
 ---
 
@@ -198,4 +198,4 @@ Formato per entry:
 - **Razón del cambio:** Mismo motivo que ch5 — nano-banana-2 drifteó colores. Rafael eligió banana-2 pro.
 - **Qué se intentó diferente:** model: "banana-2" pro. Referencias: ch5 iter13 recién generado. Pelo un poco más largo que ch5 (sutil adicional). EXACTAMENTE 2 canas en barba (strands individuales en mentón). Ropa dark navy blue hex #1B2A4A. Sin canas en cabeza. Sin arrugas extra.
 - **Resultado:** ACEPTADO — 1 intento. Piel morena OK, pelo oscuro rizado levemente más largo que ch5 OK, ojos teal OK, 2 pixels claros en mentón (canas presentes sutiles) OK, ropa azul oscuro navy OK. optimize_sprite aplicado (13% savings, 16,097 bytes).
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `ee82d2c`
