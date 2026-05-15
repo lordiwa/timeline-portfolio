@@ -288,3 +288,21 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15: "extiende el verde hasta el cuello en ch6 y que no quede nada transparente o mas facil copia la camisa de ch4 y listo pero de otro color". El fix de outlines anterior dejó el cuello con skin midtone plano (para tapar outline blanco), pero Rafael quiere la zona completa debajo de mandíbula en verde uniforme #1A3D24. Sin skin midtone, sin transparencias en zona inferior.
 - **Qué se intentó diferente:** Pipeline 2 pasos: (1) Adobe MCP image_select_by_prompt bodyParts ["Neck","Upper Clothes"] + image_fill_area #1A3D24 opacity 100 × 2 intentos (SAM cubrió ropa pero no skin midtone del cuello). (2) Script Python Pillow pixel-by-pixel: pintar verde todo píxel opaco (alpha>=30) en y>=48 que no sea verde ni pelo/barba oscuro. 1627 píxeles modificados. Verificación PowerShell: skin=0, verde=3109, transparentes=1286 (solo borde externo sprite), otro=0.
 - **Commit hash post-fix:** `473a726`
+
+---
+
+## ch5-bust.png — green-shirt → final-navy (2026-05-15)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-green-shirt-prefinal.png` (commit `7df20c5`)
+- **Razón del cambio:** Rafael 2026-05-15: "haz de nuevo con todas las cosas que sabemos ahora para regenerar 5 y 6 ... planifiquemos ambas fotos bien". Plan aprobado: crecimiento de pelo notorio (a la mandibula), camisa verde (vía Adobe post-fix), hex REALES pixel-sampled con PowerShell.
+- **Qué se intentará diferente:** pixelforge banana-2 pro + ch3-bust.png ref directa + hex REALES (#FBB782 piel, #1A0805 pelo casi-negro, #8A9E86 ojos sage) + pelo a la mandibula notorio + ropa NAVY #131D2A intermedia (Adobe la convertirá a verde después).
+- **Commit hash post-regen:** {pending}
+
+---
+
+## ch6-bust.png — green-blob → final-navy (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-green-blob-prefinal.png` (commit `7df20c5`)
+- **Razón del cambio:** Rafael 2026-05-15: mismo plan aprobado — pelo a los hombros (paso del tiempo visible vs ch5), scalp uniformemente casi-negro sin canas, EXACTAMENTE 2 canas en barba (mentón), hex REALES, ropa navy #131D2A.
+- **Qué se intentará diferente:** pixelforge banana-2 pro + ch5 recién regenerado como referencia multimodal directa + pelo significativamente más largo que ch5 (a los hombros) + 2 canas individuales en barba (mentón) + 0 canas en scalp.
+- **Commit hash post-regen:** {pending}
