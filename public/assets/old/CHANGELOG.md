@@ -314,7 +314,7 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-15-final-navy.png` (14,203 bytes — commit `534e6f2`)
 - **Razón del cambio:** Plan final aprobado por Rafael: navy intermedia → verde #1A3D24 con Adobe zonal. Approach mínimo destructivo (solo fill 1-paso). Misma pipeline exitosa de ch5 fix anterior (commits `3b0dbc1`/`b88d981`).
 - **Qué se intentó diferente:** Adobe MCP zonal — image_select_by_prompt bodyParts ["Neck","Upper Clothes"] excludedBodyParts ["Face","Hair","Beard","Eyes","Eyebrow","Nose","Mouth"] + image_fill_area #1A3D24 (red:26, green:61, blue:36) opacity 100 blendMode normal. 1 intento — exitoso.
-- **Commit hash post-fix:** {pending}
+- **Commit hash post-fix:** `1a1d46f`
 
 ---
 
@@ -323,4 +323,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-15-final-navy.png` (14,790 bytes — commit `569a80d`)
 - **Razón del cambio:** Plan final aprobado por Rafael: navy intermedia → verde #1A3D24 con Adobe zonal. Mismo pipeline ch5.
 - **Qué se intentó diferente:** Adobe MCP zonal — image_select_by_prompt bodyParts ["Neck","Upper Clothes"] excludedBodyParts ["Face","Hair","Beard","Eyes","Eyebrow","Nose","Mouth"] + image_fill_area #1A3D24 (red:26, green:61, blue:36) opacity 100 blendMode normal. 1 intento — exitoso.
-- **Commit hash post-fix:** {pending}
+- **Commit hash post-fix:** `e90b8e5`
