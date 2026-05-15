@@ -151,7 +151,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-05-14T20:00:00.000Z
-Stopped at: Phase 5 executed (verdict PASS-with-observations) — visual review cross-chapter pending
-Resume file: .planning/phases/05-phaser-chapter-6/05-MANUAL-CHECKLIST.md (read §10 instructions if Rafael wants to sign formally)
-Next command: investigar y fixear los visual errors cross-chapter reportados (nueva phase "Visual Polish & Chapter Review" o gap-closure plans 06-XX según prioridad)
+Last session: 2026-05-14T23:30:00.000Z
+Stopped at: Busts ch4/ch5 "pésimos" + ch6 cara OK pero ropa borrada — handoff para clear & resume
+Resume file: .planning/SESSION-HANDOFF-2026-05-14-busts.md (estado actual de los 7 busts + próximos pasos concretos)
+Next command: (próxima sesión) (1) arreglar ropa ch6 con Adobe selective (image_select_by_prompt + image_fill_area) preservando cara — ch3 SIGUE siendo la referencia visual general; (2) regenerar ch4/ch5 matcheando ch3 (no ch6), con prompt agregando "flat lit face no specular highlights" para evitar drift previo; (3) aplicar proceso old/ + CHANGELOG (CLAUDE.md §6.5) en cada regen
