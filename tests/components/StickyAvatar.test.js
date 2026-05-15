@@ -72,32 +72,32 @@ describe('StickyAvatar.vue', () => {
   })
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Test 2: placeholder gris + span con ch{N} inicial
+  // Test 2: <img.avatar-bust> con src derivado de chapters[N].avatarSrc
+  // (Rafael 2026-05-14: placeholder gris → img real, resuelve "no sale la cara" ch6)
   // ───────────────────────────────────────────────────────────────────────────
-  it('renders <div class="avatar-placeholder" aria-hidden="true"> with <span>ch3</span>', () => {
+  it('renders <img class="avatar-bust"> with src and alt derived from chapter (ch3)', () => {
     const { wrapper } = mountAvatar({ initialChapter: 3 })
-    const placeholder = wrapper.find('.avatar-placeholder')
-    expect(placeholder.exists()).toBe(true)
-    expect(placeholder.attributes('aria-hidden')).toBe('true')
-    const span = placeholder.find('span.avatar-chapter-label')
-    expect(span.exists()).toBe(true)
-    expect(span.text()).toBe('ch3')
+    const img = wrapper.find('img.avatar-bust')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe('/assets/ch3-bust.png')
+    expect(img.attributes('alt')).toBeTruthy()
+    expect(img.attributes('alt').length).toBeGreaterThan(0)
   })
 
   // ───────────────────────────────────────────────────────────────────────────
   // Test 3: reactividad — mutar activeChapter actualiza aria-label y texto
   // ───────────────────────────────────────────────────────────────────────────
-  it('reactivity: mutating activeChapter updates aria-label and span text after crossfade window', async () => {
+  it('reactivity: mutating activeChapter updates aria-label and img src after crossfade window', async () => {
     vi.useFakeTimers()
     const { wrapper, activeChapter } = mountAvatar({ initialChapter: 3, initialPRM: false })
     activeChapter.value = 5
     await flushPromises()
     expect(wrapper.find('aside.sticky-avatar').attributes('aria-label'))
       .toBe('Avatar de Rafael — capítulo 5 activo')
-    expect(wrapper.find('span.avatar-chapter-label').text()).toBe('ch5')
+    expect(wrapper.find('img.avatar-bust').attributes('src')).toBe('/assets/ch5-bust.png')
     vi.advanceTimersByTime(100)
     await flushPromises()
-    expect(wrapper.find('.avatar-placeholder').attributes('style')).toContain('opacity: 1')
+    expect(wrapper.find('.avatar-bust').attributes('style')).toContain('opacity: 1')
   })
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -106,17 +106,17 @@ describe('StickyAvatar.vue', () => {
   it('default motion: chapter change drops opacity to 0, then restores to 1 after 100ms (NOT 200ms)', async () => {
     vi.useFakeTimers()
     const { wrapper, activeChapter } = mountAvatar({ initialChapter: 3, initialPRM: false })
-    const placeholder = () => wrapper.find('.avatar-placeholder')
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
+    const bust = () => wrapper.find('.avatar-bust')
+    expect(bust().attributes('style')).toContain('opacity: 1')
     activeChapter.value = 4
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 0')
+    expect(bust().attributes('style')).toContain('opacity: 0')
     vi.advanceTimersByTime(99)
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 0')
+    expect(bust().attributes('style')).toContain('opacity: 0')
     vi.advanceTimersByTime(1)
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
+    expect(bust().attributes('style')).toContain('opacity: 1')
   })
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -124,12 +124,12 @@ describe('StickyAvatar.vue', () => {
   // ───────────────────────────────────────────────────────────────────────────
   it('PRM motion: chapter change does NOT dip opacity (instant swap, D-02)', async () => {
     const { wrapper, activeChapter } = mountAvatar({ initialChapter: 3, initialPRM: true })
-    const placeholder = () => wrapper.find('.avatar-placeholder')
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
+    const bust = () => wrapper.find('.avatar-bust')
+    expect(bust().attributes('style')).toContain('opacity: 1')
     activeChapter.value = 4
     await nextTick()
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
-    expect(wrapper.find('span.avatar-chapter-label').text()).toBe('ch4')
+    expect(bust().attributes('style')).toContain('opacity: 1')
+    expect(bust().attributes('src')).toBe('/assets/ch4-bust.png')
   })
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -138,16 +138,16 @@ describe('StickyAvatar.vue', () => {
   it('PRM mid-flight recovery: activating PRM during in-flight fade restores opacity=1 and cancels pending timer', async () => {
     vi.useFakeTimers()
     const { wrapper, activeChapter, prefersReduced } = mountAvatar({ initialChapter: 3, initialPRM: false })
-    const placeholder = () => wrapper.find('.avatar-placeholder')
+    const bust = () => wrapper.find('.avatar-bust')
     activeChapter.value = 4
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 0')
+    expect(bust().attributes('style')).toContain('opacity: 0')
     prefersReduced.value = true
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
+    expect(bust().attributes('style')).toContain('opacity: 1')
     vi.advanceTimersByTime(150)
     await flushPromises()
-    expect(placeholder().attributes('style')).toContain('opacity: 1')
+    expect(bust().attributes('style')).toContain('opacity: 1')
   })
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ describe('StickyAvatar.vue', () => {
   // ───────────────────────────────────────────────────────────────────────────
   // Test 8 (HIGH 1): CSS transition: opacity 100ms ease (NO 200ms)
   // ───────────────────────────────────────────────────────────────────────────
-  it('CSS: .avatar-placeholder declares transition: opacity 100ms ease (NOT 200ms — HIGH 1 fix)', () => {
+  it('CSS: .avatar-bust declares transition: opacity 100ms ease (NOT 200ms — HIGH 1 fix)', () => {
     expect(STICKY_AVATAR_SOURCE).toMatch(/transition:\s*opacity\s+100ms\s+ease/)
     expect(STICKY_AVATAR_SOURCE).not.toMatch(/transition:\s*opacity\s+200ms/)
   })
@@ -185,12 +185,12 @@ describe('StickyAvatar.vue', () => {
   // ───────────────────────────────────────────────────────────────────────────
   // Test 10: CSS @media (prefers-reduced-motion: reduce) → transition:none
   // ───────────────────────────────────────────────────────────────────────────
-  it('CSS: @media (prefers-reduced-motion: reduce) disables transition on .avatar-placeholder', () => {
+  it('CSS: @media (prefers-reduced-motion: reduce) disables transition on .avatar-bust', () => {
     const prmMatch = STICKY_AVATAR_SOURCE.match(
       /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*\{[\s\S]*?\}\s*\}/
     )
     expect(prmMatch).not.toBeNull()
-    expect(prmMatch[0]).toMatch(/\.avatar-placeholder\s*\{[\s\S]*?transition:\s*none/)
+    expect(prmMatch[0]).toMatch(/\.avatar-bust\s*\{[\s\S]*?transition:\s*none/)
   })
 
   // ───────────────────────────────────────────────────────────────────────────

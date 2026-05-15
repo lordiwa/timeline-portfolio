@@ -25,12 +25,19 @@
 //   sobre prefersReduced cancela cualquier setTimeout pendiente y fuerza
 //   opacity = 1 al activar PRM, garantizando visibilidad.
 
-import { ref, inject, watch, nextTick } from 'vue'
+import { ref, computed, inject, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { chapters } from '@/data/chapters'
 
 const { t } = useI18n()
 const { activeChapter } = inject('scrollState')
 const { prefersReduced } = inject('prm')
+
+// Bust real reactivo al chapter (Rafael 2026-05-14: "no sale la cara en ch6").
+// chapters[N] tiene avatarSrc='/assets/ch{N}-bust.png'. Cross-chapter switch via
+// el watcher de activeChapter (crossfade 200ms preserved).
+const currentBust = computed(() => chapters[activeChapter.value]?.avatarSrc ?? '/assets/ch0-bust.png')
+const currentAlt = computed(() => t(`avatar.busts.${activeChapter.value}.alt`))
 
 const opacity = ref(1)
 let pendingSwapTimer = null
@@ -85,9 +92,14 @@ watch(prefersReduced, (isPRM) => {
     :aria-label="t('avatar.ariaTemplate', { chapter: activeChapter })"
     aria-live="polite"
   >
-    <div class="avatar-placeholder" aria-hidden="true" :style="{ opacity }">
-      <span class="avatar-chapter-label">ch{{ activeChapter }}</span>
-    </div>
+    <img
+      class="avatar-bust"
+      :src="currentBust"
+      :alt="currentAlt"
+      width="80"
+      height="96"
+      :style="{ opacity }"
+    />
   </aside>
 </template>
 
@@ -117,23 +129,17 @@ watch(prefersReduced, (isPRM) => {
  * - El swap del texto ch{N} ocurre durante opacity:0 (invisible), por lo
  *   que el usuario solo ve un crossfade limpio sin "flash" del cambio.
  * ───────────────────────────────────────────────────────────────────────── */
-.avatar-placeholder {
+.avatar-bust {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
   background: var(--c-surface);
   border: 1px solid var(--c-border);
+  border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: opacity 100ms ease;
-}
-
-.avatar-chapter-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--c-muted);
+  display: block;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -161,7 +167,7 @@ watch(prefersReduced, (isPRM) => {
  * no haya transición de opacidad bajo PRM.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .avatar-placeholder {
+  .avatar-bust {
     transition: none;
   }
 }
