@@ -249,3 +249,13 @@ Formato per entry:
 - **Qué se intentará diferente:** ch5-bust.png (recién fixed con Adobe — piel peach cálido, pelo casi-negro, ojos sage, ropa navy #131D2A, sin canas) como referencia multimodal directa. Prompt con reglas SEPARADAS: "CRITICAL HAIR RULE" (scalp uniformemente casi-negro #1A0805, SIN grey pixels) y "CRITICAL BEARD RULE" (exactamente 2 strands individuales en mentón). Navy completo hasta hombros sin banda blanca.
 - **Resultado:** PASS-PARCIAL — scalp oscuro casi-negro uniforme OK (0 canas en scalp), piel peach cálida OK, ojos sage OK. Canas barba: pixels claros presentes pero difusos (banana-2 no genera exactamente 2 strands individuales — genera área difusa sutil). Ropa: banda blanca en cuello/hombros persistente (problema recurrente banana-2 documentado). 2 intentos: intento 1 falló scalp (highlights azul-gris). Intento 2: scalp OK, ropa requiere fix Adobe MCP posterior. optimize_sprite aplicado (17% savings, 13,830 bytes).
 - **Commit hash post-regen:** `5284c7b`
+
+---
+
+## ch6-bust.png — real-iter2 → real-iter2-fixed (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-real-iter2-white-collar.png` (13,830 bytes — commit `5284c7b`)
+- **Razón del cambio:** real-iter2 corrigió canas en scalp (era el problema crítico) pero banda blanca cuello/hombros persistió — banana-2 problema sistemático en esa zona.
+- **Qué se intentó diferente:** Adobe MCP selective fill mismo pipeline exitoso ch5 (commits `3b0dbc1` + `61754ba`). image_select_by_prompt bodyParts ["Neck","Upper Clothes"] + excludedBodyParts ["Face","Hair","Beard","Eyes"] + image_fill_area #131D2A (red:19, green:29, blue:42) opacity 100 blendMode normal. 1 intento — exitoso en primer intento.
+- **Resultado:** DONE — banda blanca eliminada, ropa y cuello navy uniforme #131D2A, cara/pelo/barba/ojos intactos. Dimensiones 96×96 mantenidas.
+- **Commit hash post-fix:** `{pending}`
