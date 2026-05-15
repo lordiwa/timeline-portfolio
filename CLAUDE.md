@@ -192,6 +192,44 @@ Generar solo el **frame idle** con pixelforge y animar con otra herramienta.
 
 ---
 
+## 6.5 Iteración de assets — proceso `old/` + CHANGELOG.md
+
+> **Rule establecida 2026-05-14 por Rafael:** cada vez que se regenera un asset existente
+> (no nuevo), debe preservarse el historial visual con contexto.
+
+**Antes de sobrescribir** `public/assets/{filename}.{ext}`:
+
+1. **Asegurar que existe** `public/assets/old/` (crear si no existe).
+2. **Mover** (no copiar) el archivo actual a `public/assets/old/{stem}-{ISO-date}-iter{N}.{ext}` —
+   donde `iter{N}` es el contador secuencial de iteraciones de ese asset (iter1 = original
+   generación, iter2 = primera regeneración, etc.).
+3. **Append** una entry a `public/assets/old/CHANGELOG.md` con shape:
+   ```markdown
+   ## {asset-filename} — iter{N} → iter{N+1} ({ISO-date})
+
+   - **Versión guardada:** `old/{stem}-{ISO-date}-iter{N}.{ext}`
+   - **Razón del cambio:** {feedback Rafael verbatim o issue identificado}
+   - **Qué se intentará diferente:** {hipótesis del prompt/approach nuevo}
+   - **Commit hash del cambio:** `{hash post-regen}`
+   ```
+4. **Regenerar** el asset (artist-creator / artist-editor / inline).
+5. **Commit** atómico mencionando la iteración (e.g. `art(ch4): regenerate ch4-bust.png iter4 — color match piel/ojos`).
+
+**Aplica a:**
+- Dispatches a `artist-creator` y `artist-editor` agents (incluirlo en el prompt del dispatch).
+- Regeneraciones inline desde main session.
+- Cualquier sobrescritura de PNG/JPG/WEBP en `public/assets/`.
+
+**NO aplica a:**
+- Primera generación de un asset que no existía (no hay "iter0" que preservar).
+- Compresión / optimización del MISMO asset (no es regeneración semántica).
+
+**Por qué:** Rafael puede revertir si una iteración rompe lo que funcionaba.
+El CHANGELOG da trazabilidad de las decisiones visuales sin contaminar `git log`
+con narrativa larga. Memoria persistente del proceso para futuras sesiones.
+
+---
+
 ## 7. Estado actual del proyecto
 
 **Objetivo:** portafolio personal decorado con pixel art generado vía los MCPs de arte.
