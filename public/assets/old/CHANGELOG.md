@@ -121,3 +121,21 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15: "ch5 y ch6 el pelo mas largo, en ch5 algo largo en ch6 mas largo que se vea el paso del tiempo". Iter7 tenía pelo similar a ch5 sin paso del tiempo perceptible. También quedaba en 64x64 (inconsistente con resto 96x96).
 - **Qué se intentará diferente:** pelo significativamente más largo que ch5 iter8 (fluye pasando el cuello, volumen mayor), aging visible solo en longitud de pelo NO en canas/arrugas. Regen completo a 96x96 con prompt navy clothing. Usando ch5 nuevo como referencia.
 - **Commit hash post-regen:** `9728770`
+
+---
+
+## ch5-bust.png — iter8 → iter9 (2026-05-15)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-iter8-drift.png` (13,937 bytes — generado por commit `53f9053`)
+- **Razón del cambio:** Rafael 2026-05-15 (verbatim): "why are you changing the eyes and hair color, i explicitly told you not to change that and use the base skin and hair color as well as eyes, why are you making this mistake over and over again? fix that". Pixelforge drifteó colores piel/pelo/ojos en iter8 a pesar de hex codes en prompt — error documentado y recurrente: cabello drifteo a marrón medio (en lugar de dark brown #3D2B1A), ojos driftaron de teal #4A7A6B a marrón/hazel.
+- **Qué se intentará diferente:** NO regenerar con pixelforge. Adobe MCP HSL zonal para alinear piel/pelo/ojos al hex de ch3 (piel: #D4956A/#B87A50/#8B5A35; cabello: #3D2B1A/#5C3D22; ojos: #4A7A6B). Preservar pelo largo iter8 + sin canas/sin arrugas + ropa navy + dimensiones 96x96.
+- **Commit hash post-edit:** {pending}
+
+---
+
+## ch6-bust.png — iter8 → iter9 (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-iter8-drift.png` (14,422 bytes — generado por commit `9728770`)
+- **Razón del cambio:** Rafael 2026-05-15 (verbatim): "why are you changing the eyes and hair color, i explicitly told you not to change that and use the base skin and hair color as well as eyes, why are you making this mistake over and over again? fix that". Pixelforge drifteó colores piel/pelo/ojos en iter8: cabello más claro que ch3 (drift a marrón medio), ojos marrón en lugar de teal #4A7A6B.
+- **Qué se intentará diferente:** NO regenerar con pixelforge. Adobe MCP HSL zonal para alinear piel/pelo/ojos al hex de ch3 (piel: #D4956A/#B87A50/#8B5A35; cabello: #3D2B1A/#5C3D22; ojos: #4A7A6B). Preservar pelo largo a hombros iter8 + sin canas + ropa navy + dimensiones 96x96.
+- **Commit hash post-edit:** {pending}
