@@ -32,6 +32,9 @@ const chapter = chapters[2]
 
 // computed para reactividad si projects.js cambia en HMR
 const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
+
+// Bio era-specific: Flash era — BlueLizard/Matte/Joju + advergames (Rafael 2026-05-14).
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -55,7 +58,7 @@ const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
       <FlashBanner />
 
       <div class="ch2-bio">
-        <p>{{ t(bio.coreKey) }}</p>
+        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
 
       <p class="ch2-flavor">{{ t('chapters.2.flavor') }}</p>

@@ -27,6 +27,9 @@ const { t } = useI18n()
 
 const chapter = chapters[4]
 const ch4Projects = computed(() => projects.filter((p) => p.chapterEra === 4))
+
+// Bio era-specific: AR/VR independiente Ecuador + Metrodigi líder (Rafael 2026-05-14).
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -49,7 +52,7 @@ const ch4Projects = computed(() => projects.filter((p) => p.chapterEra === 4))
     <div class="ch4-content">
       <FloatingPanel :title="t(chapter.titleKey)">
         <p class="ch4-flavor">{{ t('chapters.4.flavor') }}</p>
-        <p class="ch4-bio">{{ t(bio.coreKey) }}</p>
+        <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch4-bio">{{ para }}</p>
       </FloatingPanel>
 
       <FloatingPanel

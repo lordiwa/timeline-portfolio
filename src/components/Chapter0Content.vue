@@ -16,6 +16,7 @@
   Bio text usa t(bio.coreKey) — renderiza placeholder hasta que Rafael llene i18n.
 -->
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { bio } from '@/data/bio'
@@ -25,6 +26,10 @@ const { t } = useI18n()
 
 // chapters[0] — Terminal 1995. Lookup directo por index (D3-04 locked).
 const chapter = chapters[0]
+
+// Bio era-specific: split por \n\n para renderizar múltiples <p> (Rafael 2026-05-14).
+// t() es reactive con locale via vue-i18n — computed re-evalúa al toggle.
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -49,8 +54,8 @@ const chapter = chapters[0]
       <TerminalScroll />
 
       <div class="ch0-bio">
-        <!-- t(bio.coreKey) renderiza placeholder "PENDING..." hasta que Rafael llene i18n -->
-        <p>{{ t(bio.coreKey) }}</p>
+        <!-- bio era-specific: ch0 muestra DOS + California Games + Warcraft/SC/Magic. -->
+        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
 
       <p class="ch0-flavor">{{ t('chapters.0.flavor') }}</p>

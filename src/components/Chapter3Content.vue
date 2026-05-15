@@ -33,6 +33,9 @@ const chapter = chapters[3]
 
 // computed para reactividad si projects.js cambia en HMR (Phase 4 llenará con contenido real)
 const ch3Projects = computed(() => projects.filter((p) => p.chapterEra === 3))
+
+// Bio era-specific: Pink Parrot UX + liderazgo + ágil (Rafael 2026-05-14).
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -54,8 +57,8 @@ const ch3Projects = computed(() => projects.filter((p) => p.chapterEra === 3))
     <!-- Columna derecha: bio + lista de ProjectCards filtrados por chapterEra===3 -->
     <div class="ch3-content">
       <div class="ch3-bio">
-        <!-- t(bio.coreKey) renderiza el placeholder "PENDING..." hasta que Rafael llene i18n -->
-        <p>{{ t(bio.coreKey) }}</p>
+        <!-- bio era-specific: ch3 muestra Pink Parrot UX + liderazgo + ágil. -->
+        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
 
       <div v-if="ch3Projects.length > 0" class="ch3-projects">

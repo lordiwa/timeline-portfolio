@@ -24,6 +24,9 @@ const { t } = useI18n()
 
 const chapter = chapters[5]
 const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
+
+// Bio era-specific: number8 + BairesDev + VivoEnVivo + RocketSnail + Remoose (Rafael 2026-05-14).
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -45,7 +48,7 @@ const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
       <ScrollRevealCard :threshold="0.2" :delay="0">
         <h1 class="ch5-title">{{ t(chapter.titleKey) }}</h1>
         <p class="ch5-flavor">{{ t('chapters.5.flavor') }}</p>
-        <p class="ch5-bio">{{ t(bio.coreKey) }}</p>
+        <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch5-bio">{{ para }}</p>
       </ScrollRevealCard>
 
       <div v-if="ch5Projects.length > 0" class="ch5-projects">

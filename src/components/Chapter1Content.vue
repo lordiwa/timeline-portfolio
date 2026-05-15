@@ -20,6 +20,7 @@
   position: relative en .ch1-layout es CRÍTICO para contener StarfieldBg absolute.
 -->
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { bio } from '@/data/bio'
@@ -30,6 +31,9 @@ const { t } = useI18n()
 
 // chapters[1] — HTML 90s / GeoCities. Lookup directo por index (D3-04 locked).
 const chapter = chapters[1]
+
+// Bio era-specific: 14 años + autodidacta + competitivo SC/WC + BLG QA (Rafael 2026-05-14).
+const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 </script>
 
 <template>
@@ -57,8 +61,8 @@ const chapter = chapters[1]
       <MarqueeBanner />
 
       <div class="ch1-bio">
-        <!-- t(bio.coreKey) renderiza placeholder "PENDING..." hasta que Rafael llene i18n -->
-        <p>{{ t(bio.coreKey) }}</p>
+        <!-- bio era-specific: ch1 muestra 14 años + Perl/C++ + competitivo SC/WC + BLG QA. -->
+        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
 
       <p class="ch1-flavor">{{ t('chapters.1.flavor') }}</p>
