@@ -126,11 +126,9 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 }
 
 /* Bio protagonista — font más grande + line-height generoso + DOS white pleno
-   (Rafael 2026-05-14: "el texto de historia debería tener más protagonismo"). */
-.ch0-bio {
-  max-width: 65ch;
-}
-
+   (Rafael 2026-05-14: "el texto de historia debería tener más protagonismo").
+   Sin max-width — ocupa el full 1fr del content grid igual que ch1-ch5 .ch{N}-bio
+   (Rafael 2026-05-14: "ch0 deberia ser del mismo width que los otros ch"). */
 .ch0-bio p {
   font-family: 'VT323', ui-monospace, monospace;
   font-size: clamp(1.15rem, 1.6vw, 1.45rem);
