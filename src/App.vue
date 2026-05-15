@@ -32,6 +32,7 @@ import StickyAvatar from './components/StickyAvatar.vue'
 import StickyTimeline from './components/StickyTimeline.vue'
 import LangToggle from './components/LangToggle.vue'
 import ContactHUD from './components/ContactHUD.vue'
+import GlobalMantra from './components/GlobalMantra.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
@@ -143,6 +144,8 @@ useHead({
   <StickyTimeline />
   <LangToggle />
   <ContactHUD />
+  <!-- GlobalMantra: signature cross-chapter (Rafael 2026-05-14 "en todas las fechas"). -->
+  <GlobalMantra />
 </template>
 
 <!--
