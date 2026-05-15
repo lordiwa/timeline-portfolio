@@ -111,7 +111,7 @@ Formato per entry:
 - **Versión guardada:** `old/ch5-bust-2026-05-15-iter7.png` (13,369 bytes — generado por commit `d97c7e7`)
 - **Razón del cambio:** Rafael 2026-05-15: "ch5 y ch6 el pelo mas largo, en ch5 algo largo en ch6 mas largo que se vea el paso del tiempo" — iter7 mantenía pelo similar a ch4 sin progresión visible de tiempo.
 - **Qué se intentará diferente:** pelo "algo más largo" que ch4 — mechones rizados pasando las orejas, más volumen arriba. Mantener sin canas/sin arrugas (iter7 funcionó en ese aspecto). 96x96.
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `53f9053`
 
 ---
 
@@ -120,4 +120,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-15-iter7.png` (9,177 bytes — generado por commits `bf069c5` + `00cc5c9`)
 - **Razón del cambio:** Rafael 2026-05-15: "ch5 y ch6 el pelo mas largo, en ch5 algo largo en ch6 mas largo que se vea el paso del tiempo". Iter7 tenía pelo similar a ch5 sin paso del tiempo perceptible. También quedaba en 64x64 (inconsistente con resto 96x96).
 - **Qué se intentará diferente:** pelo significativamente más largo que ch5 iter8 (fluye pasando el cuello, volumen mayor), aging visible solo en longitud de pelo NO en canas/arrugas. Regen completo a 96x96 con prompt navy clothing. Usando ch5 nuevo como referencia.
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `9728770`
