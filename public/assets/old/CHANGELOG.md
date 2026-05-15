@@ -324,3 +324,12 @@ Formato per entry:
 - **Razón del cambio:** Plan final aprobado por Rafael: navy intermedia → verde #1A3D24 con Adobe zonal. Mismo pipeline ch5.
 - **Qué se intentó diferente:** Adobe MCP zonal — image_select_by_prompt bodyParts ["Neck","Upper Clothes"] excludedBodyParts ["Face","Hair","Beard","Eyes","Eyebrow","Nose","Mouth"] + image_fill_area #1A3D24 (red:26, green:61, blue:36) opacity 100 blendMode normal. 1 intento — exitoso.
 - **Commit hash post-fix:** `e90b8e5`
+
+---
+
+## ch5-bust.png — adobe-green-blob → drawn-green-shirt (2026-05-15)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-adobe-green-blob.png` (17,491 bytes — commit `1a1d46f`)
+- **Razón del cambio:** Rafael 2026-05-15: "quita ese adobe verde o como se llame necesito una camista". El Adobe fill_area plano en zona Upper Clothes generaba un blob de color uniforme sin estructura — no se leía como camisa.
+- **Qué se intentó diferente:** pixelforge banana-2 pro dibuja la camisa directamente con cuello-V/hombros/textura pixel art. Verde #1A3D24 especificado en prompt. 1 intento — exitoso. Camisa con cuello-V claramente visible, forma de hombros definida, shading natural.
+- **Commit hash post-regen:** `{pending-ch5}`
