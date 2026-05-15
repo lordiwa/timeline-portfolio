@@ -279,3 +279,12 @@ Formato per entry:
 - **Qué se intentó diferente:** Mismo pipeline ch5. Paso 1: image_fill_area #1A3D24 en Neck+Upper Clothes. Paso 2: primer intento outline prompt falló con SAM IoU threshold 0.8 → retry con prompt "thin white lines at the border between the face and shirt, between hair and skin" — máscara generada pero fill skin #B35A48 arruinó la imagen (cubrió figura completa). Retry 2: image_select_by_prompt bodyParts ["Neck"] solo + image_fill_area skin midtone (red:200, green:120, blue:90) — resultado aceptable: cuello uniforme, cara/pelo/barba intactos. 3 intentos en paso de outlines.
 - **Resultado:** DONE-PARTIAL — camisa verde oscuro #1A3D24 visible, cara/pelo cana/barba intactos. Cuello con skin midtone plano (no degradado natural) — aceptable vs tener outlines blancos. Dimensiones 96×96 mantenidas.
 - **Commit hash post-fix:** `15f11c3`
+
+---
+
+## ch6-bust.png — green-partial → green-full (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-green-partial.png` (18,899 bytes — commit `15f11c3`)
+- **Razón del cambio:** Rafael 2026-05-15: "extiende el verde hasta el cuello en ch6 y que no quede nada transparente o mas facil copia la camisa de ch4 y listo pero de otro color". El fix de outlines anterior dejó el cuello con skin midtone plano (para tapar outline blanco), pero Rafael quiere la zona completa debajo de mandíbula en verde uniforme #1A3D24. Sin skin midtone, sin transparencias en zona inferior.
+- **Qué se intentó diferente:** Pipeline 2 pasos: (1) Adobe MCP image_select_by_prompt bodyParts ["Neck","Upper Clothes"] + image_fill_area #1A3D24 opacity 100 × 2 intentos (SAM cubrió ropa pero no skin midtone del cuello). (2) Script Python Pillow pixel-by-pixel: pintar verde todo píxel opaco (alpha>=30) en y>=48 que no sea verde ni pelo/barba oscuro. 1627 píxeles modificados. Verificación PowerShell: skin=0, verde=3109, transparentes=1286 (solo borde externo sprite), otro=0.
+- **Commit hash post-fix:** {pending}
