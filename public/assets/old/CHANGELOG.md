@@ -199,3 +199,33 @@ Formato per entry:
 - **Qué se intentó diferente:** model: "banana-2" pro. Referencias: ch5 iter13 recién generado. Pelo un poco más largo que ch5 (sutil adicional). EXACTAMENTE 2 canas en barba (strands individuales en mentón). Ropa dark navy blue hex #1B2A4A. Sin canas en cabeza. Sin arrugas extra.
 - **Resultado:** ACEPTADO — 1 intento. Piel morena OK, pelo oscuro rizado levemente más largo que ch5 OK, ojos teal OK, 2 pixels claros en mentón (canas presentes sutiles) OK, ropa azul oscuro navy OK. optimize_sprite aplicado (13% savings, 16,097 bytes).
 - **Commit hash post-regen:** `ee82d2c`
+
+---
+
+## ch5-bust.png — iter13 → iter14 (2026-05-15, hex REALES pixel-sampled ch3)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-iter13-pre-real.png` (16,097 bytes — commit `ee82d2c`)
+- **Razón del cambio:** Rafael 2026-05-15 pixel-sampled ch3-bust.png con PowerShell System.Drawing.Bitmap y reveló que los hex previos (#D4956A piel, #3D2B1A pelo, #4A7A6B ojos) eran INVENTADOS por agente anterior. Hex REALES: piel highlights #FBB782, midtones #ED9766, shadows #B35A48. Pelo #1A0805 casi-negro. Ojos sage #8A9E86/#48622D (NO teal). Todos los iters anteriores usaron palette incorrecta.
+- **Qué se intentó diferente:** model: "banana-2" pro + hex REALES en prompt + ch3-bust.png como referencia multimodal directa. 2 intentos: iter14-retry1 falló (piel blanca, pelo castaño, ropa blanca). iter14-retry2 logró piel peach cálida correcta y pelo casi-negro. Ropa con banda blanca en zona cuello — problema recurrente banana-2 en esta sesión.
+- **Resultado:** PASS-PARCIAL — piel peach cálida OK (#FBB782 range), pelo oscuro casi-negro OK, sin canas OK, sin arrugas OK. Ropa con banda blanca superior (zona cuello/hombros) — no navy uniforme. optimize_sprite aplicado (9% savings, 16,476 bytes).
+- **Commit hash post-regen:** `4b41c20`
+
+---
+
+## ch6-bust.png — iter13 → iter14 (2026-05-15, hex REALES pixel-sampled ch3)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-iter13-pre-real.png` (16,097 bytes — commit `ee82d2c`)
+- **Razón del cambio:** Mismo motivo que ch5 iter14 — hex inventados en iters previos. Rafael 2026-05-15 pixel-sampled ch3 con PowerShell y reveló hex REALES. Regen con palette correcta.
+- **Qué se intentó diferente:** model: "banana-2" pro + hex REALES + ch5 iter14 recién generado como referencia. Pelo BARELY más largo que ch5. EXACTAMENTE 2 canas en barba (2 strands individuales en mentón). Sin canas en cabeza. Ropa #131D2A dark navy.
+- **Resultado:** PASS-PARCIAL — piel peach cálida OK, pelo oscuro casi-negro rizos más largos que ch5 OK, aging progression visible OK. Canas: barba con píxeles claros dispersos (difícil contar exactamente 2, el modelo genera área difusa). Ropa con banda blanca superior (mismo problema recurrente banana-2). optimize_sprite aplicado (24% savings, 16,586 bytes).
+- **Commit hash post-regen:** `fe03223`
+
+---
+
+## ch0-bust.png — iter1 → iter2 (2026-05-15, hex REALES pixel-sampled ch3)
+
+- **Versión guardada:** `old/ch0-bust-2026-05-15-iter1-pre-real.png` (19,993 bytes — Phase 3 batch original)
+- **Razón del cambio:** Rafael 2026-05-15 pixel-sampled ch3 con PowerShell y reveló hex REALES. La generación original (iter1) usaba hex inventados. Regen con palette correcta + énfasis en rasgos de niño 11 años (1995): sin barba, pelo corto, cara juvenil.
+- **Qué se intentó diferente:** model: "banana-2" pro + hex REALES (#FBB782 piel, #1A0805 pelo casi-negro) + ch3-bust.png ref multimodal + descriptores infantiles explícitos (pelo corto boyish, NO barba, cara redondeada, ropa 90s colorida). 1 intento — resultado excelente en primer intento.
+- **Resultado:** DONE — piel peach cálida OK, pelo casi-negro corto boyish EXCELENTE, sin barba PASS, cara juvenil redondeada OK, ojos sage coherentes, ropa colorida 90s OK. optimize_sprite aplicado (13% savings, 13,375 bytes).
+- **Commit hash post-regen:** `5149656`
