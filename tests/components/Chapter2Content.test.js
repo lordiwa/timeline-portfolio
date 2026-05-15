@@ -2,7 +2,8 @@
 // TDD RED phase — Plan 04-03, Task 3.
 //
 // Cobertura (clonada de Chapter3Content.test.js + variantes ch2):
-// - T1 DOM contract: .ch2-layout + .ch2-meta + img.ch2-avatar + .ch2-content + .ch2-bio + (opcional .ch2-projects)
+// - T1 DOM contract: .ch2-layout + .ch2-meta (sin inline avatar) + .ch2-content + .ch2-bio + (opcional .ch2-projects)
+//   Rafael 2026-05-15: inline avatars eliminados de todos los ch — solo StickyAvatar top-left.
 // - T2 avatar img src='/assets/ch2-bust.png' + alt i18n
 // - T3 bio render: .ch2-bio p contiene texto del locale activo
 // - T4 projects filter: solo chapterEra===2 monta ProjectCards
@@ -89,9 +90,10 @@ describe('Chapter2Content.vue', () => {
     expect(wrapper.find('.ch2-content').exists()).toBe(true)
   })
 
-  it('T1 DOM: .ch2-meta contiene img.ch2-avatar', () => {
+  it('T1 DOM: .ch2-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar)', () => {
     const { wrapper } = mountCh2()
-    expect(wrapper.find('.ch2-meta img.ch2-avatar').exists()).toBe(true)
+    expect(wrapper.find('.ch2-meta img.ch2-avatar').exists()).toBe(false)
+    expect(wrapper.find('img.ch2-avatar').exists()).toBe(false)
   })
 
   it('T1 DOM: .ch2-content contiene .ch2-bio (div, no section)', () => {
@@ -105,20 +107,9 @@ describe('Chapter2Content.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────
-  // T2 avatar
+  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
+  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
   // ─────────────────────────────────────────────────────────
-  it('T2 avatar img: src === /assets/ch2-bust.png', () => {
-    const { wrapper } = mountCh2()
-    const img = wrapper.find('img.ch2-avatar')
-    expect(img.attributes('src')).toBe('/assets/ch2-bust.png')
-  })
-
-  it('T2 avatar img alt: locale=es → alt resuelve t(avatar.busts.2.alt)', () => {
-    const { wrapper } = mountCh2({ locale: 'es' })
-    const img = wrapper.find('img.ch2-avatar')
-    expect(img.attributes('alt')).toBeTruthy()
-    expect(img.attributes('alt').length).toBeGreaterThan(0)
-  })
 
   // ─────────────────────────────────────────────────────────
   // T3 bio render

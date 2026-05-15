@@ -40,16 +40,9 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 
 <template>
   <div class="ch3-layout">
-    <!-- Columna izquierda: avatar bust grande + meta (year + era localizada) -->
+    <!-- Columna izquierda: meta (year + era localizada). StickyAvatar top-left invariante
+         es el único avatar visible (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
     <aside class="ch3-meta">
-      <img
-        class="ch3-avatar"
-        :src="chapter.avatarSrc"
-        :alt="t('avatar.busts.3.alt')"
-        width="160"
-        height="192"
-        loading="lazy"
-      />
       <p class="ch3-year">{{ chapter.year }}</p>
       <p class="ch3-era">{{ t(chapter.eraKey) }}</p>
     </aside>
@@ -96,15 +89,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   flex-direction: column;
   gap: var(--sp-sm);
   align-items: flex-start;
-}
-
-.ch3-avatar {
-  width: 160px;
-  height: 192px;
-  image-rendering: pixelated;
-  background: var(--c-surface, var(--c-bg, #f0f4ff));
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
 }
 
 .ch3-year {
@@ -162,11 +146,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     flex-direction: row;
     align-items: center;
     margin-bottom: var(--sp-md);
-  }
-
-  .ch3-avatar {
-    width: 96px;
-    height: 116px;
   }
 
   .ch3-year {

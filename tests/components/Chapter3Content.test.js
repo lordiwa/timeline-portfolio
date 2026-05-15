@@ -2,8 +2,8 @@
 // TDD RED phase — Plan 03-03, Task 3.2.
 //
 // Cobertura:
-// - T1 DOM contract: .ch3-layout + .ch3-meta + img.ch3-avatar + .ch3-content + .ch3-bio + .ch3-projects
-// - T2 avatar img src y alt i18n (locale es + en)
+// - T1 DOM contract: .ch3-layout + .ch3-meta (sin inline avatar) + .ch3-content + .ch3-bio + .ch3-projects
+//   Rafael 2026-05-15: inline avatars eliminados de todos los ch — solo StickyAvatar top-left.
 // - T3 bio render: .ch3-bio p muestra el texto del locale activo
 // - T4 projects filter: solo chapterEra===3 monta ProjectCards (2 ch3 + 1 ch4 → 1 card)
 // - T5 reactive (Pitfall 3): toggle locale → bio text actualiza sin re-mount
@@ -96,9 +96,10 @@ describe('Chapter3Content.vue', () => {
     expect(wrapper.find('.ch3-content').exists()).toBe(true)
   })
 
-  it('T1 DOM contract: .ch3-meta contiene img.ch3-avatar', () => {
+  it('T1 DOM contract: .ch3-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar)', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-meta img.ch3-avatar').exists()).toBe(true)
+    expect(wrapper.find('.ch3-meta img.ch3-avatar').exists()).toBe(false)
+    expect(wrapper.find('img.ch3-avatar').exists()).toBe(false)
   })
 
   it('T1 DOM contract: .ch3-content contiene .ch3-bio (div, no section)', () => {
@@ -113,30 +114,9 @@ describe('Chapter3Content.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T2: avatar img src + alt i18n
+  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
+  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
   // ─────────────────────────────────────────────────────────────────────────
-  it('T2 avatar img: src === /assets/ch3-bust.png', () => {
-    const { wrapper } = mountCh3()
-    const img = wrapper.find('img.ch3-avatar')
-    expect(img.attributes('src')).toBe('/assets/ch3-bust.png')
-  })
-
-  it('T2 avatar img alt: locale=es → alt es la traducción de avatar.busts.3.alt en español', () => {
-    const { wrapper } = mountCh3({ locale: 'es' })
-    const img = wrapper.find('img.ch3-avatar')
-    expect(img.attributes('alt')).toBeTruthy()
-    expect(img.attributes('alt').length).toBeGreaterThan(0)
-  })
-
-  it('T2 avatar img alt: locale=en → alt cambia a versión en inglés', () => {
-    const { wrapper: wrapperEs } = mountCh3({ locale: 'es' })
-    const { wrapper: wrapperEn } = mountCh3({ locale: 'en' })
-    const altEs = wrapperEs.find('img.ch3-avatar').attributes('alt')
-    const altEn = wrapperEn.find('img.ch3-avatar').attributes('alt')
-    // Ambos deben ser strings no vacíos
-    expect(altEs.length).toBeGreaterThan(0)
-    expect(altEn.length).toBeGreaterThan(0)
-  })
 
   // ─────────────────────────────────────────────────────────────────────────
   // T3: bio render — .ch3-bio p muestra el texto t(bio.coreKey)

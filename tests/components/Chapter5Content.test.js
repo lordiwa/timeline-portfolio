@@ -94,26 +94,17 @@ describe('Chapter5Content.vue', () => {
     expect(wrapper.find('.ch5-content').exists()).toBe(true)
   })
 
-  it('T1 DOM: .ch5-meta contiene img.ch5-avatar; .ch5-projects existe (mock 3 ch5)', () => {
+  it('T1 DOM: .ch5-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar); .ch5-projects existe (mock 3 ch5)', () => {
     const { wrapper } = mountCh5()
-    expect(wrapper.find('.ch5-meta img.ch5-avatar').exists()).toBe(true)
+    expect(wrapper.find('.ch5-meta img.ch5-avatar').exists()).toBe(false)
+    expect(wrapper.find('img.ch5-avatar').exists()).toBe(false)
     expect(wrapper.find('.ch5-projects').exists()).toBe(true)
   })
 
   // ───────────────────────────────────────────────
-  // T2 avatar
+  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
+  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
   // ───────────────────────────────────────────────
-  it('T2 avatar img: src === /assets/ch5-bust.png', () => {
-    const { wrapper } = mountCh5()
-    expect(wrapper.find('img.ch5-avatar').attributes('src')).toBe('/assets/ch5-bust.png')
-  })
-
-  it('T2 avatar img alt: locale=es → alt no vacío', () => {
-    const { wrapper } = mountCh5({ locale: 'es' })
-    const alt = wrapper.find('img.ch5-avatar').attributes('alt')
-    expect(alt).toBeTruthy()
-    expect(alt.length).toBeGreaterThan(0)
-  })
 
   // ───────────────────────────────────────────────
   // T3 ScrollRevealCard count

@@ -41,16 +41,9 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     <!-- StarfieldBg PRIMERO — su CSS scoped lo posiciona absolute detrás del content -->
     <StarfieldBg />
 
-    <!-- Columna izquierda: avatar bust grande + meta (year + era localizada) -->
+    <!-- Columna izquierda: meta (year + era). StickyAvatar top-left es único avatar visible
+         (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
     <aside class="ch1-meta">
-      <img
-        class="ch1-avatar"
-        :src="chapter.avatarSrc"
-        :alt="t('avatar.busts.1.alt')"
-        width="160"
-        height="192"
-        loading="lazy"
-      />
       <p class="ch1-year">{{ chapter.year }}</p>
       <p class="ch1-era">{{ t(chapter.eraKey) }}</p>
     </aside>
@@ -112,15 +105,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   align-items: flex-start;
   position: relative; /* z-index encima del starfield */
   z-index: 1;
-}
-
-.ch1-avatar {
-  width: 160px;
-  height: 192px;
-  image-rendering: pixelated;
-  background: var(--c-surface, var(--c-bg, #000080));
-  border: 2px solid var(--c-border);
-  border-radius: 4px;
 }
 
 .ch1-year {
@@ -207,11 +191,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     flex-direction: row;
     align-items: center;
     margin-bottom: var(--sp-md);
-  }
-
-  .ch1-avatar {
-    width: 96px;
-    height: 116px;
   }
 
   .ch1-year {

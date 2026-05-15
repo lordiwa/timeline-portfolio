@@ -85,25 +85,16 @@ describe('Chapter4Content.vue', () => {
     expect(wrapper.find('.ch4-content').exists()).toBe(true)
   })
 
-  it('T1 DOM: .ch4-meta contiene img.ch4-avatar', () => {
+  it('T1 DOM: .ch4-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar)', () => {
     const { wrapper } = mountCh4()
-    expect(wrapper.find('.ch4-meta img.ch4-avatar').exists()).toBe(true)
+    expect(wrapper.find('.ch4-meta img.ch4-avatar').exists()).toBe(false)
+    expect(wrapper.find('img.ch4-avatar').exists()).toBe(false)
   })
 
   // ───────────────────────────────────────────────
-  // T2 avatar
+  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
+  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
   // ───────────────────────────────────────────────
-  it('T2 avatar img: src === /assets/ch4-bust.png', () => {
-    const { wrapper } = mountCh4()
-    expect(wrapper.find('img.ch4-avatar').attributes('src')).toBe('/assets/ch4-bust.png')
-  })
-
-  it('T2 avatar img alt: locale=es → alt no vacío', () => {
-    const { wrapper } = mountCh4({ locale: 'es' })
-    const alt = wrapper.find('img.ch4-avatar').attributes('alt')
-    expect(alt).toBeTruthy()
-    expect(alt.length).toBeGreaterThan(0)
-  })
 
   // ───────────────────────────────────────────────
   // T3 ParallaxLayers + FloatingPanel embeds

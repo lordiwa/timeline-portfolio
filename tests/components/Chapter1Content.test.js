@@ -2,8 +2,8 @@
 // TDD RED phase — Plan 04-02, Task 2.
 //
 // Cobertura:
-// - T1 DOM contract: .ch1-layout + .ch1-meta + img.ch1-avatar + .ch1-content + .ch1-bio
-// - T2 avatar img src === /assets/ch1-bust.png + alt i18n (no vacío)
+// - T1 DOM contract: .ch1-layout + .ch1-meta (sin inline avatar) + .ch1-content + .ch1-bio
+//   Rafael 2026-05-15: inline avatars eliminados de todos los ch — solo StickyAvatar top-left.
 // - T3 <MarqueeBanner> + <StarfieldBg> components embebidos
 // - T4 ch1 NO renderea ProjectCard (sin proyectos — CONTENT-CHECKLIST §2.6)
 // - T5 locale ES→EN toggle actualiza flavor text
@@ -58,9 +58,10 @@ describe('Chapter1Content.vue', () => {
     expect(wrapper.find('.ch1-content').exists()).toBe(true)
   })
 
-  it('T1 DOM contract: .ch1-meta contiene img.ch1-avatar', () => {
+  it('T1 DOM contract: .ch1-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar)', () => {
     const { wrapper } = mountCh1()
-    expect(wrapper.find('.ch1-meta img.ch1-avatar').exists()).toBe(true)
+    expect(wrapper.find('.ch1-meta img.ch1-avatar').exists()).toBe(false)
+    expect(wrapper.find('img.ch1-avatar').exists()).toBe(false)
   })
 
   it('T1 DOM contract: .ch1-content contiene .ch1-bio', () => {
@@ -69,29 +70,9 @@ describe('Chapter1Content.vue', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T2: avatar img src + alt i18n
+  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
+  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
   // ─────────────────────────────────────────────────────────────────────────
-  it('T2 avatar img: src === /assets/ch1-bust.png', () => {
-    const { wrapper } = mountCh1()
-    const img = wrapper.find('img.ch1-avatar')
-    expect(img.attributes('src')).toBe('/assets/ch1-bust.png')
-  })
-
-  it('T2 avatar img alt: locale=es → alt es string no vacío', () => {
-    const { wrapper } = mountCh1({ locale: 'es' })
-    const img = wrapper.find('img.ch1-avatar')
-    expect(img.attributes('alt')).toBeTruthy()
-    expect(img.attributes('alt').length).toBeGreaterThan(0)
-  })
-
-  it('T2 avatar img alt: locale=en → alt cambia a versión inglés', () => {
-    const { wrapper: wEs } = mountCh1({ locale: 'es' })
-    const { wrapper: wEn } = mountCh1({ locale: 'en' })
-    const altEs = wEs.find('img.ch1-avatar').attributes('alt')
-    const altEn = wEn.find('img.ch1-avatar').attributes('alt')
-    expect(altEs.length).toBeGreaterThan(0)
-    expect(altEn.length).toBeGreaterThan(0)
-  })
 
   // ─────────────────────────────────────────────────────────────────────────
   // T3: MarqueeBanner + StarfieldBg embebidos

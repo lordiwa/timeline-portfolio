@@ -31,15 +31,9 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 
 <template>
   <div class="ch5-layout">
+    <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible
+         (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
     <aside class="ch5-meta">
-      <img
-        class="ch5-avatar"
-        :src="chapter.avatarSrc"
-        :alt="t('avatar.busts.5.alt')"
-        width="160"
-        height="192"
-        loading="lazy"
-      />
       <p class="ch5-year">{{ chapter.year }}</p>
       <p class="ch5-era">{{ t(chapter.eraKey) }}</p>
     </aside>
@@ -87,15 +81,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   flex-direction: column;
   gap: var(--sp-sm);
   align-items: flex-start;
-}
-
-.ch5-avatar {
-  width: 160px;
-  height: 192px;
-  image-rendering: pixelated;
-  background: var(--c-surface, #f5f7fb);
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
 }
 
 .ch5-year {
@@ -169,11 +154,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     flex-direction: row;
     align-items: center;
     margin-bottom: var(--sp-md);
-  }
-
-  .ch5-avatar {
-    width: 96px;
-    height: 116px;
   }
 
   .ch5-year {
