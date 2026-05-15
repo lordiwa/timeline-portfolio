@@ -202,6 +202,16 @@ Formato per entry:
 
 ---
 
+## ch5-bust.png — real-iter → real-fix1 (2026-05-15)
+
+- **Versión guardada:** `old/ch5-bust-2026-05-15-real-iter-white-collar.png` (16,476 bytes — commit `4b41c20`)
+- **Razón del cambio:** banana-2 generó banda blanca/gris en zona cuello/hombros ignorando #131D2A navy. Resto del bust OK (piel peach, pelo casi-negro, ojos sage, sin canas — Rafael lo aprobó).
+- **Qué se intentó diferente:** Adobe MCP selective edit — `image_select_by_prompt` bodyParts: ["Neck", "Upper Clothes"] + excludedBodyParts: ["Face", "Hair", "Beard", "Eyes"] → `image_fill_area` color #131D2A (red:19, green:29, blue:42) opacity 100. 1 intento — exitoso en primer intento.
+- **Resultado:** DONE — banda blanca eliminada, ropa navy uniforme #131D2A, cara/pelo/ojos/barba intactos. Dimensiones 96×96 mantenidas.
+- **Commit hash post-fix:** `{pending}`
+
+---
+
 ## ch5-bust.png — iter13 → iter14 (2026-05-15, hex REALES pixel-sampled ch3)
 
 - **Versión guardada:** `old/ch5-bust-2026-05-15-iter13-pre-real.png` (16,097 bytes — commit `ee82d2c`)
