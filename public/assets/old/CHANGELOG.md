@@ -66,4 +66,4 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bust-2026-05-14-iter5-HSL.png` (9,440 bytes — generado por commit `928de86`)
 - **Razón del cambio:** Rafael 2026-05-14: ropa "borrada" después de HSL post-process iter5 — la zona bajo el cuello quedó casi transparente / corrupta. Cara intacta y aceptada.
 - **Qué se intentará diferente:** Adobe MCP selective edit — pipeline: (1) image_generative_expand bottom 20px para generar píxeles opacos en zona transparente, (2) image_select_by_prompt "white area below neck/torso" + image_adjust_exposure exposure=-20 gamma=0.1 para oscurecer zona blanca con máscara, (3) image_select_by_prompt "dark clothing area below chin" + image_adjust_hsl colorize=true hue=220 sat=50 light=+15 para teñir de azul navy, (4) image_crop_to_bounds top=0 bottom=0.762 para recortar de 64×84 a 64×64. Cara preservada en todo momento.
-- **Commit hash post-regen:** {pending}
+- **Commit hash post-regen:** `bf069c5`
