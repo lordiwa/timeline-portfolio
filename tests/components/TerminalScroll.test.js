@@ -202,16 +202,26 @@ describe('TerminalScroll.vue', () => {
 
       const slugsSeen = []
       // Avanzar el cycle múltiples veces capturando el slug actual de cada PROGRAM state.
-      // PRM cycle es ~2.45s/programa (100 banner + 100 idle + 0 cd + 50 cwd + 0 exec + 50 loading + 2000 program + 50 exit + 50 cls).
-      for (let i = 0; i < 6; i++) {
-        await vi.advanceTimersByTimeAsync(2500)
+      // PRM cycle varía por programa:
+      //   - california / warcraft: ~2.3s (idle 100 + load 50 + program 2000 + exit 50 + cls 50)
+      //   - win95: ~3.1s (mismo + BOOT 800ms adicional antes de PROGRAM)
+      // Avanzamos 3500ms por iteración para garantizar capturar PROGRAM aun de win95.
+      for (let i = 0; i < 8; i++) {
+        await vi.advanceTimersByTimeAsync(3500)
         await flushPromises()
         const img = wrapper.find('.terminal-program-img')
         if (img.exists()) {
           const src = img.attributes('src')
-          // Extraer slug del path
-          const match = src.match(/ch0-(?:game|os)-([a-z0-9]+)\.png/)
-          if (match) slugsSeen.push(match[1])
+          // Extraer slug del path. Ignorar boot/loading variants (terminan en -loading,
+          // -boot, etc.) — solo interesa el program principal (california, warcraft, win95).
+          const match = src.match(/ch0-(?:game|os)-([a-z0-9]+)(?:-loading|-boot)?\.png/)
+          if (match) {
+            const slug = match[1]
+            // Dedupe sequential duplicates (mismo PROGRAM aparece en múltiples ticks)
+            if (slugsSeen[slugsSeen.length - 1] !== slug) {
+              slugsSeen.push(slug)
+            }
+          }
         }
       }
 

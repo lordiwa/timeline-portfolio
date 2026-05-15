@@ -42,16 +42,17 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     ch6-bg.png + ch6-bg-stars-far.png + ch6-bg-nebulae-mid.png
 //     ch6-planet-{ar-vr,remoose,software-mind}.png
 //     ch6-ship-{1,2}.png
-//   - 4 Phase 6 ch0 DOS demo reel (TerminalScroll auto-rotating programs):
+//   - 5 Phase 6 ch0 DOS demo reel (TerminalScroll auto-rotating programs):
 //     · ch0-game-{california,warcraft,starcraft,magic}.png (pixel art game screens)
-//     · ch0-os-win95.png (Windows 95 desktop)
+//     · ch0-os-win95.png (Windows 95 desktop final)
+//     · ch0-os-win95-loading.png (Windows 95 boot splash, mostrado antes del desktop)
 //     starcraft + magic listed pero opcionales — generan solo cuando Rafael entrega refs.
 //
 // JPG vs PNG decision (D4-W2-01): backgrounds opacos full-frame en JPEG, sprites con
 // alpha en PNG. ch6-bg.png y ch0-game-*.png/ch0-os-*.png son PNG por VGA 16-color
 // palette indexed (mejor compresión PNG indexada que JPEG para colores planos).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-win95)\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

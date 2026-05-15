@@ -17,7 +17,8 @@
             "alt": "Pixel art screen of Warcraft Orcs & Humans title (1994) — fantasy gothic banner with gold-orange crest, VGA 16-color palette"
           },
           "win95": {
-            "alt": "Pixel art screen of the Windows 95 desktop — teal cyan background, Start button bottom-left, taskbar, My Computer and Recycle Bin icons"
+            "alt": "Pixel art screen of the Windows 95 desktop — teal cyan background, Start button bottom-left, taskbar, My Computer and Recycle Bin icons",
+            "bootAlt": "Pixel art loading screen of Windows 95 — light blue sky with clouds, Windows logo fragmented into orange/green/blue/yellow quadrants dissolving into pixels, Microsoft Windows 95 text"
           }
         }
       }

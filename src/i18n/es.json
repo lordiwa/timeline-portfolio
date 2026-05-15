@@ -17,7 +17,8 @@
             "alt": "Pantalla pixel art del título Warcraft Orcs & Humans (1994) — banner fantasy gothic con crest dorado-naranja, paleta VGA 16 colores"
           },
           "win95": {
-            "alt": "Pantalla pixel art del desktop de Windows 95 — fondo teal cyan, botón Start abajo a la izquierda, taskbar, íconos My Computer y Recycle Bin"
+            "alt": "Pantalla pixel art del desktop de Windows 95 — fondo teal cyan, botón Start abajo a la izquierda, taskbar, íconos My Computer y Recycle Bin",
+            "bootAlt": "Pantalla pixel art de loading de Windows 95 — cielo azul claro con nubes, logo Windows fragmentado en cuadrantes naranja/verde/azul/amarillo desintegrándose en pixels, texto Microsoft Windows 95"
           }
         }
       }

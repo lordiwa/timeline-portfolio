@@ -51,10 +51,18 @@ const prefersReduced = injectedPrm?.prefersReduced ?? ref(false)
 
 // Lista de programas — sincronizada con assets ch0-game-{slug}.png y ch0-os-{slug}.png.
 // Cada slug debe matchear el regex extendido en tests/assets/asset-naming.test.js.
+// bootImg es OPCIONAL: si está presente, se muestra una pantalla intermedia entre LOADING
+// (blackout) y PROGRAM (final). Útil para Windows 95 que tiene splash boot antes del desktop.
 const programs = [
   { slug: 'california', dir: '\\GAMES\\CALGAMES',  exe: 'CALGAMES.EXE', img: '/assets/ch0-game-california.png' },
   { slug: 'warcraft',   dir: '\\GAMES\\WARCRAFT', exe: 'WAR.EXE',      img: '/assets/ch0-game-warcraft.png' },
-  { slug: 'win95',      dir: '\\WINDOWS',          exe: 'WIN',          img: '/assets/ch0-os-win95.png' },
+  {
+    slug: 'win95',
+    dir: '\\WINDOWS',
+    exe: 'WIN',
+    img: '/assets/ch0-os-win95.png',
+    bootImg: '/assets/ch0-os-win95-loading.png',
+  },
 ]
 
 // State machine.
@@ -151,6 +159,14 @@ async function runCycle() {
     await delay(prefersReduced.value ? 50 : 400)
     if (myVersion !== cycleVersion || activeChapter.value !== 0) break
 
+    // BOOT (opcional) — splash/loading screen antes del programa final.
+    // Solo si el programa declaró bootImg (e.g. Windows 95 splash boot antes del desktop).
+    if (program.bootImg) {
+      state.value = 'BOOT'
+      await delay(prefersReduced.value ? 800 : 2500)
+      if (myVersion !== cycleVersion || activeChapter.value !== 0) break
+    }
+
     // PROGRAM — pixel art overlay ~6s (PRM 2s)
     state.value = 'PROGRAM'
     await delay(prefersReduced.value ? 2000 : 6000)
@@ -208,12 +224,13 @@ if (import.meta.hot) {
 const currentProgram = computed(() => programs[currentProgramIdx.value])
 const showBanner = computed(() => state.value === 'BANNER')
 const showCdLine = computed(() =>
-  ['TYPING_CD', 'PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'PROGRAM', 'EXIT'].includes(state.value),
+  ['TYPING_CD', 'PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'BOOT', 'PROGRAM', 'EXIT'].includes(state.value),
 )
 const showCwdLine = computed(() =>
-  ['PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'PROGRAM', 'EXIT'].includes(state.value),
+  ['PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'BOOT', 'PROGRAM', 'EXIT'].includes(state.value),
 )
 const showBlackout = computed(() => state.value === 'LOADING' || state.value === 'EXIT')
+const showBootImage = computed(() => state.value === 'BOOT')
 const showProgramImage = computed(() => state.value === 'PROGRAM')
 </script>
 
@@ -240,6 +257,13 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
       >█</span></pre>
 
     <div v-if="showBlackout" class="terminal-blackout" aria-hidden="true" />
+
+    <img
+      v-if="showBootImage && currentProgram.bootImg"
+      class="terminal-program-img"
+      :src="currentProgram.bootImg"
+      :alt="t('chapters.0.terminal.programs.' + currentProgram.slug + '.bootAlt')"
+    />
 
     <img
       v-if="showProgramImage"
