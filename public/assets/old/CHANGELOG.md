@@ -88,6 +88,15 @@ Formato per entry:
 
 ---
 
+## ch6-bust.png — iter6 → iter7 (2026-05-15)
+
+- **Versión guardada:** `old/ch6-bust-2026-05-15-iter6.png` (9,172 bytes — generado por commits `bf069c5` + `20b7028`)
+- **Razón del cambio:** Rafael 2026-05-15: "ch5 y ch6 menos canas y menos arrugas en ch5" — ch6 tenía 2 canas blancas visibles en la barba (mentón). Decisión: ir a 0 canas para coherencia con ch5 (también sin canas tras iter7 commit `d97c7e7`).
+- **Qué se intentará diferente:** Adobe MCP selective edit — image_select_by_prompt aislando ÚNICAMENTE las canas (white/grey hair strands in beard/Beard bodyPart) + image_fill_area con color dark brown matching barba (#3D2B1A aprox). Approach selectivo preservando cara, pelo, ropa y ojos intactos. NO regenerar con pixelforge para no perder cara aceptada y ropa reconstruida por Adobe.
+- **Commit hash post-regen:** {pending}
+
+---
+
 ## ch5-bust.png — iter6 → iter7 (2026-05-15)
 
 - **Versión guardada:** `old/ch5-bust-2026-05-15-iter6.png` (generado por commit `5834917`)
