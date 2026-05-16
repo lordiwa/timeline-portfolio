@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command \"if (-not (Test-Path 'node_modules/.machine-initialized')) { Write-Output 'FIRST RUN DETECTED en esta maquina (marker node_modules/.machine-initialized ausente). Antes de cualquier otra tarea: ejecutar el procedimiento documentado en .claude/skills/init-machine.md paso a paso (system reqs, git identity/remote, npm install, GEMINI_API_KEY, claude mcp list, dirs publicos, verificar-mcps, npm run build) y crear el marker solo si todo pasa. Comunicar en espanol. Si el usuario pide otra cosa primero, recordarle el FIRST RUN y preguntar si saltar el init o ejecutarlo antes.' }\""
+          }
+        ]
+      }
+    ]
+  }
+}
