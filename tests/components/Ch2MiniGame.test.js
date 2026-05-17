@@ -11,12 +11,14 @@ import { ref, defineComponent, h } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// Mock factory: createMiniGame returns un fake game object con destroy spy.
+// Mock factory: createMiniGame returns un fake game object con destroy/pause/resume spies.
 const destroySpy = vi.fn()
+const pauseSpy = vi.fn()
+const resumeSpy = vi.fn()
 const createMiniGameSpy = vi.fn(() => ({
   destroy: destroySpy,
   events: { on: vi.fn(), off: vi.fn(), emit: vi.fn() },
-  scene: { pause: vi.fn(), resume: vi.fn() },
+  scene: { pause: pauseSpy, resume: resumeSpy },
 }))
 
 vi.mock('@/phaser/ch2/index.js', () => ({
@@ -42,6 +44,8 @@ describe('Ch2MiniGame.vue — Phase 04.2 mini-game shell', () => {
   beforeEach(() => {
     createMiniGameSpy.mockClear()
     destroySpy.mockClear()
+    pauseSpy.mockClear()
+    resumeSpy.mockClear()
   })
 
   it('T1 DOM: monta .ch2-minigame con .ch2-minigame-frame + canvas host', async () => {
@@ -67,14 +71,29 @@ describe('Ch2MiniGame.vue — Phase 04.2 mini-game shell', () => {
     expect(createMiniGameSpy).not.toHaveBeenCalled()
   })
 
-  it('T4 toggle: active true→false destruye game', async () => {
+  it('T4 toggle: active true→false pausa scene (NO destruye, keep-alive friendly)', async () => {
     const wrapper = mountMiniGame({ active: true })
     await flushPromises()
     await flushPromises()
     expect(createMiniGameSpy).toHaveBeenCalled()
     await wrapper.setProps({ active: false })
     await flushPromises()
-    expect(destroySpy).toHaveBeenCalled()
+    expect(pauseSpy).toHaveBeenCalled()
+    expect(destroySpy).not.toHaveBeenCalled()
+  })
+
+  it('T4b toggle: active false→true reanuda scene sin recrear', async () => {
+    const wrapper = mountMiniGame({ active: true })
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
+    await wrapper.setProps({ active: false })
+    await flushPromises()
+    await wrapper.setProps({ active: true })
+    await flushPromises()
+    // Game ya existe → resume en lugar de createMiniGame de nuevo
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
+    expect(resumeSpy).toHaveBeenCalled()
   })
 
   it('T5 unmount: destruye game al unmount', async () => {

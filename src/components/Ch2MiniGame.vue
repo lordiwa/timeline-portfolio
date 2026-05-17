@@ -48,16 +48,32 @@ async function mountGame() {
 
 function destroyGame() {
   if (game.value) {
-    game.value.destroy(true)
+    game.value.destroy(true, false)
     game.value = null
   }
+}
+
+// Pause/resume preferred over destroy/recreate cuando el panel cambia — evita
+// race conditions de Phaser global state (WebGL context, audio, scene plugins)
+// cuando KeepAlive mantiene la HomePanel viva pero inactiva.
+function pauseGame() {
+  if (!game.value) return
+  try { game.value.scene.pause('MatchScene') } catch {}
+}
+function resumeGame() {
+  if (!game.value) return
+  try { game.value.scene.resume('MatchScene') } catch {}
 }
 
 watch(
   () => props.active,
   (isActive) => {
-    if (isActive) mountGame()
-    else destroyGame()
+    if (isActive) {
+      if (game.value) resumeGame()
+      else mountGame()
+    } else {
+      pauseGame()
+    }
   },
   { immediate: true, flush: 'post' }
 )
