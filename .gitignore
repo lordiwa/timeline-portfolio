@@ -5,8 +5,9 @@ dist
 .env
 .env.local
 
-# Documentos personales fuera del repo
+# Documentos personales fuera del repo (excepto la copia pública del CV servida por Vite)
 Profile.pdf
+!public/Profile.pdf
 
 # Fotos de referencia para pixelforge (privacy gate Phase 4 D4-02)
 # Vite las sirve en dev local pero NO deben commitearse al repo.

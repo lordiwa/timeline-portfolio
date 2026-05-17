@@ -266,356 +266,559 @@
   }
 
   /* ─────────────────────────────────────────────────────────
-   * Phase 4 W2 — ch2 Flash era 2009 (Plan 04-03)
-   * FlashBanner skeumorphic header + ProjectCard variant Flash-era
-   * Source: UI-SPEC §6.4 (banner DOM) + §6.9 (project-card variants ch2)
-   * 2026-05-16 full-Flash transformation: agregado wrapper .flash-browser
-   * (chrome bar 2009 + toolbar + statusbar), banner con glossy highlight
-   * y pulse animation, project-card estilo popup-window.
+   * Phase 04.1 (iter3 2026-05-17) — ch2 Y2K cyber Flash single-page
+   * REEMPLAZA iter2 IE6 chrome (Rafael decisión Y2K-01).
+   * Estética: futurismo Y2K / cyber — azul hielo + cromo + neón lime.
+   * Layout: full-bleed stage con sidebar nav HOME/ABOUT/WORK/CONTACT.
+   * Tipografía mix: Press Start 2P (headings) + VT323 (tech labels) + Verdana (prose).
+   * Source: PLAN.md §"Decisiones locked" + Rafael Y2K aesthetic reference.
    * ───────────────────────────────────────────────────────── */
 
   /* ─────────────────────────────────────────────────────────
-   * .flash-browser — wrapper que da look de ventana Browser 2009
-   * Esqueumórfico: gradiente gris claro, borde fino, sombra exterior,
-   * highlight interno. Esquinas redondeadas suaves (Win XP / IE7 vibes).
+   * Layout root — full-bleed stage Y2K cyber
    * ───────────────────────────────────────────────────────── */
-  [data-chapter="2"] .flash-browser {
+  [data-chapter="2"] .flash-y2k-desktop {
     position: relative;
-    width: min(100%, 1100px);
-    max-height: calc(100dvh - 120px);
-    margin: 60px auto 0;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "meta stage"
+      "nav  stage"
+      "status status";
+    gap: 12px;
+    height: 100dvh;
+    padding: 76px 24px 24px 160px;
+    color: #f8fcff;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(90, 242, 255, 0.10) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 90%, rgba(184, 255, 58, 0.07) 0%, transparent 55%),
+      linear-gradient(180deg, #0a1428 0%, #050a18 100%);
+    overflow: hidden;
+  }
+
+  /* BG decorative layers — scanlines + hex grid + blobs flotando */
+  [data-chapter="2"] .flash-y2k-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    /* Scanlines horizontales + hex grid sutil */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        rgba(90, 242, 255, 0.04) 0px,
+        rgba(90, 242, 255, 0.04) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      radial-gradient(circle at 50% 50%, rgba(74, 104, 144, 0.18) 1px, transparent 1px);
+    background-size: 100% 3px, 28px 28px;
+    mix-blend-mode: screen;
+  }
+
+  /* Blobs orgánicos liquid-floating — Y2K signature */
+  [data-chapter="2"] .flash-y2k-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.55;
+    animation: y2k-blob-float 18s ease-in-out infinite;
+    z-index: 0;
+  }
+  [data-chapter="2"] .flash-y2k-blob-1 {
+    top: 10%; left: 8%;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(90, 242, 255, 0.55) 0%, transparent 70%);
+    animation-delay: 0s;
+  }
+  [data-chapter="2"] .flash-y2k-blob-2 {
+    bottom: 12%; right: 14%;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(184, 255, 58, 0.35) 0%, transparent 70%);
+    animation-delay: -6s;
+  }
+  [data-chapter="2"] .flash-y2k-blob-3 {
+    top: 45%; left: 38%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255, 122, 26, 0.30) 0%, transparent 70%);
+    animation-delay: -12s;
+  }
+
+  @keyframes y2k-blob-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25%      { transform: translate(40px, -30px) scale(1.08); }
+    50%      { transform: translate(-20px, 30px) scale(0.95); }
+    75%      { transform: translate(30px, 20px) scale(1.05); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-chapter="2"] .flash-y2k-blob { animation: none; }
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * Meta col — year + era + tag
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-y2k-meta {
+    grid-area: meta;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    border-radius: 6px;
-    background: linear-gradient(to bottom, #ece9d8 0%, #d4d0c8 100%);
-    border: 1px solid #4a3a6a;
-    box-shadow:
-      0 20px 60px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.4) inset,
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
-    overflow: hidden;
+    gap: 4px;
+    padding: 4px 0 8px;
+    border-bottom: 1px solid rgba(90, 242, 255, 0.25);
+  }
+  [data-chapter="2"] .flash-y2k-meta-tag {
+    font-family: 'VT323', ui-monospace, monospace;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    color: #b8ff3a;
+    text-shadow: 0 0 6px rgba(184, 255, 58, 0.6);
+  }
+  [data-chapter="2"] .flash-y2k-year {
+    font-family: 'Press Start 2P', 'VT323', monospace;
+    font-size: 26px;
+    margin: 0;
+    color: #f8fcff;
+    text-shadow: 0 0 12px rgba(90, 242, 255, 0.5);
+  }
+  [data-chapter="2"] .flash-y2k-era {
+    font-family: 'VT323', ui-monospace, monospace;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    margin: 0;
+    color: rgba(248, 252, 255, 0.85);
   }
 
-  /* Chrome top bar — contenedor de tabs + toolbar */
-  [data-chapter="2"] .flash-browser-chrome {
-    background: linear-gradient(to bottom, #f0ecd8 0%, #c8c0a8 100%);
-    border-bottom: 1px solid #8a7a5a;
-    user-select: none;
-  }
-
-  /* Tab strip — fila de tabs falsos */
-  [data-chapter="2"] .flash-browser-tabs {
+  /* ─────────────────────────────────────────────────────────
+   * Sidebar nav — pill-buttons cromados + neón
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-nav {
+    grid-area: nav;
+    z-index: 2;
     display: flex;
-    align-items: flex-end;
-    gap: 2px;
-    padding: 6px 8px 0;
-    background: linear-gradient(to bottom, #e8e0c0 0%, #d0c8a8 100%);
-    border-bottom: 1px solid #8a7a5a;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 8px;
   }
-
-  [data-chapter="2"] .flash-tab {
-    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
-    font-size: 11px;
-    padding: 4px 12px 5px;
-    border-radius: 6px 6px 0 0;
-    border: 1px solid #8a7a5a;
-    border-bottom: none;
-    background: linear-gradient(to bottom, #c8c0a0 0%, #a8a088 100%);
-    color: #3a2a1a;
-    cursor: default;
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  [data-chapter="2"] .flash-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
-
-  [data-chapter="2"] .flash-tab-active {
-    background: linear-gradient(to bottom, #ffe8b0 0%, #ffcc66 100%);
-    border-color: #8a5a1a;
-    color: #2a1a00;
-    font-weight: 700;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-    position: relative;
-    z-index: 1;
-  }
-
-  [data-chapter="2"] .flash-tab-ghost {
-    opacity: 0.55;
-    font-style: italic;
-  }
-
-  [data-chapter="2"] .flash-tab-plus {
-    font-family: 'Verdana', sans-serif;
-    font-size: 12px;
-    padding: 3px 8px;
-    color: #5a4a2a;
-    cursor: default;
-    align-self: center;
-  }
-
-  /* Toolbar — back/fwd/reload + address bar + GO button */
-  [data-chapter="2"] .flash-browser-toolbar {
+  [data-chapter="2"] .flash-nav-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 8px;
-    background: linear-gradient(to bottom, #ece9d8 0%, #d4d0c0 100%);
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #4a6890;
+    border-radius: 999px;
+    background:
+      linear-gradient(180deg, rgba(200, 212, 232, 0.18) 0%, rgba(80, 96, 128, 0.10) 100%),
+      rgba(14, 28, 52, 0.85);
+    color: rgba(248, 252, 255, 0.9);
+    font-family: 'VT323', ui-monospace, monospace;
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
+    text-align: left;
   }
-
-  [data-chapter="2"] .flash-btn {
+  [data-chapter="2"] .flash-nav-btn:hover {
+    transform: scale(1.02);
+    color: #5af2ff;
+    border-color: #5af2ff;
+    box-shadow:
+      0 0 0 1px rgba(90, 242, 255, 0.4) inset,
+      0 0 14px rgba(90, 242, 255, 0.45);
+  }
+  [data-chapter="2"] .flash-nav-btn:active {
+    transform: scale(0.98);
+  }
+  [data-chapter="2"] .flash-nav-btn:focus-visible {
+    outline: 2px solid #b8ff3a;
+    outline-offset: 2px;
+  }
+  [data-chapter="2"] .flash-nav-btn-active {
+    background:
+      linear-gradient(180deg, rgba(184, 255, 58, 0.32) 0%, rgba(74, 168, 38, 0.18) 100%),
+      rgba(14, 28, 52, 0.95);
+    border-color: #b8ff3a;
+    color: #050a18;
+    color: #f8fcff;
+    box-shadow:
+      0 0 0 1px rgba(184, 255, 58, 0.55) inset,
+      0 0 18px rgba(184, 255, 58, 0.55);
+  }
+  [data-chapter="2"] .flash-nav-btn-active .flash-nav-label {
+    color: #b8ff3a;
+    text-shadow: 0 0 8px rgba(184, 255, 58, 0.75);
+  }
+  [data-chapter="2"] .flash-nav-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 22px;
     height: 22px;
-    border-radius: 3px;
-    border: 1px solid #8a7a5a;
-    background: linear-gradient(to bottom, #ffffff 0%, #d4d0b8 100%);
-    color: #3a2a1a;
-    font-size: 11px;
-    cursor: default;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    color: currentColor;
+    filter: drop-shadow(0 0 4px rgba(90, 242, 255, 0.35));
   }
-
-  [data-chapter="2"] .flash-address-bar {
+  [data-chapter="2"] .flash-nav-label {
     flex: 1;
-    min-width: 0;
-    padding: 3px 8px;
-    border: 1px solid #8a7a5a;
-    border-radius: 3px;
-    background: #ffffff;
-    color: #1a1a3a;
-    font-family: 'Verdana', sans-serif;
-    font-size: 11px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.15);
   }
-
-  [data-chapter="2"] .flash-go-btn {
-    padding: 3px 10px;
-    border-radius: 3px;
-    border: 1px solid #1a4a8a;
-    background: linear-gradient(to bottom, #6aaaff 0%, #2266cc 100%);
-    color: #ffffff;
-    font-family: 'Verdana', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  }
-
-  /* Statusbar — bottom strip estilo IE6/7 con texto + zone indicator */
-  [data-chapter="2"] .flash-browser-statusbar {
+  [data-chapter="2"] .flash-nav-footer {
+    margin-top: 14px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 3px 10px;
-    background: linear-gradient(to bottom, #ece9d8 0%, #c8c0a8 100%);
-    border-top: 1px solid #8a7a5a;
-    font-family: 'Verdana', sans-serif;
-    font-size: 10px;
-    color: #3a2a1a;
+    gap: 8px;
+    padding: 6px 10px;
+    border-top: 1px dashed rgba(90, 242, 255, 0.3);
+    font-family: 'VT323', ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: rgba(184, 255, 58, 0.85);
+  }
+  [data-chapter="2"] .flash-nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #b8ff3a;
+    box-shadow: 0 0 8px #b8ff3a;
+    animation: y2k-dot-blink 1.4s ease-in-out infinite;
+  }
+  @keyframes y2k-dot-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-chapter="2"] .flash-nav-dot { animation: none; }
   }
 
-  [data-chapter="2"] .flash-status-zone {
-    font-weight: 700;
-  }
-
-  /* La .ch2-layout dentro del browser ya no necesita el padding-top del avatar
-     (el chrome de arriba da spacing); reseteamos overrides puntuales aquí. */
-  [data-chapter="2"] .flash-browser .ch2-layout {
-    padding-top: var(--sp-md);
-    padding-left: var(--sp-md);
-    padding-right: var(--sp-md);
-    height: auto;
-    overflow-y: auto;
-    flex: 1;
-    /* Backdrop sutil púrpura semi-transparente para que el bg pixel art
-       se entrevea detrás de los bullets/texto sin perder legibilidad. */
+  /* ─────────────────────────────────────────────────────────
+   * Stage container — paneles intercambiables
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-stage {
+    grid-area: stage;
+    z-index: 2;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #4a6890;
+    border-radius: 6px;
     background:
-      radial-gradient(ellipse at top left, rgba(255, 136, 0, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at bottom right, rgba(128, 96, 192, 0.12) 0%, transparent 60%),
-      rgba(42, 26, 74, 0.78);
+      linear-gradient(180deg, rgba(14, 28, 52, 0.92) 0%, rgba(5, 10, 24, 0.95) 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(200, 212, 232, 0.08),
+      0 0 30px rgba(5, 10, 24, 0.6);
+    padding: 22px;
+  }
+  [data-chapter="2"] .flash-stage::before {
+    /* Corner brackets cyber */
+    content: '';
+    position: absolute;
+    inset: 8px;
+    pointer-events: none;
+    border: 1px solid transparent;
+    background:
+      linear-gradient(to right, #5af2ff 0, #5af2ff 24px, transparent 24px) top left/100% 1px no-repeat,
+      linear-gradient(to bottom, #5af2ff 0, #5af2ff 24px, transparent 24px) top left/1px 100% no-repeat,
+      linear-gradient(to left, #5af2ff 0, #5af2ff 24px, transparent 24px) top right/100% 1px no-repeat,
+      linear-gradient(to bottom, #5af2ff 0, #5af2ff 24px, transparent 24px) top right/1px 100% no-repeat,
+      linear-gradient(to right, #5af2ff 0, #5af2ff 24px, transparent 24px) bottom left/100% 1px no-repeat,
+      linear-gradient(to top, #5af2ff 0, #5af2ff 24px, transparent 24px) bottom left/1px 100% no-repeat,
+      linear-gradient(to left, #5af2ff 0, #5af2ff 24px, transparent 24px) bottom right/100% 1px no-repeat,
+      linear-gradient(to top, #5af2ff 0, #5af2ff 24px, transparent 24px) bottom right/1px 100% no-repeat;
+    opacity: 0.7;
   }
 
-  /* FlashBanner — header skeumorphic 2009 con orange→deep gradient + chrome dots
-     2026-05-16: agregado glossy highlight stripe + pulse animation en title */
+  [data-chapter="2"] .flash-panel {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  [data-chapter="2"] .flash-panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(90, 242, 255, 0.25);
+  }
+  [data-chapter="2"] .flash-panel-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    margin: 0;
+    color: #b8ff3a;
+    text-shadow: 0 0 8px rgba(184, 255, 58, 0.55);
+    letter-spacing: 0.05em;
+  }
+  [data-chapter="2"] .flash-panel-meta {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: rgba(248, 252, 255, 0.7);
+    letter-spacing: 0.1em;
+  }
+  [data-chapter="2"] .flash-panel-flavor {
+    font-family: 'Verdana', sans-serif;
+    color: rgba(248, 252, 255, 0.85);
+    font-style: italic;
+    margin: 0;
+  }
+  [data-chapter="2"] .flash-panel-hint {
+    margin-top: auto;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: rgba(90, 242, 255, 0.7);
+    letter-spacing: 0.1em;
+  }
+
+  /* Panel transitions — fade-slide */
+  .flash-panel-enter-active,
+  .flash-panel-leave-active {
+    transition: opacity 220ms ease, transform 220ms ease;
+  }
+  .flash-panel-enter-from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  .flash-panel-leave-to {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flash-panel-enter-active,
+    .flash-panel-leave-active { transition: opacity 120ms ease; }
+    .flash-panel-enter-from,
+    .flash-panel-leave-to { transform: none; }
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * HOME panel — Banner Y2K cyber (override del FlashBanner)
+   * ───────────────────────────────────────────────────────── */
   [data-chapter="2"] .flash-banner {
     position: relative;
-    border-radius: 8px;
-    padding: calc(var(--sp-lg) + 6px) var(--sp-lg) var(--sp-lg);
-    background: linear-gradient(to bottom, #ff8800 0%, #cc6600 50%, #883300 100%);
-    border: 2px solid #ffaa00;
-    box-shadow:
-      0 8px 24px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    margin-bottom: var(--sp-md);
+    border-radius: 6px;
+    padding: 18px 22px;
     overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(90, 242, 255, 0.18) 0%, rgba(184, 255, 58, 0.10) 100%),
+      linear-gradient(180deg, #0e1c34 0%, #050a18 100%);
+    border: 1px solid #5af2ff;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 0 0 1px rgba(90, 242, 255, 0.4) inset,
+      0 0 30px rgba(90, 242, 255, 0.25),
+      0 10px 30px rgba(0, 0, 0, 0.55);
   }
-
-  /* Glossy highlight stripe que cruza la mitad superior del banner — Flash 2009 vibes */
+  /* Glossy scan stripe diagonal */
   [data-chapter="2"] .flash-banner::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(
-      to bottom,
-      rgba(255, 255, 255, 0.35) 0%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
+    top: 0; left: -40%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.18) 50%, transparent 100%);
     pointer-events: none;
-    border-radius: 6px 6px 0 0;
+    animation: y2k-banner-scan 4s ease-in-out infinite;
   }
-
-  /* "Click to play" pulse en la esquina inferior derecha del banner */
+  @keyframes y2k-banner-scan {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(220%); }
+  }
+  /* CTA pulse "▶ click to play" — Flash 2009 vibes preservados */
   [data-chapter="2"] .flash-banner::after {
     content: '▶ click to play';
     position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-family: 'Verdana', sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    color: #ffffff;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
-    background: rgba(0, 0, 0, 0.25);
+    bottom: 10px; right: 14px;
+    font-family: 'VT323', monospace;
+    font-size: 13px;
+    color: #b8ff3a;
     padding: 2px 8px;
-    border-radius: 3px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    animation: flash-banner-pulse 1.6s ease-in-out infinite;
+    border: 1px solid rgba(184, 255, 58, 0.55);
+    background: rgba(5, 10, 24, 0.55);
+    text-shadow: 0 0 6px rgba(184, 255, 58, 0.7);
+    letter-spacing: 0.08em;
+    animation: y2k-banner-pulse 1.6s ease-in-out infinite;
   }
-
-  @keyframes flash-banner-pulse {
-    0%, 100% { opacity: 0.85; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.04); }
+  @keyframes y2k-banner-pulse {
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 1; box-shadow: 0 0 14px rgba(184, 255, 58, 0.55); }
   }
-
   @media (prefers-reduced-motion: reduce) {
-    [data-chapter="2"] .flash-banner::after {
-      animation: none;
-    }
+    [data-chapter="2"] .flash-banner::before,
+    [data-chapter="2"] .flash-banner::after { animation: none; }
   }
-
   [data-chapter="2"] .flash-banner-chrome {
     position: absolute;
-    top: 8px;
-    left: 8px;
-    width: 32px;
-    height: 8px;
-    /* 3 dots simulando window controls (red/yellow/green) */
+    top: 8px; left: 10px;
+    width: 32px; height: 8px;
     background:
       radial-gradient(circle 4px at 4px center, #ff5f56 0%, #ff5f56 70%, transparent 80%),
       radial-gradient(circle 4px at 16px center, #ffbd2e 0%, #ffbd2e 70%, transparent 80%),
       radial-gradient(circle 4px at 28px center, #27c93f 0%, #27c93f 70%, transparent 80%);
+    opacity: 0.65;
   }
-
   [data-chapter="2"] .flash-banner-title {
-    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
-    color: #ffffff;
+    font-family: 'Press Start 2P', monospace;
+    color: #f8fcff;
+    margin: 14px 0 6px 0;
+    font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+    letter-spacing: 0.04em;
     text-shadow:
-      0 1px 0 rgba(0, 0, 0, 0.4),
-      0 -1px 0 rgba(255, 255, 255, 0.4);
-    margin: var(--sp-sm) 0 var(--sp-xs) 0;
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
-    font-weight: 700;
+      0 0 14px rgba(90, 242, 255, 0.55),
+      0 1px 0 rgba(0, 0, 0, 0.6);
   }
-
   [data-chapter="2"] .flash-banner-subtitle {
-    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
-    color: rgba(255, 255, 255, 0.85);
+    font-family: 'VT323', monospace;
+    color: rgba(248, 252, 255, 0.85);
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
   }
 
-  /* ProjectCard variant Flash era 2009 — popup window estilo IE/Flash 2009.
-     El <article> es la "ventana", el <h3> simula la title bar con close-button fake. */
+  /* ─────────────────────────────────────────────────────────
+   * ABOUT panel — bust + bio
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-about-grid {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+  [data-chapter="2"] .flash-about-frame {
+    position: relative;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid #5af2ff;
+    background:
+      linear-gradient(135deg, rgba(90, 242, 255, 0.10) 0%, rgba(184, 255, 58, 0.05) 100%),
+      #050a18;
+    box-shadow:
+      0 0 0 1px rgba(90, 242, 255, 0.3) inset,
+      0 0 18px rgba(90, 242, 255, 0.3);
+  }
+  [data-chapter="2"] .flash-about-frame::after {
+    /* Scanlines sobre la foto */
+    content: '';
+    position: absolute;
+    inset: 8px;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(90, 242, 255, 0.10) 0px,
+      rgba(90, 242, 255, 0.10) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+  [data-chapter="2"] .flash-about-bust {
+    width: 100%;
+    height: auto;
+    display: block;
+    image-rendering: pixelated;
+  }
+  [data-chapter="2"] .flash-about-caption {
+    margin-top: 6px;
+    font-family: 'VT323', monospace;
+    font-size: 13px;
+    color: #b8ff3a;
+    letter-spacing: 0.18em;
+    text-align: center;
+  }
+  [data-chapter="2"] .flash-about-bio p {
+    font-family: 'Verdana', sans-serif;
+    color: rgba(248, 252, 255, 0.92);
+    line-height: 1.55;
+    font-size: 0.95rem;
+    margin: 0 0 12px 0;
+  }
+  [data-chapter="2"] .flash-about-bio p:last-child { margin-bottom: 0; }
+
+  /* ─────────────────────────────────────────────────────────
+   * WORK panel — project cards Y2K
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-work-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 6px;
+  }
+  /* Project card Y2K — cromo+neón outline (linear-gradient preserved para T7) */
   [data-chapter="2"] .project-card {
     position: relative;
-    padding: 0;  /* el padding va por sección interna */
+    padding: 0;
     border-radius: 4px;
-    border: 1px solid #4a3a6a;
-    background: linear-gradient(to bottom, #ece9d8 0%, #d4d0c0 100%);
+    border: 1px solid #4a6890;
+    background:
+      linear-gradient(180deg, rgba(200, 212, 232, 0.10) 0%, rgba(74, 104, 144, 0.06) 50%, rgba(14, 28, 52, 0.95) 100%);
     box-shadow:
-      0 10px 24px rgba(0, 0, 0, 0.45),
-      0 0 0 1px rgba(255, 255, 255, 0.3) inset,
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      inset 0 0 0 1px rgba(200, 212, 232, 0.12),
+      0 0 0 1px rgba(90, 242, 255, 0.20),
+      0 10px 24px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    /* Hover tilt suave estilo skeumorfismo 2009 */
-    transition: transform 200ms ease, box-shadow 200ms ease;
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
   }
-
   [data-chapter="2"] .project-card:hover {
     transform: translateY(-2px);
+    border-color: #5af2ff;
     box-shadow:
-      0 14px 32px rgba(0, 0, 0, 0.55),
-      0 0 0 1px rgba(255, 255, 255, 0.4) inset,
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      inset 0 0 0 1px rgba(200, 212, 232, 0.18),
+      0 0 0 1px rgba(90, 242, 255, 0.55),
+      0 0 24px rgba(90, 242, 255, 0.4),
+      0 14px 30px rgba(0, 0, 0, 0.6);
   }
-
-  /* Title bar — el h3 se transforma en barra de ventana Win XP / Flash 2009 */
+  /* Title bar Y2K — cromo strip con close-X */
   [data-chapter="2"] .project-card-title {
-    font-family: 'Verdana', 'Trebuchet MS', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    font-weight: normal;
     margin: 0;
-    padding: 6px 36px 6px 12px;
-    background: linear-gradient(to bottom, #ff9933 0%, #cc6611 50%, #883300 100%);
-    color: #ffffff;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255, 220, 180, 0.4);
-    border-bottom: 1px solid #4a2a0a;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    padding: 8px 36px 8px 12px;
+    background: linear-gradient(180deg, #2a4060 0%, #0e1c34 100%);
+    color: #b8ff3a;
+    border-bottom: 1px solid #5af2ff;
+    text-shadow: 0 0 8px rgba(184, 255, 58, 0.6);
+    letter-spacing: 0.04em;
     position: relative;
   }
-
-  /* Fake close-button (X) en la esquina derecha del titlebar */
   [data-chapter="2"] .project-card-title::after {
-    content: '✕';
+    content: '×';
     position: absolute;
-    top: 4px;
-    right: 6px;
-    width: 18px;
-    height: 18px;
+    top: 4px; right: 6px;
+    width: 18px; height: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: #ffffff;
-    background: linear-gradient(to bottom, #ff5544 0%, #aa2211 100%);
-    border: 1px solid #882211;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #f8fcff;
+    background: linear-gradient(180deg, #ff7a1a 0%, #aa3a00 100%);
+    border: 1px solid #ff9933;
     border-radius: 2px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
-
-  /* Body del popup — descripción, role, tech */
   [data-chapter="2"] .project-card-desc,
   [data-chapter="2"] .project-card-role,
   [data-chapter="2"] .project-card-tech {
-    color: #1a1a2e;
     font-family: 'Verdana', sans-serif;
     margin: 0;
   }
-
   [data-chapter="2"] .project-card-desc {
     padding: 10px 12px 4px;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     line-height: 1.45;
-    color: #2a1a4a;
+    color: rgba(248, 252, 255, 0.92);
   }
-
   [data-chapter="2"] .project-card-role {
     padding: 0 12px 6px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-style: italic;
-    color: #5a3a8a;
+    color: #5af2ff;
   }
-
   [data-chapter="2"] .project-card-tech {
     list-style: none;
     padding: 4px 12px 10px;
@@ -623,37 +826,377 @@
     flex-wrap: wrap;
     gap: 4px;
   }
-
   [data-chapter="2"] .project-card-tech li {
-    font-size: 0.7rem;
+    font-family: 'VT323', monospace;
+    font-size: 0.78rem;
     padding: 1px 8px;
-    background: linear-gradient(to bottom, #ffe8b0 0%, #ffcc66 100%);
-    border: 1px solid #aa7733;
+    background: rgba(90, 242, 255, 0.12);
+    border: 1px solid rgba(90, 242, 255, 0.45);
     border-radius: 8px;
-    color: #4a2a0a;
-    font-weight: 700;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #5af2ff;
+    letter-spacing: 0.06em;
   }
-
   [data-chapter="2"] .project-card-link {
     display: inline-block;
     margin: 0 12px 12px;
     padding: 4px 14px;
-    background: linear-gradient(to bottom, #6aaaff 0%, #2266cc 100%);
-    color: #ffffff;
-    font-family: 'Verdana', sans-serif;
-    font-size: 0.8rem;
+    background: linear-gradient(180deg, #b8ff3a 0%, #4aa826 100%);
+    color: #050a18;
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
     font-weight: 700;
     text-decoration: none;
-    border: 1px solid #1a4a8a;
+    border: 1px solid #b8ff3a;
     border-radius: 3px;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 12px rgba(184, 255, 58, 0.5);
+    letter-spacing: 0.08em;
+  }
+  [data-chapter="2"] .project-card-link:hover {
+    background: linear-gradient(180deg, #d8ff7a 0%, #5ac836 100%);
+    box-shadow: 0 0 18px rgba(184, 255, 58, 0.8);
   }
 
-  [data-chapter="2"] .project-card-link:hover {
-    background: linear-gradient(to bottom, #88c0ff 0%, #3377dd 100%);
+  /* ─────────────────────────────────────────────────────────
+   * CONTACT panel — links + CV buttons
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
+  [data-chapter="2"] .flash-contact-link {
+    display: grid;
+    grid-template-columns: 30px 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    text-decoration: none;
+    color: #f8fcff;
+    border: 1px solid #4a6890;
+    border-radius: 4px;
+    background:
+      linear-gradient(180deg, rgba(200, 212, 232, 0.08) 0%, rgba(14, 28, 52, 0.6) 100%);
+    transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  }
+  [data-chapter="2"] .flash-contact-link:hover {
+    transform: translateX(4px);
+    border-color: #5af2ff;
+    box-shadow:
+      inset 0 0 0 1px rgba(90, 242, 255, 0.4),
+      0 0 14px rgba(90, 242, 255, 0.4);
+  }
+  [data-chapter="2"] .flash-contact-link:focus-visible {
+    outline: 2px solid #b8ff3a;
+    outline-offset: 2px;
+  }
+  [data-chapter="2"] .flash-contact-icon {
+    display: inline-flex;
+    color: #5af2ff;
+    filter: drop-shadow(0 0 4px rgba(90, 242, 255, 0.55));
+  }
+  [data-chapter="2"] .flash-contact-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    color: #f8fcff;
+    letter-spacing: 0.04em;
+  }
+  [data-chapter="2"] .flash-contact-tech {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: rgba(248, 252, 255, 0.65);
+    letter-spacing: 0.08em;
+  }
+  [data-chapter="2"] .flash-contact-arrow {
+    color: #b8ff3a;
+    font-size: 18px;
+    text-shadow: 0 0 8px rgba(184, 255, 58, 0.7);
+  }
+  [data-chapter="2"] .flash-contact-cv {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px dashed rgba(184, 255, 58, 0.4);
+    border-radius: 4px;
+    background: rgba(184, 255, 58, 0.04);
+  }
+  [data-chapter="2"] .flash-contact-cv-label {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #b8ff3a;
+    letter-spacing: 0.18em;
+    margin: 0 0 8px 0;
+  }
+  [data-chapter="2"] .flash-contact-cv-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  [data-chapter="2"] .flash-cv-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 14px;
+    text-align: center;
+    text-decoration: none;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: #050a18;
+    background: linear-gradient(180deg, #b8ff3a 0%, #4aa826 100%);
+    border: 1px solid #b8ff3a;
+    border-radius: 3px;
+    box-shadow: 0 0 12px rgba(184, 255, 58, 0.45);
+    transition: transform 140ms ease, box-shadow 140ms ease;
+  }
+  [data-chapter="2"] .flash-cv-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(184, 255, 58, 0.7);
+  }
+  [data-chapter="2"] .flash-cv-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * Statusbar bottom
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-y2k-status {
+    grid-area: status;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    border-top: 1px solid rgba(90, 242, 255, 0.3);
+    font-family: 'VT323', monospace;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: rgba(248, 252, 255, 0.7);
+    background: rgba(5, 10, 24, 0.6);
+  }
+  [data-chapter="2"] .flash-y2k-status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #b8ff3a;
+    box-shadow: 0 0 6px #b8ff3a;
+  }
+  [data-chapter="2"] .flash-y2k-status-right {
+    margin-left: auto;
+    color: #5af2ff;
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * Preloader overlay — full stage cover
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-preloader {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    background: radial-gradient(circle at 50% 50%, rgba(14, 28, 52, 0.97) 0%, #050a18 80%);
+    color: #b8ff3a;
+    font-family: 'VT323', monospace;
+  }
+  [data-chapter="2"] .flash-preloader-spinner {
+    width: 64px; height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-chapter="2"] .flash-preloader-cube {
+    width: 36px; height: 36px;
+    border: 1.5px solid #5af2ff;
+    box-shadow:
+      0 0 0 1px rgba(90, 242, 255, 0.35) inset,
+      0 0 18px rgba(90, 242, 255, 0.6);
+    animation: y2k-cube-rot 1.6s linear infinite;
+    transform-style: preserve-3d;
+  }
+  @keyframes y2k-cube-rot {
+    0%   { transform: rotate(0deg) skewX(0); }
+    50%  { transform: rotate(180deg) skewX(8deg); border-radius: 4px; }
+    100% { transform: rotate(360deg) skewX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-chapter="2"] .flash-preloader-cube { animation: none; }
+  }
+  [data-chapter="2"] .flash-preloader-bar {
+    width: 280px;
+    height: 12px;
+    border: 1px solid #5af2ff;
+    background: rgba(90, 242, 255, 0.08);
+    box-shadow: 0 0 12px rgba(90, 242, 255, 0.4);
+    overflow: hidden;
+  }
+  [data-chapter="2"] .flash-preloader-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #5af2ff 0%, #b8ff3a 100%);
+    box-shadow: 0 0 12px rgba(184, 255, 58, 0.7);
+    transition: width 80ms linear;
+  }
+  [data-chapter="2"] .flash-preloader-label {
+    font-size: 18px;
+    letter-spacing: 0.2em;
+    color: #b8ff3a;
+    text-shadow: 0 0 10px rgba(184, 255, 58, 0.7);
+  }
+  [data-chapter="2"] .flash-preloader-sub {
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: rgba(90, 242, 255, 0.7);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * Mobile <600px — notice modal + stacked
+   * ───────────────────────────────────────────────────────── */
+  [data-chapter="2"] .flash-y2k-mobile-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+  [data-chapter="2"] .flash-y2k-mobile-bio p {
+    font-family: 'Verdana', sans-serif;
+    color: rgba(248, 252, 255, 0.92);
+    line-height: 1.55;
+    font-size: 1rem;
+    margin: 0 0 10px 0;
+  }
+  [data-chapter="2"] .flash-y2k-mobile-flavor {
+    font-family: 'Verdana', sans-serif;
+    color: rgba(248, 252, 255, 0.85);
+    font-style: italic;
+    margin: 0;
+  }
+  [data-chapter="2"] .flash-y2k-mobile-projects {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  [data-chapter="2"] .flash-mobile-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(5, 10, 24, 0.88);
+    backdrop-filter: blur(6px);
+  }
+  [data-chapter="2"] .flash-mobile-notice-window {
+    width: min(100%, 360px);
+    background: linear-gradient(180deg, #0e1c34 0%, #050a18 100%);
+    border: 1px solid #5af2ff;
+    border-radius: 6px;
+    box-shadow:
+      0 0 0 1px rgba(90, 242, 255, 0.4) inset,
+      0 0 24px rgba(90, 242, 255, 0.4);
+    overflow: hidden;
+  }
+  [data-chapter="2"] .flash-mobile-notice-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: linear-gradient(180deg, #2a4060 0%, #0e1c34 100%);
+    border-bottom: 1px solid #5af2ff;
+  }
+  [data-chapter="2"] .flash-mobile-notice-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ff7a1a;
+    box-shadow: 0 0 8px #ff7a1a;
+  }
+  [data-chapter="2"] .flash-mobile-notice-titletext {
+    flex: 1;
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    color: #b8ff3a;
+    letter-spacing: 0.14em;
+  }
+  [data-chapter="2"] .flash-mobile-notice-close {
+    width: 24px; height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #f8fcff;
+    background: linear-gradient(180deg, #ff7a1a 0%, #aa3a00 100%);
+    border: 1px solid #ff9933;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  [data-chapter="2"] .flash-mobile-notice-body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  [data-chapter="2"] .flash-mobile-notice-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.85rem;
+    margin: 0;
+    color: #b8ff3a;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 8px rgba(184, 255, 58, 0.55);
+  }
+  [data-chapter="2"] .flash-mobile-notice-body p {
+    font-family: 'Verdana', sans-serif;
+    font-size: 0.9rem;
+    color: rgba(248, 252, 255, 0.92);
+    margin: 0;
+    line-height: 1.45;
+  }
+  [data-chapter="2"] .flash-mobile-notice-sub {
+    font-style: italic;
+    color: rgba(248, 252, 255, 0.7) !important;
+  }
+  [data-chapter="2"] .flash-mobile-notice-btn {
+    margin-top: 6px;
+    padding: 10px 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+    color: #050a18;
+    background: linear-gradient(180deg, #b8ff3a 0%, #4aa826 100%);
+    border: 1px solid #b8ff3a;
+    border-radius: 3px;
+    cursor: pointer;
+    box-shadow: 0 0 14px rgba(184, 255, 58, 0.5);
+  }
+
+  /* ─────────────────────────────────────────────────────────
+   * Responsive — tablet 600-900px: meta+nav stacked left col
+   * ───────────────────────────────────────────────────────── */
+  @media (min-width: 600px) and (max-width: 900px) {
+    [data-chapter="2"] .flash-y2k-desktop {
+      padding: 60px 18px 18px 80px;
+      grid-template-columns: 180px 1fr;
+      gap: 8px;
+    }
+    [data-chapter="2"] .flash-nav-btn {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    [data-chapter="2"] .flash-stage {
+      padding: 16px;
+    }
+    [data-chapter="2"] .flash-about-grid {
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+    }
+  }
+
+  /* Legacy iter2 block (chrome IE6) REMOVED 2026-05-17 — superseded by Y2K cyber Phase 04.1. */
+
 
   /* ─────────────────────────────────────────────────────────
    * Phase 4 W3 — ch4 AR/VR FloatingPanel (Plan 04-04)

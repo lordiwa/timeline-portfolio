@@ -179,4 +179,69 @@ describe('Chapter2Content.vue', () => {
     expect(blockMatch).toBeTruthy()
     expect(blockMatch[0]).toMatch(/linear-gradient/)
   })
+
+  // ─────────────────────────────────────────────────────────
+  // Phase 04.1 iter3 — Y2K cyber single-page coverage
+  // ─────────────────────────────────────────────────────────
+
+  it('T8 nav: sidebar renderiza 4 botones HOME/ABOUT/WORK/CONTACT', () => {
+    const { wrapper } = mountCh2()
+    const btns = wrapper.findAll('.flash-nav-btn')
+    expect(btns.length).toBe(4)
+    const labels = btns.map((b) => b.text())
+    expect(labels.join(' ')).toMatch(/HOME/i)
+    expect(labels.join(' ')).toMatch(/ABOUT/i)
+    expect(labels.join(' ')).toMatch(/WORK/i)
+    expect(labels.join(' ')).toMatch(/CONTACT/i)
+  })
+
+  it('T8 nav: HOME es el panel activo por defecto', () => {
+    const { wrapper } = mountCh2()
+    const stage = wrapper.find('.flash-stage')
+    expect(stage.exists()).toBe(true)
+    expect(stage.attributes('data-active')).toBe('home')
+  })
+
+  it('T9 nav: clickear ABOUT cambia el panel activo a "about"', async () => {
+    const { wrapper } = mountCh2()
+    const btns = wrapper.findAll('.flash-nav-btn')
+    // ABOUT es el segundo botón (index 1)
+    await btns[1].trigger('click')
+    expect(wrapper.find('.flash-stage').attributes('data-active')).toBe('about')
+  })
+
+  it('T9 nav: clickear WORK monta los ProjectCards del panel', async () => {
+    const { wrapper } = mountCh2()
+    const btns = wrapper.findAll('.flash-nav-btn')
+    await btns[2].trigger('click')  // WORK
+    expect(wrapper.find('.flash-stage').attributes('data-active')).toBe('work')
+    // ProjectCards en panel WORK además del fallback mobile = 4 (2 desktop + 2 mobile)
+    const cards = wrapper.findAllComponents(ProjectCard)
+    expect(cards.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('T10 contact: panel CONTACT contiene botones CV apuntando a /Profile.pdf', async () => {
+    const { wrapper } = mountCh2()
+    const btns = wrapper.findAll('.flash-nav-btn')
+    await btns[3].trigger('click')  // CONTACT
+    const cvLinks = wrapper.findAll('a.flash-cv-btn')
+    expect(cvLinks.length).toBe(2)  // ES + EN
+    cvLinks.forEach((link) => {
+      expect(link.attributes('href')).toBe('/Profile.pdf')
+      expect(link.attributes('download')).toBeDefined()
+    })
+  })
+
+  it('T11 mobile notice: FlashMobileNotice renderiza al mount con role=alertdialog', () => {
+    // Limpieza sessionStorage para que el notice arranque visible
+    try { sessionStorage.removeItem('ch2-mobile-notice-dismissed') } catch {}
+    const { wrapper } = mountCh2()
+    expect(wrapper.find('[role="alertdialog"].flash-mobile-notice').exists()).toBe(true)
+  })
+
+  it('T12 preloader: FlashPreloader renderiza al mount (Y2K-08 cada entrada al viewport)', () => {
+    const { wrapper } = mountCh2()
+    expect(wrapper.find('.flash-preloader').exists()).toBe(true)
+    expect(wrapper.find('.flash-preloader-bar').exists()).toBe(true)
+  })
 })
