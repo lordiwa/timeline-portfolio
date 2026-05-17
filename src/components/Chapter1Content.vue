@@ -203,8 +203,8 @@ const oldGifs = [
 }
 
 .ch1-gif--goku {
-  top: 30%;
-  right: 12%;
+  bottom: 18%;
+  right: 6%;
   width: 128px;
   transform: rotate(-4deg);
 }
@@ -281,7 +281,7 @@ const oldGifs = [
 
   /* GIFs mobile: más pequeños y centrados verticalmente para no tapar bio */
   .ch1-gif--skull     { top: 42%;   left: 4%;   width: 56px; }
-  .ch1-gif--goku      { top: 28%;   right: 4%;  width: 72px; }
+  .ch1-gif--goku      { bottom: 18%; right: 4%; width: 72px; }
   .ch1-gif--milk      { top: 56%;   right: 4px; width: 44px; }
   .ch1-gif--cornholio { bottom: 80px; left: 8px; width: 48px; }
 }
