@@ -117,8 +117,14 @@ const oldGifs = [
   padding-right: var(--sp-lg);
   padding-top: calc(96px + var(--sp-lg));
   padding-bottom: var(--sp-lg);
-  height: 100%;
-  overflow-y: hidden;
+  /* height + max-height:100dvh estricto — evita que el flex-center del
+   * .chapter-section desplace el layout cuando contenido > viewport
+   * (Rafael 2026-05-17: starfield/gifs bleed a ch0). */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
   position: relative; /* Contiene StarfieldBg absolute — CRÍTICO */
 }
 
@@ -181,33 +187,11 @@ const oldGifs = [
  * (z:-1) pero detrás del .ch1-meta/.ch1-content (z:1) — no estorban al texto.
  * image-rendering pixelated para preservar el grano original 90s.
  * ───────────────────────────────────────────────────────────────────────── */
-/* Container de GIFs limitado al viewport (100dvh) para que los hijos absolute
- * con bottom:X% / top:X% no calculen sobre .ch1-layout si éste supera el
- * viewport (bug chapter-overlap Phase 4 — Pattern 12: NO usar overflow:hidden
- * en .ch1-layout porque crea stacking context; sí en este sub-container). */
 .ch1-gifs {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
-}
-
-/* Mismo clipping para el StarfieldBg (que también es absolute inset:0 dentro
- * del .ch1-layout). Override vía :deep() del CSS scoped del child component —
- * cambia inset:0 por top:0 + height:100dvh para no extender al bottom del
- * .ch1-layout cuando éste supera el viewport (Rafael 2026-05-17: estrellas
- * visibles en ch0). */
-.ch1-layout :deep(.starfield-bg) {
-  bottom: auto;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
 }
 
 .ch1-gif {
@@ -277,8 +261,11 @@ const oldGifs = [
     padding-left: 60px;
     padding-right: var(--sp-md);
     padding-top: calc(68px + var(--sp-sm));
-    height: auto;
-    overflow-y: visible;
+    /* Mobile: mantener clip 100dvh (D3-12 sólo aplica a .ch1-content scroll
+     * interno, NO al layout root — Rafael 2026-05-17 fix overlap bug). */
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 
   .ch1-meta {
