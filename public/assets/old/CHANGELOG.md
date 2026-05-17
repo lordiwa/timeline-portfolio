@@ -16,6 +16,15 @@ Formato per entry:
 
 ---
 
+## ch3 design — iter1 → iter2 (2026-05-17)
+
+- **Versión guardada:** `old/ch3-paper-bg-2026-05-17-iter1.png` (128×128 light blue scanlines paper texture — generado en commit `777da6b`)
+- **Razón del cambio:** Rafael 2026-05-17: "no me gusta mi cara en el centro, está muy blanco, faltan detalles, ponlo más enfocado en liderazgo". iter1 hero tenía avatar bust + wet reflection + paper texture pastel → demasiado personal + demasiado blanco + bio enfocado en UX no liderazgo.
+- **Qué se intentará diferente:** iter2 — avatar cara reemplazado por logo RM 3D glossy (pink→cyan Aqua badge 128px); paper-bg reemplazado por halftone pop-art Lichtenstein (pink base + cyan dots 96px tile); +3 Aqua glossy buttons Mac OS X 10.4; +pull-quote magazine "Liderar no es delegar, es desbloquear"; +5 social badges era 2007 footer (flickr/vimeo/del.icio.us/MySpace/twttr beta SVG inline); bio reordenado i18n leadership-first.
+- **Commit hash post-regen:** `2455490`
+
+---
+
 ## ch2-bg.jpg — iter2 → REMOVED (2026-05-17)
 
 - **Versión guardada:** `old/ch2-bg-2026-05-17-iter2-removed.jpg` (wallpaper abstracto blobs púrpura/naranja iter2 — generado en commit del 2026-05-16)
