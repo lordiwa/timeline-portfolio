@@ -1,0 +1,19 @@
+- [User profile — Rafael Matovelle](user-profile.md) — Full Stack + QA, base gamedev, 15+ años, bilingüe ES/EN, Quito
+- [Rafael nació en 1984](rafael-birth-year-1984.md) — edades portfolio: year-1984. Drift 3yrs cometido 2026-05-14; verificar antes de prompt pixelforge/alt-text
+- [Portfolio goal](portfolio-goal.md) — portafolio personal decorado con pixel art vía MCPs; gamedev background da contexto narrativo
+- [Portfolio design decisions](portfolio-design-decisions.md) — bilingüe ES/EN toggle, retro 16-bit, "flex" mode con settings, narrativa: convergencia dev/QA/líder + AI
+- [MCP stack](mcp-stack.md) — Adobe + Google* + gsd (user) + pixelforge (local, hereda GEMINI_API_KEY del env). Comando: `claude mcp list`
+- [Phase 1 execution status (2026-05-13)](project_phase-1-execution-status.md) — 6/7 plans done, W6 (iOS smoke human gate) interrumpido en dispatch; LAN URL + patterns críticos del checker
+- [Rafael no tiene iOS](rafael-no-ios-device.md) — bloquea Plan 07 indefinidamente; mitigaciones iOS deben aplicarse preventivamente o vía emulador / browser cloud
+- [Workflow paralelo Phase 2+3](portfolio-parallel-workflow.md) — Claude impl P2 (theme+i18n) + Rafael produce contenido P3 (bio/proyectos/paletas) en paralelo
+- [Verifica antes de sugerir](feedback_verify-before-suggest.md) — Rafael: pedí console errors / DOM state ANTES de sugerir hard reload, restart, cache clear
+- [No snooping other projects](feedback_no-snooping-other-projects.md) — leer solo lo mínimo fuera del cwd; parar al encontrar el match, no auditar afirmaciones de Rafael
+- [Phase 3 execution status (2026-05-13)](project_phase-3-execution-status.md) — PASS-with-deferred-art: 4/5 plans + Plan 03-05 avatar art gate BLOCKED (Rafael CONTENT-CHECKLIST + foto pending)
+- [Chapter overlap bug Phase 4](project_chapter-overlap-bug-phase4.md) — al scrollear desde ch3 los chapters se overlapping; investigar scroll-snap-stop + .ch{N}-layout overflow/position stacking context (deferred 2026-05-14)
+- [GSD-executor MCP bug workaround](routing_gsd-executor-mcp-bug.md) — bug #13898 strip MCP tools en gsd-executor subagents; re-routar a artist-creator/artist-editor (allowedTools explícito)
+- [Phase 5 visual review pendiente](project_phase-5-visual-review-pending.md) — 6/6 plans + 424 tests verde pero Rafael reportó "diseño roto desde ch3"; visual polish cross-chapter deferred (2026-05-14)
+- [Reference photos available](reference-photos-available.md) — 7 fotos Rafael 1995-2026 en public/references/ gitignored, listas para artist-creator visión multimodal; desbloquea Phase 3 Plan 03-05 (batch 7 busts cross-chapter)
+- [Asset iteration process](feedback_asset-iteration-process.md) — antes de regen un asset, mover el actual a public/assets/old/{stem}-{ISO}-iter{N}.ext + entry CHANGELOG.md (Rafael 2026-05-14, CLAUDE.md §6.5)
+- [Busts status 2026-05-14](busts-status-2026-05-14.md) — ch0-3 OK (ch3=referencia visual), ch4/5 "pésimos" regenerar matcheando ch3, ch6 cara OK ropa borrada arreglar con Adobe selective. Handoff en .planning/SESSION-HANDOFF-2026-05-14-busts.md
+- [Validar colores bust vs ch3 ANTES de DONE](feedback_validate-bust-colors-vs-ch3.md) — pixel-sample obligatorio piel/pelo/ojos vs ch3 post-pixelforge. Rafael se enojó 2x por drift recurrente; Adobe HSL zonal es la fix obligatoria
+- [Git identity siempre srparca@gmail.com](feedback_git-identity.md) — Rafael Matovelle / srparca@gmail.com global. Si commit sale con identidad corporativa autoderivada, amend --reset-author si no está pusheado

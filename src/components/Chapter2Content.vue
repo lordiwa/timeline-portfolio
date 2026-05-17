@@ -38,31 +38,57 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 </script>
 
 <template>
-  <div class="ch2-layout">
-    <!-- Columna izquierda: meta (year + era). StickyAvatar top-left es único avatar visible
-         (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
-    <aside class="ch2-meta">
-      <p class="ch2-year">{{ chapter.year }}</p>
-      <p class="ch2-era">{{ t(chapter.eraKey) }}</p>
-    </aside>
-
-    <!-- Columna derecha: FlashBanner header + bio + flavor + projects -->
-    <div class="ch2-content">
-      <FlashBanner />
-
-      <div class="ch2-bio">
-        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
+  <!-- Flash transformation 2026-05-16: wrappeo .ch2-layout en .flash-browser para
+       darle look de ventana de browser 2009 (tabs falsos + address bar skeumórfica).
+       Tests siguen encontrando .ch2-layout/.ch2-meta/.ch2-content sin cambios. -->
+  <div class="flash-browser">
+    <div class="flash-browser-chrome" aria-hidden="true">
+      <div class="flash-browser-tabs">
+        <span class="flash-tab flash-tab-active">Portfolio 2009</span>
+        <span class="flash-tab">about:blank</span>
+        <span class="flash-tab flash-tab-ghost">untitled</span>
+        <span class="flash-tab-plus">+</span>
       </div>
-
-      <p class="ch2-flavor">{{ t('chapters.2.flavor') }}</p>
-
-      <div v-if="ch2Projects.length > 0" class="ch2-projects">
-        <ProjectCard
-          v-for="project in ch2Projects"
-          :key="project.id"
-          :project="project"
-        />
+      <div class="flash-browser-toolbar">
+        <span class="flash-btn flash-btn-back">◄</span>
+        <span class="flash-btn flash-btn-fwd">►</span>
+        <span class="flash-btn flash-btn-reload">↻</span>
+        <span class="flash-address-bar">http://rafael.flash/portfolio/2009/index.swf</span>
+        <span class="flash-go-btn">GO</span>
       </div>
+    </div>
+
+    <div class="ch2-layout">
+      <!-- Columna izquierda: meta (year + era). StickyAvatar top-left es único avatar visible
+           (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
+      <aside class="ch2-meta">
+        <p class="ch2-year">{{ chapter.year }}</p>
+        <p class="ch2-era">{{ t(chapter.eraKey) }}</p>
+      </aside>
+
+      <!-- Columna derecha: FlashBanner header + bio + flavor + projects -->
+      <div class="ch2-content">
+        <FlashBanner />
+
+        <div class="ch2-bio">
+          <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
+        </div>
+
+        <p class="ch2-flavor">{{ t('chapters.2.flavor') }}</p>
+
+        <div v-if="ch2Projects.length > 0" class="ch2-projects">
+          <ProjectCard
+            v-for="project in ch2Projects"
+            :key="project.id"
+            :project="project"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="flash-browser-statusbar" aria-hidden="true">
+      <span class="flash-status-text">Done · 47/47 items · Flash Player 9 detected</span>
+      <span class="flash-status-zone">🔒 Internet</span>
     </div>
   </div>
 </template>

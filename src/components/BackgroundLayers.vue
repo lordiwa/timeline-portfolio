@@ -69,7 +69,13 @@ const { layerA, layerB } = inject('bgMorph')
 .bg-layer {
   position: absolute;
   inset: 0;
-  background: var(--c-bg);
+  background-color: var(--c-bg);
+  background-image: var(--bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Pixel art crisp scaling — chapter bg assets vienen de pixelforge */
+  image-rendering: pixelated;
   transition: opacity 200ms ease;
 }
 

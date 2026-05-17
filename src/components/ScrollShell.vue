@@ -139,7 +139,8 @@ defineExpose({ shellEl })
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--c-bg);
+  /* Transparente — BackgroundLayers (z:-1) pinta --c-bg + --bg-image (D2-04). */
+  background: transparent;
   color: var(--c-fg);
 }
 

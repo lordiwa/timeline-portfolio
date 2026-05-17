@@ -342,3 +342,12 @@ Formato per entry:
 - **Razón del cambio:** Rafael 2026-05-15: "quita ese adobe verde o como se llame necesito una camista". Mismo problema que ch5 — Adobe fill plano no genera estructura de camisa.
 - **Qué se intentó diferente:** pixelforge banana-2 pro + ch5 recién generado como referencia multimodal. 2 intentos: intento 1 (grey-scalp-retry) tenía highlights azul-grisáceos en scalp — descartado. Intento 2: prompt más enfático ("PITCH BLACK to VERY DARK BROWN ONLY, ZERO grey pixels") — scalp predominantemente oscuro OK, pelo a hombros OK, camisa verde #1A3D24 con cuello-V visible.
 - **Commit hash post-regen:** `fd7bf3b`
+
+---
+
+## ch2-bg.jpg — iter1 → iter2 (2026-05-16)
+
+- **Versión guardada:** `old/ch2-bg-2026-05-16-iter1.jpg` (626,894 bytes)
+- **Razón del cambio:** iter1 era un pixel art con UI Flash-era DIBUJADA EN LA IMAGEN (browser chrome, banner naranja, popup window, blobs). Rafael 2026-05-16: ahora la UI Flash se construye en CSS real (.flash-browser chrome bar + .flash-banner + project-card popup window) — el bg pintado competía con esa UI; necesitamos wallpaper abstracto detrás.
+- **Qué se intentó diferente:** prompt forge_background enfocado en textura ABSTRACTA — blobs orgánicos púrpura/naranja, gradientes radiales soft, halftone dots Flash-era, lava-lamp vibes. SIN UI dibujada (no browser, no banner, no popup, no buttons, no text, no windows). Pure abstract decorative wallpaper.
+- **Commit hash post-regen:** (pendiente)
