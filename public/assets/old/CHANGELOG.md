@@ -16,6 +16,24 @@ Formato per entry:
 
 ---
 
+## ch2 tiles cursor.png → coin.png — iter1 → iter2 rename (2026-05-17)
+
+- **Versión guardada:** `old/cursor-2026-05-17-iter1.png` (4,358 bytes — generado por commit `8fdc2de`)
+- **Razón del cambio:** Rafael 2026-05-17: "el icono del cursor hazlo una moneda". Cambio de identidad semántica del tile (no solo regen del mismo sprite) — cursor flecha cyan reemplazada por moneda chrome cyan. Asset renombrado a `coin.png`, sprite key `tile-coin`, TILE_TYPES slot 0 actualizado.
+- **Qué se intentará diferente:** generar coin como disc 3/4 con chrome rim + símbolo central embossed, conservando paleta cyan #5af2ff del slot para no romper el balance cromático del grid match-3.
+- **Commit hash post-regen:** `c3ef8e1`
+
+---
+
+## ch2 tiles banner.png → candy.png — iter1 → iter2 rename (2026-05-17)
+
+- **Versión guardada:** `old/banner-2026-05-17-iter1.png` (6,770 bytes — regenerado en commit `8fdc2de` para sacar texto "CLICK ME" del iter1 original)
+- **Razón del cambio:** Rafael 2026-05-17: "el icono de banner hazlo un caramelo". Cambio de identidad semántica (banner web Y2K reemplazado por caramelo wrap). Asset renombrado a `candy.png`, sprite key `tile-candy`, TILE_TYPES slot 1 actualizado.
+- **Qué se intentará diferente:** hard candy wrapper twist en ambos lados, centro brillante con shine, conservando paleta orange #ff7a1a del slot.
+- **Commit hash post-regen:** `c3ef8e1`
+
+---
+
 ## ch4-bust.png — iter3 → iter4 (2026-05-14)
 
 - **Versión guardada:** `old/ch4-bust-2026-05-14-iter3.png` (12,672 bytes — generado por commit `1f86ab6`)
