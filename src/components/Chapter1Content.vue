@@ -198,6 +198,18 @@ const oldGifs = [
   z-index: 0;
 }
 
+/* Mismo clipping para el StarfieldBg (que también es absolute inset:0 dentro
+ * del .ch1-layout). Override vía :deep() del CSS scoped del child component —
+ * cambia inset:0 por top:0 + height:100dvh para no extender al bottom del
+ * .ch1-layout cuando éste supera el viewport (Rafael 2026-05-17: estrellas
+ * visibles en ch0). */
+.ch1-layout :deep(.starfield-bg) {
+  bottom: auto;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
 .ch1-gif {
   position: absolute;
   image-rendering: pixelated;
