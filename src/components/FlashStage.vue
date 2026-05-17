@@ -25,7 +25,11 @@ const panels = {
 <template>
   <div class="ch2-content flash-stage" :data-active="panel">
     <Transition name="flash-panel" mode="out-in">
-      <component :is="panels[panel] || panels.home" :key="panel" />
+      <component
+        :is="panels[panel] || panels.home"
+        :key="panel"
+        :active="panel === 'home'"
+      />
     </Transition>
   </div>
 </template>
