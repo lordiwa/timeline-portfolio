@@ -20,18 +20,28 @@ const GRID_OFFSET_X = (360 - (GRID_COLS * TILE_SIZE + (GRID_COLS - 1) * TILE_GAP
 const GRID_OFFSET_Y = 80
 const TIME_LIMIT = 60_000  // 60s in ms
 
-// 5 tile types — cada uno: { color, glyph, glow }
+// 5 tile types — cada uno: { color, sprite, glow }
 const TILE_TYPES = [
-  { color: 0x5af2ff, glow: 0x5af2ff, glyph: '▲' }, // cursor (cyan)
-  { color: 0xff7a1a, glow: 0xffaa44, glyph: '▭' }, // banner (orange)
-  { color: 0xb8ff3a, glow: 0xddff88, glyph: '◆' }, // gem (lime)
-  { color: 0xff44aa, glow: 0xff88cc, glyph: '⊕' }, // joystick (magenta)
-  { color: 0xffdd44, glow: 0xffee88, glyph: '★' }, // star (yellow)
+  { color: 0x5af2ff, glow: 0x5af2ff, sprite: 'tile-cursor' },   // cursor (cyan)
+  { color: 0xff7a1a, glow: 0xffaa44, sprite: 'tile-banner' },   // banner (orange)
+  { color: 0xb8ff3a, glow: 0xddff88, sprite: 'tile-gem' },      // gem (lime)
+  { color: 0xff44aa, glow: 0xff88cc, sprite: 'tile-joystick' }, // joystick (magenta)
+  { color: 0xffdd44, glow: 0xffee88, sprite: 'tile-star' },     // star (yellow)
 ]
+
+const TILE_SPRITE_INSET = 12 // px margin del sprite dentro del tile bg
 
 export class MatchScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MatchScene' })
+  }
+
+  preload() {
+    this.load.image('tile-cursor', 'assets/ch2/tiles/cursor.png')
+    this.load.image('tile-banner', 'assets/ch2/tiles/banner.png')
+    this.load.image('tile-gem', 'assets/ch2/tiles/gem.png')
+    this.load.image('tile-joystick', 'assets/ch2/tiles/joystick.png')
+    this.load.image('tile-star', 'assets/ch2/tiles/star.png')
   }
 
   create() {
@@ -131,14 +141,12 @@ export class MatchScene extends Phaser.Scene {
     bg.strokeRoundedRect(-TILE_SIZE / 2, -TILE_SIZE / 2, TILE_SIZE, TILE_SIZE, 8)
     container.add(bg)
 
-    // Glyph text
-    const txt = this.add.text(0, 0, tileDef.glyph, {
-      fontFamily: 'Verdana, sans-serif',
-      fontSize: '24px',
-      color: '#050a18',
-      fontStyle: 'bold',
-    }).setOrigin(0.5)
-    container.add(txt)
+    // Sprite icon (pixel-art, nearest-neighbor scaled to fit inside the rounded bg)
+    const iconSize = TILE_SIZE - TILE_SPRITE_INSET * 2
+    const icon = this.add.image(0, 0, tileDef.sprite)
+      .setOrigin(0.5)
+      .setDisplaySize(iconSize, iconSize)
+    container.add(icon)
 
     // Interactive
     container.setSize(TILE_SIZE, TILE_SIZE)

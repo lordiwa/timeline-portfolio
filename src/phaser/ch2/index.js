@@ -32,7 +32,7 @@ export function createMiniGame(parentEl, { prefersReduced } = {}) {
     parent: parentEl,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
-    pixelArt: false, // match-3 tiles usan Graphics primitives, no sprites
+    pixelArt: true, // iter5: tiles ahora cargan sprites pixel-art (preserve nearest-neighbor)
     backgroundColor: '#050a18', // deep ice-blue base ch2 Y2K palette
     transparent: false,
     physics: { default: 'none' },
