@@ -280,15 +280,17 @@
   [data-chapter="2"] .flash-y2k-desktop {
     position: relative;
     display: grid;
-    grid-template-columns: 220px 1fr;
-    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
       "meta stage"
       "nav  stage"
       "status status";
     gap: 12px;
-    height: 100dvh;
+    width: 100%;
+    height: 100%;
     padding: 76px 24px 24px 160px;
+    box-sizing: border-box;
     color: #f8fcff;
     background:
       radial-gradient(ellipse at 20% 10%, rgba(90, 242, 255, 0.10) 0%, transparent 50%),

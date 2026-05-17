@@ -155,13 +155,16 @@ onBeforeUnmount(() => {
    (era-specific styling convention — Phase 3+). */
 
 .flash-y2k-root {
+  /* chapter-section es display:flex + center → claim full main axis aquí */
+  flex: 1 1 100%;
+  min-width: 0;
+  align-self: stretch;
   height: 100%;
   width: 100%;
   position: relative;
 }
 
 .flash-y2k-desktop {
-  display: block;
   height: 100%;
   width: 100%;
   position: relative;
