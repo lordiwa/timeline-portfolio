@@ -52,7 +52,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 // alpha en PNG. ch6-bg.png y ch0-game-*.png/ch0-os-*.png son PNG por VGA 16-color
 // palette indexed (mejor compresión PNG indexada que JPEG para colores planos).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

@@ -1,15 +1,17 @@
 // tests/components/Chapter3Content.test.js
-// TDD RED phase — Plan 03-03, Task 3.2.
+// Updated 2026-05-17 — design Web 2.0 final (Rafael "todo a tope").
 //
 // Cobertura:
-// - T1 DOM contract: .ch3-layout + .ch3-meta (sin inline avatar) + .ch3-content + .ch3-bio + .ch3-projects
-//   Rafael 2026-05-15: inline avatars eliminados de todos los ch — solo StickyAvatar top-left.
-// - T3 bio render: .ch3-bio p muestra el texto del locale activo
-// - T4 projects filter: solo chapterEra===3 monta ProjectCards (2 ch3 + 1 ch4 → 1 card)
+// - T1 DOM contract: .ch3-stage + .ch3-hero + .ch3-bio-card + (.ch3-projects condicional)
+//   Override 2026-05-17: el avatar inline en hero (.ch3-avatar-wet) ES intencional —
+//   centerpiece del design Web 2.0 wet-reflection. Coexiste con StickyAvatar HUD top-left.
+// - T2 starbursts: 2 starbursts BETA/NEW decorativos presentes con aria-hidden
+// - T3 bio render: .ch3-bio-card p muestra el texto del locale activo
+// - T4 projects filter: solo chapterEra===3 monta ProjectCards (2 ch3 + 1 ch4 → 2 cards)
 // - T5 reactive (Pitfall 3): toggle locale → bio text actualiza sin re-mount
-// - T6 CSS readFileSync: Chapter3Content.vue tiene layout D3-09 Opción A + D3-12 mobile
+// - T6 CSS readFileSync: Chapter3Content.vue tiene layout Web 2.0 + D3-12 mobile scroll
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -17,9 +19,6 @@ import Chapter3Content from '@/components/Chapter3Content.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
-// Mock de @/data/projects con fixtures para tests determinísticos
-// - 2 proyectos chapterEra:3 → deben aparecer como ProjectCards
-// - 1 proyecto chapterEra:4 → NO debe aparecer (filtrado)
 vi.mock('@/data/projects', () => ({
   projects: [
     {
@@ -67,7 +66,6 @@ vi.mock('@/data/projects', () => ({
   ],
 }))
 
-// Helper para montar Chapter3Content con i18n plugin
 function mountCh3({ locale = 'es', stubs } = {}) {
   const i18n = createTestI18n({ locale })
   const wrapper = mount(Chapter3Content, {
@@ -79,107 +77,120 @@ function mountCh3({ locale = 'es', stubs } = {}) {
   return { wrapper, i18n }
 }
 
-// Lee el archivo Chapter3Content.vue como raw string para asserts de CSS (T6)
 const CH3_SOURCE = readFileSync(
   resolve(process.cwd(), 'src/components/Chapter3Content.vue'),
   'utf8'
 )
 
-describe('Chapter3Content.vue', () => {
+describe('Chapter3Content.vue (Web 2.0 design — 2026-05-17)', () => {
   // ─────────────────────────────────────────────────────────────────────────
-  // T1: DOM contract — estructura base del layout
+  // T1: DOM contract — nuevo layout Web 2.0 hero centered
   // ─────────────────────────────────────────────────────────────────────────
-  it('T1 DOM contract: .ch3-layout existe con .ch3-meta y .ch3-content', () => {
+  it('T1 DOM contract: .ch3-stage existe como root', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-layout').exists()).toBe(true)
-    expect(wrapper.find('.ch3-meta').exists()).toBe(true)
-    expect(wrapper.find('.ch3-content').exists()).toBe(true)
+    expect(wrapper.find('.ch3-stage').exists()).toBe(true)
   })
 
-  it('T1 DOM contract: .ch3-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar)', () => {
+  it('T1 DOM contract: .ch3-hero (hero centered Web 2.0) presente con title y subtitle', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-meta img.ch3-avatar').exists()).toBe(false)
-    expect(wrapper.find('img.ch3-avatar').exists()).toBe(false)
+    expect(wrapper.find('.ch3-hero').exists()).toBe(true)
+    expect(wrapper.find('.ch3-hero-title').exists()).toBe(true)
+    expect(wrapper.find('.ch3-hero-subtitle').exists()).toBe(true)
   })
 
-  it('T1 DOM contract: .ch3-content contiene .ch3-bio (div, no section)', () => {
+  it('T1 DOM contract: .ch3-bio-card (glassy Aqua card) presente con párrafos', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-content .ch3-bio').exists()).toBe(true)
+    expect(wrapper.find('.ch3-bio-card').exists()).toBe(true)
+    expect(wrapper.findAll('.ch3-bio-card p').length).toBeGreaterThan(0)
   })
 
-  it('T1 DOM contract: .ch3-content contiene .ch3-projects (proyectos mockeados presentes)', () => {
+  it('T1 DOM contract: .ch3-projects renderea con projects mockeados', () => {
     const { wrapper } = mountCh3()
-    // Con el mock, ch3Projects.length > 0, por lo que .ch3-projects debe existir
-    expect(wrapper.find('.ch3-content .ch3-projects').exists()).toBe(true)
+    expect(wrapper.find('.ch3-projects').exists()).toBe(true)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T2: (RETIRED 2026-05-15) avatar img src/alt — el bust ahora vive solo en
-  // StickyAvatar. Cobertura de src/alt cross-chapter está en StickyAvatar.test.
+  // T2: starbursts BETA/NEW Web 2.0 signature elements
   // ─────────────────────────────────────────────────────────────────────────
+  it('T2 starbursts: 2 starbursts (BETA + NEW) renderean con aria-hidden', () => {
+    const { wrapper } = mountCh3()
+    const sbs = wrapper.findAll('.ch3-starburst')
+    expect(sbs.length).toBe(2)
+    sbs.forEach((sb) => {
+      expect(sb.attributes('aria-hidden')).toBe('true')
+    })
+  })
+
+  it('T2 starbursts: labels BETA y ¡NEW! presentes', () => {
+    const { wrapper } = mountCh3()
+    const labels = wrapper.findAll('.ch3-starburst-text').map((n) => n.text())
+    expect(labels).toContain('BETA')
+    expect(labels).toContain('¡NEW!')
+  })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T3: bio render — .ch3-bio p muestra el texto t(bio.coreKey)
+  // T3: bio render
   // ─────────────────────────────────────────────────────────────────────────
-  it('T3 bio render: .ch3-bio p contiene texto (puede ser PENDING placeholder)', () => {
+  it('T3 bio render: locale=es → .ch3-bio-card p tiene texto', () => {
     const { wrapper } = mountCh3({ locale: 'es' })
-    const bioP = wrapper.find('.ch3-bio p')
+    const bioP = wrapper.find('.ch3-bio-card p')
     expect(bioP.exists()).toBe(true)
     expect(bioP.text().length).toBeGreaterThan(0)
   })
 
-  it('T3 bio render: locale=en → .ch3-bio p contiene texto en inglés', () => {
+  it('T3 bio render: locale=en → .ch3-bio-card p tiene texto en inglés', () => {
     const { wrapper } = mountCh3({ locale: 'en' })
-    const bioP = wrapper.find('.ch3-bio p')
+    const bioP = wrapper.find('.ch3-bio-card p')
     expect(bioP.exists()).toBe(true)
     expect(bioP.text().length).toBeGreaterThan(0)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T4: projects filter — solo chapterEra===3 → 2 ProjectCards (filtra ch4-x)
+  // T4: projects filter
   // ─────────────────────────────────────────────────────────────────────────
-  it('T4 projects filter: chapterEra===3 → monta 2 ProjectCards (filtra el de chapterEra=4)', () => {
+  it('T4 projects filter: chapterEra===3 → monta 2 ProjectCards (filtra el ch4)', () => {
     const { wrapper } = mountCh3()
     const cards = wrapper.findAllComponents(ProjectCard)
     expect(cards.length).toBe(2)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T5: reactive (Pitfall 3) — toggle locale → bio text actualiza
+  // T5: reactive (Pitfall 3)
   // ─────────────────────────────────────────────────────────────────────────
-  it('T5 reactive (Pitfall 3): toggle locale es→en → .ch3-bio p text actualiza sin re-mount', async () => {
+  it('T5 reactive: toggle locale es→en → .ch3-bio-card p text actualiza sin re-mount', async () => {
     const { wrapper, i18n } = mountCh3({ locale: 'es' })
-    const textEs = wrapper.find('.ch3-bio p').text()
+    const textEs = wrapper.find('.ch3-bio-card p').text()
 
     i18n.global.locale.value = 'en'
     await flushPromises()
 
-    const textEn = wrapper.find('.ch3-bio p').text()
+    const textEn = wrapper.find('.ch3-bio-card p').text()
     expect(textEn.length).toBeGreaterThan(0)
     expect(typeof textEs).toBe('string')
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // T6: CSS readFileSync — Chapter3Content.vue contiene layout D3-09 + D3-12
+  // T6: CSS readFileSync — Chapter3Content.vue tiene layout Web 2.0 + D3-12
   // ─────────────────────────────────────────────────────────────────────────
-  it('T6 CSS desktop: .ch3-layout tiene grid-template-columns: 200px 1fr (D3-09 Opción A)', () => {
-    expect(CH3_SOURCE).toMatch(/grid-template-columns:\s*200px 1fr/)
+  it('T6 CSS: .ch3-stage tiene paper-bg background-image', () => {
+    expect(CH3_SOURCE).toMatch(/background-image:\s*url\(['"]\/assets\/ch3-paper-bg\.png['"]\)/)
   })
 
-  it('T6 CSS desktop: .ch3-layout tiene padding-left: 160px (D3-09 StickyTimeline clearance)', () => {
-    expect(CH3_SOURCE).toMatch(/padding-left:\s*160px/)
-  })
-
-  it('T6 CSS mobile: @media (max-width: 599px) presente con grid-template-columns: 1fr', () => {
-    expect(CH3_SOURCE).toMatch(/@media\s*\(max-width:\s*599px\)/)
-    expect(CH3_SOURCE).toMatch(/grid-template-columns:\s*1fr/)
-  })
-
-  it('T6 CSS mobile: .ch3-content tiene overflow-y: auto en mobile (D3-12)', () => {
+  it('T6 CSS: .ch3-stage tiene overflow-y: auto (scroll interno respeta D3-12 + previene bleed bug)', () => {
     expect(CH3_SOURCE).toMatch(/overflow-y:\s*auto/)
   })
 
-  it('T6 CSS mobile: padding-left: 60px en mobile (StickyTimeline mobile clearance)', () => {
-    expect(CH3_SOURCE).toMatch(/padding-left:\s*60px/)
+  it('T6 CSS: .ch3-stage tiene height/max-height 100dvh (clip al viewport — fix overlap del bug Phase 4)', () => {
+    expect(CH3_SOURCE).toMatch(/max-height:\s*100dvh/)
+  })
+
+  it('T6 CSS: .ch3-bio-card tiene gradient + box-shadow (Web 2.0 glass card)', () => {
+    expect(CH3_SOURCE).toMatch(/\.ch3-bio-card\s*\{[\s\S]*?linear-gradient/)
+    expect(CH3_SOURCE).toMatch(/\.ch3-bio-card\s*\{[\s\S]*?box-shadow/)
+  })
+
+  it('T6 CSS: .ch3-avatar-wet tiene reflection pseudo (::after con scaleY(-1) + mask-image fade)', () => {
+    expect(CH3_SOURCE).toMatch(/\.ch3-avatar-wet::after\s*\{[\s\S]*?scaleY\(-1\)/)
+    expect(CH3_SOURCE).toMatch(/\.ch3-avatar-wet::after\s*\{[\s\S]*?mask-image/)
   })
 })
