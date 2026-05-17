@@ -16,6 +16,15 @@ Formato per entry:
 
 ---
 
+## ch3-halftone-bg.png — iter2 → REMOVED (2026-05-17)
+
+- **Versión guardada:** `old/ch3-halftone-bg-2026-05-17-iter2.png` (128×128 Lichtenstein pink+cyan dots — generado en commit `2455490`)
+- **Razón del cambio:** Rafael 2026-05-17: "jajaj quita los puntos al fondo y dejalo plano del rosado ese que pusiste, pon talvez tramados ligeros de fondo pero muy leves". Los dots cyan eran demasiado agresivos visualmente.
+- **Qué se intentará diferente:** ninguna regeneración — `background-image` PNG removido, sustituido por `repeating-linear-gradient` diagonal 45° CSS-only con stripes `rgba(255,255,255,0.06)` cada 7-8px sobre `background-color: #ffd6e3`. Tramado apenas perceptible.
+- **Commit hash post-regen:** `8e45dd6`
+
+---
+
 ## ch3 design — iter1 → iter2 (2026-05-17)
 
 - **Versión guardada:** `old/ch3-paper-bg-2026-05-17-iter1.png` (128×128 light blue scanlines paper texture — generado en commit `777da6b`)
