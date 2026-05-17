@@ -20,7 +20,7 @@
   position: relative en .ch1-layout es CRÍTICO para contener StarfieldBg absolute.
 -->
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { bio } from '@/data/bio'
@@ -32,14 +32,38 @@ const { t } = useI18n()
 // chapters[1] — HTML 90s / GeoCities. Lookup directo por index (D3-04 locked).
 const chapter = chapters[1]
 
-// Bio era-specific: 14 años + autodidacta + competitivo SC/WC + BLG QA (Rafael 2026-05-14).
+// Bio era-specific: castigo/HTML + autodidacta + competitivo SC/WC + BLG QA (Rafael 2026-05-17).
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
+
+// PRM: GIFs animados son decoración era-90s. Bajo prefers-reduced-motion no se renderizan.
+const { prefersReduced } = inject('prm')
+
+// GIFs 90s: src dinámico via :src binding evita que el compiler SFC intente
+// resolver el path absolute como import en tests (vitest tropezaba con file:///assets/...).
+const oldGifs = [
+  { key: 'skull', src: '/assets/oldGifs/skull.gif' },
+  { key: 'goku', src: '/assets/oldGifs/goku.gif' },
+  { key: 'milk', src: '/assets/oldGifs/milk.gif' },
+  { key: 'cornholio', src: '/assets/oldGifs/cornholio.gif' },
+]
 </script>
 
 <template>
   <div class="ch1-layout">
     <!-- StarfieldBg PRIMERO — su CSS scoped lo posiciona absolute detrás del content -->
     <StarfieldBg />
+
+    <!-- GIFs 90s era-auténticos: floating chaos GeoCities style (Rafael 2026-05-17).
+         aria-hidden + alt="" — decoración pura, sin valor informativo. Skip bajo PRM. -->
+    <div v-if="!prefersReduced" class="ch1-gifs" aria-hidden="true">
+      <img
+        v-for="g in oldGifs"
+        :key="g.key"
+        :class="['ch1-gif', `ch1-gif--${g.key}`]"
+        :src="g.src"
+        alt=""
+      />
+    </div>
 
     <!-- Columna izquierda: meta (year + era). StickyAvatar top-left es único avatar visible
          (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
@@ -151,6 +175,54 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   font-style: italic;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * GIFs 90s — floating chaos GeoCities era. Posicionados absolute dentro de
+ * .ch1-layout (que es position:relative). z-index 0 → encima del StarfieldBg
+ * (z:-1) pero detrás del .ch1-meta/.ch1-content (z:1) — no estorban al texto.
+ * image-rendering pixelated para preservar el grano original 90s.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch1-gifs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ch1-gif {
+  position: absolute;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.5));
+}
+
+.ch1-gif--skull {
+  top: 42%;
+  left: 12%;
+  width: 96px;
+  transform: rotate(-6deg);
+}
+
+.ch1-gif--goku {
+  top: 30%;
+  right: 12%;
+  width: 128px;
+  transform: rotate(-4deg);
+}
+
+.ch1-gif--milk {
+  top: 52%;
+  right: 48px;
+  width: 72px;
+  transform: rotate(6deg);
+}
+
+.ch1-gif--cornholio {
+  bottom: 120px;
+  left: 40px;
+  width: 80px;
+  transform: rotate(-3deg);
+}
+
 /* Tabla legacy era-auténtica — border era HTML 90s (magenta sobre navy) */
 .ch1-legacy-table {
   font-family: 'Comic Neue', 'Comic Sans MS', cursive;
@@ -206,5 +278,11 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     /* D3-12: scroll interno hasta agotar height → browser propaga al outer snap shell */
     max-height: calc(100dvh - 200px - env(safe-area-inset-bottom, 0px));
   }
+
+  /* GIFs mobile: más pequeños y centrados verticalmente para no tapar bio */
+  .ch1-gif--skull     { top: 42%;   left: 4%;   width: 56px; }
+  .ch1-gif--goku      { top: 28%;   right: 4%;  width: 72px; }
+  .ch1-gif--milk      { top: 56%;   right: 4px; width: 44px; }
+  .ch1-gif--cornholio { bottom: 80px; left: 8px; width: 48px; }
 }
 </style>
