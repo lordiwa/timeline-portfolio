@@ -16,6 +16,15 @@ Formato per entry:
 
 ---
 
+## ch2-bg.jpg — iter2 → REMOVED (2026-05-17)
+
+- **Versión guardada:** `old/ch2-bg-2026-05-17-iter2-removed.jpg` (wallpaper abstracto blobs púrpura/naranja iter2 — generado en commit del 2026-05-16)
+- **Razón del cambio:** Rafael 2026-05-17: "podemos quitar el bg de ch2.bg y dejarlo negro". El wallpaper competía visualmente con la UI Y2K cyber CSS encima — fondo negro deja respirar el stage Flash transformation.
+- **Qué se intentará diferente:** ninguna regeneración — `--bg-image` removido del bloque `[data-chapter="2"]` en `chapter-themes.css`, `--c-bg` cambiado de `#2a1a4a` a `#000000`. Si en el futuro se quiere reintroducir un fondo, generar uno más sutil (low-saturation, dark) que no compita con la UI.
+- **Commit hash post-regen:** `59bbb86`
+
+---
+
 ## ch0-game-warcraft.png — iter1 → iter2 (2026-05-17)
 
 - **Versión guardada:** `old/ch0-game-warcraft-2026-05-17-iter1.png` (128×96, piso de piedra azul oscuro genérico — no representaba Warcraft)
