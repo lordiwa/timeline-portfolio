@@ -136,6 +136,13 @@ defineExpose({ shellEl })
   width: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  /* Fix arquitectural chapter-overlap bleed (Rafael 2026-05-17):
+   * CUALQUIER child con position:absolute o transform (ParallaxLayers ch4,
+   * ScrollRevealCard transforms, GIFs ch1, starbursts ch3) puede sobresalir
+   * del section sin overflow:hidden. Pattern 12 NO aplica aquí — el test
+   * ch6-overlap T2 prohíbe overflow:hidden sólo en .ch{N}-layout (creaba
+   * stacking context que rompía scroll-snap), NO en .chapter-section. */
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
