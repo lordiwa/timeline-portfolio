@@ -36,7 +36,13 @@
       "era": "Flash",
       "flavor": "Era Flash 2009. ActionScript, banners vector, gameplay arcade.",
       "bannerTitle": "Era Flash · 2009",
-      "bannerSubtitle": "BlueLizard / Matte CG / Joju Games"
+      "bannerSubtitle": "BlueLizard / Matte CG / Joju Games",
+      "nav": {
+        "home": "HOME",
+        "about": "ABOUT",
+        "work": "WORK",
+        "contact": "CONTACT"
+      }
     },
     "3": { "title": "Web 2.0: UX + dev + líder", "era": "Web 2.0" },
     "4": {
