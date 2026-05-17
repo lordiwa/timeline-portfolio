@@ -5,6 +5,11 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import FlashBanner from './FlashBanner.vue'
+import Ch2MiniGame from './Ch2MiniGame.vue'
+
+defineProps({
+  active: { type: Boolean, default: true },
+})
 
 const { t } = useI18n()
 </script>
@@ -13,6 +18,6 @@ const { t } = useI18n()
   <div class="flash-panel flash-panel-home" data-panel="home">
     <FlashBanner />
     <p class="ch2-flavor flash-panel-flavor">{{ t('chapters.2.flavor') }}</p>
-    <div class="flash-panel-hint" aria-hidden="true">▸ select a section from the menu</div>
+    <Ch2MiniGame :active="active" />
   </div>
 </template>
