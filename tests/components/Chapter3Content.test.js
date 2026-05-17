@@ -172,8 +172,8 @@ describe('Chapter3Content.vue (Web 2.0 design — 2026-05-17)', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // T6: CSS readFileSync — Chapter3Content.vue tiene layout Web 2.0 + D3-12
   // ─────────────────────────────────────────────────────────────────────────
-  it('T6 CSS: .ch3-stage tiene paper-bg background-image', () => {
-    expect(CH3_SOURCE).toMatch(/background-image:\s*url\(['"]\/assets\/ch3-paper-bg\.png['"]\)/)
+  it('T6 CSS: .ch3-stage tiene halftone-bg background-image (iter2)', () => {
+    expect(CH3_SOURCE).toMatch(/background-image:\s*url\(['"]\/assets\/ch3-halftone-bg\.png['"]\)/)
   })
 
   it('T6 CSS: .ch3-stage tiene overflow-y: auto (scroll interno respeta D3-12 + previene bleed bug)', () => {
@@ -189,8 +189,45 @@ describe('Chapter3Content.vue (Web 2.0 design — 2026-05-17)', () => {
     expect(CH3_SOURCE).toMatch(/\.ch3-bio-card\s*\{[\s\S]*?box-shadow/)
   })
 
-  it('T6 CSS: .ch3-avatar-wet tiene reflection pseudo (::after con scaleY(-1) + mask-image fade)', () => {
-    expect(CH3_SOURCE).toMatch(/\.ch3-avatar-wet::after\s*\{[\s\S]*?scaleY\(-1\)/)
-    expect(CH3_SOURCE).toMatch(/\.ch3-avatar-wet::after\s*\{[\s\S]*?mask-image/)
+  it('T6 CSS: .ch3-aqua-btn--linkedin tiene linear-gradient blue (Aqua Tiger 2005)', () => {
+    expect(CH3_SOURCE).toMatch(/\.ch3-aqua-btn--linkedin\s*\{[\s\S]*?linear-gradient/)
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T7: nuevos elementos iter2 (logo, quote, aqua buttons, social badges)
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T7 iter2: .ch3-logo renderea con logo-rm.png', () => {
+    const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-logo').exists()).toBe(true)
+    const img = wrapper.find('.ch3-logo img')
+    expect(img.attributes('src')).toBe('/assets/ch3-logo-rm.png')
+  })
+
+  it('T7 iter2: .ch3-quote (pull-quote) renderea con texto', () => {
+    const { wrapper } = mountCh3()
+    const q = wrapper.find('.ch3-quote')
+    expect(q.exists()).toBe(true)
+    expect(q.text()).toContain('Liderar no es delegar')
+  })
+
+  it('T7 iter2: .ch3-aqua-btn (3 botones decorativos LINKEDIN/GITHUB/CONTACT)', () => {
+    const { wrapper } = mountCh3()
+    const btns = wrapper.findAll('.ch3-aqua-btn')
+    expect(btns.length).toBe(3)
+    const labels = btns.map((b) => b.text())
+    expect(labels).toContain('LINKEDIN')
+    expect(labels).toContain('GITHUB')
+    expect(labels).toContain('CONTACT')
+  })
+
+  it('T7 iter2: .ch3-social-badge (5 badges era 2007 flickr/vimeo/delicious/myspace/twitter)', () => {
+    const { wrapper } = mountCh3()
+    const badges = wrapper.findAll('.ch3-social-badge')
+    expect(badges.length).toBe(5)
+  })
+
+  it('T7 iter2: subtitle enfocado en liderazgo (no UX)', () => {
+    const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-hero-subtitle').text()).toContain('liderazgo')
   })
 })
