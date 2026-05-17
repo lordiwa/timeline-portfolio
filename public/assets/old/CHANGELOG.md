@@ -16,6 +16,15 @@ Formato per entry:
 
 ---
 
+## ch0-game-warcraft.png — iter1 → iter2 (2026-05-17)
+
+- **Versión guardada:** `old/ch0-game-warcraft-2026-05-17-iter1.png` (128×96, piso de piedra azul oscuro genérico — no representaba Warcraft)
+- **Razón del cambio:** Rafael 2026-05-17: "make a pixel art copy of Warcraft_orcs_and_humans3 which is a file i added inside assets". El iter1 era un piso de piedra azul sin relación con el juego — usado en `TerminalScroll.vue:58` como pantalla del .EXE de WARCRAFT pero no comunicaba la temática.
+- **Qué se intentará diferente:** `forge_background` aspect 4:3 estilo SNES describiendo verbatim los elementos del screenshot real (HUD LUMBER/GOLD, sidebar KNIGHT/MENU, peones humanos azules, hoguera central, edificios con techo naranja, palisade) + `optimize_sprite` size 128 para match dimensiones con `ch0-game-california.png`.
+- **Commit hash post-regen:** `c0f8a23`
+
+---
+
 ## ch2 tiles cursor.png → coin.png — iter1 → iter2 rename (2026-05-17)
 
 - **Versión guardada:** `old/cursor-2026-05-17-iter1.png` (4,358 bytes — generado por commit `8fdc2de`)
