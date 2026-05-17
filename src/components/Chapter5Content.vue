@@ -72,8 +72,15 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   padding-right: var(--sp-lg);
   padding-top: calc(96px + var(--sp-lg));
   padding-bottom: var(--sp-lg);
-  height: 100%;
-  overflow-y: hidden;
+  /* height + max-height:100dvh estricto — evita que el flex-center del
+   * .chapter-section desplace el layout cuando contenido > viewport
+   * (Rafael 2026-05-17: ch5 asomaba en parte abajo de ch4 — mismo bug
+   * que ch1 fix 2f5c627). */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .ch5-meta {
@@ -146,8 +153,11 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     padding-left: 60px;
     padding-right: var(--sp-md);
     padding-top: calc(68px + var(--sp-sm));
-    height: auto;
-    overflow-y: visible;
+    /* Mobile: mantener clip 100dvh (D3-12 sólo aplica a .ch5-content scroll
+     * interno, NO al layout root — mismo fix que ch1 2f5c627). */
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
   }
 
   .ch5-meta {
