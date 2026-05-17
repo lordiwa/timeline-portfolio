@@ -181,9 +181,19 @@ const oldGifs = [
  * (z:-1) pero detrás del .ch1-meta/.ch1-content (z:1) — no estorban al texto.
  * image-rendering pixelated para preservar el grano original 90s.
  * ───────────────────────────────────────────────────────────────────────── */
+/* Container de GIFs limitado al viewport (100dvh) para que los hijos absolute
+ * con bottom:X% / top:X% no calculen sobre .ch1-layout si éste supera el
+ * viewport (bug chapter-overlap Phase 4 — Pattern 12: NO usar overflow:hidden
+ * en .ch1-layout porque crea stacking context; sí en este sub-container). */
 .ch1-gifs {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
   pointer-events: none;
   z-index: 0;
 }
