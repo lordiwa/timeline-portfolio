@@ -172,8 +172,11 @@ describe('Chapter3Content.vue (Web 2.0 design — 2026-05-17)', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // T6: CSS readFileSync — Chapter3Content.vue tiene layout Web 2.0 + D3-12
   // ─────────────────────────────────────────────────────────────────────────
-  it('T6 CSS: .ch3-stage tiene halftone-bg background-image (iter2)', () => {
-    expect(CH3_SOURCE).toMatch(/background-image:\s*url\(['"]\/assets\/ch3-halftone-bg\.png['"]\)/)
+  it('T6 CSS: .ch3-stage tiene fondo rosado plano + tramado diagonal CSS-only (iter3)', () => {
+    // iter3 (Rafael 2026-05-17): halftone PNG quitado por agresivo. Ahora bg
+    // plano #ffd6e3 + repeating-linear-gradient diagonal muy sutil.
+    expect(CH3_SOURCE).toMatch(/background-color:\s*#ffd6e3/)
+    expect(CH3_SOURCE).toMatch(/repeating-linear-gradient/)
   })
 
   it('T6 CSS: .ch3-stage tiene overflow-y: auto (scroll interno respeta D3-12 + previene bleed bug)', () => {

@@ -144,10 +144,18 @@ const socialBadges = [
   overflow-x: hidden;
   box-sizing: border-box;
   padding: calc(96px + var(--sp-lg)) var(--sp-lg) calc(96px + env(safe-area-inset-bottom, 0px));
-  background-image: url('/assets/ch3-halftone-bg.png');
-  background-repeat: repeat;
-  background-size: 96px 96px;
+  /* Fondo rosado plano (Rafael 2026-05-17: quitar halftone dots, muy
+   * agresivos) + tramado diagonal CSS-only muy leve (white alpha 0.06)
+   * para que no sea totalmente plano. */
   background-color: #ffd6e3;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 7px,
+      rgba(255, 255, 255, 0.06) 7px,
+      rgba(255, 255, 255, 0.06) 8px
+    );
   display: flex;
   flex-direction: column;
   align-items: center;
