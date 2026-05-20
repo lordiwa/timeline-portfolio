@@ -16,6 +16,51 @@ Formato per entry:
 
 ---
 
+## ch3-robots-bg.png — iter1 (2026-05-19) — PRIMER ASSET
+
+- **Versión guardada:** ninguna — asset nuevo, primera generación. `ch3-invaders-bg.png` (iter7) preservado en `old/ch3-invaders-bg-2026-05-19-iter7.png` por Rafael antes del dispatch.
+- **Razón del cambio:** Rafael 2026-05-19 pivotó: en lugar de Space Invaders, quiere 6 robots distintos cuerpo completo en el mismo estilo acuarela vintage del bio card (`ch3-robot.png`). Nombre cambia de `ch3-invaders-bg.png` a `ch3-robots-bg.png`.
+- **Qué se hizo:** `forge_background` (modelo `banana-2`, `nano-banana-2` falló sin imágenes) — 6 robots retro Tin Toy vintage: torre humanoide, boxy con orugas, barril R2-D2, pulpoide multi-brazo, araña cuadrúpeda, humanoide 50s con antenas. Paleta: grises azulados, durazno, coral tierra, acentos bronce, visores azul/ámbar/verde polvorientos. Outlines marrón suave acuarela, sombras azul-gris sutiles, fondo cream `#faf7f0`. Centro respirable para overlay de texto. 1376×768, 642 KB. NO se aplicó `optimize_sprite` (va con `background-size: cover`). 1 intento de prompt (nano-banana-2 falló silenciosamente, banana-2 exitoso).
+- **Commit hash post-regen:** _pending_
+
+---
+
+## ch3-invaders-bg.png — NEW iter7 (2026-05-19)
+
+- **Versión guardada:** ninguna — asset nuevo con nombre distinto. iter6 (`ch3-desk-bg.png` lápices) preservado en `old/ch3-desk-bg-2026-05-19-iter6.png`.
+- **Razón del cambio:** Rafael 2026-05-19, tras correr `npm run dev` con iter6: "me encanta el estilo, en ese mismo estilo pon personajes de space invaders no muchos grandes unos 6". Aprobó el estilo pixel art acuarela vintage pero cambió el sujeto de lápices a Space Invaders.
+- **Qué se intentó diferente:** asset `ch3-invaders-bg.png` (1376×768 16:9 nativo pixelforge, 731 KB) vía `forge_background` — 6 invaders grandes distribuidos naturalmente (2 squid + 2 crab + 1 octopus + 1 UFO mothership), MISMA paleta acuarela del iter6 (cream bg, coral suave, verde salvia, azul empolvado, amarillo apagado, outlines marrón suave, sombras azul-gris). NO verde-neón clásico del arcade — pintados en acuarela. 1 solo intento de prompt. NO se aplicó `optimize_sprite` (preserva detalle). Wire: solo cambia `background-image` url, resto del .ch3-stage idéntico al iter6 (cover + fixed + pixelated).
+- **Commit hash post-regen:** _pending_
+
+---
+
+## ch3-desk-bg.png — iter6 → REPLACED (2026-05-19)
+
+- **Versión guardada:** ninguna — asset nuevo con nombre distinto. iter5 (`ch3-flat-geo-bg.png`) preservado en `old/ch3-flat-geo-bg-2026-05-19-iter5.png`.
+- **Razón del cambio:** Rafael 2026-05-19, tras correr `npm run dev` con iter5: "creo que no sirvio tiene que ser una paleta plana talvez simplemente un fondo fullscreen de n escritorio blanco con lapices real". Pivot 1: foto-real bloqueado (pixelforge wrapper hardcoded "pixel art"; Adobe MCP no genera, solo edita; Adobe Stock no tiene acuarela genuina). Pivot 2 (Rafael): "porque no usas pixelforge" — pixel art ES coherente con el resto del portafolio, no rotura. Aceptamos pixel art como estilo final, no como limitación.
+- **Qué se intentó diferente:** asset `ch3-desk-bg.png` (1376×768 16:9 nativo pixelforge, 581 KB) vía `forge_background` — escritorio top-down vista cenital con 8 lápices dispersos en arco perimetral (centro libre para overlay de logo/bio/botones), paleta acuarela vintage stationery desaturada (cream #faf7f0 base + amarillo apagado + coral + azul empolvado + verde salvia + rosa polvo + tierra grafito + madera natural), outlines marrón suave, sombras azul-gris sutiles. NO se aplicó `optimize_sprite` (preserva detalle de cada lápiz para uso fullscreen). Wire: `.ch3-stage background-size: cover` + `background-attachment: fixed` + `image-rendering: pixelated`.
+- **Commit hash post-regen:** _pending_
+
+---
+
+## ch3-flat-geo-bg.png — iter5 → REVERTED (2026-05-19)
+
+- **Versión guardada:** ninguna — asset nuevo con nombre distinto. NO aplica §6.5.
+- **Razón del cambio:** Rafael 2026-05-19, después de revertir iter4 loros: "tienes como revisar las notas para ver como se veia un sitio en 2013 no tiene que ser rosado por pink parrot". Research confirmó que 2013 = año bisagra (iOS 7 sept 2013 → flat design oficial, Bootstrap 3 ago 2013, Flat UI Colors website). El chapter estaba cableado como era 2005-2009 (Aqua/Lobster/halftone/glossy) y necesitaba ancla real 2013.
+- **Qué se intentó diferente:** asset NUEVO `ch3-flat-geo-bg.png` (128×128 tileable seamless, 33 KB) generado vía `forge_background` — patrón triangles low-poly (el motivo más icónico 2013-2014, vino con iOS 7 wallpapers), paleta Flat UI 2013 exacta (`#ecf0f1` base + `#1abc9c`/`#16a085` turquoise + acentos `#3498db`/`#f39c12`). Wire: `.ch3-stage background-color: #ecf0f1` + `background-image: url(...) repeat`, `background-size: 128px`, `image-rendering: pixelated`. Scope mínimo — botones Aqua/Lobster/logo RM conservados; coherencia cross-chapter es iter futura si Rafael lo pide.
+- **Commit hash post-regen:** _pending_
+
+---
+
+## ch3-parrots-bg.png — iter4 → REVERTED (2026-05-19)
+
+- **Versión guardada:** `old/ch3-parrots-bg-2026-05-19-iter4.png` (128×128 tileable seamless, ~26 KB — generado vía `forge_background` con prompt "seamless tileable pattern" de loros pequeños mezclando gafas wayfarer, gorras y audífonos DJ, paleta rosada baja saturación).
+- **Razón del cambio:** Rafael 2026-05-19: "me encanto el fondo pero no sirve para la idea... no tiene que ser rosado por pink parrot". El loro/rosado venía del nombre de la empresa (Pink Parrot UX 2013), no de la era — el chapter debe sentirse a sitio web 2013 real, no a brand anchor literal. Wire-up en Chapter3Content revertido a iter3 (rosado plano + tramado CSS) mientras se decide nueva dirección visual auténtica 2013 (post iOS 7 flat / parallax / hero fullscreen).
+- **Qué se intentará diferente:** pendiente — iter5 partirá de research era 2013 real, no del nombre de la empresa. Direcciones candidatas: flat design post-iOS-7 con hero fullscreen, parallax site estilo Apple iPad mini, ghost buttons + Open Sans + paleta desaturada.
+- **Commit hash post-regen:** _pending_
+
+---
+
 ## ch3-halftone-bg.png — iter2 → REMOVED (2026-05-17)
 
 - **Versión guardada:** `old/ch3-halftone-bg-2026-05-17-iter2.png` (128×128 Lichtenstein pink+cyan dots — generado en commit `2455490`)

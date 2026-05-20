@@ -1,23 +1,17 @@
 <!--
   Chapter3Content.vue — Web 2.0 era 2013 (Pink Parrot, líder de equipo).
 
-  Iter2 (Rafael 2026-05-17): logo RM 3D reemplaza cara, halftone dots
-  pattern reemplaza paper-bg, +Aqua buttons row, +pull-quote destacado,
-  +social badges footer era 2007, bio reenfocado en LIDERAZGO (no UX).
+  Iter7 (Rafael 2026-05-19): fondo Space Invaders pixel art acuarela
+  (ch3-invaders-bg.png). Removidos por Rafael: logo RM 3D, Aqua buttons
+  (LinkedIn/GitHub/Contact), social badges era 2007 (Flickr/Vimeo/etc).
+  Quedan: hero text + pull-quote + bio card + starbursts BETA/NEW.
 
-  Decisiones design:
-  - Layout hero centered + cards stack.
-  - Logo RM glossy 3D Aqua estilo Apple Tiger 2005 — no avatar bust personal.
-  - Background halftone Lichtenstein pop-art pink+cyan.
-  - Aqua buttons gel-glass estilo Mac OS X 10.4 (LINKEDIN/GITHUB/CONTACT decorativos).
-  - Pull-quote big magazine text del bio.
-  - Social badges era 2007 (Flickr/Vimeo/Delicious/MySpace/Twitter beta) SVG inline.
-  - Clip ya garantizado por overflow:hidden en .chapter-section (311ac02).
+  Assets activos:
+  - ch3-invaders-bg.png (1376×768 hero bg cover fixed)
+  - ch3-starburst-{green,orange}.png (BETA/NEW floating)
 
-  Assets iter2:
-  - ch3-logo-rm.png (128px glossy pink-cyan gradient monogram)
-  - ch3-halftone-bg.png (128px tileable pink+cyan dots)
-  - ch3-starburst-{green,orange}.png (iter1 conservados)
+  Assets disponibles pero no referenciados (en public/assets/):
+  - ch3-logo-rm.png — recuperar si se reintroduce el logo
 -->
 <script setup>
 import { computed } from 'vue'
@@ -37,25 +31,6 @@ const starbursts = [
   { key: 'beta', src: '/assets/ch3-starburst-green.png', label: 'BETA' },
   { key: 'new', src: '/assets/ch3-starburst-orange.png', label: '¡NEW!' },
 ]
-
-const logoSrc = '/assets/ch3-logo-rm.png'
-
-// Decorativo: 3 Aqua buttons (sin href real — clicks ignorados, son visual flavor).
-const aquaButtons = [
-  { key: 'linkedin', label: 'LINKEDIN' },
-  { key: 'github', label: 'GITHUB' },
-  { key: 'contact', label: 'CONTACT' },
-]
-
-// Social badges era 2007 — SVG inline simple (mini geometric shapes representando
-// servicios icónicos). Decorativos, aria-hidden, no functional links.
-const socialBadges = [
-  { key: 'flickr', label: 'flickr', color1: '#ff0084', color2: '#0063dc' },
-  { key: 'vimeo', label: 'vimeo', color1: '#1ab7ea', color2: '#162221' },
-  { key: 'delicious', label: 'del.icio.us', color1: '#3399ff', color2: '#003366' },
-  { key: 'myspace', label: 'MySpace', color1: '#003399', color2: '#000000' },
-  { key: 'twitter', label: 'twttr beta', color1: '#1da1f2', color2: '#0084b4' },
-]
 </script>
 
 <template>
@@ -71,39 +46,26 @@ const socialBadges = [
       <span class="ch3-starburst-text">{{ sb.label }}</span>
     </div>
 
-    <!-- Hero centered con logo RM 3D -->
+    <!-- Hero centered (tag PINK PARROT 2013 removido iter11) -->
     <header class="ch3-hero">
-      <div class="ch3-logo" aria-hidden="true">
-        <img :src="logoSrc" alt="" class="ch3-logo-img" />
-      </div>
-      <p class="ch3-hero-tag">PINK PARROT · 2013</p>
       <h1 class="ch3-hero-title">Rafael</h1>
-      <p class="ch3-hero-subtitle">{{ t(chapter.eraKey) }} · liderazgo de equipo</p>
-
-      <!-- Aqua glossy buttons decorativos (Mac OS X Tiger 2005 vibe) -->
-      <div class="ch3-buttons" aria-hidden="true">
-        <button
-          v-for="b in aquaButtons"
-          :key="b.key"
-          :class="['ch3-aqua-btn', `ch3-aqua-btn--${b.key}`]"
-          type="button"
-          tabindex="-1"
-        >
-          <span>{{ b.label }}</span>
-        </button>
-      </div>
     </header>
 
-    <!-- Pull-quote magazine big text -->
-    <blockquote class="ch3-quote" aria-hidden="true">
-      <span class="ch3-quote-mark ch3-quote-mark--open">“</span>
-      Liderar no es delegar, es desbloquear.
-      <span class="ch3-quote-mark ch3-quote-mark--close">”</span>
-    </blockquote>
+    <!-- Marquee multicolor neon scanlines (iter12 — reemplaza pull-quote) -->
+    <h2 class="ch3-marquee" aria-hidden="true">De vuelta al movimiento</h2>
 
-    <!-- Bio card glassy Aqua -->
+    <!-- Bio card protagonico — layout 2/3 texto + 1/3 robot head rotada (iter7) -->
     <article class="ch3-bio-card">
-      <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
+      <div class="ch3-bio-text">
+        <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
+      </div>
+      <aside class="ch3-bio-aside" aria-hidden="true">
+        <img
+          src="/assets/ch3-robot.png"
+          alt=""
+          class="ch3-bio-mascot"
+        />
+      </aside>
     </article>
 
     <!-- Project cards stack (vacío hasta que data/projects.js tenga ch3 entries) -->
@@ -115,23 +77,12 @@ const socialBadges = [
       />
     </div>
 
-    <!-- Footer: social badges era 2007 (decorativos, no links reales) -->
-    <footer class="ch3-social" aria-hidden="true">
-      <span
-        v-for="sb in socialBadges"
-        :key="sb.key"
-        :class="['ch3-social-badge', `ch3-social-badge--${sb.key}`]"
-        :style="{
-          background: `linear-gradient(180deg, ${sb.color1} 0%, ${sb.color2} 100%)`,
-        }"
-      >{{ sb.label }}</span>
-    </footer>
   </div>
 </template>
 
 <style scoped>
 /* ─────────────────────────────────────────────────────────────────────────
- * .ch3-stage — full-bleed canvas con halftone pop-art bg.
+ * .ch3-stage — full-bleed canvas con 6 robots vintage Tin Toy pixel art acuarela (iter8).
  * Clip ya gestionado por .chapter-section overflow:hidden (311ac02).
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-stage {
@@ -144,18 +95,17 @@ const socialBadges = [
   overflow-x: hidden;
   box-sizing: border-box;
   padding: calc(96px + var(--sp-lg)) var(--sp-lg) calc(96px + env(safe-area-inset-bottom, 0px));
-  /* Fondo rosado plano (Rafael 2026-05-17: quitar halftone dots, muy
-   * agresivos) + tramado diagonal CSS-only muy leve (white alpha 0.06)
-   * para que no sea totalmente plano. */
-  background-color: #ffd6e3;
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0,
-      transparent 7px,
-      rgba(255, 255, 255, 0.06) 7px,
-      rgba(255, 255, 255, 0.06) 8px
-    );
+  /* Fondo hero fullscreen — 6 robots vintage Tin Toy cuerpo completo
+   * (Rafael 2026-05-19, iter8). Mismo estilo acuarela vintage del iter7
+   * invaders + matchea el robot del bio card. 16:9 cover fijo. Iters
+   * previas (rosado/loros/triangles/lápices/invaders) preservadas en old/. */
+  background-color: #faf7f0;
+  background-image: url('/assets/ch3-robots-bg.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  image-rendering: pixelated;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -163,7 +113,7 @@ const socialBadges = [
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Hero centered — logo RM + tag + nombre + subtitle + Aqua buttons
+ * Hero centered — tag + nombre + subtitle (logo + Aqua buttons removidos iter7)
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-hero {
   text-align: center;
@@ -172,154 +122,161 @@ const socialBadges = [
   margin: 0 auto;
 }
 
-.ch3-logo {
-  display: inline-block;
-  margin: 0 auto var(--sp-sm);
-  filter: drop-shadow(0 6px 14px rgba(26, 26, 46, 0.3));
-}
-
-.ch3-logo-img {
-  display: block;
-  width: 96px;
-  height: 96px;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
 .ch3-hero-tag {
-  font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
-  font-size: 0.85rem;
-  font-weight: bold;
-  letter-spacing: 0.2em;
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: 0.22em;
   color: var(--c-accent);
   text-transform: uppercase;
   margin: 0 0 var(--sp-xs) 0;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  animation: ch3-tag-slide 8s ease-in-out infinite;
+}
+
+@keyframes ch3-tag-slide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(6px); }
 }
 
 .ch3-hero-title {
-  font-family: 'Lobster', Georgia, serif;
-  font-size: clamp(2.5rem, 7vw, 4.5rem);
-  font-weight: 400;
-  margin: 0;
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 900;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  margin: 0 0 var(--sp-md) 0;
   line-height: 1;
+  letter-spacing: -0.02em;
   color: var(--c-fg);
   text-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9),
     0 2px 4px rgba(26, 26, 46, 0.15);
+  display: inline-block;
+  animation: ch3-title-sway 4s ease-in-out infinite;
+  transform-origin: 50% 100%;
 }
 
-.ch3-hero-subtitle {
-  font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
-  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
-  color: var(--c-fg);
-  opacity: 0.8;
-  margin: var(--sp-xs) 0 var(--sp-md) 0;
+@keyframes ch3-title-sway {
+  0%, 100% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
- * Aqua glossy buttons — Mac OS X 10.4 Tiger 2005 vibe
- * Cada button con gradient top→bottom + inset highlight + soft shadow
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-sm);
-  margin-top: var(--sp-sm);
-}
-
-.ch3-aqua-btn {
-  font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
-  font-size: 0.9rem;
-  font-weight: bold;
-  letter-spacing: 0.08em;
-  color: #ffffff;
-  padding: 8px 22px;
-  border: 1px solid rgba(26, 26, 46, 0.4);
-  border-radius: 22px;
-  cursor: default;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -2px 6px rgba(0, 0, 0, 0.2),
-    0 4px 8px rgba(26, 26, 46, 0.2);
-  transition: transform 0.15s ease;
-}
-
-.ch3-aqua-btn--linkedin {
-  background: linear-gradient(to bottom, #88d4f1 0%, #39a0d8 50%, #1a7ab4 51%, #278ecb 100%);
-}
-
-.ch3-aqua-btn--github {
-  background: linear-gradient(to bottom, #b8ff3a 0%, #6fcb1a 50%, #4a8810 51%, #5fab14 100%);
-}
-
-.ch3-aqua-btn--contact {
-  background: linear-gradient(to bottom, #ff9eb5 0%, #ff5085 50%, #c8295a 51%, #e23a73 100%);
-}
-
-.ch3-aqua-btn:hover {
-  transform: translateY(-1px);
+.ch3-hero-title:hover {
+  animation-duration: 0.6s;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Pull-quote magazine big text — "Liderar no es delegar..."
  * ───────────────────────────────────────────────────────────────────────── */
-.ch3-quote {
-  font-family: 'Lobster', Georgia, serif;
-  font-size: clamp(1.5rem, 3.5vw, 2.4rem);
-  line-height: 1.25;
-  color: var(--c-fg);
+/* ─────────────────────────────────────────────────────────────────────────
+ * Marquee multicolor neon arcade — "De vuelta al movimiento" (iter12).
+ * Rainbow gradient animado + scanlines horizontales texture + chromatic
+ * aberration shadow (RGB split magenta/cyan) + neon glow halo + pulse de
+ * letter-spacing. Web 2.0 / arcade marquee energy.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch3-marquee {
+  font-family: 'Bungee', Impact, 'Arial Black', sans-serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 5.5vw, 4rem);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   text-align: center;
-  max-width: 720px;
+  max-width: 1080px;
   margin: 0 auto;
-  padding: 0 var(--sp-md);
-  position: relative;
-  text-shadow: 0 2px 6px rgba(255, 255, 255, 0.55);
+  padding: var(--sp-md, 16px) var(--sp-md, 16px);
+  line-height: 1.05;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.22) 2px 3px),
+    linear-gradient(90deg, #ff8a00 0%, #fff700 22%, #00ff95 44%, #00bfff 66%, #7c3aed 88%, #ff8a00 110%);
+  background-size: 100% 100%, 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    -2px 0 0 rgba(255, 138, 0, 0.7),
+    2px 0 0 rgba(0, 191, 255, 0.7),
+    0 0 18px rgba(124, 58, 237, 0.55),
+    0 0 38px rgba(0, 191, 255, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.4);
+  animation: ch3-marquee-shift 5s linear infinite,
+             ch3-marquee-pulse 1.6s ease-in-out infinite;
+  filter: contrast(1.06);
 }
 
-.ch3-quote-mark {
-  font-family: Georgia, serif;
-  font-size: 2.5em;
-  line-height: 0;
-  color: var(--c-accent);
-  vertical-align: -0.35em;
-  opacity: 0.7;
+@keyframes ch3-marquee-shift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 0 0, 220% 0; }
 }
 
-.ch3-quote-mark--open { margin-right: 0.05em; }
-.ch3-quote-mark--close { margin-left: 0.05em; }
+@keyframes ch3-marquee-pulse {
+  0%, 100% { letter-spacing: 0.03em; text-shadow:
+    0 0 4px rgba(255, 255, 255, 0.9),
+    -2px 0 0 rgba(255, 138, 0, 0.7),
+    2px 0 0 rgba(0, 191, 255, 0.7),
+    0 0 18px rgba(124, 58, 237, 0.55),
+    0 0 38px rgba(0, 191, 255, 0.4),
+    0 6px 14px rgba(0, 0, 0, 0.4); }
+  50%      { letter-spacing: 0.06em; text-shadow:
+    0 0 6px rgba(255, 255, 255, 1),
+    -3px 0 0 rgba(255, 138, 0, 0.85),
+    3px 0 0 rgba(0, 191, 255, 0.85),
+    0 0 26px rgba(124, 58, 237, 0.7),
+    0 0 50px rgba(0, 191, 255, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.4); }
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Bio card glassy Aqua — Pink tint para no ser blanco puro
+ * Bio card protagonico (iter7) — esquinas planas, layout 2/3 texto + 1/3
+ * diablito. Más grande que iter anteriores (1080px max, padding xl).
+ * Mantiene tinte glassy sutil pero SIN border-radius (Rafael 2026-05-19).
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-bio-card {
-  max-width: 720px;
+  max-width: 1080px;
   width: 100%;
-  padding: var(--sp-lg) calc(var(--sp-lg) + var(--sp-sm));
-  border-radius: 18px;
+  padding: var(--sp-xl, 48px) var(--sp-xl, 48px);
+  border-radius: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 240, 246, 0.72) 50%, rgba(212, 232, 255, 0.78) 100%);
-  border: 1px solid rgba(160, 176, 216, 0.5);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 240, 246, 0.35) 50%, rgba(212, 232, 255, 0.42) 100%);
+  border: 3px solid #33160E;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 6px 18px rgba(26, 26, 46, 0.15),
+    0 8px 24px rgba(26, 26, 46, 0.18),
     0 1px 3px rgba(26, 26, 46, 0.08);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--sp-lg, 24px);
+  align-items: center;
 }
 
-.ch3-bio-card p {
-  font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
+.ch3-bio-text p {
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
   font-size: 1.1rem;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--c-fg);
   margin: 0 0 var(--sp-md) 0;
 }
 
-.ch3-bio-card p:last-child {
+.ch3-bio-text p:last-child {
   margin-bottom: 0;
+}
+
+.ch3-bio-aside {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ch3-bio-mascot {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 3px solid #33160E;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -359,13 +316,28 @@ const socialBadges = [
 .ch3-starburst--beta {
   top: 120px;
   right: 6%;
-  transform: rotate(12deg);
+  animation: ch3-starburst-spin-cw 18s linear infinite, ch3-starburst-pulse 2.2s ease-in-out infinite;
 }
 
 .ch3-starburst--new {
   bottom: 24%;
   left: 5%;
-  transform: rotate(-14deg);
+  animation: ch3-starburst-spin-ccw 22s linear infinite, ch3-starburst-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes ch3-starburst-spin-cw {
+  from { rotate: 12deg; }
+  to { rotate: 372deg; }
+}
+
+@keyframes ch3-starburst-spin-ccw {
+  from { rotate: -14deg; }
+  to { rotate: -374deg; }
+}
+
+@keyframes ch3-starburst-pulse {
+  0%, 100% { scale: 1; }
+  50% { scale: 1.08; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -380,37 +352,6 @@ const socialBadges = [
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Social badges era 2007 — Flickr/Vimeo/Delicious/MySpace/Twitter beta
- * Mini "pills" rectangular con linear-gradient brand colors + lowercase
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-social {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--sp-xs, 6px);
-  max-width: 720px;
-  width: 100%;
-  margin-top: var(--sp-md);
-  padding-top: var(--sp-sm);
-  border-top: 1px dashed rgba(26, 26, 46, 0.25);
-}
-
-.ch3-social-badge {
-  font-family: 'Trebuchet MS', Helvetica, Arial, sans-serif;
-  font-size: 0.7rem;
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  color: #ffffff;
-  padding: 3px 8px;
-  border-radius: 3px;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 1px 2px rgba(0, 0, 0, 0.2);
-  text-transform: lowercase;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
  * Mobile <600px — typography reducida, starbursts más chicos
  * ───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
@@ -419,23 +360,24 @@ const socialBadges = [
     gap: var(--sp-md);
   }
 
-  .ch3-logo-img {
-    width: 72px;
-    height: 72px;
-  }
-
   .ch3-bio-card {
     padding: var(--sp-md) var(--sp-md);
-    border-radius: 14px;
+    grid-template-columns: 1fr;
+    gap: var(--sp-md);
   }
 
-  .ch3-bio-card p {
+  .ch3-bio-text p {
     font-size: 1rem;
   }
 
-  .ch3-aqua-btn {
-    font-size: 0.8rem;
-    padding: 6px 14px;
+  .ch3-marquee {
+    font-size: 1.7rem;
+    letter-spacing: 0.02em;
+  }
+
+  .ch3-bio-mascot {
+    max-width: 200px;
+    margin: 0 auto;
   }
 
   .ch3-starburst {
