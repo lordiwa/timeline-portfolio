@@ -104,9 +104,10 @@
     --c-border: #2050a0;
     --c-focus: #00ffff;
     --c-surface: #142050;
-    /* NO --bg-image — ch4 es self-contained parallax (D4-07): ParallaxLayers.vue
-       renderiza 4 <img> layers con z-index escalonado; BackgroundLayers.vue
-       global no se usa para ch4. --c-bg sólido sirve de fondo en gap de carga lazy. */
+    /* NO --bg-image — ch4 maneja su bg internamente vía Chapter4Content.vue
+       (.ch4-layout background-image: ch4-bg.png cover fixed pixelated).
+       BackgroundLayers.vue global no aplica para ch4. iter2 2026-05-28 simplificó
+       el stack parallax 4-capas a un único bg full-bleed estilo .ch3-stage. */
     --font-body: 'Audiowide', 'Eurostile', sans-serif;
     /* contrast(#b0d0ff, #0a0f2e) = 11.8:1 — chapter 4 (AR/VR) — Phase 4 W3 ✓ */
   }

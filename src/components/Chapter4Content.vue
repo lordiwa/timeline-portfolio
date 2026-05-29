@@ -1,18 +1,17 @@
 <!--
   Chapter4Content.vue — Layout 2-col desktop / stacked mobile para chapter AR/VR.
 
-  Plan 04-04 Task 4. Decisiones de diseño:
-  - D4-04 + UI-SPEC §6.8: ch4 usa <FloatingPanel> con slot directamente para
-    proyectos — NO <ProjectCard> (glass holographic es estructuralmente
-    distinto del skeumorphic de Phase 3).
-  - .ch4-layout { position: relative; overflow: hidden } — para contener
-    ParallaxLayers absolute child sin overflow al viewport.
-  - .ch4-content { position: relative; z-index: 4 } — encima de las parallax
-    layers (z-0..3) para que bio + project panels queden visibles.
-  - ParallaxLayers PRIMERO en el template como first-child — z-index 0 dentro
-    del .ch4-layout absolute container.
+  iter2 (Rafael 2026-05-28): reemplazado el stack parallax 4-capas (ParallaxLayers.vue
+  + 4 assets ch4-bg-stars-far / ch4-bg-planet-mid / ch4-fg-panels / ch4-fg-ships) por un
+  único `ch4-bg.png` full-bleed cover fixed, mismo patrón que .ch3-stage. Los
+  foregrounds originales eran sprites ~120×120 estirados full-bleed → naves gigantes
+  bloqueando todo. Estilo halftone también disonante con el acuarela vintage del portfolio.
+  Assets iter1 preservados en public/assets/old/ + CHANGELOG entry. Ver CLAUDE.md §6.5.
+
+  Decisiones que quedan vigentes:
+  - D4-04 + UI-SPEC §6.8: ch4 usa <FloatingPanel> glass holographic (NO ProjectCard
+    skeumorphic) — confirmado por Rafael 2026-05-28.
   - D3-09 layout 2-col / mobile stacked heredado.
-  - Avatar in-content reusa convención Chapter3Content (aside.chN-meta).
 -->
 <script setup>
 import { computed } from 'vue'
@@ -20,7 +19,6 @@ import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
-import ParallaxLayers from './ParallaxLayers.vue'
 import FloatingPanel from './FloatingPanel.vue'
 
 const { t } = useI18n()
@@ -34,8 +32,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 
 <template>
   <div class="ch4-layout">
-    <ParallaxLayers />
-
     <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible
          (Rafael 2026-05-15: quitar imagen inline en todos los ch). -->
     <aside class="ch4-meta">
@@ -73,13 +69,14 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 
 <style scoped>
 /* ─────────────────────────────────────────────────────────────
- * .ch4-layout — D4-07: position relative + overflow hidden para
- * contener ParallaxLayers absolute child sin overflow al viewport.
+ * .ch4-layout — iter2: full-bleed bg fixed cover estilo .ch3-stage.
+ * Pixel art acuarela vintage AR/VR (chico con visor + paneles
+ * holográficos + monitor CRT + hex wireframes). FloatingPanel
+ * glass + backdrop-filter blur sobre el bg.
  * 2-col grid desktop (200px aside + 1fr content) heredado D3-09.
  * ───────────────────────────────────────────────────────────── */
 .ch4-layout {
   position: relative;
-  overflow: hidden;
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: var(--sp-lg);
@@ -88,11 +85,16 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   padding-top: calc(96px + var(--sp-lg));
   padding-bottom: var(--sp-lg);
   height: 100%;
+  background-color: var(--c-bg);
+  background-image: url('/assets/ch4-bg.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  image-rendering: pixelated;
 }
 
 .ch4-meta {
-  position: relative;
-  z-index: 4;  /* encima de parallax layers (z-0..3) */
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
@@ -115,8 +117,6 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 }
 
 .ch4-content {
-  position: relative;
-  z-index: 4;  /* encima de parallax layers */
   overflow-y: auto;
   padding-right: var(--sp-md);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
@@ -199,6 +199,8 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
     padding-right: var(--sp-md);
     padding-top: calc(68px + var(--sp-sm));
     height: auto;
+    /* fixed attachment es buggy en iOS Safari — scroll mobile usa scroll attachment */
+    background-attachment: scroll;
   }
 
   .ch4-meta {

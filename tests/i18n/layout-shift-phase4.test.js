@@ -21,7 +21,7 @@ vi.mock('@/data/projects', () => ({
 }))
 
 // Helper genérico para mount Chapter{N}Content con i18n.locale variable.
-// ParallaxLayers (ch4) y ScrollRevealCard (ch5) requieren provides extra.
+// ScrollRevealCard (ch5) requiere prm; provides extra son no-op para ch0-4.
 function mountChapter(Component, locale = 'es') {
   const i18n = createTestI18n({ locale })
   return mount(Component, {

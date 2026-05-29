@@ -48,18 +48,20 @@ describe('ScrollShell theme isolation — Phase 4 cross-chapter', () => {
     expect(sections).toHaveLength(7)
   })
 
-  // T2: section ch4 contiene .parallax-layers (Chapter4Content embebe ParallaxLayers)
-  it('T2: section[data-chapter="4"] contiene .parallax-layers', () => {
+  // T2 (iter2 2026-05-28): ParallaxLayers retirado — el bg ch4 ahora vive en el
+  // CSS de .ch4-layout. Verificamos que el wrapper .ch4-layout existe en la
+  // section ch4 (contenedor del bg + meta + content + glass panels).
+  it('T2 iter2: section[data-chapter="4"] contiene .ch4-layout', () => {
     const wrapper = mountShell()
     const ch4 = wrapper.find('section[data-chapter="4"]')
-    expect(ch4.find('.parallax-layers').exists()).toBe(true)
+    expect(ch4.find('.ch4-layout').exists()).toBe(true)
   })
 
-  // T3: section ch3 NO contiene .parallax-layers (Chapter3Content sin parallax)
-  it('T3: section[data-chapter="3"] NO contiene .parallax-layers (no theme bleed ch4→ch3)', () => {
+  // T3 (iter2): section ch3 NO contiene .ch4-layout (no theme bleed ch4→ch3)
+  it('T3 iter2: section[data-chapter="3"] NO contiene .ch4-layout (no theme bleed ch4→ch3)', () => {
     const wrapper = mountShell()
     const ch3 = wrapper.find('section[data-chapter="3"]')
-    expect(ch3.find('.parallax-layers').exists()).toBe(false)
+    expect(ch3.find('.ch4-layout').exists()).toBe(false)
   })
 
   // T4: section ch5 contiene .scroll-reveal-card (header reveal card al menos)

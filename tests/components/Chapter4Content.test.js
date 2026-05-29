@@ -1,22 +1,22 @@
 // tests/components/Chapter4Content.test.js
-// Tests Plan 04-04 Task 4 — Chapter4Content.vue (wrapper AR/VR con parallax + glass).
+// Tests Plan 04-04 Task 4 — Chapter4Content.vue (wrapper AR/VR con bg + glass panels).
 //
-// Cobertura T1-T7 (clonada Chapter3Content + ch4-specific):
-// - T1 DOM contract: .ch4-layout + .ch4-meta + .ch4-content; CSS source contiene position:relative
-// - T2 avatar src=/assets/ch4-bust.png + alt i18n
-// - T3 ParallaxLayers + FloatingPanel embeds
+// iter2 (Rafael 2026-05-28): ParallaxLayers stack reemplazado por single bg full-bleed
+// (ch4-bg.png cover fixed estilo .ch3-stage). T3/T6 actualizados al nuevo contrato.
+//
+// Cobertura T1-T7:
+// - T1 DOM contract: .ch4-layout + .ch4-meta + .ch4-content
+// - T3 bg-image ch4-bg.png + FloatingPanel embeds (sin ParallaxLayers)
 // - T4 projects filter ch4 → solo ch4 items en FloatingPanel (mock 1 ch4 + 1 ch5)
 // - T5 reactive: locale ES→EN, flavor + bio actualizan
-// - T6 CSS source: .ch4-layout tiene position:relative + overflow:hidden + .ch4-content z-index:4
+// - T6 CSS source: .ch4-layout tiene position:relative + bg-image + background-attachment:fixed
 // - T7 NO usa <ProjectCard> (D4-04 — projects van vía FloatingPanel slot)
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Chapter4Content from '@/components/Chapter4Content.vue'
-import ParallaxLayers from '@/components/ParallaxLayers.vue'
 import FloatingPanel from '@/components/FloatingPanel.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
@@ -64,11 +64,6 @@ function mountCh4({ locale = 'es' } = {}) {
   const wrapper = mount(Chapter4Content, {
     global: {
       plugins: [i18n],
-      // ParallaxLayers requires inject scrollState + prm
-      provide: {
-        scrollState: { scrollProgress: ref(4.5 / 7) },
-        prm: { prefersReduced: ref(false) },
-      },
     },
   })
   return { wrapper, i18n }
@@ -97,11 +92,10 @@ describe('Chapter4Content.vue', () => {
   // ───────────────────────────────────────────────
 
   // ───────────────────────────────────────────────
-  // T3 ParallaxLayers + FloatingPanel embeds
+  // T3 bg-image + FloatingPanel embeds (iter2: sin ParallaxLayers)
   // ───────────────────────────────────────────────
-  it('T3: <ParallaxLayers> está presente como componente hijo', () => {
-    const { wrapper } = mountCh4()
-    expect(wrapper.findComponent(ParallaxLayers).exists()).toBe(true)
+  it('T3 iter2: CSS source referencia ch4-bg.png como background-image', () => {
+    expect(CH4_SOURCE).toMatch(/background-image:\s*url\(['"]?\/assets\/ch4-bg\.png/)
   })
 
   it('T3: count <FloatingPanel> ≥ 2 (panel principal + N projects ch4)', () => {
@@ -137,15 +131,16 @@ describe('Chapter4Content.vue', () => {
   })
 
   // ───────────────────────────────────────────────
-  // T6 CSS source markers
+  // T6 CSS source markers iter2 — bg fixed cover patrón .ch3-stage
   // ───────────────────────────────────────────────
-  it('T6 CSS: .ch4-layout tiene position: relative + overflow: hidden (D4-07)', () => {
+  it('T6 iter2 CSS: .ch4-layout tiene position: relative + background-attachment: fixed', () => {
     expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*position:\s*relative/s)
-    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*overflow:\s*hidden/s)
+    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*background-attachment:\s*fixed/s)
   })
 
-  it('T6 CSS: .ch4-content tiene z-index: 4 (encima de parallax z-0..3)', () => {
-    expect(CH4_SOURCE).toMatch(/\.ch4-content\s*\{[^}]*z-index:\s*4/s)
+  it('T6 iter2 CSS: .ch4-layout tiene background-size: cover + image-rendering: pixelated', () => {
+    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*background-size:\s*cover/s)
+    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*image-rendering:\s*pixelated/s)
   })
 
   // ───────────────────────────────────────────────

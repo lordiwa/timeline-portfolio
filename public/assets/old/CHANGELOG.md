@@ -16,6 +16,23 @@ Formato per entry:
 
 ---
 
+## ch4 parallax stack — iter1 → REPLACED por ch4-bg.png (2026-05-28)
+
+Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2). Se reemplazan por un único `ch4-bg.png` full-bleed estilo ch3, eliminando el sistema de 4 capas + `ParallaxLayers.vue`.
+
+- **Versiones guardadas:**
+  - `old/ch4-bg-stars-far-2026-05-28-iter1.jpg` (340 KB)
+  - `old/ch4-bg-planet-mid-2026-05-28-iter1.jpg` (437 KB)
+  - `old/ch4-fg-panels-2026-05-28-iter1.png` (17 KB)
+  - `old/ch4-fg-ships-2026-05-28-iter1.png` (4.6 KB)
+- **Razón del cambio:** Rafael 2026-05-28 — "los tamaños en la ch04 estan mal y los estilos estan mal". Dos issues confirmados al inspeccionar los assets:
+  1. **Tamaños:** `ch4-fg-panels.png` (~120×120) y `ch4-fg-ships.png` (~120×120) son sprites diminutos que el CSS estiraba full-bleed (`width:100%; height:120%; object-fit:cover; image-rendering:pixelated`) → en pantalla salían 2 naves gigantes y 3 paneles gigantes tapando todo, no un parallax sutil.
+  2. **Estilos:** los bg (estrellas/luna) usan halftone/dot patterns con gradientes suaves anti-aliased — estilo distinto al acuarela vintage Tin Toy que ch3 estableció como referencia visual del portfolio (`ch3-robots-bg.png`).
+- **Qué se intentará diferente:** colapsar el stack 4-layers a 1 solo background full-bleed `ch4-bg.png` 1376×768 estilo acuarela vintage AR/VR (matchea ch3-robots-bg.png), wire idéntico al `.ch3-stage` (cover + fixed + pixelated). FloatingPanel glass holographic se mantiene. `ParallaxLayers.vue` se borra (sin uso fuera de ch4).
+- **Commit hash post-regen:** _pending_
+
+---
+
 ## ch3-robots-bg.png — iter1 (2026-05-19) — PRIMER ASSET
 
 - **Versión guardada:** ninguna — asset nuevo, primera generación. `ch3-invaders-bg.png` (iter7) preservado en `old/ch3-invaders-bg-2026-05-19-iter7.png` por Rafael antes del dispatch.
