@@ -468,3 +468,13 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** iter1 era un pixel art con UI Flash-era DIBUJADA EN LA IMAGEN (browser chrome, banner naranja, popup window, blobs). Rafael 2026-05-16: ahora la UI Flash se construye en CSS real (.flash-browser chrome bar + .flash-banner + project-card popup window) — el bg pintado competía con esa UI; necesitamos wallpaper abstracto detrás.
 - **Qué se intentó diferente:** prompt forge_background enfocado en textura ABSTRACTA — blobs orgánicos púrpura/naranja, gradientes radiales soft, halftone dots Flash-era, lava-lamp vibes. SIN UI dibujada (no browser, no banner, no popup, no buttons, no text, no windows). Pure abstract decorative wallpaper.
 - **Commit hash post-regen:** (pendiente)
+
+---
+
+## ch3-robots-bg.png — iter8 → RETIRADO (parallax) (2026-05-28)
+
+- **Versión guardada:** `old/ch3-robots-bg-2026-05-28-iter8.png` (commit `58ea9da`)
+- **Razón del cambio:** Rafael 2026-05-28: "ch03 habla del movimiento pero es muy estático". El bg full-bleed `fixed` de 6 robots Tin Toy era un solo PNG estático sin profundidad. Se reemplaza por un parallax real de 3 capas que reacciona al scroll + puntero + drift.
+- **Qué se intentará diferente:** 3 capas separadas con transparencia — `ch3-sky.png` (cielo opaco pastel, drift lento), `ch3-mountains.png` (silueta de montañas pálidas, transparente arriba), `ch3-path.png` (camino de piedras claro en primer plano, transparente arriba). Estilo fantasía épica de guerra (armas medievales + magia) en acuarela vintage, colores claros. Decor Web 2.0 (robot mascota + starbursts BETA/NEW) reemplazado por props fantasía (`ch3-prop-shield.png` escudo heráldico + `ch3-prop-banner.png` estandarte). Rayos láser + brasas mágicas vía CSS. Los 5 PNGs nuevos son primera generación (sin iter previa que preservar).
+- **Lección de pipeline (importante):** `optimize_sprite` y `process_sprite` aplastan a ≤128px (tope de la tool) → arte gigante/roto/bloques al escalar full-screen. Para fondos/capas usar `forge_background` (opaco, res nativa ~1376px) o `forge_sprite size:0`, y recortar transparencia con flood-fill chroma-key del cielo plano (Python/PIL, sin downscale ni huecos). NUNCA `optimize_sprite` en assets full-frame.
+- **Commit hash post-regen:** `31b8951`

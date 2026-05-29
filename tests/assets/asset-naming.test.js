@@ -51,8 +51,14 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 // JPG vs PNG decision (D4-W2-01): backgrounds opacos full-frame en JPEG, sprites con
 // alpha en PNG. ch6-bg.png y ch0-game-*.png/ch0-os-*.png son PNG por VGA 16-color
 // palette indexed (mejor compresión PNG indexada que JPEG para colores planos).
+//   - 5 ch3 parallax fantasía épica (Rafael 2026-05-28, iter9):
+//     · ch3-sky.png (cielo opaco pastel, capa lejana)
+//     · ch3-mountains.png (silueta montañas, transparente arriba)
+//     · ch3-path.png (camino de piedras primer plano, transparente arriba)
+//     · ch3-prop-shield.png + ch3-prop-banner.png (decor heráldico, reemplaza robot+starbursts)
+//     · ch3-robot.png queda como asset legacy no referenciado (bio mascota iter7-8).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|prop-(shield|banner)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).
