@@ -46,9 +46,9 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
   })
 
   // ── T2: hint mínimo ─────────────────────────────────────────────────────────
-  it('T2 hint: título + CTA storyHint presentes (texto mínimo)', () => {
+  it('T2 hint: título "La muerte de Flash" + CTA storyHint (texto mínimo)', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-hint-title').exists()).toBe(true)
+    expect(wrapper.find('.ch3-hint-title').text()).toMatch(/muerte de Flash/i)
     expect(wrapper.find('.ch3-hint-cta').text().length).toBeGreaterThan(0)
   })
 

@@ -35,13 +35,18 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 // Emblemas clicables — 1 por párrafo de la historia. Plantados en el escenario.
 // pos en % relativo a .ch3-content. Cada uno despliega bioParagraphs[idx].
 const ROMAN = ['I', 'II', 'III', 'IV', 'V']
+// Arco muerte→renacer (Rafael 2026-05-28): 1 emblema por párrafo.
+//   I  Flash caído ......... la muerte de Flash → salto a JS
+//   II reconstrucción ...... Pink Parrot, reconstruir desde cero con reglas nuevas
+//   III estandarte ......... el ágil como forma de pensar / ordenar el caos
+//   IV orbe creativo ....... publicidad digital, experimentar, cosas nuevas
+//   V  HTML5 naciente ...... época de crecer, salto de vuelta a la web (en el horizonte)
 const markers = [
-  // Emblema I = la muerte de Flash → salto a JS (refuerza el párrafo 1).
-  { key: 'flash', src: '/assets/ch3-flash-fallen.png', top: '42%', left: '14%', size: 100 },
-  { key: 'shield', src: '/assets/ch3-prop-shield.png', top: '62%', left: '27%', size: 96 },
-  { key: 'scroll', src: '/assets/ch3-mark-scroll.png', top: '70%', left: '50%', size: 92 },
-  { key: 'tome',   src: '/assets/ch3-mark-tome.png',   top: '60%', left: '72%', size: 88 },
-  { key: 'orb',    src: '/assets/ch3-mark-orb.png',    top: '40%', left: '86%', size: 92 },
+  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '54%', left: '16%', size: 112 },
+  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '67%', left: '34%', size: 94 },
+  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '49%', left: '51%', size: 98 },
+  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '66%', left: '69%', size: 88 },
+  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '35%', left: '85%', size: 100 },
 ]
 
 // ── Estado del cuento ─────────────────────────────────────────────────────────
@@ -138,9 +143,6 @@ onBeforeUnmount(() => {
         class="ch3-spark"
         :style="{ left: sp.left, '--sp-delay': sp.delay, '--sp-dur': sp.dur, '--sp-size': sp.size }"
       ></span>
-
-      <!-- Faro HTML5 en el horizonte = el futuro (contraparte del Flash caído) -->
-      <div class="ch3-beacon" aria-hidden="true"></div>
     </div>
 
     <!-- ── Contenido: hint sutil + emblemas clicables ────────────────────── -->
@@ -148,7 +150,7 @@ onBeforeUnmount(() => {
       <!-- Hint mínimo (el entorno es el protagonista) -->
       <header class="ch3-hint">
         <p class="ch3-hint-era">Rafael · 2013</p>
-        <h1 class="ch3-hint-title">De vuelta al movimiento</h1>
+        <h1 class="ch3-hint-title">{{ t('ui.deathOfFlash') }}</h1>
         <p class="ch3-hint-cta">{{ t('ui.storyHint') }}</p>
       </header>
 
@@ -236,7 +238,7 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
-  background-color: #e9f1fb;
+  background-color: #1a1320;
   image-rendering: pixelated;
 }
 
@@ -323,34 +325,6 @@ onBeforeUnmount(() => {
   32% { opacity: 0; transform: translateX(-50px) rotate(-14deg); }
 }
 
-/* Faro HTML5 en el horizonte — el futuro. Glow celestial cálido + pulso suave. */
-.ch3-beacon {
-  position: absolute;
-  top: 34%;
-  left: 50%;
-  width: clamp(64px, 8.5vw, 120px);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  background: url('/assets/ch3-html5-future.png') center / contain no-repeat;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 14px rgba(255, 200, 120, 0.85)) drop-shadow(0 0 32px rgba(255, 170, 80, 0.5));
-  animation: ch3-beacon-pulse 5.5s ease-in-out infinite;
-}
-.ch3-beacon::before {
-  content: '';
-  position: absolute;
-  inset: -65%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 244, 210, 0.6) 0%, rgba(255, 210, 140, 0.26) 40%, transparent 70%);
-  z-index: -1;
-  animation: ch3-beacon-halo 5.5s ease-in-out infinite;
-}
-@keyframes ch3-beacon-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -53%) scale(1.05); }
-}
-@keyframes ch3-beacon-halo { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } }
-
 .ch3-spark {
   position: absolute;
   bottom: 8%;
@@ -395,26 +369,29 @@ onBeforeUnmount(() => {
   font-size: 0.85rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: #4a3f63;
+  color: #e8b27a;
   margin: 0 0 4px;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 .ch3-hint-title {
   font-family: 'Cinzel', 'Trajan Pro', serif;
   font-weight: 900;
-  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-size: clamp(1.8rem, 4.4vw, 3rem);
   margin: 0 0 8px;
   line-height: 1.05;
-  color: #2a2140;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.9), 0 0 18px rgba(150,220,255,0.45);
+  color: #fbeede;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.85),
+    0 0 22px rgba(255, 140, 60, 0.6),
+    0 0 44px rgba(255, 90, 40, 0.35);
 }
 .ch3-hint-cta {
   font-family: 'Roboto', sans-serif;
   font-size: 0.95rem;
   font-style: italic;
-  color: #3c3450;
+  color: #f0e2cf;
   margin: 0;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
   animation: ch3-hint-pulse 3s ease-in-out infinite;
 }
 @keyframes ch3-hint-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
@@ -654,8 +631,6 @@ onBeforeUnmount(() => {
   .ch3-fx--lasers::before,
   .ch3-fx--lasers::after,
   .ch3-spark,
-  .ch3-beacon,
-  .ch3-beacon::before,
   .ch3-hint-cta,
   .ch3-mark,
   .ch3-mark::before,
