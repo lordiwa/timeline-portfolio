@@ -15,6 +15,9 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 // Dynamic binding (avoids vite-plugin-vue transformAssetUrls trying to resolve the
 // /assets/ path at compile-time → it's a public/ runtime URL).
 const bustSrc = '/assets/ch2-bust.png'
+// Imagen épica "La gran guerra Flash vs Apple" — debajo del texto (Rafael 2026-05-28).
+// Foreshadowing de ch3 (Flash caído): aquí Flash está sano y poderoso liderando la horda.
+const warSrc = '/assets/ch2-flash-war.png'
 </script>
 
 <template>
@@ -28,5 +31,11 @@ const bustSrc = '/assets/ch2-bust.png'
         <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
       </div>
     </div>
+
+    <!-- La gran guerra: Flash vs Apple (debajo del texto) -->
+    <figure class="flash-about-war">
+      <img :src="warSrc" :alt="t('ui.flashWar')" class="flash-about-war-img" />
+      <figcaption class="flash-about-war-cap">{{ t('ui.flashWar') }}</figcaption>
+    </figure>
   </div>
 </template>
