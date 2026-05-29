@@ -123,59 +123,59 @@
   "projects": {
     "pp1": {
       "title": "PENDING — CONTENT-CHECKLIST §2.2 (nombre proyecto #1 Pink Parrot ES)",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.2 (descripción proyecto #1 ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch2-bluelizard": {
       "title": "BlueLizard Games",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en BlueLizard ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch2-matte": {
       "title": "Matte CG",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en Matte CG ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch2-joju": {
       "title": "Joju Games",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.1 (Rafael describe rol Flash gameplay en Joju Games ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch4-arvr-own": {
       "title": "ARVR Studio (empresa propia)",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.3 (Rafael describe empresa AR/VR propia, role Founder/Tech Lead, ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch4-metrodigi": {
       "title": "Metrodigi",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.3 (Rafael describe role Frontend Engineer en Metrodigi ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch5-bairesdev": {
       "title": "BairesDev",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role Frontend Lead en BairesDev ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch5-number8": {
       "title": "number8",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role en number8 ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch5-vivoenvivo": {
       "title": "VivoEnVivo",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe streaming Vue + WebRTC en VivoEnVivo ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch5-rocketsnail": {
       "title": "RocketSnail",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe role en RocketSnail ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch5-remoose": {
       "title": "Remoose",
-      "desc": "PENDING — CONTENT-CHECKLIST §2.4 (Rafael describe convergencia QA + Frontend en Remoose ES)"
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch6-ar-vr": {
       "title": "Empresa propia AR/VR",
-      "desc": "PENDING — Rafael refresca via CONTENT-CHECKLIST §2.5: empresa AR/VR aplicada a publicidad y entrenamiento corporativo, 2015-18."
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch6-remoose": {
       "title": "Remoose Interactive",
-      "desc": "PENDING — Rafael refresca §2.5: full stack remoto Vancouver, 2023-presente."
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     },
     "ch6-software-mind": {
       "title": "Software Mind NA",
-      "desc": "PENDING — Rafael refresca §2.5: QA + AI data science automation, 2023-presente."
+      "desc": "Reseña en preparación — pronto con el detalle completo."
     }
   },
   "contact": {
@@ -186,7 +186,7 @@
     "githubAria": "GitHub de Rafael"
   },
   "seo": {
-    "title": "PENDING — CONTENT-CHECKLIST §4.1 (title ES ≤60 chars)",
-    "description": "PENDING — CONTENT-CHECKLIST §4.1 (description ES ≤155 chars)"
+    "title": "Rafael Matovelle · Full Stack & QA",
+    "description": "Portafolio de Rafael Matovelle: ingeniero full stack y QA con raíces en gamedev y tres décadas de tecnología."
   }
 }

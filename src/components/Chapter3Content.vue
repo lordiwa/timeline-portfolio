@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
   animation: ch3-mark-float 5s ease-in-out infinite;
   animation-delay: calc(var(--mk-i, 0) * 0.6s);
   transition: filter 0.2s ease, transform 0.18s ease;
-  filter: drop-shadow(0 4px 10px rgba(26,26,46,0.35));
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(255,210,140,0.55));
 }
 .ch3-mark-img {
   width: 100%;
@@ -430,13 +430,13 @@ onBeforeUnmount(() => {
   inset: -30%;
   border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(255,255,255,0.72) 0%,
-    rgba(255,238,196,0.5) 26%,
-    rgba(174,243,255,0.3) 54%,
-    transparent 72%);
-  opacity: 0.6;
+    rgba(255,255,255,0.85) 0%,
+    rgba(255,224,150,0.62) 30%,
+    rgba(255,150,70,0.34) 56%,
+    transparent 74%);
+  opacity: 0.85;
   z-index: -1;
-  animation: ch3-mark-glow 3.2s ease-in-out infinite;
+  animation: ch3-mark-glow 2.6s ease-in-out infinite;
   animation-delay: calc(var(--mk-i, 0) * 0.6s);
 }
 /* Rayos celestiales rotando lentamente detrás del emblema */
@@ -487,8 +487,8 @@ onBeforeUnmount(() => {
 .ch3-mark.is-visited::before { opacity: 0.25; }
 .ch3-mark.is-active::before { opacity: 0.9; }
 
-@keyframes ch3-mark-float { 0%, 100% { margin-top: 0; } 50% { margin-top: -10px; } }
-@keyframes ch3-mark-glow { 0%, 100% { transform: scale(0.92); opacity: 0.4; } 50% { transform: scale(1.08); opacity: 0.7; } }
+@keyframes ch3-mark-float { 0%, 100% { margin-top: 0; } 50% { margin-top: -12px; } }
+@keyframes ch3-mark-glow { 0%, 100% { transform: scale(0.9); opacity: 0.55; } 50% { transform: scale(1.12); opacity: 1; } }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Recuadro pergamino (panel del cuento)
