@@ -164,12 +164,26 @@ const oldGifs = [
   z-index: 1;
 }
 
+/* Scrim de legibilidad — el starfield detrás es ruidoso; un panel sutil
+   levanta el contraste del texto sin perder el vibe GeoCities (Rafael 2026-05-29). */
+.ch1-bio {
+  max-width: 760px;
+  background: rgba(8, 10, 38, 0.55);
+  border: 1px solid rgba(120, 160, 255, 0.32);
+  border-radius: 6px;
+  padding: var(--sp-md);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
 .ch1-bio p {
   font-family: 'Comic Neue', 'Comic Sans MS', cursive;
-  font-size: 1.1rem;
-  line-height: 1.6;
+  font-size: 1.18rem;
+  line-height: 1.65;
   color: var(--c-fg);
   margin: 0 0 var(--sp-md) 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .ch1-flavor {
