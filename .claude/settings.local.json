@@ -45,7 +45,30 @@
       "Bash(Write-Output \"Temporales eliminados.\")",
       "mcp__claude_ai_Adobe_for_creativity__asset_search",
       "PowerShell(Get-Item *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(grep -qE \"ready in|error|Error\" \"C:\\\\\\\\Users\\\\\\\\RAFAEL~1\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Users-RafaelMatovelle-Documents-mato-new-portfolio\\\\\\\\e67c2512-1722-4aff-8be2-b7a618139881\\\\\\\\tasks\\\\\\\\brjw6p84a.output\")",
+      "Bash(cd *)",
+      "Bash(python -c \"import json;d=json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\);import sys;print\\(json.dumps\\(d['bio']['eras']['3'],ensure_ascii=False,indent=2\\)\\)\")",
+      "Bash(python -c \"import json;d=json.load\\(open\\('src/i18n/en.json',encoding='utf-8'\\)\\);print\\(json.dumps\\(d['bio']['eras']['3'],ensure_ascii=False,indent=2\\)\\)\")",
+      "Bash(python)",
+      "mcp__pixelforge__process_sprite",
+      "Bash(python -c \"import json;d=json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\);print\\(len\\(d['bio']['eras']['3']['text'].split\\(chr\\(10\\)+chr\\(10\\)\\)\\),'parrafos'\\)\")",
+      "Bash(python -c \"import json;d=json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\);print\\(list\\(d.get\\('ui',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('fontsource'\\)\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('cinzel'\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./package.json'\\).dependencies;for\\(const k of Object.keys\\(d\\).filter\\(x=>x.includes\\('fontsource'\\)\\)\\)console.log\\(k, d[k]\\)\")",
+      "Bash(npm uninstall *)",
+      "Bash(ls -d node_modules/playwright* node_modules/puppeteer* node_modules/@playwright)",
+      "Bash(ls \"/c/Program Files/Google/Chrome/Application/chrome.exe\")",
+      "Bash(ls \"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\")",
+      "Bash(mkdir -p .audit)",
+      "Bash(echo \"dev server lanzado, PID bash: $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5173/)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(awk '{print $5,$9}')",
+      "Bash(python -c ' *)",
+      "Bash(grep -rln \"PENDING\" tests/)",
+      "Bash(python -c \"import json;json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\);json.load\\(open\\('src/i18n/en.json',encoding='utf-8'\\)\\);print\\('JSON válido ✓'\\)\")"
     ]
   }
 }
