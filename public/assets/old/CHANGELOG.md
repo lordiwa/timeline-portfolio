@@ -478,3 +478,13 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Qué se intentará diferente:** 3 capas separadas con transparencia — `ch3-sky.png` (cielo opaco pastel, drift lento), `ch3-mountains.png` (silueta de montañas pálidas, transparente arriba), `ch3-path.png` (camino de piedras claro en primer plano, transparente arriba). Estilo fantasía épica de guerra (armas medievales + magia) en acuarela vintage, colores claros. Decor Web 2.0 (robot mascota + starbursts BETA/NEW) reemplazado por props fantasía (`ch3-prop-shield.png` escudo heráldico + `ch3-prop-banner.png` estandarte). Rayos láser + brasas mágicas vía CSS. Los 5 PNGs nuevos son primera generación (sin iter previa que preservar).
 - **Lección de pipeline (importante):** `optimize_sprite` y `process_sprite` aplastan a ≤128px (tope de la tool) → arte gigante/roto/bloques al escalar full-screen. Para fondos/capas usar `forge_background` (opaco, res nativa ~1376px) o `forge_sprite size:0`, y recortar transparencia con flood-fill chroma-key del cielo plano (Python/PIL, sin downscale ni huecos). NUNCA `optimize_sprite` en assets full-frame.
 - **Commit hash post-regen:** `31b8951`
+
+---
+
+## ch2-flash-war.png — iter1 → iter2 (2026-05-28)
+
+- **Versión guardada:** `old/ch2-flash-war-2026-05-28-iter1.png` (commit `6c56ce7`)
+- **Razón del cambio:** Rafael 2026-05-28: "me gusta pero hazlo aun más exageradamente épico, mira la referencia de war que puse" → `public/references/war.jpg` (box-art de Warcraft III). iter1 era una buena batalla pero composición plana (dos ejércitos enfrentados a media distancia), faltaba el drama del foreground.
+- **Qué se intentará diferente:** estilo box-art Warcraft III — cielo ardiente naranja/carmesí con cometas/meteoros surcando + relámpagos, CHOQUE DE CAMPEONES en primer plano (héroe alzando el orbe Flash vs campeón de Apple con martillo/energía azul), ejércitos colisionando detrás, ciudadela Apple de Macs/iPhones, ángulo cinematográfico bajo, máxima épica. forge_background nano-banana-2 res nativa.
+- **Resultado:** 1 intento — éxito. 1376×768, héroe Flash con orbe ardiente en estandarte vs campeón Apple con escudo-manzana + crystal azul, meteoros + relámpagos + explosiones, ciudadela de CRT Macs coronada por Apple negro glowing. Foreshadow directo de ch3-flash-fallen.
+- **Commit hash post-regen:** `e010343`
