@@ -73,7 +73,11 @@
       "tickAria": "Ir a {era} ({year})"
     },
     "openProject": "Ver proyecto →",
-    "closeOverlay": "Cerrar"
+    "closeOverlay": "Cerrar",
+    "storyHint": "Toca los emblemas para descubrir la historia",
+    "storyPrev": "Anterior",
+    "storyNext": "Siguiente",
+    "storyPage": "Página {n} de {total}"
   },
   "avatar": {
     "ariaTemplate": "Avatar de Rafael — capítulo {chapter} activo",
