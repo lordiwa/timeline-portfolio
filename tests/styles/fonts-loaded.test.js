@@ -33,7 +33,9 @@ const themesSource = readFileSync(
   'utf8'
 )
 
-// Los 6 paquetes self-hosted esperados (ch2 omitido — system-safe)
+// Paquetes self-hosted esperados (ch2 omitido — system-safe).
+// 2026-05-29: +roboto (ch3 body/CTA), +cinzel/+cinzel-decorative (ch3 título épico
+// "La muerte de Flash"). Removidos bungee+pacifico (ch3 legacy iter9, sin uso).
 const EXPECTED_PACKAGES = [
   '@fontsource/vt323',
   '@fontsource/comic-neue',
@@ -41,19 +43,22 @@ const EXPECTED_PACKAGES = [
   '@fontsource/audiowide',
   '@fontsource/press-start-2p',
   '@fontsource-variable/inter',
+  '@fontsource/roboto',
+  '@fontsource/cinzel',
+  '@fontsource/cinzel-decorative',
 ]
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 describe('Fonts — source-level (Task 5.1)', () => {
 
-  it('T1: package.json contiene exactamente los 6 paquetes @fontsource*', () => {
+  it('T1: package.json contiene exactamente los 9 paquetes @fontsource*', () => {
     const deps = packageJson.dependencies || {}
     for (const pkg of EXPECTED_PACKAGES) {
       expect(deps, `Falta paquete: ${pkg}`).toHaveProperty(pkg)
     }
     // Verificar count exacto de paquetes @fontsource* en dependencies
     const fontsourceKeys = Object.keys(deps).filter(k => k.startsWith('@fontsource'))
-    expect(fontsourceKeys).toHaveLength(6)
+    expect(fontsourceKeys).toHaveLength(EXPECTED_PACKAGES.length)
   })
 
   it('T2: versiones de los 6 paquetes son ^5.x (major version 5)', () => {
