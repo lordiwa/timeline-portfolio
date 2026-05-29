@@ -6,33 +6,32 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const PARALLAX_SRC = readFileSync(resolve(process.cwd(), 'src/components/ParallaxLayers.vue'), 'utf8')
 const CH4_SRC = readFileSync(resolve(process.cwd(), 'src/components/Chapter4Content.vue'), 'utf8')
 const CH5_SRC = readFileSync(resolve(process.cwd(), 'src/components/Chapter5Content.vue'), 'utf8')
 const SCROLL_SHELL_SRC = readFileSync(resolve(process.cwd(), 'src/components/ScrollShell.vue'), 'utf8')
 const CHAPTER_THEMES_SRC = readFileSync(resolve(process.cwd(), 'src/styles/chapter-themes.css'), 'utf8')
 
 describe('Theme bleed prevention — Phase 4 architectural integration', () => {
-  // T1: ParallaxLayers contiene `position: absolute` + `inset: 0` (containerizable)
-  it('T1: ParallaxLayers.vue tiene .parallax-layers con position:absolute + inset:0', () => {
-    const block = PARALLAX_SRC.match(/\.parallax-layers\s*\{[^}]*\}/s)
-    expect(block).toBeTruthy()
-    expect(block[0]).toMatch(/position:\s*absolute/)
-    expect(block[0]).toMatch(/inset:\s*0/)
-    expect(block[0]).toMatch(/z-index:\s*0/)
+  // T1 (iter2 2026-05-28): ParallaxLayers.vue retirado al colapsar stack 4-capas
+  // a single bg full-bleed. El nuevo contrato T1 verifica que ch4-stage-bg.png
+  // está referenciado como background-image del .ch4-layout.
+  it('T1 iter2: Chapter4Content.vue referencia ch4-stage-bg.png como background-image', () => {
+    expect(CH4_SRC).toMatch(/background-image:\s*url\(['"]?\/assets\/ch4-bg\.png/)
   })
 
-  // T2: Chapter4Content.vue contiene .ch4-layout con position:relative + overflow:hidden
-  // (containerización mandatory para que ParallaxLayers absolute NO bleed al viewport)
-  it('T2: Chapter4Content.vue tiene .ch4-layout con position:relative + overflow:hidden (D4-07)', () => {
+  // T2 (iter2 2026-05-28): ya no hay child absolute que contener — el bg vive en
+  // el background-image del propio .ch4-layout. Verificamos position:relative
+  // (preservado para los FloatingPanel internos) + bg cover fixed pixelated.
+  it('T2 iter2: Chapter4Content.vue tiene .ch4-layout con bg cover fixed pixelated', () => {
     expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*position:\s*relative/s)
-    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*overflow:\s*hidden/s)
+    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*background-size:\s*cover/s)
+    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*background-attachment:\s*fixed/s)
+    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*image-rendering:\s*pixelated/s)
   })
 
-  // T3: Chapter5Content.vue NO importa ParallaxLayers ni FloatingPanel
-  // (ch5 NO debe heredar AR/VR aesthetic)
-  it('T3: Chapter5Content.vue NO importa ParallaxLayers ni FloatingPanel (no AR/VR bleed)', () => {
-    expect(CH5_SRC).not.toMatch(/import\s+ParallaxLayers/)
+  // T3: Chapter5Content.vue NO importa FloatingPanel (ch5 NO debe heredar AR/VR
+  // glass aesthetic). ParallaxLayers ya no existe — drop de su assertion.
+  it('T3: Chapter5Content.vue NO importa FloatingPanel (no AR/VR bleed)', () => {
     expect(CH5_SRC).not.toMatch(/import\s+FloatingPanel/)
   })
 
