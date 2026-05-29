@@ -41,6 +41,8 @@ const { t } = useI18n()
 const chapter = chapters[2]
 const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
+// Binding dinámico (evita que transformAssetUrls resuelva el path /assets/ en compile-time).
+const warSrc = '/assets/ch2-flash-war.png'
 
 // Sidebar nav state — panel activo. Default 'home' para que FlashBanner monte en mount inicial (test T6).
 const activePanel = ref('home')
@@ -134,6 +136,11 @@ onBeforeUnmount(() => {
         <div class="ch2-bio flash-y2k-mobile-bio">
           <p v-for="(para, idx) in bioParagraphs" :key="idx">{{ para }}</p>
         </div>
+
+        <figure class="flash-about-war">
+          <img :src="warSrc" :alt="t('ui.flashWar')" class="flash-about-war-img" />
+          <figcaption class="flash-about-war-cap">{{ t('ui.flashWar') }}</figcaption>
+        </figure>
 
         <p class="ch2-flavor flash-y2k-mobile-flavor">{{ t('chapters.2.flavor') }}</p>
 

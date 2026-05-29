@@ -62,7 +62,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch3-flash-fallen.png (logo Flash "caído" — narrativa muerte de Flash, emblema I)
 //     · ch3-html5-future.png (logo HTML5 radiante en el horizonte — el futuro)
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|html5-future|prop-(shield|banner)|mark-(scroll|tome|orb)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|prop-(shield|banner)|mark-(scroll|tome|orb)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).
