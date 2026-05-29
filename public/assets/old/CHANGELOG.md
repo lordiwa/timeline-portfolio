@@ -29,7 +29,8 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   1. **Tamaños:** `ch4-fg-panels.png` (~120×120) y `ch4-fg-ships.png` (~120×120) son sprites diminutos que el CSS estiraba full-bleed (`width:100%; height:120%; object-fit:cover; image-rendering:pixelated`) → en pantalla salían 2 naves gigantes y 3 paneles gigantes tapando todo, no un parallax sutil.
   2. **Estilos:** los bg (estrellas/luna) usan halftone/dot patterns con gradientes suaves anti-aliased — estilo distinto al acuarela vintage Tin Toy que ch3 estableció como referencia visual del portfolio (`ch3-robots-bg.png`).
 - **Qué se intentará diferente:** colapsar el stack 4-layers a 1 solo background full-bleed `ch4-bg.png` 1376×768 estilo acuarela vintage AR/VR (matchea ch3-robots-bg.png), wire idéntico al `.ch3-stage` (cover + fixed + pixelated). FloatingPanel glass holographic se mantiene. `ParallaxLayers.vue` se borra (sin uso fuera de ch4).
-- **Commit hash post-regen:** _pending_
+- **Qué se hizo:** `forge_background` (modelo `nano-banana-2`, 1 solo intento, 491 KB, 1376×768 exacto). Asset renombrado `ch4-stage-bg.png` → `ch4-bg.png` para conformar al naming enum del asset-naming test. NO se aplicó `optimize_sprite` (cover + fixed preserva detalle). Side fix: comment stale en `ScrollShell.vue .chapter-section` mencionaba "ParallaxLayers ch4"; reescrito sin literal "position:absolute" lo que verde-ó casualmente `theme-bleed-phase4 T6`.
+- **Commit hash post-regen:** `d2324cd`
 
 ---
 
