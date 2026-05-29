@@ -11,13 +11,9 @@ import { i18n } from './i18n'
 import '@fontsource/vt323/latin.css'              // ch0 — CRT terminal (latin)
 import '@fontsource/vt323/latin-ext.css'          // ch0 — latin-ext (ñ, á, etc.)
 import '@fontsource/comic-neue'                   // ch1 — Comic Sans equivalent (solo latin disponible)
-import '@fontsource/lobster/latin.css'            // ch3 — Web 2.0 cursive (latin) [legacy]
+import '@fontsource/lobster/latin.css'            // ch3 stub theme --font-body + .project-card-title
 import '@fontsource/lobster/latin-ext.css'        // ch3 — latin-ext (ñ, á, etc.)
-import '@fontsource/bungee/latin.css'             // ch3 iter9 — kinetic display tag [legacy]
-import '@fontsource/bungee/latin-ext.css'
-import '@fontsource/pacifico/latin.css'           // ch3 iter9 — curvy script [legacy]
-import '@fontsource/pacifico/latin-ext.css'
-import '@fontsource/roboto/400.css'               // ch3 iter10 — Roboto body/quote
+import '@fontsource/roboto/400.css'               // ch3 — Roboto body/CTA
 import '@fontsource/roboto/500.css'
 import '@fontsource/roboto/700.css'
 import '@fontsource/roboto/900.css'               // ch3 iter10 — Roboto Black title/tag
@@ -26,6 +22,9 @@ import '@fontsource/audiowide/latin-ext.css'      // ch4 — latin-ext (ñ, á, 
 import './styles/inter-variable-latin.css'        // ch5 — Inter Variable latin+latin-ext (wght 100-900)
 import '@fontsource/press-start-2p/latin.css'     // ch6 — Phaser pixel UI (latin)
 import '@fontsource/press-start-2p/latin-ext.css' // ch6 — latin-ext (ñ, á, etc.)
+import '@fontsource/cinzel/latin-700.css'             // ch3 — epic engraved display (numerales/labels)
+import '@fontsource/cinzel/latin-900.css'             // ch3 — epic display heavy
+import '@fontsource/cinzel-decorative/latin-900.css'  // ch3 — título ornamentado épico "La muerte de Flash"
 
 import './styles/chapter-themes.css'   // W2: @layer cascade + 7 themes era-auténticos
 

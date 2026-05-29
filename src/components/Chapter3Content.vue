@@ -374,11 +374,12 @@ onBeforeUnmount(() => {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 .ch3-hint-title {
-  font-family: 'Cinzel', 'Trajan Pro', serif;
+  font-family: 'Cinzel Decorative', 'Cinzel', 'Trajan Pro', serif;
   font-weight: 900;
-  font-size: clamp(1.8rem, 4.4vw, 3rem);
-  margin: 0 0 8px;
-  line-height: 1.05;
+  font-size: clamp(2.1rem, 5.2vw, 3.6rem);
+  letter-spacing: 0.04em;
+  margin: 0 0 10px;
+  line-height: 1.08;
   color: #fbeede;
   text-shadow:
     0 2px 8px rgba(0, 0, 0, 0.85),
@@ -543,9 +544,9 @@ onBeforeUnmount(() => {
 
 .ch3-panel-head { text-align: center; margin-bottom: var(--sp-sm); }
 .ch3-panel-numeral {
-  font-family: 'Cinzel', 'Trajan Pro', serif;
+  font-family: 'Cinzel Decorative', 'Cinzel', 'Trajan Pro', serif;
   font-weight: 900;
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
   color: #6b4a1e;
   letter-spacing: 0.05em;
   text-shadow: 0 1px 0 rgba(255,255,255,0.5);
