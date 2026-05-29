@@ -488,3 +488,12 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Qué se intentará diferente:** estilo box-art Warcraft III — cielo ardiente naranja/carmesí con cometas/meteoros surcando + relámpagos, CHOQUE DE CAMPEONES en primer plano (héroe alzando el orbe Flash vs campeón de Apple con martillo/energía azul), ejércitos colisionando detrás, ciudadela Apple de Macs/iPhones, ángulo cinematográfico bajo, máxima épica. forge_background nano-banana-2 res nativa.
 - **Resultado:** 1 intento — éxito. 1376×768, héroe Flash con orbe ardiente en estandarte vs campeón Apple con escudo-manzana + crystal azul, meteoros + relámpagos + explosiones, ciudadela de CRT Macs coronada por Apple negro glowing. Foreshadow directo de ch3-flash-fallen.
 - **Commit hash post-regen:** `e010343`
+
+---
+
+## ch3 parallax (sky/mountains/path) — iter1 → iter2 (2026-05-28)
+
+- **Versiones guardadas:** `old/ch3-sky-2026-05-28-iter1.png`, `old/ch3-mountains-2026-05-28-iter1.png`, `old/ch3-path-2026-05-28-iter1.png` (commit `2650d31`)
+- **Razón del cambio:** Rafael 2026-05-28: ch3 ahora es "La muerte de Flash" y debe tener el estilo del fondo de batalla épico de ch2 (Warcraft). iter1 era fantasía pastel clara (cielo aurora + montañas + camino con estandartes) — bonito pero no matchea el tema muerte-de-Flash ni el drama de ch2.
+- **Qué se intentará diferente:** mood "secuela con amanecer HTML5" — campo de batalla DESPUÉS de la guerra: cielo crepuscular humo/brasas que abre a un amanecer HTML5 dorado/cyan en el horizonte; cresta con fortaleza en ruinas humeante; primer plano de tierra quemada con armas/estandartes caídos y escombros. Estilo comic pixel dramático (matchea ch2-flash-war). Emblemas re-tematizados al arco muerte→renacer (Flash caído → reconstrucción → estandarte → orbe → HTML5 naciente). Título "De vuelta al movimiento" → "La muerte de Flash".
+- **Commit hash post-regen:** `9c92672`
