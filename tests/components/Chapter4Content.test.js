@@ -74,10 +74,13 @@ describe('Chapter4Content.vue', () => {
   // ───────────────────────────────────────────────
   // T1 DOM
   // ───────────────────────────────────────────────
-  it('T1 DOM: .ch4-layout existe con .ch4-meta y .ch4-content', () => {
+  it('T1 DOM: .ch4-layout existe con .ch4-title grande y .ch4-content', () => {
     const { wrapper } = mountCh4()
     expect(wrapper.find('.ch4-layout').exists()).toBe(true)
-    expect(wrapper.find('.ch4-meta').exists()).toBe(true)
+    // iter3: el meta year/era se reemplazó por un título grande full-width centrado.
+    const title = wrapper.find('.ch4-title')
+    expect(title.exists()).toBe(true)
+    expect(title.text().length).toBeGreaterThan(0)
     expect(wrapper.find('.ch4-content').exists()).toBe(true)
   })
 
