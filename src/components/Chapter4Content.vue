@@ -34,11 +34,6 @@ const { t } = useI18n()
 const chapter = chapters[4]
 const ch4Projects = computed(() => projects.filter((p) => p.chapterEra === 4))
 
-// Toggle temporal: el contenido (paneles bio/proyectos) arranca OCULTO para ver el
-// parallax sin taparlo. El botón superior lo muestra/oculta mientras Rafael decide
-// dónde reubicarlo (follow-up). v-show (no v-if) → los paneles siguen en el DOM.
-const showContent = ref(false)
-
 // Bio era-specific: AR/VR independiente Ecuador + Metrodigi líder (Rafael 2026-05-14).
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
@@ -120,44 +115,39 @@ onBeforeUnmount(() => {
       <div class="ch4-layer ch4-layer--near"></div>
     </div>
 
-    <!-- Toggle temporal de contenido (decisión de layout pendiente). -->
-    <button
-      type="button"
-      class="ch4-content-toggle"
-      :aria-pressed="showContent"
-      @click="showContent = !showContent"
-    >{{ showContent ? 'Ocultar contenido' : 'Mostrar contenido' }}</button>
+    <!-- Contenido flotando a la izquierda, sobre el espacio vacío. -->
+    <div class="ch4-panel-column">
+      <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible. -->
+      <aside class="ch4-meta">
+        <p class="ch4-year">{{ chapter.year }}</p>
+        <p class="ch4-era">{{ t(chapter.eraKey) }}</p>
+      </aside>
 
-    <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible. -->
-    <aside v-show="showContent" class="ch4-meta">
-      <p class="ch4-year">{{ chapter.year }}</p>
-      <p class="ch4-era">{{ t(chapter.eraKey) }}</p>
-    </aside>
+      <div class="ch4-content">
+        <FloatingPanel :title="t(chapter.titleKey)">
+          <p class="ch4-flavor">{{ t('chapters.4.flavor') }}</p>
+          <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch4-bio">{{ para }}</p>
+        </FloatingPanel>
 
-    <div v-show="showContent" class="ch4-content">
-      <FloatingPanel :title="t(chapter.titleKey)">
-        <p class="ch4-flavor">{{ t('chapters.4.flavor') }}</p>
-        <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch4-bio">{{ para }}</p>
-      </FloatingPanel>
-
-      <FloatingPanel
-        v-for="project in ch4Projects"
-        :key="project.id"
-        :title="t(project.titleKey)"
-      >
-        <p class="ch4-project-desc">{{ t(project.descKey) }}</p>
-        <p v-if="project.role" class="ch4-project-role">{{ project.role }}</p>
-        <ul v-if="project.techStack" class="ch4-project-tech">
-          <li v-for="tech in project.techStack" :key="tech">{{ tech }}</li>
-        </ul>
-        <a
-          v-if="project.link"
-          :href="project.link"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="ch4-project-link"
-        >{{ t('ui.openProject') }}</a>
-      </FloatingPanel>
+        <FloatingPanel
+          v-for="project in ch4Projects"
+          :key="project.id"
+          :title="t(project.titleKey)"
+        >
+          <p class="ch4-project-desc">{{ t(project.descKey) }}</p>
+          <p v-if="project.role" class="ch4-project-role">{{ project.role }}</p>
+          <ul v-if="project.techStack" class="ch4-project-tech">
+            <li v-for="tech in project.techStack" :key="tech">{{ tech }}</li>
+          </ul>
+          <a
+            v-if="project.link"
+            :href="project.link"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="ch4-project-link"
+          >{{ t('ui.openProject') }}</a>
+        </FloatingPanel>
+      </div>
     </div>
   </div>
 </template>
@@ -169,9 +159,9 @@ onBeforeUnmount(() => {
  * ───────────────────────────────────────────────────────────── */
 .ch4-layout {
   position: relative;
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: var(--sp-lg);
+  display: flex;
+  align-items: center;          /* centra verticalmente la columna de contenido */
+  justify-content: flex-start;  /* contenido a la izquierda */
   padding-left: 160px;
   padding-right: var(--sp-lg);
   padding-top: calc(96px + var(--sp-lg));
@@ -187,6 +177,25 @@ onBeforeUnmount(() => {
   overflow: hidden;
   background-color: var(--c-bg);
   image-rendering: pixelated;
+}
+
+/* Columna de contenido — flota a la izquierda sobre el espacio vacío. */
+.ch4-panel-column {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 400px;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  padding-right: var(--sp-xs);
+  animation: ch4-col-float 7s ease-in-out infinite;
+}
+@keyframes ch4-col-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 /* ── Parallax stack — cubre todo el chapter, detrás del contenido ──────────── */
@@ -303,37 +312,11 @@ onBeforeUnmount(() => {
   );
 }
 
-/* ── Toggle temporal de contenido ──────────────────────────────────────────── */
-.ch4-content-toggle {
-  position: absolute;
-  top: calc(56px + var(--sp-sm));
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 6;
-  padding: 6px 16px;
-  font-family: 'Audiowide', 'Eurostile', sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
-  color: var(--c-accent);
-  background: rgba(10, 15, 46, 0.55);
-  border: 1px solid var(--c-accent);
-  border-radius: 999px;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-.ch4-content-toggle:hover {
-  background: rgba(0, 255, 255, 0.12);
-}
-
-/* ── Meta + contenido — encima del parallax ────────────────────────────────── */
+/* ── Meta + contenido — dentro de la columna flotante ──────────────────────── */
 .ch4-meta {
-  position: relative;
-  z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-sm);
+  gap: var(--sp-xs);
   align-items: flex-start;
 }
 
@@ -353,11 +336,10 @@ onBeforeUnmount(() => {
 }
 
 .ch4-content {
-  position: relative;
-  z-index: 5;
-  overflow-y: auto;
-  padding-right: var(--sp-md);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  margin-top: var(--sp-sm);
 }
 
 .ch4-flavor {
@@ -433,9 +415,11 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .ch4-layer,
   .ch4-character-art,
-  .ch4-glyph { animation: none !important; transition: none !important; }
+  .ch4-glyph,
+  .ch4-panel-column { animation: none !important; transition: none !important; }
   .ch4-layer { transform: none !important; }
   .ch4-character-art { transform: none !important; }
+  .ch4-panel-column { transform: none !important; }
   .ch4-glyph { opacity: 0.3 !important; }
 }
 
@@ -444,11 +428,10 @@ onBeforeUnmount(() => {
  * ───────────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
   .ch4-layout {
-    grid-template-columns: 1fr;
-    padding-left: 60px;
+    padding-left: var(--sp-md);
     padding-right: var(--sp-md);
     padding-top: calc(68px + var(--sp-sm));
-    height: auto;
+    align-items: stretch;
   }
 
   /* Sin puntero táctil: capas estáticas. NUNCA position:fixed — se anclaría al
@@ -457,22 +440,14 @@ onBeforeUnmount(() => {
   .ch4-parallax { position: absolute; }
   .ch4-layer { transform: none; }
 
-  .ch4-meta {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: var(--sp-md);
+  /* Columna a ancho completo, sin float (evita reflow táctil incómodo). */
+  .ch4-panel-column {
+    max-width: none;
+    max-height: calc(100dvh - 160px - env(safe-area-inset-bottom, 0px));
+    animation: none;
   }
 
-  .ch4-year {
-    font-size: 1.5rem;
-  }
-
-  .ch4-era {
-    font-size: 1.2rem;
-  }
-
-  .ch4-content {
-    max-height: calc(100dvh - 200px - env(safe-area-inset-bottom, 0px));
-  }
+  .ch4-year { font-size: 1.5rem; }
+  .ch4-era { font-size: 1.2rem; }
 }
 </style>
