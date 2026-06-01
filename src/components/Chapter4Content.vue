@@ -205,6 +205,8 @@ onBeforeUnmount(() => {
   margin-top: 20vh;          /* más abajo ~20% (altura perfecta) */
   flex: 0 1 auto;
   min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
   width: 100%;
   max-width: 640px;
   overflow-y: auto;
@@ -434,15 +436,19 @@ onBeforeUnmount(() => {
  * ───────────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
   .ch4-layout {
-    padding-left: var(--sp-md);
-    padding-right: var(--sp-md);
-    padding-top: calc(68px + var(--sp-sm));
+    padding: calc(64px + var(--sp-sm)) var(--sp-sm) var(--sp-sm);
   }
 
-  /* Título: cancelar el padding mobile (sp-md ambos lados) para centrar full-width. */
+  /* Título: sin márgenes negativos en mobile (causaban desborde); centrado en el
+     content box, fuente chica para que entre/ envuelva limpio. */
   .ch4-title {
-    margin-left: calc(-1 * var(--sp-md));
-    margin-right: calc(-1 * var(--sp-md));
+    margin: 0 0 var(--sp-sm);
+    font-size: 1.05rem;
+  }
+
+  /* Proyectos apilados (1 col) en mobile — 2 col queda muy apretado. */
+  .ch4-projects {
+    grid-template-columns: 1fr;
   }
 
   /* Sin puntero táctil: capas estáticas. NUNCA position:fixed — se anclaría al
@@ -451,12 +457,13 @@ onBeforeUnmount(() => {
   .ch4-parallax { position: absolute; }
   .ch4-layer { transform: none; }
 
-  /* Columna a ancho completo, sin float ni offset (evita reflow táctil incómodo). */
+  /* Columna: width auto + align-self stretch → la dimensiona el contenedor (sin
+     width:100% que se resolvía mal). Sin offset ni float. */
   .ch4-panel-column {
     align-self: stretch;
-    margin-left: 0;
-    margin-top: var(--sp-md);
-    max-width: none;
+    width: auto;
+    max-width: 100%;
+    margin: var(--sp-sm) 0 0 0;
     animation: none;
   }
 }

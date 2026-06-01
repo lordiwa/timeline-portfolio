@@ -23,7 +23,7 @@
   - T7 [data-chapter="2"] .project-card mantiene linear-gradient.
 -->
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -37,6 +37,12 @@ import FlashBanner from './FlashBanner.vue'
 import ProjectCard from './ProjectCard.vue'
 
 const { t } = useI18n()
+
+// Chapter activo (0-6). El FlashMobileNotice es position:fixed full-screen; como
+// todos los chapters están en el DOM, sin gate cubría TODA la pantalla en mobile
+// sobre cualquier chapter. Solo debe aparecer cuando ch2 está activo (Rafael 2026-06-01).
+const scrollState = inject('scrollState', null)
+const activeChapter = scrollState?.activeChapter ?? ref(2)
 
 const chapter = chapters[2]
 const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
@@ -127,7 +133,9 @@ onBeforeUnmount(() => {
          "Explicar sin explicar" easter-egg via FlashMobileNotice
          ───────────────────────────────────────────────────────── -->
     <div class="flash-y2k-mobile">
-      <FlashMobileNotice />
+      <!-- Solo cuando ch2 está activo: el modal es fixed full-screen y si no, tapa
+           otros chapters en mobile (bug detectado en Fase C mobile review). -->
+      <FlashMobileNotice v-if="activeChapter === 2" />
 
       <!-- Reusa los mismos componentes para que el contenido sea idéntico al desktop -->
       <FlashBanner />
