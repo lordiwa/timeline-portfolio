@@ -387,7 +387,7 @@ onBeforeUnmount(() => {
     0 0 44px rgba(255, 90, 40, 0.35);
 }
 .ch3-hint-cta {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter Variable', system-ui, sans-serif;
   font-size: 0.95rem;
   font-style: italic;
   color: #f0e2cf;
