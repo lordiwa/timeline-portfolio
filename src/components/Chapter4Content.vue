@@ -115,14 +115,11 @@ onBeforeUnmount(() => {
       <div class="ch4-layer ch4-layer--near"></div>
     </div>
 
+    <!-- Título grande centrado a todo el ancho de la página. -->
+    <h1 class="ch4-title">{{ t('chapters.4.heading') }}</h1>
+
     <!-- Contenido flotando a la izquierda, sobre el espacio vacío. -->
     <div class="ch4-panel-column">
-      <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible. -->
-      <aside class="ch4-meta">
-        <p class="ch4-year">{{ chapter.year }}</p>
-        <p class="ch4-era">{{ t(chapter.eraKey) }}</p>
-      </aside>
-
       <div class="ch4-content">
         <FloatingPanel :title="t(chapter.titleKey)">
           <p class="ch4-flavor">{{ t('chapters.4.flavor') }}</p>
@@ -163,11 +160,11 @@ onBeforeUnmount(() => {
 .ch4-layout {
   position: relative;
   display: flex;
-  align-items: center;          /* centra verticalmente la columna de contenido */
-  justify-content: flex-start;  /* contenido a la izquierda */
+  flex-direction: column;       /* título arriba (full-width) + contenido debajo */
+  align-items: stretch;
   padding-left: 160px;
   padding-right: var(--sp-lg);
-  padding-top: calc(96px + var(--sp-lg));
+  padding-top: calc(64px + var(--sp-sm));
   padding-bottom: var(--sp-lg);
   height: 100%;
   /* .chapter-section es flex-centrado → reclamar el ancho completo del viewport,
@@ -182,14 +179,32 @@ onBeforeUnmount(() => {
   image-rendering: pixelated;
 }
 
-/* Columna de contenido — flota a la izquierda sobre el espacio vacío.
+/* Título grande centrado a TODO el ancho de la página. Los márgenes negativos
+   cancelan el padding asimétrico del layout (160px izq / sp-lg der) para que el
+   texto quede centrado respecto al viewport completo, no respecto a la columna. */
+.ch4-title {
+  position: relative;
+  z-index: 5;
+  flex: 0 0 auto;
+  margin: 0 calc(-1 * var(--sp-lg)) var(--sp-md) -160px;
+  text-align: center;
+  font-family: 'Audiowide', 'Eurostile', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  line-height: 1.1;
+  color: var(--c-accent);
+  text-shadow: 0 0 14px rgba(0, 255, 255, 0.45), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* Columna de contenido — flota a la izquierda sobre el espacio vacío, bajo el título.
    Ancha y baja: proyectos en grid 2-col para reducir altura y no cortarse abajo. */
 .ch4-panel-column {
   position: relative;
   z-index: 5;
+  align-self: flex-start;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   max-width: 640px;
-  max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -323,29 +338,7 @@ onBeforeUnmount(() => {
   );
 }
 
-/* ── Meta + contenido — dentro de la columna flotante ──────────────────────── */
-.ch4-meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-xs);
-  align-items: flex-start;
-}
-
-.ch4-year {
-  font-family: 'Audiowide', 'Eurostile', sans-serif;
-  font-size: 1.6rem;
-  margin: 0;
-  color: var(--c-accent);
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
-}
-
-.ch4-era {
-  font-family: 'Audiowide', 'Eurostile', sans-serif;
-  font-size: 1.15rem;
-  margin: 0;
-  color: var(--c-fg);
-}
-
+/* ── Contenido — dentro de la columna flotante ─────────────────────────────── */
 .ch4-content {
   display: flex;
   flex-direction: column;
@@ -442,7 +435,12 @@ onBeforeUnmount(() => {
     padding-left: var(--sp-md);
     padding-right: var(--sp-md);
     padding-top: calc(68px + var(--sp-sm));
-    align-items: stretch;
+  }
+
+  /* Título: cancelar el padding mobile (sp-md ambos lados) para centrar full-width. */
+  .ch4-title {
+    margin-left: calc(-1 * var(--sp-md));
+    margin-right: calc(-1 * var(--sp-md));
   }
 
   /* Sin puntero táctil: capas estáticas. NUNCA position:fixed — se anclaría al
@@ -454,11 +452,7 @@ onBeforeUnmount(() => {
   /* Columna a ancho completo, sin float (evita reflow táctil incómodo). */
   .ch4-panel-column {
     max-width: none;
-    max-height: calc(100dvh - 160px - env(safe-area-inset-bottom, 0px));
     animation: none;
   }
-
-  .ch4-year { font-size: 1.5rem; }
-  .ch4-era { font-size: 1.2rem; }
 }
 </style>
