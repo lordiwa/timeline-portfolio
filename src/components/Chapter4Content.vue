@@ -34,6 +34,11 @@ const { t } = useI18n()
 const chapter = chapters[4]
 const ch4Projects = computed(() => projects.filter((p) => p.chapterEra === 4))
 
+// Toggle temporal: el contenido (paneles bio/proyectos) arranca OCULTO para ver el
+// parallax sin taparlo. El botón superior lo muestra/oculta mientras Rafael decide
+// dónde reubicarlo (follow-up). v-show (no v-if) → los paneles siguen en el DOM.
+const showContent = ref(false)
+
 // Bio era-specific: AR/VR independiente Ecuador + Metrodigi líder (Rafael 2026-05-14).
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
@@ -115,13 +120,21 @@ onBeforeUnmount(() => {
       <div class="ch4-layer ch4-layer--near"></div>
     </div>
 
+    <!-- Toggle temporal de contenido (decisión de layout pendiente). -->
+    <button
+      type="button"
+      class="ch4-content-toggle"
+      :aria-pressed="showContent"
+      @click="showContent = !showContent"
+    >{{ showContent ? 'Ocultar contenido' : 'Mostrar contenido' }}</button>
+
     <!-- Meta sin imagen inline — StickyAvatar top-left es único avatar visible. -->
-    <aside class="ch4-meta">
+    <aside v-show="showContent" class="ch4-meta">
       <p class="ch4-year">{{ chapter.year }}</p>
       <p class="ch4-era">{{ t(chapter.eraKey) }}</p>
     </aside>
 
-    <div class="ch4-content">
+    <div v-show="showContent" class="ch4-content">
       <FloatingPanel :title="t(chapter.titleKey)">
         <p class="ch4-flavor">{{ t('chapters.4.flavor') }}</p>
         <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch4-bio">{{ para }}</p>
@@ -281,6 +294,30 @@ onBeforeUnmount(() => {
     calc((var(--my, 0) + var(--dy, 0)) * 22px),
     0
   );
+}
+
+/* ── Toggle temporal de contenido ──────────────────────────────────────────── */
+.ch4-content-toggle {
+  position: absolute;
+  top: calc(56px + var(--sp-sm));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  padding: 6px 16px;
+  font-family: 'Audiowide', 'Eurostile', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--c-accent);
+  background: rgba(10, 15, 46, 0.55);
+  border: 1px solid var(--c-accent);
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.ch4-content-toggle:hover {
+  background: rgba(0, 255, 255, 0.12);
 }
 
 /* ── Meta + contenido — encima del parallax ────────────────────────────────── */
