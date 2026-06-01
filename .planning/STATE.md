@@ -173,14 +173,16 @@ Recent decisions affecting current work:
 | ✅ Resuelto | ~~`BackgroundLayers T7`: CSS usa `background-color`, test espera shorthand~~ → **arreglado 2026-06-01**: `.bg-layer` usa `background: var(--c-bg)` (alineado al contrato D2-05, comportamiento idéntico). Suite 418/418 verde. | RESUELTO | 2026-06-01 |
 | Docs/GSD | Fases INSERTED 04.1 (Y2K Flash stage) y 04.2 (match-3 minigame) ejecutadas ad-hoc, añadidas a ROADMAP + SUMMARY retroactivos generados 2026-06-01 (`04.1-01-SUMMARY.md`, `04.2-01-SUMMARY.md`). **Falta solo verificación/sign-off formal** (no hay VERIFICATION.md ni §10). | Pending verification | 2026-06-01 |
 | Content | `src/data/contact.js` con email/LinkedIn/GitHub **vacíos** (`''`) + `src/data/projects.js` con 8 stubs PENDING. BLOCKING para cerrar Phase 3/4 de verdad y para deploy con contenido real. Input de Rafael vía CONTENT-CHECKLIST §2.1/2.2/3. | Pending Rafael content | 2026-06-01 |
-| Bug mobile | **Overflow horizontal global en mobile** (detectado 2026-06-01 en Fase C ch4): en viewports angostos el documento es más ancho que el viewport y `.chapter-section` (flex justify-center) centra/recorta el contenido a ambos lados. Afecta varios chapters (ch3 título "THE DEATH OF FLASH" recortado, ch4 paneles recortados). NO introducido por el parallax ch4 — pre-existente. Investigar qué elemento fuerza el ancho (candidatos: Phaser canvas ch6, stage Y2K ch2, alguna capa fixed/width). Mitigación posible: `overflow-x: hidden` en el scroll shell o constrain del culpable. Necesita pasada dedicada. | Pending investigation | 2026-06-01 |
+| Bug mobile | **Overflow horizontal global en mobile** — DIAGNOSTICADO 2026-06-01. Causa: capas de parallax (`.ch3-layer`/`.ch4-layer`, `inset:-8%;width:116%`) expanden el viewport de layout mobile (docScrollW=482 @390); `html,body` sin `overflow-x:hidden`. `.chapter-section` flex-center recorta el contenido sobreancho a ambos lados. **Plan listo: `.planning/PLAN-mobile-overflow-fix.md`** (ejecutar tras /clear). | Plan ready — execute | 2026-06-01 |
 | Polish | ch4 capa matrix (c3) "híbrida": hoy son glifos CSS vivos; falta (opcional) el PNG tenue de glifos como base. Rafael eligió híbrido pero el PNG quedó pendiente — los glifos CSS solos se ven bien. | Optional | 2026-06-01 |
 
 ## Session Continuity
 
-Last session: 2026-05-29 (épica Flash vs Apple — commit db52832). Auditoría de estado 2026-06-01.
-Stopped at: ch2 batalla Flash-vs-Apple + ch3 "La muerte de Flash" pusheados. Pendiente: contenido real Rafael, arte busts ch4/5/6, visual polish ch3+, Phase 6 deploy.
-Resume file: .planning/SESSION-HANDOFF-2026-05-29-epic-chapters.md (más reciente) + .planning/SESSION-HANDOFF-2026-05-14-busts.md (detalle 7 busts).
+Last session: 2026-06-01 (ch4 parallax "flotando en el vacío" Fases A/B/C + auditoría + bundle fuentes + ch1 fix + mobile notice). Suite 418/418.
+Stopped at: diagnóstico del overflow horizontal global en mobile completo; plan + handoff escritos para ejecutar tras /clear.
+Resume file: **.planning/SESSION-HANDOFF-2026-06-01-ch4-parallax.md** (más reciente — leer primero).
+Next command: ejecutar **.planning/PLAN-mobile-overflow-fix.md** (arreglar overflow horizontal mobile: `overflow-x:hidden` en html,body + capas parallax sin overscan en mobile; verificar con script de scan; 418/418).
+Resume files previos: SESSION-HANDOFF-2026-05-29-epic-chapters.md, SESSION-HANDOFF-2026-05-14-busts.md.
 Next options (sin orden forzado — Rafael decide):
   (A) CONTENIDO: Rafael llena CONTENT-CHECKLIST §2.1/2.2/3 → wire bio/proyectos reales + contact.js (email/LinkedIn/GitHub). BLOCKING para cerrar Phase 3/4 de verdad.
   (B) ARTE: arreglar ropa ch6 (Adobe image_select_by_prompt + image_fill_area, preservar cara) + regenerar busts ch4/ch5 matcheando ch3 ("flat lit face no specular highlights"). Proceso old/ + CHANGELOG (CLAUDE.md §6.5).
