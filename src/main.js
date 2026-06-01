@@ -13,10 +13,9 @@ import '@fontsource/vt323/latin-ext.css'          // ch0 — latin-ext (ñ, á, 
 import '@fontsource/comic-neue'                   // ch1 — Comic Sans equivalent (solo latin disponible)
 import '@fontsource/lobster/latin.css'            // ch3 stub theme --font-body + .project-card-title
 import '@fontsource/lobster/latin-ext.css'        // ch3 — latin-ext (ñ, á, etc.)
-import '@fontsource/roboto/400.css'               // ch3 — Roboto body/CTA
-import '@fontsource/roboto/500.css'
-import '@fontsource/roboto/700.css'
-import '@fontsource/roboto/900.css'               // ch3 iter10 — Roboto Black title/tag
+// Roboto ELIMINADO 2026-06-01 (bundle fix): importaba 4 pesos × 8 idiomas (~453KB en .woff2)
+// y solo se usaba en .ch3-hint-cta (un hint italic). Reemplazado por Inter Variable (ya cargado
+// para ch5). Bajó el bundle de 782KB → ~329KB. Ver STATE.md "Real State Audit".
 import '@fontsource/audiowide/latin.css'          // ch4 — AR/VR futuristic (latin)
 import '@fontsource/audiowide/latin-ext.css'      // ch4 — latin-ext (ñ, á, etc.)
 import './styles/inter-variable-latin.css'        // ch5 — Inter Variable latin+latin-ext (wght 100-900)
