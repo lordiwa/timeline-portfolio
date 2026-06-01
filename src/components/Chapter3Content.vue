@@ -652,5 +652,11 @@ onBeforeUnmount(() => {
   .ch3-mark { width: calc(var(--mk-size, 88px) * 0.72); height: calc(var(--mk-size, 88px) * 0.72); }
   .ch3-mark-num { font-size: 0.7rem; padding: 0 6px; }
   .ch3-panel { width: 94%; max-height: 80dvh; }
+
+  /* Sin puntero en mobile → las capas no se mueven horizontalmente (--mx = 0),
+     solo hay drift vertical por scroll (--sx). El overscan lateral (width:116%)
+     expandía el layout viewport y recortaba el contenido a los lados. Lo quitamos
+     conservando el overscan vertical (top/bottom -8% del inset) para el drift. */
+  .ch3-layer { left: 0; width: 100%; }
 }
 </style>

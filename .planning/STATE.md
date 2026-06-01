@@ -173,15 +173,15 @@ Recent decisions affecting current work:
 | ✅ Resuelto | ~~`BackgroundLayers T7`: CSS usa `background-color`, test espera shorthand~~ → **arreglado 2026-06-01**: `.bg-layer` usa `background: var(--c-bg)` (alineado al contrato D2-05, comportamiento idéntico). Suite 418/418 verde. | RESUELTO | 2026-06-01 |
 | Docs/GSD | Fases INSERTED 04.1 (Y2K Flash stage) y 04.2 (match-3 minigame) ejecutadas ad-hoc, añadidas a ROADMAP + SUMMARY retroactivos generados 2026-06-01 (`04.1-01-SUMMARY.md`, `04.2-01-SUMMARY.md`). **Falta solo verificación/sign-off formal** (no hay VERIFICATION.md ni §10). | Pending verification | 2026-06-01 |
 | Content | `src/data/contact.js` con email/LinkedIn/GitHub **vacíos** (`''`) + `src/data/projects.js` con 8 stubs PENDING. BLOCKING para cerrar Phase 3/4 de verdad y para deploy con contenido real. Input de Rafael vía CONTENT-CHECKLIST §2.1/2.2/3. | Pending Rafael content | 2026-06-01 |
-| Bug mobile | **Overflow horizontal global en mobile** — DIAGNOSTICADO 2026-06-01. Causa: capas de parallax (`.ch3-layer`/`.ch4-layer`, `inset:-8%;width:116%`) expanden el viewport de layout mobile (docScrollW=482 @390); `html,body` sin `overflow-x:hidden`. `.chapter-section` flex-center recorta el contenido sobreancho a ambos lados. **Plan listo: `.planning/PLAN-mobile-overflow-fix.md`** (ejecutar tras /clear). | Plan ready — execute | 2026-06-01 |
+| Bug mobile | ~~Overflow horizontal global en mobile~~ **RESUELTO 2026-06-01: era artefacto de Chrome headless, NO bug real.** Headless ignora `--window-size=390` y reporta `innerW=482` siempre (el `docScrollW=482` del "diagnóstico" era eso). Con emulación mobile REAL vía CDP (`setDeviceMetricsOverride` 390 mobile) → `docScrollW===innerW===390` sin overflow, contenido completo en ch1/ch3/ch4. Se aplicaron fixes defensivos igual (guard `overflow-x:hidden` html,body + capas mobile sin overscan lateral). Ver `PLAN-mobile-overflow-fix.md` §RESUELTO y memoria `chrome-headless-viewport-artifact`. | ✅ Resolved | 2026-06-01 |
 | Polish | ch4 capa matrix (c3) "híbrida": hoy son glifos CSS vivos; falta (opcional) el PNG tenue de glifos como base. Rafael eligió híbrido pero el PNG quedó pendiente — los glifos CSS solos se ven bien. | Optional | 2026-06-01 |
 
 ## Session Continuity
 
 Last session: 2026-06-01 (ch4 parallax "flotando en el vacío" Fases A/B/C + auditoría + bundle fuentes + ch1 fix + mobile notice). Suite 418/418.
-Stopped at: diagnóstico del overflow horizontal global en mobile completo; plan + handoff escritos para ejecutar tras /clear.
+Stopped at: "overflow horizontal mobile" RESUELTO — resultó ser artefacto de Chrome headless (innerW=482 fijo); verificado con CDP que a 390px real no hay overflow. Fixes defensivos aplicados + 418/418.
 Resume file: **.planning/SESSION-HANDOFF-2026-06-01-ch4-parallax.md** (más reciente — leer primero).
-Next command: ejecutar **.planning/PLAN-mobile-overflow-fix.md** (arreglar overflow horizontal mobile: `overflow-x:hidden` en html,body + capas parallax sin overscan en mobile; verificar con script de scan; 418/418).
+Next command: pendientes reales — contenido (`contact.js`/`projects.js`), busts ch4/5, o Phase 6 deploy (downscale backgrounds + Firebase). Ver "Next options" / CONTENT-CHECKLIST.
 Resume files previos: SESSION-HANDOFF-2026-05-29-epic-chapters.md, SESSION-HANDOFF-2026-05-14-busts.md.
 Next options (sin orden forzado — Rafael decide):
   (A) CONTENIDO: Rafael llena CONTENT-CHECKLIST §2.1/2.2/3 → wire bio/proyectos reales + contact.js (email/LinkedIn/GitHub). BLOCKING para cerrar Phase 3/4 de verdad.

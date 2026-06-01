@@ -3,6 +3,27 @@
 > Creado 2026-06-01 (Fase C ch4). Para ejecutar tras `/clear` con contexto fresco.
 > Comunicación con Rafael en **español**.
 
+## ✅ RESUELTO 2026-06-01 — era artefacto de medición, NO bug real
+
+**El "overflow horizontal global en mobile" no existía en dispositivo real.** El diagnóstico
+original (`docScrollW=482` a 390px) midió un **artefacto de Chrome headless**: en este Windows,
+headless **ignora `--window-size=390`** y siempre reporta `innerWidth=482` / `screen.width=800`
+(confirmado con página en blanco trivial; `--headless=old` y `--force-device-scale-factor=1`
+no lo arreglan). Ver memoria [[chrome-headless-viewport-artifact]].
+
+Verificado con **emulación mobile REAL vía CDP** (`Emulation.setDeviceMetricsOverride`
+width:390 mobile:true, usando `WebSocket` global de Node 24): a 390px reales
+→ **`docScrollW === innerW === 390` en ch1/ch3/ch4**, sin overflow del documento, títulos y
+paneles completos sin recorte. Desktop 1366: parallax intacto. Tests 418/418.
+
+**Cambios aplicados igual (higiene defensiva, inofensivos):**
+- `index.html` — guard global `html,body { overflow-x:hidden; max-width:100% }`.
+- `Chapter4Content.vue` — mobile: capas estáticas `inset:0; width/height:100%` (sin overscan).
+- `Chapter3Content.vue` — mobile: capas `left:0; width:100%` (quita overscan lateral inútil sin
+  puntero; conserva el vertical para el drift de scroll).
+
+Lo de abajo queda como registro del razonamiento original (premisa parcialmente errónea).
+
 ## Contexto / problema
 
 En viewports angostos (mobile) el contenido de varios chapters aparece **recortado a ambos
