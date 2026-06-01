@@ -12,21 +12,23 @@ const SCROLL_SHELL_SRC = readFileSync(resolve(process.cwd(), 'src/components/Scr
 const CHAPTER_THEMES_SRC = readFileSync(resolve(process.cwd(), 'src/styles/chapter-themes.css'), 'utf8')
 
 describe('Theme bleed prevention — Phase 4 architectural integration', () => {
-  // T1 (iter2 2026-05-28): ParallaxLayers.vue retirado al colapsar stack 4-capas
-  // a single bg full-bleed. El nuevo contrato T1 verifica que ch4-stage-bg.png
-  // está referenciado como background-image del .ch4-layout.
-  it('T1 iter2: Chapter4Content.vue referencia ch4-stage-bg.png como background-image', () => {
-    expect(CH4_SRC).toMatch(/background-image:\s*url\(['"]?\/assets\/ch4-bg\.png/)
+  // T1 (iter3 2026-06-01): parallax de 4 capas "flotando en el vacío". El contrato
+  // verifica que el stack vive en un contenedor .ch4-parallax con capas .ch4-layer
+  // (NO un single bg ni ParallaxLayers.vue externo).
+  it('T1 iter3: Chapter4Content.vue tiene un stack .ch4-parallax con capas .ch4-layer', () => {
+    expect(CH4_SRC).toMatch(/class="ch4-parallax"/)
+    expect(CH4_SRC).toMatch(/ch4-layer--portal/)
+    expect(CH4_SRC).toMatch(/ch4-layer--character/)
   })
 
-  // T2 (iter2 2026-05-28): ya no hay child absolute que contener — el bg vive en
-  // el background-image del propio .ch4-layout. Verificamos position:relative
-  // (preservado para los FloatingPanel internos) + bg cover fixed pixelated.
-  it('T2 iter2: Chapter4Content.vue tiene .ch4-layout con bg cover fixed pixelated', () => {
+  // T2 (iter3 2026-06-01): containment — el parallax NO debe bleed a otros chapters.
+  // .ch4-layout es position:relative + overflow:hidden (boundary), y .ch4-parallax
+  // está absolute + overflow:hidden contenido dentro (no fixed full-viewport en desktop).
+  it('T2 iter3: parallax contenido en .ch4-layout (relative+overflow) sin bleed', () => {
     expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*position:\s*relative/s)
-    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*background-size:\s*cover/s)
-    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*background-attachment:\s*fixed/s)
-    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*image-rendering:\s*pixelated/s)
+    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*overflow:\s*hidden/s)
+    expect(CH4_SRC).toMatch(/\.ch4-parallax\s*\{[^}]*position:\s*absolute/s)
+    expect(CH4_SRC).toMatch(/\.ch4-parallax\s*\{[^}]*overflow:\s*hidden/s)
   })
 
   // T3: Chapter5Content.vue NO importa FloatingPanel (ch5 NO debe heredar AR/VR
