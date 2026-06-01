@@ -61,8 +61,14 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch3-mark-(scroll|tome|orb).png + ch3-parchment.png
 //     · ch3-flash-fallen.png (logo Flash "caído" — narrativa muerte de Flash, emblema I)
 //     · ch3-html5-future.png (logo HTML5 radiante en el horizonte — el futuro)
+//   - 4 ch4 parallax "flotando en el vacío" iter3 (Rafael 2026-06-01):
+//     · ch4-portal.png (espacio profundo + portal con mundo 3D tenue, capa fondo opaca)
+//     · ch4-character.png (chico flotando de espaldas con gafas VR, sprite transparente)
+//     · ch4-matrix.png (glifos matrix neón tenues, transparente — capa híbrida c3)
+//     · ch4-near.png (partículas/fragmentos próximos, transparente — primer plano c0)
+//     Reemplazan al ch4-bg.png iter2 (movido a old/ vía §6.5).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

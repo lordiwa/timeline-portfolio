@@ -16,6 +16,20 @@ Formato per entry:
 
 ---
 
+## ch4-bg.png — iter2 → REPLACED por parallax 4 capas iter3 (2026-06-01)
+
+El bg único full-bleed (iter2) se reemplaza por un parallax de 4 capas "flotando en el vacío" (concepto de Rafael): personaje de espaldas con gafas VR mirando a un portal con mundo 3D, símbolos matrix neón flotantes, profundidad por puntero + drift.
+
+- **Versión guardada:** `old/ch4-bg-2026-06-01-iter2.png` (~503 KB)
+- **Razón del cambio:** Rafael — "el contenido tapa el arte y la izquierda se desperdicia… sería el personaje en la mitad a la derecha flotando dando la espalda usando gafas vr, mirando hacia abajo a la derecha, a un agujero negro donde se ve un mundo 3D… parallax de 4 capas… debe sentirse alguien flotando en el espacio vacío".
+- **Qué se hizo diferente:** stack de 4 capas (NO sprites 128px del fracaso iter1; full-frame ~1376px, sin optimize/process_sprite):
+  - `ch4-portal.png` (forge_background opaco, fondo) — espacio + portal cyan con mundo 3D wireframe tenue abajo-derecha.
+  - `ch4-character.png` (forge_sprite size:0 transparente) — chico flotando de espaldas, gafas VR.
+  - capa matrix (c3) + near (c0): glifos/partículas CSS por ahora (híbrido; PNG tenue opcional pendiente).
+- **Commit hash post-regen:** `<pendiente este commit>`
+
+---
+
 ## ch4 parallax stack — iter1 → REPLACED por ch4-bg.png (2026-05-28)
 
 Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2). Se reemplazan por un único `ch4-bg.png` full-bleed estilo ch3, eliminando el sistema de 4 capas + `ParallaxLayers.vue`.
