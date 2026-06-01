@@ -547,3 +547,17 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   - iter17 (`old/ch5-bust-2026-06-01-iter17-grey-hair.png`): regen bg="lava" + flood-fill → transparencia OK pero pelo gris/canoso + calvicie (drift). Rechazada.
   - iter18 (final): regen bg="lava" forzando pelo castaño denso + barba larga oscura. Transparencia OK. Quedaron artefactos cyan semi-transparentes (alpha 15-53) tipo "icicle" en barba/bajo-ojos (restos del flood-fill del lava). **Fix post-proceso (PIL, main session):** densificado de barba + kill de píxeles cyan (b>r+12, b>90) sin importar alpha → castaño en barba / piel en mejilla. Validado pixel-sample vs ch3 (pelo #1B0A04, piel #FCB57D, barba #1C0A05, ojos sage, ropa navy #151F2D) + render en app (avatar OK).
 - **Commit hash del cambio:** `aaf4b30`
+
+## ch4-bust.png — iter6 → iter7 (2026-06-01, cambio de enfoque)
+
+- **Versión guardada:** `old/ch4-bust-2026-06-01-iter6-forge-shorthair.png` (forge, pelo corto, commit `ad1a349`)
+- **Razón del cambio:** Rafael: "ch4 es ch3 pero con la barba apenas más larga". El enfoque forge (cara nueva) no era lo pedido — quiere literalmente ch3 con barba un poco más larga.
+- **Qué se hizo:** ch4 = COPIA exacta de ch3-bust.png + extensión de la barba (punta del mentón ~4 filas más, tapered/natural) vía PIL. Mismo pelo, cara, ojos, piel y colores que ch3. Verificado en app (StickyAvatar).
+- **Commit hash del cambio:** `ad8170e`
+
+## ch5-bust.png — iter18 → iter19 (2026-06-01, cambio de enfoque)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter18-forge-cyanfix.png` (forge + fix cyan, commit `ad1a349`)
+- **Razón del cambio:** Rafael: "arruinaste ch5, barba recta irreal. Usa de base ch2 pero con barba". El forge driftó (barba irreal tras pixel-surgery). Decisión: derivar de un bust aprobado en vez de generar cara nueva.
+- **Qué se hizo:** ch5 = COPIA exacta de ch2-bust.png (pelo corto, cara, ojos, piel, camisa navy intactos) + barba castaño oscuro PINTADA siguiendo la mandíbula real de ch2 (textura orgánica dispersa, borde superior irregular, punta natural — NO recta). Color barba de ch3 (#0E0100). Luego, por pedido de Rafael, pelo de ch2 oscurecido de gris/canoso → castaño (matchea barba/ch3/ch4). Validado en app: pelo y barba oscuros, transparente. NOTA: en upscale LANCZOS el pelo se ve gris (artefacto de mezcla con fondo transparente); el dato real y el render pixelated de la app son castaño oscuro.
+- **Commit hash del cambio:** `ad8170e`
