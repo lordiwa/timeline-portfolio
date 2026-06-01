@@ -177,6 +177,13 @@ onBeforeUnmount(() => {
   padding-top: calc(96px + var(--sp-lg));
   padding-bottom: var(--sp-lg);
   height: 100%;
+  /* .chapter-section es flex-centrado → reclamar el ancho completo del viewport,
+     si no el parallax queda angosto y el portal (esquina derecha) cae fuera.
+     Mismo fix que ch2 (.flash-y2k-root). */
+  width: 100%;
+  flex: 1 1 100%;
+  align-self: stretch;
+  min-width: 0;
   overflow: hidden;
   background-color: var(--c-bg);
   image-rendering: pixelated;
@@ -206,21 +213,22 @@ onBeforeUnmount(() => {
 /* Profundidad: factor puntero+drift creciente del fondo (portal) al frente (near).
    FASE A — placeholders CSS; los background-image reales llegan en Fase B. */
 
-/* c4 portal — fondo opaco. Placeholder: espacio profundo + glow del portal abajo-derecha. */
+/* c4 portal — fondo opaco: espacio profundo + portal con mundo 3D tenue abajo-derecha.
+   Sin overscan (el portal está en la esquina; el -8%/116% lo recortaba). Se mueve solo
+   5px y el bg es navy → no revela bordes. */
 .ch4-layer--portal {
   z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background-color: var(--c-bg);
-  background-image:
-    radial-gradient(34% 40% at 78% 74%, rgba(0, 255, 255, 0.35) 0%, rgba(32, 80, 160, 0.18) 38%, transparent 70%),
-    radial-gradient(120% 120% at 50% 30%, rgba(20, 32, 80, 0.55) 0%, #0a0f2e 70%);
+  background-image: url('/assets/ch4-portal.png');
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 5px),
     calc((var(--my, 0) + var(--dy, 0)) * 4px),
     0
   );
-  animation: ch4-portal-pulse 9s ease-in-out infinite;
 }
-@keyframes ch4-portal-pulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
 
 /* c3 matrix base — PNG tenue (Fase B). Por ahora transparente, sin artefacto. */
 .ch4-layer--matrix {
@@ -257,7 +265,7 @@ onBeforeUnmount(() => {
   50% { opacity: 0.55; transform: translateY(-18px) scale(1.05); }
 }
 
-/* c1 personaje — placeholder: arte actual (ch4-bg.png) a la derecha. Bob autónomo en el inner. */
+/* c1 personaje — sprite ch4-character.png (de espaldas, gafas VR) a la derecha. Bob autónomo. */
 .ch4-layer--character {
   z-index: 3;
   transform: translate3d(
@@ -269,12 +277,11 @@ onBeforeUnmount(() => {
 .ch4-character-art {
   position: absolute;
   inset: 0;
-  background-image: url('/assets/ch4-bg.png');
+  background-image: url('/assets/ch4-character.png');
   background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
+  background-size: auto 52%;
+  background-position: 64% 34%;
   image-rendering: pixelated;
-  opacity: 0.92;
   animation: ch4-char-bob 6.5s ease-in-out infinite;
 }
 @keyframes ch4-char-bob {
