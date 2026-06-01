@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 5;
   width: 100%;
-  max-width: 400px;
+  max-width: 540px;
   max-height: calc(100% - 16px);
   overflow-y: auto;
   display: flex;
@@ -322,7 +322,7 @@ onBeforeUnmount(() => {
 
 .ch4-year {
   font-family: 'Audiowide', 'Eurostile', sans-serif;
-  font-size: 2rem;
+  font-size: 1.6rem;
   margin: 0;
   color: var(--c-accent);
   text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
 
 .ch4-era {
   font-family: 'Audiowide', 'Eurostile', sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   margin: 0;
   color: var(--c-fg);
 }
@@ -353,8 +353,8 @@ onBeforeUnmount(() => {
 
 .ch4-bio {
   font-family: Georgia, serif;
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.45;
   color: var(--c-fg);
   margin: 0;
 }
