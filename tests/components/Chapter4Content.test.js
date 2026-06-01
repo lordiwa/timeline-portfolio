@@ -1,15 +1,16 @@
 // tests/components/Chapter4Content.test.js
 // Tests Plan 04-04 Task 4 — Chapter4Content.vue (wrapper AR/VR con bg + glass panels).
 //
-// iter2 (Rafael 2026-05-28): ParallaxLayers stack reemplazado por single bg full-bleed
-// (ch4-bg.png cover fixed estilo .ch3-stage). T3/T6 actualizados al nuevo contrato.
+// iter3 (Rafael 2026-06-01): single bg reemplazado por parallax de 4 capas "flotando en el
+// vacío" (portal/matrix/glyphs/character/near) con movimiento puntero+drift PRM-aware.
+// T3/T6 actualizados al contrato iter3 (estructura parallax, no single bg).
 //
 // Cobertura T1-T7:
-// - T1 DOM contract: .ch4-layout + .ch4-meta + .ch4-content
-// - T3 bg-image ch4-bg.png + FloatingPanel embeds (sin ParallaxLayers)
+// - T1 DOM contract: .ch4-layout + .ch4-meta + .ch4-content + .ch4-parallax con 4+ capas
+// - T3 estructura parallax: .ch4-layer--{portal,character,near} + glifos matrix + FloatingPanel embeds
 // - T4 projects filter ch4 → solo ch4 items en FloatingPanel (mock 1 ch4 + 1 ch5)
 // - T5 reactive: locale ES→EN, flavor + bio actualizan
-// - T6 CSS source: .ch4-layout tiene position:relative + bg-image + background-attachment:fixed
+// - T6 CSS source: .ch4-parallax absolute + .ch4-layer transform var(--mx) + PRM freeze
 // - T7 NO usa <ProjectCard> (D4-04 — projects van vía FloatingPanel slot)
 
 import { describe, it, expect, vi } from 'vitest'
@@ -92,10 +93,16 @@ describe('Chapter4Content.vue', () => {
   // ───────────────────────────────────────────────
 
   // ───────────────────────────────────────────────
-  // T3 bg-image + FloatingPanel embeds (iter2: sin ParallaxLayers)
+  // T3 estructura parallax iter3 + FloatingPanel embeds
   // ───────────────────────────────────────────────
-  it('T3 iter2: CSS source referencia ch4-bg.png como background-image', () => {
-    expect(CH4_SOURCE).toMatch(/background-image:\s*url\(['"]?\/assets\/ch4-bg\.png/)
+  it('T3 iter3 DOM: .ch4-parallax con 4 capas + glifos matrix', () => {
+    const { wrapper } = mountCh4()
+    expect(wrapper.find('.ch4-parallax').exists()).toBe(true)
+    expect(wrapper.find('.ch4-layer--portal').exists()).toBe(true)
+    expect(wrapper.find('.ch4-layer--character').exists()).toBe(true)
+    expect(wrapper.find('.ch4-layer--near').exists()).toBe(true)
+    // glifos matrix (capa híbrida c3) — al menos uno renderizado
+    expect(wrapper.findAll('.ch4-glyph').length).toBeGreaterThan(0)
   })
 
   it('T3: count <FloatingPanel> ≥ 2 (panel principal + N projects ch4)', () => {
@@ -131,16 +138,20 @@ describe('Chapter4Content.vue', () => {
   })
 
   // ───────────────────────────────────────────────
-  // T6 CSS source markers iter2 — bg fixed cover patrón .ch3-stage
+  // T6 CSS source markers iter3 — parallax stack + movimiento por var + PRM freeze
   // ───────────────────────────────────────────────
-  it('T6 iter2 CSS: .ch4-layout tiene position: relative + background-attachment: fixed', () => {
-    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*position:\s*relative/s)
-    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*background-attachment:\s*fixed/s)
+  it('T6 iter3 CSS: .ch4-parallax position: absolute + .ch4-layer will-change: transform', () => {
+    expect(CH4_SOURCE).toMatch(/\.ch4-parallax\s*\{[^}]*position:\s*absolute/s)
+    expect(CH4_SOURCE).toMatch(/\.ch4-layer\s*\{[^}]*will-change:\s*transform/s)
   })
 
-  it('T6 iter2 CSS: .ch4-layout tiene background-size: cover + image-rendering: pixelated', () => {
-    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*background-size:\s*cover/s)
-    expect(CH4_SOURCE).toMatch(/\.ch4-layout\s*\{[^}]*image-rendering:\s*pixelated/s)
+  it('T6 iter3 CSS: capas se mueven con var(--mx) y PRM congela transform', () => {
+    // El movimiento del parallax se conduce por las CSS vars --mx/--dx (puntero + drift).
+    expect(CH4_SOURCE).toMatch(/translate3d\(\s*calc\(\(var\(--mx/s)
+    // PRM: dentro de @media prefers-reduced-motion, .ch4-layer transform:none.
+    expect(CH4_SOURCE).toMatch(
+      /@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*\{[\s\S]*?\.ch4-layer\s*\{[^}]*transform:\s*none/
+    )
   })
 
   // ───────────────────────────────────────────────
