@@ -200,8 +200,9 @@ onBeforeUnmount(() => {
 .ch4-panel-column {
   position: relative;
   z-index: 5;
-  align-self: flex-start;
-  flex: 1 1 auto;
+  align-self: center;        /* más al centro (horizontal) */
+  margin-top: 20vh;          /* más abajo ~20% */
+  flex: 0 1 auto;
   min-height: 0;
   width: 100%;
   max-width: 640px;
@@ -449,8 +450,10 @@ onBeforeUnmount(() => {
   .ch4-parallax { position: absolute; }
   .ch4-layer { transform: none; }
 
-  /* Columna a ancho completo, sin float (evita reflow táctil incómodo). */
+  /* Columna a ancho completo, sin float ni offset (evita reflow táctil incómodo). */
   .ch4-panel-column {
+    align-self: stretch;
+    margin-top: var(--sp-md);
     max-width: none;
     animation: none;
   }
