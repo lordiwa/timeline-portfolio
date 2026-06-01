@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Scroll Shell + Sticky Anchors** - Infraestructura de scroll vertical con avatar sticky top-left + timeline sticky bottom; smoke test iOS confirmatorio. **Cerrada 2026-05-12 con deferred verification:** 6/7 plans ejecutados, Plan 07 (iOS smoke test) deferido por falta de hardware iOS.
 - [x] **Phase 2: Theme System + i18n** - Motor visual (7 themes era-auténticos) y motor lingüístico (ES/EN toggle) listos antes de cualquier contenido real. **Cerrada 2026-05-13:** 6/6 plans + manual gate firmado por Rafael verdict PASS. Caveats: panel del StickyTimeline (rediseñado vertical-left ese mismo día) usa tokens :root estáticos — opcional override por theme en Phase 3.
 - [~] **Phase 3: Chapter 3 End-to-End** - Landing por defecto polished con avatar, bio, proyectos y contacto en ambos idiomas. **Cerrada 2026-05-13 con deferred art:** 4/5 plans ejecutados (W0 data + W1 ContactHUD + W1 SEO @unhead/vue + W2 Chapter3Content/ProjectCard). Plan 03-05 (avatar pixel art batch 7 busts) deferred — Task 5.1 gate BLOCKED pending Rafael CONTENT-CHECKLIST + foto ~30 años en `public/assets/.refs/` + `.gitignore` entry. 216 tests verdes, build verde. Placeholder mode activo.
-- [ ] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable)
+- [x] **Phase 4: Chapters 0-2 + 4-5** - Cinco chapters restantes completos con pixel art y contenido era-auténtico (paralelizable). **Cerrada 2026-05-14 PASS-with-observations:** 6/6 plans ejecutados (04-VERIFICATION=passed, 04-06-SUMMARY=complete). Deferred: contenido proyectos real (stubs PENDING) + backgrounds downscale + axe contrast audit. Luego INSERTED 04.1 (Y2K Flash stage) + 04.2 (match-3 minigame) sobre ch2.
 - [~] **Phase 5: Phaser Chapter 6** - Escena espacial explorable en Phaser con parallax, naves y planetas-proyecto. **Cerrada 2026-05-14 con observations:** 6/6 plans ejecutados (W0 scaffolding + W1 8 ch6 assets vía artist-creator/editor + W2 Phaser factory/SpaceScene + W3 Chapter6Content shell + W4 ProjectOverlay synthwave + W5 manual checklist artifact). Programmatic 424/424 GREEN, build PASS. Rafael verdict efectivo **PASS-with-observations 2026-05-14** ("ya salió hay que arreglar igual visualmente"). §10 sign-off formal pendiente. Deferred: visual review cross-chapter (ch3+ visual errors) + lazy chunk Phaser 341 KB gzip excede target 200 KB.
 - [ ] **Phase 6: Deploy + Polish** - Build de producción, Firebase Hosting configurado y cache headers correctos
 
@@ -90,7 +90,23 @@ Plans:
 - [x] 04-03-PLAN.md — Wave 2: Ch2 Flash — pixelforge ch2-bg.png + FlashBanner skeumorphic + Chapter2Content + ProjectCard variant ch2 + projects BlueLizard/Matte/Joju
 - [x] 04-04-PLAN.md — Wave 3: Ch4 AR/VR multi-layer parallax — 4 pixelforge layers (stars-far/planet-mid/panels-fg/ships-near) + ParallaxLayers (Pitfall 6/7) + FloatingPanel (@supports backdrop-filter)
 - [x] 04-05-PLAN.md — Wave 4: Ch5 Modern hero — ch5-hero.png + ScrollRevealCard (PRM defensive double JS+CSS) + Chapter5Content staggered + projects BairesDev/number8/VivoEnVivo/RocketSnail/Remoose
-- [ ] 04-06-PLAN.md — Wave 5: Integración + a11y — i18n alt-text refresh era-accurate + parity T4 guard + theme-isolation tests + 04-MANUAL-CHECKLIST.md + Rafael firma §13 sign-off
+- [x] 04-06-PLAN.md — Wave 5: Integración + a11y — i18n alt-text refresh era-accurate + parity T4 guard + theme-isolation tests + 04-MANUAL-CHECKLIST.md (ejecutado 2026-05-14, 04-06-SUMMARY=complete; §13 sign-off formal de Rafael pendiente)
+
+### Phase 4.1: ch2 Y2K Flash stage (INSERTED)
+**Goal**: Reemplazar el ch2 (chrome IE6 iter2) por un stage Flash Y2K cyber full-bleed con sidebar nav HOME·ABOUT·WORK·CONTACT, paneles intercambiables con tween, preloader cyber y mobile notice easter-egg.
+**Estado**: ✓ Ejecutada ad-hoc 2026-05-17 (commits 8d69a58, 56cd60d). PLAN + SUMMARY retroactivo (2026-06-01). **Sin VERIFICATION/§10 formal.**
+**Archivos**: src/components/Flash{SidebarNav,Stage,HomePanel,AboutPanel,WorkPanel,ContactPanel,Preloader,MobileNotice}.vue + Chapter2Content.vue reescrito.
+
+Plans:
+- [x] 04.1/PLAN.md — Y2K cyber single-page interactive (04.1-01-SUMMARY.md retroactivo; audio SFX deferred)
+
+### Phase 4.2: ch2 match-3 minigame (INSERTED)
+**Goal**: Embeber un mini-advergame match-3 de ~60s en el HOME panel del ch2 Y2K stage (Phaser instance separada de ch6, lazy-load + pause/resume vía KeepAlive).
+**Estado**: ✓ Ejecutada ad-hoc 2026-05-28 (commits fc437ad, 5bec5a3 fix nav bug). PLAN + SUMMARY retroactivo (2026-06-01). **Sin VERIFICATION/§10 formal.**
+**Archivos**: src/phaser/ch2/{index.js,MatchScene.js} + Ch2MiniGame.vue.
+
+Plans:
+- [x] 04.2/PLAN.md — match-3 advergame embebido (04.2-01-SUMMARY.md retroactivo; deviation: KeepAlive pause/resume en vez de destroy)
 
 ### Phase 5: Phaser Chapter 6
 **Goal**: El chapter 6 carga una escena Phaser explorable con **parallax vertical descendente**, naves cruzando y 3 planetas-proyecto clicables distribuidos verticalmente; el locale bridge funciona; la instancia de Phaser no produce memory leaks al navegar a otros chapters y volver.
@@ -137,11 +153,22 @@ Plans:
 
 **Execution Order:** 1 → 2 → 3 → 4 → 5 → 6
 
+> **Tabla corregida 2026-06-01** (auditoría de estado). La versión previa se contradecía con
+> los headers de cada fase (decía Phase 2 "4/6", Phase 4 "1/6 In Progress" cuando en realidad
+> estaban cerradas). Verificado contra git + archivos VERIFICATION/SUMMARY.
+
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scroll Shell + Sticky Anchors | 6/7 (+1 deferred) | ✓ Closed with deferred verification (Plan 07 ios-smoke-test pendiente por falta de hardware iOS — ver STATE.md Deferred Items) | 2026-05-12 |
-| 2. Theme System + i18n | 4/6 | In Progress|  |
-| 3. Chapter 3 End-to-End | 4/5 | In Progress|  |
-| 4. Chapters 0-2 + 4-5 | 1/6 | In Progress | - |
+| 2. Theme System + i18n | 6/6 | ✓ Closed PASS (manual checklist §10 firmado por Rafael verdict PASS) | 2026-05-13 |
+| 3. Chapter 3 End-to-End | 4/5 (+1 deferred) | ✓ Closed with deferred art (Plan 03-05 avatar batch BLOCKED — CONTENT-CHECKLIST + foto pending Rafael) | 2026-05-13 |
+| 4. Chapters 0-2 + 4-5 | 6/6 | ✓ Closed PASS-with-observations (04-VERIFICATION passed + 04-06-SUMMARY complete; deferred items en STATE.md) | 2026-05-14 |
+| 4.1. ch2 Y2K Flash stage (INSERTED) | 1/1 | ✓ Executed ad-hoc (sin SUMMARY/verificación GSD formal — commits 8d69a58/56cd60d) | 2026-05-28 |
+| 4.2. ch2 match-3 minigame (INSERTED) | 1/1 | ✓ Executed ad-hoc (sin SUMMARY/verificación GSD formal — commits fc437ad/5bec5a3) | 2026-05-28 |
 | 5. Phaser Chapter 6 | 6/6 | ✓ Closed PASS-with-observations (programmatic 424/424 + build PASS; visual review cross-chapter + §10 formal sign-off deferred — ver STATE.md Deferred Items) | 2026-05-14 |
-| 6. Deploy + Polish | 0/TBD | Not started | - |
+| 6. Deploy + Polish | 0/TBD | Not started (Firebase sin configurar; backgrounds ~1.65MB + bundle fuentes 782KB pendientes de optimizar) | - |
+
+**Nota post-roadmap (2026-05-17 → 2026-05-29):** abundante iteración de arte ad-hoc fuera del flujo GSD
+(chapter-bleed fixes, ch1 GIFs 90s, ch3 rediseños múltiples, ch2 batalla épica "Flash vs Apple",
+ch3 "La muerte de Flash" parallax + cuento interactivo, tipografía Cinzel). No mapeada a planes GSD.
+Ver `SESSION-HANDOFF-2026-05-29-epic-chapters.md` + STATE.md "Real State Audit 2026-06-01".

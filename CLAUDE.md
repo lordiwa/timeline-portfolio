@@ -259,29 +259,34 @@ mato-new-portfolio/
 ├── vite.config.js                   ← host 127.0.0.1, port 5173
 ├── index.html                       ← image-rendering: pixelated
 ├── src/
-│   ├── main.js                      ← createApp(App).mount('#app')
-│   └── App.vue                      ← placeholder, a la espera de datos
-└── public/assets/                   ← assets pixel-art generados (vacío)
+│   ├── main.js                      ← createApp + vue-i18n + @fontsource imports
+│   ├── App.vue                      ← shell completo (ScrollShell + sticky avatar/timeline + bg morph)
+│   ├── components/                  ← 7 Chapter{N}Content + Flash*.vue (ch2 Y2K) + Phaser shells
+│   ├── data/                        ← chapters / projects / bio / contact (contact+projects = stubs PENDING)
+│   ├── i18n/locales/                ← es.json / en.json
+│   ├── phaser/                      ← index.js + SpaceScene.js (ch6) + ch2/MatchScene.js (minigame)
+│   └── styles/chapter-themes.css    ← 7 themes era-auténticos @layer
+└── public/assets/                   ← decenas de assets pixel-art generados (+ old/ con CHANGELOG §6.5)
 ```
 
-### 7.2 Estado del scaffold
+### 7.2 Estado del scaffold — DESACTUALIZADO, ver `.planning/STATE.md`
 
-- Vue 3 + Vite arrancan con un placeholder limpio en `App.vue`
-- Phaser sigue en `package.json` pero no se instancia hasta que haga falta
-  (decoraciones animadas, mini-escenas interactivas, etc.)
-- `public/assets/` vacío — los agentes lo llenarán al generar arte
-- Agentes y skills listos para invocarse cuando lleguen los datos del usuario
+> ⚠️ El proyecto NO es un scaffold vacío. Está casi completo. Para el estado real y
+> actualizado, la fuente de verdad es **`.planning/STATE.md`** (sección "Real State Audit 2026-06-01")
+> y **`.planning/ROADMAP.md`**. Resumen a 2026-06-01:
 
-### 7.3 Próximo paso
+- **Phases 1-5 ejecutadas** (1 con deferred iOS, 3 con deferred avatar art, 4 y 5 PASS-with-observations).
+  + 2 fases INSERTED sobre ch2 (04.1 Y2K Flash stage, 04.2 match-3 minigame).
+- Los 7 chapters están maquetados con arte pixel + Phaser (ch2 minigame + ch6 escena espacial) instanciado.
+- Tests: **416/418 verdes** (2 rojos: bundle .woff2 782KB > 350KB tras añadir Cinzel; BackgroundLayers shorthand).
+- **Phase 6 (deploy a Firebase) NO empezada.**
 
-Esperar a que el usuario entregue:
-- Bio / sobre mí
-- Lista de proyectos a mostrar
-- Datos de contacto / redes
-- Referencias visuales o paleta deseada para el pixel art
+### 7.3 Próximo paso — pendientes reales (ver STATE.md "Next options")
 
-Cuando lleguen, el planner decide: qué assets generar, en qué orden, y qué
-secciones del portafolio maquetar primero.
+- **Contenido real (BLOCKING, input Rafael):** `contact.js` vacío + `projects.js` stubs PENDING → CONTENT-CHECKLIST §2.1/2.2/3.
+- **Arte busts:** ch4/ch5 regenerar matcheando ch3; ch6 ropa borrada (Adobe selective).
+- **Visual polish:** "diseño roto desde ch3" cross-chapter.
+- **Phase 6 deploy:** downscale backgrounds (~1.65MB) + fix bundle fuentes + Firebase config.
 
 ### 7.4 Correr el proyecto
 

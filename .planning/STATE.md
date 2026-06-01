@@ -3,15 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: phase_executed_pass_with_observations
-stopped_at: Phase 5 executed — visual review cross-chapter pending
-last_updated: "2026-05-14T20:00:00.000Z"
-last_activity: 2026-05-14 -- Phase 5 executed 6/6 plans (verdict PASS-with-observations; visual review pendiente)
+stopped_at: Iteración de arte ad-hoc ch2/ch3 (épica Flash vs Apple) cerrada 2026-05-29; pendiente contenido real + arte busts + Phase 6 deploy
+last_updated: "2026-06-01T00:00:00.000Z"
+last_activity: 2026-05-29 -- épica Flash vs Apple (ch2 batalla + ch3 "La muerte de Flash") commit db52832; auditoría de estado 2026-06-01
 progress:
-  total_phases: 6
-  completed_phases: 4
-  total_plans: 30
-  completed_plans: 28
-  percent: 93
+  total_phases: 6           # + 2 fases INSERTED (04.1, 04.2) no contadas aquí
+  completed_phases: 5       # 1,2,3,4,5 cerradas (2 full PASS, 3 con deferred); Phase 6 NO empezada
+  total_plans: 30           # planes de fases enteras (Phase 6 = TBD, sin contar)
+  completed_plans: 28       # 2 deferred: 01-07 iOS smoke + 03-05 avatar art
+  percent: 93               # ⚠️ ENGAÑOSO: mide planes GSD ejecutados, NO "portafolio listo".
+                            # Phase 6 deploy = 0%. Contenido real, arte busts y visual polish
+                            # siguen pendientes. Ver "Real State Audit 2026-06-01" abajo.
+  inserted_phases_executed: 2   # 04.1 Y2K Flash stage + 04.2 match-3 minigame (sin SUMMARY/verificación formal)
 ---
 
 # Project State
@@ -21,21 +24,39 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Que un visitante mueva el scroll, vea el sitio transformarse, y entienda en 30 segundos sin leer una sola viñeta de CV que está mirando a alguien que vivió tres décadas de tecnología y cuyas habilidades convergen en algo único.
-**Current focus:** Phase 05 — phaser-chapter-6
+**Current focus:** Post-Phase-5 — iteración de arte ad-hoc (fuera del flujo GSD formal) + pendiente contenido real + Phase 6 deploy.
+
+## Real State Audit 2026-06-01
+
+> Auditoría solicitada por Rafael tras detectar que el "93%" no cuadraba con la realidad.
+> Corregidas disonancias entre STATE.md ↔ ROADMAP.md ↔ código ↔ git.
+
+**El 93% es de planes-GSD ejecutados, NO de "portafolio terminado".** Lo que falta para shippear:
+
+1. **Contenido real (BLOCKING, input de Rafael)** — `src/data/contact.js` tiene email/LinkedIn/GitHub **vacíos** (`''`); `src/data/projects.js` tiene descs como **stubs PENDING** (8 marcadores) esperando `CONTENT-CHECKLIST §2.1/2.2/3`. Bio era-specific existe pero proyectos siguen como nombre-de-estudio sin descripción real.
+2. **Arte busts ch4/ch5/ch6** — ch4/ch5 "pésimos" (regenerar matcheando ch3), ch6 ropa borrada (Adobe selective). Ver `busts-status-2026-05-14`.
+3. **Visual polish cross-chapter** — "diseño roto desde ch3" reportado por Rafael (deferred Phase 5).
+4. **Phase 6 deploy = 0%** — Firebase nunca configurado. + backgrounds pesados (~1.65MB) sin downscale.
+5. **2 tests rojos** — `fonts-bundle T4`: bundle .woff2 = **782 KB** (creció de 285KB→782KB al añadir Cinzel el 29-may; presupuesto 350KB). `BackgroundLayers T7`: espera shorthand `background`.
+
+**Trabajo real desde el último STATE (2026-05-14 → 2026-05-29), todo ad-hoc fuera de GSD:**
+- 2026-05-17/19: fixes de chapter-bleed (overflow:hidden), ch1 GIFs 90s, ch3 rediseños Web2.0→robots Tin Toy.
+- 2026-05-28: **ch2 INSERTED 04.1** (Y2K cyber Flash stage: sidebar HOME·ABOUT·WORK·CONTACT + preloader), **ch2 INSERTED 04.2** (minijuego match-3 Phaser embebido en HOME), ch4 bg acuarela iter2.
+- 2026-05-28/29: ch3 parallax 3 capas + cuento interactivo (5 emblemas clicables + pergamino), ch2 imagen "La gran guerra Flash vs Apple", ch3 "La muerte de Flash", tipografía Cinzel.
 
 ## Current Position
 
-Phase: 05 (phaser-chapter-6) — EXECUTED (verdict PASS-with-observations)
-Plan: 6 of 6 (W5 artifact complete, formal §10 sign-off pending)
-Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items)
-Phase 2 status: 6/6 plans ejecutados. Motor programático completo + sign-off manual de Rafael (`02-MANUAL-CHECKLIST.md` §10 firmado, verdict PASS). Phase 2 100% cerrada.
-Phase 3 status: 4/5 plans + Plan 03-05 avatar art gate BLOCKED (CONTENT-CHECKLIST + foto pending Rafael).
-Phase 4 status: PASS-with-observations cerrada (4 deferred items registrados).
-Phase 5 status: **6/6 plans ejecutados. Programmatic 424/424 GREEN + build PASS + 8 ch6 assets generados + Phaser scene + Vue shell + ProjectOverlay + manual checklist artifact.** Rafael acknowledged "ya salió" 2026-05-14 con observation: "el diseño en general de todo el sitio a partir de ch3 se ve roto o mal hecho" → registrado como deferred item "Visual review cross-chapter".
-Last activity: 2026-05-14 -- Phase 5 executed 6/6 plans (verdict PASS-with-observations)
+Phase: post-05 — sin fase GSD formal activa. El trabajo reciente fue iteración de arte directa.
+Phase 1 status: CERRADA con deferred verification (Plan 07 ios-smoke-test bloqueado por falta de hardware iOS — ver Deferred Items). **6/7 plans.**
+Phase 2 status: **6/6 CERRADA 100%** — motor i18n+themes+morph+fonts + sign-off manual Rafael verdict PASS.
+Phase 3 status: **4/5 CERRADA con deferred art** — Plan 03-05 avatar art gate BLOCKED (CONTENT-CHECKLIST + foto pending Rafael).
+Phase 4 status: **6/6 CERRADA PASS-with-observations** (verificado `04-VERIFICATION.md`=passed + `04-06-SUMMARY.md`=complete). ⚠️ ROADMAP tenía esto mal (decía 1/6 In Progress).
+Phase 4.1 (INSERTED) status: **EJECUTADA ad-hoc** — Y2K Flash stage (commits 8d69a58/56cd60d). Sin SUMMARY ni verificación GSD formal. Componentes Flash*.vue en src/components/.
+Phase 4.2 (INSERTED) status: **EJECUTADA ad-hoc** — match-3 minigame (commits fc437ad/5bec5a3). Sin SUMMARY. src/phaser/ch2/ + Ch2MiniGame.vue.
+Phase 5 status: **6/6 CERRADA PASS-with-observations** — Phaser scene + 8 assets + ProjectOverlay. Deferred: visual review cross-chapter + §10 sign-off formal + lazy chunk 341KB.
+Phase 6 status: **NO EMPEZADA** — 0 plans. Firebase sin configurar.
 
-Progress (Phase 5 isolated): [██████████] 6/6 plans ejecutados (W0-W5) · programmatic PASS · visual polish pending
-Progress (project): Phase 1 ✓ → Phase 2 ✓ → Phase 3 ✓(deferred art) → Phase 4 ✓(deferred polish) → Phase 5 ✓(deferred visual review) → Phase 6 deploy
+Progress (project): Phase 1 ✓ → Phase 2 ✓✓ → Phase 3 ✓(deferred art) → Phase 4 ✓(deferred polish) → [04.1 ✓ad-hoc] → [04.2 ✓ad-hoc] → Phase 5 ✓(deferred visual review) → **Phase 6 deploy PENDIENTE**
 
 ## Phase 2 Verification Results (2026-05-13)
 
@@ -148,10 +169,18 @@ Recent decisions affecting current work:
 | Bug visual | Phase 5 — Visual review cross-chapter requerido (reportado Rafael 2026-05-14 post-execute): "el diseño en general de todo el sitio a partir de ch3 se ve roto o mal hecho o no hay nada como en el de phaser". Phaser sale en ch6 pero hay errores visuales en varios chapters (ch3+). Pendiente: auditar cada Chapter{N}Content.vue + chapter-themes.css [data-chapter=N] vs intent original de cada Phase (mock/preview), identificar regresiones específicas, priorizar fixes. Probable: nueva phase "Visual Polish & Chapter Review" o batch de gap-closure plans 06-XX. | Pending audit | 2026-05-14 |
 | Verification | Phase 5 / Plan 06 — Manual checklist visual 13 items (HiDPI / arrival timing / ships loop / locale tooltips / overlay UX / keyboard nav / PRM / ch5↔ch6 transitions / chapter-overlap vigilancia / bundle size / mantra ratification / vibe synthwave). Programmatic 424/424 GREEN + build PASS. Rafael acknowledged Phase 5 "ya salió" 2026-05-14, verdict efectivo PASS-with-observations (errores visuales registrados arriba). §10 sign-off formal pendiente si Rafael decide firmar el archivo. | Pending human sign-off | 2026-05-14 |
 | Polish | Phase 5 — Lazy chunk Phaser 341 KB gzip excede target 200 KB W3. Mitigation: Vite `build.rollupOptions.output.manualChunks` para separar Phaser engine de SpaceScene. Carry-forward a Phase 6 deploy budget. | Optional polish | 2026-05-14 |
+| Regresión | **Bundle .woff2 = 782 KB** (test `fonts-bundle T4` ROJO, presupuesto 350 KB). Creció de 285KB (Phase 2) al añadir Cinzel + Cinzel-Decorative el 2026-05-29 (commit c2998e9). Mitigation: subsets latin/latin-ext específicos en main.js en vez de index.css completo + evaluar si Cinzel-Decorative es necesario. BLOCKING Phase 6 deploy budget. | Mandatory pre-deploy | 2026-06-01 |
+| Test rojo | `BackgroundLayers T7`: CSS usa `background-color` pero el test espera shorthand `background`. Deuda preexistente menor — decidir si arreglar test o CSS. | Optional | 2026-06-01 |
+| Docs/GSD | Fases INSERTED 04.1 (Y2K Flash stage) y 04.2 (match-3 minigame) ejecutadas ad-hoc, añadidas a ROADMAP + SUMMARY retroactivos generados 2026-06-01 (`04.1-01-SUMMARY.md`, `04.2-01-SUMMARY.md`). **Falta solo verificación/sign-off formal** (no hay VERIFICATION.md ni §10). | Pending verification | 2026-06-01 |
+| Content | `src/data/contact.js` con email/LinkedIn/GitHub **vacíos** (`''`) + `src/data/projects.js` con 8 stubs PENDING. BLOCKING para cerrar Phase 3/4 de verdad y para deploy con contenido real. Input de Rafael vía CONTENT-CHECKLIST §2.1/2.2/3. | Pending Rafael content | 2026-06-01 |
 
 ## Session Continuity
 
-Last session: 2026-05-14T23:30:00.000Z
-Stopped at: Busts ch4/ch5 "pésimos" + ch6 cara OK pero ropa borrada — handoff para clear & resume
-Resume file: .planning/SESSION-HANDOFF-2026-05-14-busts.md (estado actual de los 7 busts + próximos pasos concretos)
-Next command: (próxima sesión) (1) arreglar ropa ch6 con Adobe selective (image_select_by_prompt + image_fill_area) preservando cara — ch3 SIGUE siendo la referencia visual general; (2) regenerar ch4/ch5 matcheando ch3 (no ch6), con prompt agregando "flat lit face no specular highlights" para evitar drift previo; (3) aplicar proceso old/ + CHANGELOG (CLAUDE.md §6.5) en cada regen
+Last session: 2026-05-29 (épica Flash vs Apple — commit db52832). Auditoría de estado 2026-06-01.
+Stopped at: ch2 batalla Flash-vs-Apple + ch3 "La muerte de Flash" pusheados. Pendiente: contenido real Rafael, arte busts ch4/5/6, visual polish ch3+, Phase 6 deploy.
+Resume file: .planning/SESSION-HANDOFF-2026-05-29-epic-chapters.md (más reciente) + .planning/SESSION-HANDOFF-2026-05-14-busts.md (detalle 7 busts).
+Next options (sin orden forzado — Rafael decide):
+  (A) CONTENIDO: Rafael llena CONTENT-CHECKLIST §2.1/2.2/3 → wire bio/proyectos reales + contact.js (email/LinkedIn/GitHub). BLOCKING para cerrar Phase 3/4 de verdad.
+  (B) ARTE: arreglar ropa ch6 (Adobe image_select_by_prompt + image_fill_area, preservar cara) + regenerar busts ch4/ch5 matcheando ch3 ("flat lit face no specular highlights"). Proceso old/ + CHANGELOG (CLAUDE.md §6.5).
+  (C) VISUAL POLISH: auditar "diseño roto desde ch3" cross-chapter.
+  (D) DEPLOY (Phase 6): downscale backgrounds (~1.65MB) + fix bundle fuentes 782KB→<350KB + Firebase config.
