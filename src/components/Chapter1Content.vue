@@ -115,8 +115,8 @@ const oldGifs = [
   gap: var(--sp-lg);
   padding-left: 160px;
   padding-right: var(--sp-lg);
-  padding-top: calc(96px + var(--sp-lg));
-  padding-bottom: var(--sp-lg);
+  padding-top: calc(80px + var(--sp-sm));
+  padding-bottom: var(--sp-md);
   /* height + max-height:100dvh estricto — evita que el flex-center del
    * .chapter-section desplace el layout cuando contenido > viewport
    * (Rafael 2026-05-17: starfield/gifs bleed a ch0). */
@@ -156,22 +156,30 @@ const oldGifs = [
 .ch1-content {
   overflow-y: hidden;
   padding-right: var(--sp-md);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  padding-bottom: var(--sp-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-md);
+  gap: var(--sp-sm);
   position: relative; /* z-index encima del starfield */
   z-index: 1;
+}
+
+/* Los items NO se encogen: si el flex los comprime, el marquee queda con su caja
+   aplastada y el texto se corta (Rafael 2026-06-01). Con flex-shrink:0 cada bloque
+   conserva su altura natural; el contenido cabe gracias a la bio ancha + compactada. */
+.ch1-content > * {
+  flex-shrink: 0;
 }
 
 /* Scrim de legibilidad — el starfield detrás es ruidoso; un panel sutil
    levanta el contraste del texto sin perder el vibe GeoCities (Rafael 2026-05-29). */
 .ch1-bio {
-  max-width: 760px;
+  /* Ancha → menos líneas → menos alto (entra sin scroll en pantallas anchas/bajas). */
+  max-width: 1000px;
   background: rgba(8, 10, 38, 0.55);
   border: 1px solid rgba(120, 160, 255, 0.32);
   border-radius: 6px;
-  padding: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-md);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
@@ -179,12 +187,13 @@ const oldGifs = [
 
 .ch1-bio p {
   font-family: 'Comic Neue', 'Comic Sans MS', cursive;
-  font-size: 1.18rem;
-  line-height: 1.65;
+  font-size: 1.02rem;
+  line-height: 1.4;
   color: var(--c-fg);
-  margin: 0 0 var(--sp-md) 0;
+  margin: 0 0 var(--sp-sm) 0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+.ch1-bio p:last-child { margin-bottom: 0; }
 
 .ch1-flavor {
   font-family: 'Comic Neue', 'Comic Sans MS', cursive;
