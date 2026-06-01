@@ -200,8 +200,9 @@ onBeforeUnmount(() => {
 .ch4-panel-column {
   position: relative;
   z-index: 5;
-  align-self: center;        /* más al centro (horizontal) */
-  margin-top: 20vh;          /* más abajo ~20% */
+  align-self: flex-start;    /* base izquierda */
+  margin-left: 7vw;          /* solo un poco hacia el centro (no centrado del todo) */
+  margin-top: 20vh;          /* más abajo ~20% (altura perfecta) */
   flex: 0 1 auto;
   min-height: 0;
   width: 100%;
@@ -453,6 +454,7 @@ onBeforeUnmount(() => {
   /* Columna a ancho completo, sin float ni offset (evita reflow táctil incómodo). */
   .ch4-panel-column {
     align-self: stretch;
+    margin-left: 0;
     margin-top: var(--sp-md);
     max-width: none;
     animation: none;
