@@ -455,7 +455,9 @@ onBeforeUnmount(() => {
      viewport y haría bleed a otros chapters (bug chapter-overlap + iOS fixed buggy).
      Se mantiene absolute, contenido dentro de .ch4-layout. */
   .ch4-parallax { position: absolute; }
-  .ch4-layer { transform: none; }
+  /* Sin movimiento → sin overscan: inset:0 / 100% mata el desborde que el 116%
+     causaba en el layout viewport mobile (corrección de raíz del overflow-x). */
+  .ch4-layer { transform: none; inset: 0; width: 100%; height: 100%; }
 
   /* Columna: width auto + align-self stretch → la dimensiona el contenedor (sin
      width:100% que se resolvía mal). Sin offset ni float. */

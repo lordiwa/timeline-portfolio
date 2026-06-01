@@ -16,6 +16,12 @@
         color: #e7e7f0;
         font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         min-height: 100vh;
+        /* Guard global: evita que el overscan de las capas parallax (inset:-8%;
+           width:116%) expanda el layout viewport en mobile y recorte el contenido
+           a los lados. El scroller real es .scroll-shell, no el body, así que esto
+           no afecta scroll-snap ni el position:sticky de ch3. Ver PLAN-mobile-overflow-fix. */
+        overflow-x: hidden;
+        max-width: 100%;
       }
       img, canvas {
         image-rendering: pixelated;
