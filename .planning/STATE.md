@@ -37,7 +37,7 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 2. **Arte busts ch4/ch5/ch6** — ch4/ch5 "pésimos" (regenerar matcheando ch3), ch6 ropa borrada (Adobe selective). Ver `busts-status-2026-05-14`.
 3. **Visual polish cross-chapter** — "diseño roto desde ch3" reportado por Rafael (deferred Phase 5).
 4. **Phase 6 deploy = 0%** — Firebase nunca configurado. + backgrounds pesados (~1.65MB) sin downscale.
-5. **Tests: 417/418** (era 416/418). ✅ `fonts-bundle` arreglado 2026-06-01 (782KB→329KB, eliminado Roboto). Queda 1 rojo preexistente: `BackgroundLayers T7` (CSS usa `background-color`, test espera shorthand `background`).
+5. **Tests: 418/418 VERDE** 🟢 (era 416/418). ✅ `fonts-bundle` arreglado (782KB→329KB, eliminado Roboto) + ✅ `BackgroundLayers T7` arreglado (`.bg-layer` usa shorthand `background`). Suite completa limpia 2026-06-01.
 
 **Trabajo real desde el último STATE (2026-05-14 → 2026-05-29), todo ad-hoc fuera de GSD:**
 - 2026-05-17/19: fixes de chapter-bleed (overflow:hidden), ch1 GIFs 90s, ch3 rediseños Web2.0→robots Tin Toy.
@@ -170,7 +170,7 @@ Recent decisions affecting current work:
 | Verification | Phase 5 / Plan 06 — Manual checklist visual 13 items (HiDPI / arrival timing / ships loop / locale tooltips / overlay UX / keyboard nav / PRM / ch5↔ch6 transitions / chapter-overlap vigilancia / bundle size / mantra ratification / vibe synthwave). Programmatic 424/424 GREEN + build PASS. Rafael acknowledged Phase 5 "ya salió" 2026-05-14, verdict efectivo PASS-with-observations (errores visuales registrados arriba). §10 sign-off formal pendiente si Rafael decide firmar el archivo. | Pending human sign-off | 2026-05-14 |
 | Polish | Phase 5 — Lazy chunk Phaser 341 KB gzip excede target 200 KB W3. Mitigation: Vite `build.rollupOptions.output.manualChunks` para separar Phaser engine de SpaceScene. Carry-forward a Phase 6 deploy budget. | Optional polish | 2026-05-14 |
 | ✅ Resuelto | ~~Bundle .woff2 = 782 KB~~ **→ 329.3 KB (2026-06-01)**. Root cause real: NO era Cinzel (43KB) sino **Roboto** importado con 4 pesos × 8 idiomas (cyrillic/greek/vietnamese/math/symbols = 453KB) usado en UN solo `.ch3-hint-cta`. Fix: eliminado Roboto de main.js + `.ch3-hint-cta` ahora usa Inter Variable (ya cargado). Test `fonts-bundle` 4/4 verde. | RESUELTO | 2026-06-01 |
-| Test rojo | `BackgroundLayers T7`: CSS usa `background-color` pero el test espera shorthand `background`. Deuda preexistente menor — decidir si arreglar test o CSS. | Optional | 2026-06-01 |
+| ✅ Resuelto | ~~`BackgroundLayers T7`: CSS usa `background-color`, test espera shorthand~~ → **arreglado 2026-06-01**: `.bg-layer` usa `background: var(--c-bg)` (alineado al contrato D2-05, comportamiento idéntico). Suite 418/418 verde. | RESUELTO | 2026-06-01 |
 | Docs/GSD | Fases INSERTED 04.1 (Y2K Flash stage) y 04.2 (match-3 minigame) ejecutadas ad-hoc, añadidas a ROADMAP + SUMMARY retroactivos generados 2026-06-01 (`04.1-01-SUMMARY.md`, `04.2-01-SUMMARY.md`). **Falta solo verificación/sign-off formal** (no hay VERIFICATION.md ni §10). | Pending verification | 2026-06-01 |
 | Content | `src/data/contact.js` con email/LinkedIn/GitHub **vacíos** (`''`) + `src/data/projects.js` con 8 stubs PENDING. BLOCKING para cerrar Phase 3/4 de verdad y para deploy con contenido real. Input de Rafael vía CONTENT-CHECKLIST §2.1/2.2/3. | Pending Rafael content | 2026-06-01 |
 
