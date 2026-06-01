@@ -69,7 +69,9 @@ const { layerA, layerB } = inject('bgMorph')
 .bg-layer {
   position: absolute;
   inset: 0;
-  background-color: var(--c-bg);
+  /* Shorthand `background` (no background-color): contrato de diseño T7.
+     Resetea sub-props a initial; background-image/size/position se re-declaran abajo. */
+  background: var(--c-bg);
   background-image: var(--bg-image, none);
   background-size: cover;
   background-position: center;
