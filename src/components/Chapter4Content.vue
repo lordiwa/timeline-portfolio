@@ -129,24 +129,27 @@ onBeforeUnmount(() => {
           <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch4-bio">{{ para }}</p>
         </FloatingPanel>
 
-        <FloatingPanel
-          v-for="project in ch4Projects"
-          :key="project.id"
-          :title="t(project.titleKey)"
-        >
-          <p class="ch4-project-desc">{{ t(project.descKey) }}</p>
-          <p v-if="project.role" class="ch4-project-role">{{ project.role }}</p>
-          <ul v-if="project.techStack" class="ch4-project-tech">
-            <li v-for="tech in project.techStack" :key="tech">{{ tech }}</li>
-          </ul>
-          <a
-            v-if="project.link"
-            :href="project.link"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="ch4-project-link"
-          >{{ t('ui.openProject') }}</a>
-        </FloatingPanel>
+        <!-- Proyectos lado a lado (grid) → bloque más ancho y menos alto. -->
+        <div class="ch4-projects">
+          <FloatingPanel
+            v-for="project in ch4Projects"
+            :key="project.id"
+            :title="t(project.titleKey)"
+          >
+            <p class="ch4-project-desc">{{ t(project.descKey) }}</p>
+            <p v-if="project.role" class="ch4-project-role">{{ project.role }}</p>
+            <ul v-if="project.techStack" class="ch4-project-tech">
+              <li v-for="tech in project.techStack" :key="tech">{{ tech }}</li>
+            </ul>
+            <a
+              v-if="project.link"
+              :href="project.link"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="ch4-project-link"
+            >{{ t('ui.openProject') }}</a>
+          </FloatingPanel>
+        </div>
       </div>
     </div>
   </div>
@@ -179,19 +182,27 @@ onBeforeUnmount(() => {
   image-rendering: pixelated;
 }
 
-/* Columna de contenido — flota a la izquierda sobre el espacio vacío. */
+/* Columna de contenido — flota a la izquierda sobre el espacio vacío.
+   Ancha y baja: proyectos en grid 2-col para reducir altura y no cortarse abajo. */
 .ch4-panel-column {
   position: relative;
   z-index: 5;
   width: 100%;
-  max-width: 540px;
-  max-height: calc(100% - 16px);
+  max-width: 640px;
+  max-height: 100%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
   padding-right: var(--sp-xs);
   animation: ch4-col-float 7s ease-in-out infinite;
+}
+
+/* Proyectos lado a lado — más ancho, menos alto. */
+.ch4-projects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-sm);
 }
 @keyframes ch4-col-float {
   0%, 100% { transform: translateY(0); }
@@ -288,8 +299,8 @@ onBeforeUnmount(() => {
   inset: 0;
   background-image: url('/assets/ch4-character.png');
   background-repeat: no-repeat;
-  background-size: auto 52%;
-  background-position: 64% 34%;
+  background-size: auto 50%;
+  background-position: 73% 32%;
   image-rendering: pixelated;
   animation: ch4-char-bob 6.5s ease-in-out infinite;
 }

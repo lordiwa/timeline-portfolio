@@ -154,7 +154,9 @@ const oldGifs = [
 }
 
 .ch1-content {
-  overflow-y: hidden;
+  /* Scroll interno: en pantallas bajas el contenido (marquee + bio + tabla) ya no
+     se recorta abajo — el browser propaga al snap shell al agotar el scroll. */
+  overflow-y: auto;
   padding-right: var(--sp-md);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
   display: flex;
@@ -162,6 +164,15 @@ const oldGifs = [
   gap: var(--sp-md);
   position: relative; /* z-index encima del starfield */
   z-index: 1;
+}
+
+/* Header marquee fijo arriba del contenido (Rafael 2026-06-01: "dejale fixed").
+   sticky — NO position:fixed (evita bleed a otros chapters). Fondo navy opaco
+   del propio banner tapa el contenido que scrollea por detrás. */
+.ch1-content :deep(.marquee-banner) {
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 /* Scrim de legibilidad — el starfield detrás es ruidoso; un panel sutil
