@@ -16,6 +16,24 @@ Formato per entry:
 
 ---
 
+## ch5-bust.png — iter17 → iter18 (2026-06-01)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter17-grey-hair.png`
+- **Razón del cambio:** iter17 salió con pelo gris/plateado, entradas/calvicie, barba sal-y-pimienta (gris en mejillas). Rafael exige pelo castaño MUY OSCURO #251109 denso sin canas, barba oscura sólida sin grises. Transparencia de esquinas superiores funcionó bien con método lava + BFS.
+- **Qué se intentará diferente:** Mismo background:"lava" + BFS flood-fill. Prompt reforzado con "NOT grey, NOT balding, NOT salt-and-pepper, ZERO grey pixels, solid dark brown #251109 hair and beard", referencias ch3-bust.png, énfasis en pelo denso/línea baja/joven.
+- **Commit hash post-regen:** `<pendiente>`
+
+---
+
+## ch5-bust.png — iter16 → iter17 (2026-06-01)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter16.png`
+- **Razón del cambio:** iter16 (Adobe `image_remove_background` semántico) falló: BL y BR esquinas alpha=255 con color navy — el fondo navy y la camisa navy son indistinguibles para el ML de Adobe. Las 2 esquinas inferiores quedaron opacas (fondo no borrado).
+- **Qué se intentará diferente:** `forge_sprite` con `background: "lava"` (alto contraste rojo/naranja vs navy #141C2A) para que el bg removal nativo de pixelforge separe correctamente la camisa del fondo. Mismo sujeto: buzz cut uniforme, barba más larga, piel #FBB782, pelo/barba #251109, ojos sage #1B2715, camisa navy #141C2A.
+- **Commit hash post-regen:** `<pendiente>`
+
+---
+
 ## ch4-bg.png — iter2 → REPLACED por parallax 4 capas iter3 (2026-06-01)
 
 El bg único full-bleed (iter2) se reemplaza por un parallax de 4 capas "flotando en el vacío" (concepto de Rafael): personaje de espaldas con gafas VR mirando a un portal con mundo 3D, símbolos matrix neón flotantes, profundidad por puntero + drift.
@@ -511,3 +529,21 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael 2026-05-28: ch3 ahora es "La muerte de Flash" y debe tener el estilo del fondo de batalla épico de ch2 (Warcraft). iter1 era fantasía pastel clara (cielo aurora + montañas + camino con estandartes) — bonito pero no matchea el tema muerte-de-Flash ni el drama de ch2.
 - **Qué se intentará diferente:** mood "secuela con amanecer HTML5" — campo de batalla DESPUÉS de la guerra: cielo crepuscular humo/brasas que abre a un amanecer HTML5 dorado/cyan en el horizonte; cresta con fortaleza en ruinas humeante; primer plano de tierra quemada con armas/estandartes caídos y escombros. Estilo comic pixel dramático (matchea ch2-flash-war). Emblemas re-tematizados al arco muerte→renacer (Flash caído → reconstrucción → estandarte → orbe → HTML5 naciente). Título "De vuelta al movimiento" → "La muerte de Flash".
 - **Commit hash post-regen:** `9c92672`
+
+## ch4-bust.png — iter5 → iter6 (2026-06-01)
+
+- **Versión guardada:** `old/ch4-bust-2026-06-01-iter5-grey-long.png` (14,439 bytes)
+- **Razón del cambio:** Rafael: "ch4 con pelo más corto". Además el pelo estaba gris/canoso (drift) y largo/desordenado — no matchea la realidad (foto 2016: castaño oscuro corto). Rafael aclaró "no el color de ch2" (ch2 también es gris) → corregir a castaño.
+- **Qué se intentará diferente:** Regenerar con forge_sprite estilo ch3. Pelo CORTO castaño muy oscuro (#251109, sombra #0E0100, SIN gris/canas), barba corta recortada. Colores hard-target de ch3: piel #FBB782, ojos sage #1B2715, ropa navy #141C2A. Referencia multimodal: foto 2016 + ch3-bust.png. Validación pixel-sample vs ch3 obligatoria + HSL zonal si drift.
+- **Commit hash del cambio:** `aaf4b30`
+
+## ch5-bust.png — iter15 → iter16 (2026-06-01)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter15-green-shirt.png` (14,631 bytes)
+- **Razón del cambio:** Rafael: "ch5 con barba más larga y pelo muy corto, basarse en ch3". Actual tiene pelo largo rizado + camisa verde.
+- **Qué se intentó diferente:** Regenerar con forge_sprite estilo ch3. Pelo MUY CORTO parejo (buzz uniforme, SIN cresta/mohawk), barba MÁS LARGA. Colores hard-target de ch3: pelo #251109/#0E0100, piel #FBB782, ojos sage #1B2715, ropa navy #141C2A.
+- **Cadena de iteraciones (ch5 históricamente difícil):**
+  - iter16 (`old/ch5-bust-2026-06-01-iter16.png`): forge_sprite bg="night" → fondo navy OPACO idéntico a la camisa (0 px transparentes). Rechazada.
+  - iter17 (`old/ch5-bust-2026-06-01-iter17-grey-hair.png`): regen bg="lava" + flood-fill → transparencia OK pero pelo gris/canoso + calvicie (drift). Rechazada.
+  - iter18 (final): regen bg="lava" forzando pelo castaño denso + barba larga oscura. Transparencia OK. Quedaron artefactos cyan semi-transparentes (alpha 15-53) tipo "icicle" en barba/bajo-ojos (restos del flood-fill del lava). **Fix post-proceso (PIL, main session):** densificado de barba + kill de píxeles cyan (b>r+12, b>90) sin importar alpha → castaño en barba / piel en mejilla. Validado pixel-sample vs ch3 (pelo #1B0A04, piel #FCB57D, barba #1C0A05, ojos sage, ropa navy #151F2D) + render en app (avatar OK).
+- **Commit hash del cambio:** `aaf4b30`
