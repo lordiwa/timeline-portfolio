@@ -561,3 +561,10 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael: "arruinaste ch5, barba recta irreal. Usa de base ch2 pero con barba". El forge driftó (barba irreal tras pixel-surgery). Decisión: derivar de un bust aprobado en vez de generar cara nueva.
 - **Qué se hizo:** ch5 = COPIA exacta de ch2-bust.png (pelo corto, cara, ojos, piel, camisa navy intactos) + barba castaño oscuro PINTADA siguiendo la mandíbula real de ch2 (textura orgánica dispersa, borde superior irregular, punta natural — NO recta). Color barba de ch3 (#0E0100). Luego, por pedido de Rafael, pelo de ch2 oscurecido de gris/canoso → castaño (matchea barba/ch3/ch4). Validado en app: pelo y barba oscuros, transparente. NOTA: en upscale LANCZOS el pelo se ve gris (artefacto de mezcla con fondo transparente); el dato real y el render pixelated de la app son castaño oscuro.
 - **Commit hash del cambio:** `ad8170e`
+
+## ch5-bust.png — iter19 → iter20 (2026-06-01, fix imagen rota)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter19-BROKEN-eyes.png` (commit `ff65057`)
+- **Razón del cambio:** Rafael: "ch5 está roto, no puedes presentar una imagen rota, hazla de nuevo". La iter19 tenía los OJOS destruidos (cuencas negras) por las pasadas de recolor agresivas, y la barba quedó como blob negro tipo máscara. Inspección con checkerboard lo confirmó.
+- **Qué se hizo:** Rehecho LIMPIO desde ch2-bust.png. (1) Pelo gris→castaño por saturación (los ojos sage tienen sat alta → protegidos, NO se tocan). (2) Barba pintada con DENSIDAD tipo stubble (textura dispersa pseudo-aleatoria, más densa hacia el mentón, borde superior suave) siguiendo la mandíbula real de ch2, dejando boca y ojos intactos — natural, no blob. Color barba de ch3 (#0D0201..#2A1810). Sin pasadas destructivas posteriores. Validado en app (StickyAvatar): pelo oscuro, ojos sage intactos, barba natural, transparente.
+- **Commit hash del cambio:** `0b1592b`
