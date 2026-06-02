@@ -575,3 +575,10 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael: "sigue mal, hazlo desde cero, no aumentes la barba luego eres malo en eso". Pintar/editar la barba a mano daba resultados pobres (stubble irreal, eyes rotos en iter19). Decisión: GENERAR el bust completo con la barba incluida nativamente (como los busts originales), no editar.
 - **Qué se hizo:** forge_sprite desde cero (artist-creator). Mismo hombre que ch3 pero pelo CORTO denso + barba, todo generado. Pelo castaño oscuro #251109 (cero gris/calvicie), barba castaño oscuro natural con punta, ojos sage definidos, piel peach, camisa navy, estilo/encuadre de ch3. bg "lava" + flood-fill, 0 píxeles cyan, esquinas sup transparentes. Downscale PIL LANCZOS a 96. Validado con checkerboard (ojos OK, no roto) + render en app (StickyAvatar).
 - **Commit hash del cambio:** `d7cfe5d`
+
+## ch4/ch5/ch6-bust.png — PROGRESIÓN COHERENTE desde ch3 (2026-06-01)
+
+- **Versiones guardadas:** `old/ch4-bust-2026-06-01-iter7-pre-progression.png`, `old/ch5-bust-2026-06-01-iter21-pre-progression.png`, `old/ch6-bust-2026-06-01-iter2-pre-progression.png`
+- **Razón del cambio:** Rafael ("pésimo") pidió rehacer ch4/ch5/ch6 como progresión coherente: todos parten de ch3, manteniendo color de piel/ojos/pelo. ch4=ch3+barba levemente más grande; ch5=base ch4, misma barba, pelo levemente más largo; ch6=versión de ch2 envejecido SIN canas, con barba, cara más madura sin arrugas, pelo corto castaño.
+- **Qué se hará:** GENERAR con forge_sprite (banana-2, bg lava) secuencialmente, cada uno referenciando al previo (ch4→ref ch3; ch5→ref ch4; ch6→ref ch3). Colores hard-target ch3: piel #FBB782, pelo/barba #1A0805/#0E0100 (cero gris), ojos sage #8A9E86, navy #141C2A. Validación checkerboard + app CDP + pixel-sample antes de presentar.
+- **Commit hash del cambio:** `8923e7a`
