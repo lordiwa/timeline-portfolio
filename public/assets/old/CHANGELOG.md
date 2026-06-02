@@ -582,3 +582,11 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael ("pésimo") pidió rehacer ch4/ch5/ch6 como progresión coherente: todos parten de ch3, manteniendo color de piel/ojos/pelo. ch4=ch3+barba levemente más grande; ch5=base ch4, misma barba, pelo levemente más largo; ch6=versión de ch2 envejecido SIN canas, con barba, cara más madura sin arrugas, pelo corto castaño.
 - **Qué se hará:** GENERAR con forge_sprite (banana-2, bg lava) secuencialmente, cada uno referenciando al previo (ch4→ref ch3; ch5→ref ch4; ch6→ref ch3). Colores hard-target ch3: piel #FBB782, pelo/barba #1A0805/#0E0100 (cero gris), ojos sage #8A9E86, navy #141C2A. Validación checkerboard + app CDP + pixel-sample antes de presentar.
 - **Commit hash del cambio:** `8923e7a`
+
+## ch4/ch5-bust.png — fix COLOR: volver a derivar de ch3 (2026-06-01)
+
+- **Versiones guardadas:** `old/ch4-bust-2026-06-01-iter8-forge-colorbad.png`, `old/ch5-bust-2026-06-01-iter22-forge-colorbad.png` (forge, commit `5a96bcb`)
+- **Razón del cambio:** Rafael: "ch4 y ch5 están mal los colores". Las versiones forge (banana-2) metían parches crema/lavanda alrededor de ojos + highlights especulares en mejillas/frente que ch3 NO tiene → piel manchada/blotchy. El hex dominante era correcto pero los parches especulares rompían el match con la piel lisa de ch3.
+- **Qué se hizo (garantiza colores):** dejar de pelear con forge. ch4 = COPIA exacta de ch3-bust.png + barba extendida (PIL, color ch3) → piel/ojos/pelo idénticos a ch3 (#FBB782, #100C09, #0E0100). ch5 = base ch4 (colores ch3) + pelo dilatado 2px hacia afuera/arriba (color ch3) para "levemente más grande", misma barba que ch4. Verificado: pixel-sample ch4/ch5 == ch3 exacto; render app limpio sin parches.
+- **ch6:** sin tocar (Rafael: "ch6 lo vemos luego").
+- **Commit hash del cambio:** `54c8f8b`
