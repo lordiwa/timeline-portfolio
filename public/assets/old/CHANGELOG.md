@@ -568,3 +568,10 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael: "ch5 está roto, no puedes presentar una imagen rota, hazla de nuevo". La iter19 tenía los OJOS destruidos (cuencas negras) por las pasadas de recolor agresivas, y la barba quedó como blob negro tipo máscara. Inspección con checkerboard lo confirmó.
 - **Qué se hizo:** Rehecho LIMPIO desde ch2-bust.png. (1) Pelo gris→castaño por saturación (los ojos sage tienen sat alta → protegidos, NO se tocan). (2) Barba pintada con DENSIDAD tipo stubble (textura dispersa pseudo-aleatoria, más densa hacia el mentón, borde superior suave) siguiendo la mandíbula real de ch2, dejando boca y ojos intactos — natural, no blob. Color barba de ch3 (#0D0201..#2A1810). Sin pasadas destructivas posteriores. Validado en app (StickyAvatar): pelo oscuro, ojos sage intactos, barba natural, transparente.
 - **Commit hash del cambio:** `0b1592b`
+
+## ch5-bust.png — iter20 → iter21 (2026-06-01, generado desde cero)
+
+- **Versión guardada:** `old/ch5-bust-2026-06-01-iter20-painted-beard.png` (commit `a67857d`)
+- **Razón del cambio:** Rafael: "sigue mal, hazlo desde cero, no aumentes la barba luego eres malo en eso". Pintar/editar la barba a mano daba resultados pobres (stubble irreal, eyes rotos en iter19). Decisión: GENERAR el bust completo con la barba incluida nativamente (como los busts originales), no editar.
+- **Qué se hizo:** forge_sprite desde cero (artist-creator). Mismo hombre que ch3 pero pelo CORTO denso + barba, todo generado. Pelo castaño oscuro #251109 (cero gris/calvicie), barba castaño oscuro natural con punta, ojos sage definidos, piel peach, camisa navy, estilo/encuadre de ch3. bg "lava" + flood-fill, 0 píxeles cyan, esquinas sup transparentes. Downscale PIL LANCZOS a 96. Validado con checkerboard (ojos OK, no roto) + render en app (StickyAvatar).
+- **Commit hash del cambio:** `d7cfe5d`
