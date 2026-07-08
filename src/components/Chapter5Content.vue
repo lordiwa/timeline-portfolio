@@ -12,9 +12,11 @@
     rotR/rotL — girar a la derecha / izquierda (recorre las 8 direcciones)
     osc       — media vuelta a un lado y media al otro
     festejo   — anim de celebración (6º estado, sheet en anim/)
-  Se usan las 8 vistas direccionales que pixellab ya generó por personaje
-  (public/assets/ch5-cinema/rot/{slug}.png = tira de 8 frames, sentido horario desde norte)
-  + el spritesheet de festejo (anim/{slug}.png). Manifest: src/data/ch5CrowdManifest.json.
+  Cada personaje usa UNA tira webp combinada (public/assets/ch5-cinema/live/{slug}.webp):
+  frames 0-7 = las 8 vistas direccionales (rotación, horario desde norte) + frames 8.. =
+  el festejo. Un solo background-image (nunca cambia) → sin titileo. Manifest:
+  src/data/ch5CrowdManifest.json {w,h,ff,festStart}. Fuentes PNG (rot/anim) NO se versionan;
+  se regeneran gratis desde pixellab (build_rotation_sheets.py + anim_poll.sh) → build_live_sheets.py.
 
   El render lo maneja UN solo bucle rAF que escribe el DOM directo (no reactividad Vue)
   para no recalcular 140+ nodos por frame. Texto original oculto (showText=false).
@@ -161,16 +163,18 @@ if (import.meta.env?.DEV) {
 }
 
 // Estilo base de cada personaje (parte estática; el frame lo mueve el bucle rAF).
+// UNA sola tira webp por personaje (rot 0-7 + festejo 8..) → el background-image NUNCA
+// cambia, solo se mueve background-position-x (elimina el titileo del swap de imagen).
 function seatBaseStyle(seat) {
   const m = crowdManifest[seat.slug]
   if (!m) return {}
-  const k = seat.h / m.rh
+  const k = seat.h / m.h
   return {
     left: seat.x + '%',
     top: seat.y + '%',
-    width: m.rw + 'px',
-    height: m.rh + 'px',
-    backgroundImage: `url(/assets/ch5-cinema/rot/${seat.slug}.png)`,
+    width: m.w + 'px',
+    height: m.h + 'px',
+    backgroundImage: `url(/assets/ch5-cinema/live/${seat.slug}.webp)`,
     transform: `translate(-50%, -100%) scale(${k})`,
     zIndex: seat.z,
     filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
@@ -241,33 +245,13 @@ function seekDone(c, dt) {
 
 function renderChar(c) {
   const m = c.m
-  if (c.state === 'festejo') {
-    if (c.mode !== 'fest') {
-      c.el.style.backgroundImage = `url(/assets/ch5-cinema/anim/${c.slug}.png)`
-      c.el.style.width = m.fw + 'px'
-      c.el.style.height = m.fh + 'px'
-      c.el.style.transform = `translate(-50%, -100%) scale(${c.seat.h / m.fh})`
-      c.mode = 'fest'
-      c.lastFrame = -1
-    }
-    if (c.fFrame !== c.lastFrame) {
-      c.el.style.backgroundPositionX = `-${c.fFrame * m.fw}px`
-      c.lastFrame = c.fFrame
-    }
-  } else {
-    if (c.mode !== 'rot') {
-      c.el.style.backgroundImage = `url(/assets/ch5-cinema/rot/${c.slug}.png)`
-      c.el.style.width = m.rw + 'px'
-      c.el.style.height = m.rh + 'px'
-      c.el.style.transform = `translate(-50%, -100%) scale(${c.seat.h / m.rh})`
-      c.mode = 'rot'
-      c.lastFrame = -1
-    }
-    const frame = ((Math.round(c.dir) % 8) + 8) % 8
-    if (frame !== c.lastFrame) {
-      c.el.style.backgroundPositionX = `-${frame * m.rw}px`
-      c.lastFrame = frame
-    }
+  // Una sola tira: frames 0-7 = rotación (dir), festStart+.. = festejo. Solo movemos
+  // background-position-x (sin cambiar background-image ni tamaño → sin titileo).
+  const frame =
+    c.state === 'festejo' ? m.festStart + c.fFrame : ((Math.round(c.dir) % 8) + 8) % 8
+  if (frame !== c.lastFrame) {
+    c.el.style.backgroundPositionX = `-${frame * m.w}px`
+    c.lastFrame = frame
   }
 }
 
@@ -364,7 +348,6 @@ onMounted(() => {
       fFrame: 0,
       fAcc: 0,
       fFps: 9 + rand(seat.seed ^ 0x1234) * 3, // 9–12 fps de festejo
-      mode: 'rot',
       lastFrame: -1,
       t: now,
     }
@@ -389,7 +372,7 @@ onBeforeUnmount(() => {
         :key="scene"
         class="cine-screen-img"
         :class="{ 'is-active': i === screenIdx }"
-        :src="`/assets/ch5-cinema/screen/${scene}.png`"
+        :src="`/assets/ch5-cinema/screen/${scene}.webp`"
         alt=""
       />
     </div>
@@ -523,8 +506,8 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-/* Sprite VIVO: el bucle rAF cambia background-image (rot/festejo) y background-position-x
-   (frame). El anclaje por los PIES lo da transform-origin 50% 100% + translate/scale. */
+/* Sprite VIVO: UNA tira webp por personaje (rot 0-7 + festejo). El bucle rAF solo mueve
+   background-position-x (frame); el anclaje por los PIES lo da transform-origin 50% 100%. */
 .cine-char-live {
   position: absolute;
   background-repeat: no-repeat;
