@@ -5,7 +5,7 @@
 # festejo/north frames, writes anim/{slug}.png if ready). Exits when all built or timeout.
 set -u
 PY="/c/Python/Python37/python"
-BS="C:\\Users\\srpar\\AppData\\Local\\Temp\\claude\\D--timeline-portfolio\\dea28548-d5d2-4331-8965-72cf39fc800a\\scratchpad\\build_sheets.py"
+BS="/d/timeline-portfolio/.planning/ch5-cinema/scripts/build_sheets.py"
 ANIM="/d/timeline-portfolio/public/assets/ch5-cinema/anim"
 MAX="$1"; shift
 declare -A P
