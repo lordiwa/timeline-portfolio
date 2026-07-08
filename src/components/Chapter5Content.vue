@@ -14,15 +14,31 @@
     Iterativo con Rafael — las posiciones se derivan de ROWS + config abajo.
 -->
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
+import animManifest from '@/data/ch5AnimManifest.json'
 import ProjectCard from './ProjectCard.vue'
 import ScrollRevealCard from './ScrollRevealCard.vue'
 
 const { t } = useI18n()
+
+// Slideshow de la pantalla: escenas de la época (2022 pandemia) transmitidas ONLINE,
+// recintos VACÍOS sin público (Rafael 2026-07-07: "no se podía ir a lugares públicos,
+// todo se transmitía online y vacío"). Cross-fade cada ~4.5s.
+const screenScenes = ['box', 'mma', 'concierto', 'lab', 'covid']
+const screenIdx = ref(0)
+let screenTimer = null
+onMounted(() => {
+  screenTimer = setInterval(() => {
+    screenIdx.value = (screenIdx.value + 1) % screenScenes.length
+  }, 4500)
+})
+onBeforeUnmount(() => {
+  if (screenTimer) clearInterval(screenTimer)
+})
 
 const chapter = chapters[5]
 const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
@@ -165,25 +181,55 @@ if (import.meta.env?.DEV) {
 
 <template>
   <div class="ch5-layout ch5-cine">
-    <!-- Pantalla futura: por ahora un cuadrado blanco al fondo-centro -->
-    <div class="cine-screen" aria-hidden="true"></div>
-
-    <!-- Público de espaldas, escalonado en profundidad -->
-    <div class="cine-audience" aria-hidden="true">
+    <!-- Pantalla del cine: slideshow de escenas de época (online/vacías), cross-fade -->
+    <div class="cine-screen" aria-hidden="true">
       <img
-        v-for="(seat, idx) in seats"
-        :key="idx"
-        class="cine-char"
-        :src="`/assets/ch5-cinema/${seat.slug}.png`"
+        v-for="(scene, i) in screenScenes"
+        :key="scene"
+        class="cine-screen-img"
+        :class="{ 'is-active': i === screenIdx }"
+        :src="`/assets/ch5-cinema/screen/${scene}.png`"
         alt=""
-        :style="{
-          left: seat.x + '%',
-          top: seat.y + '%',
-          height: seat.h + 'px',
-          zIndex: seat.z,
-          filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
-        }"
       />
+    </div>
+
+    <!-- Público de espaldas festejando. Cada asiento con sheet en el manifest usa el
+         render animado (spritesheet + CSS steps); los que aún no tienen sheet caen a
+         <img> estático (fallback temporal hasta completar 125/125). -->
+    <div class="cine-audience" aria-hidden="true">
+      <template v-for="(seat, idx) in seats" :key="idx">
+        <div
+          v-if="animManifest[seat.slug]"
+          class="cine-char-anim"
+          :style="{
+            left: seat.x + '%',
+            top: seat.y + '%',
+            width: animManifest[seat.slug].fw + 'px',
+            height: animManifest[seat.slug].fh + 'px',
+            backgroundImage: `url(/assets/ch5-cinema/anim/${seat.slug}.png)`,
+            '--frames': animManifest[seat.slug].frames,
+            '--travel': `-${animManifest[seat.slug].frames * animManifest[seat.slug].fw}px`,
+            animationDuration: ANIM_DURATION + 's',
+            animationDelay: `-${seat.animDelay}s`,
+            transform: `translate(-50%, -100%) scale(${seat.h / animManifest[seat.slug].fh})`,
+            zIndex: seat.z,
+            filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
+          }"
+        />
+        <img
+          v-else
+          class="cine-char"
+          :src="`/assets/ch5-cinema/${seat.slug}.png`"
+          alt=""
+          :style="{
+            left: seat.x + '%',
+            top: seat.y + '%',
+            height: seat.h + 'px',
+            zIndex: seat.z,
+            filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
+          }"
+        />
+      </template>
     </div>
 
     <!-- Contenido original preservado pero oculto hasta decidir qué va (showText=false) -->
@@ -235,7 +281,7 @@ if (import.meta.env?.DEV) {
 }
 
 /* Pantalla: superpuesta EXACTAMENTE sobre la pantalla pintada del hall (rectángulo gris).
-   Aquí irá el slideshow de escenas (box/MMA/conciertos/COVID). */
+   Slideshow de escenas de época (box/MMA/concierto/lab/COVID), todas online/vacías. */
 .cine-screen {
   position: absolute;
   top: 38%;
@@ -243,12 +289,28 @@ if (import.meta.env?.DEV) {
   transform: translateX(-50%);
   width: min(17vw, 300px);
   aspect-ratio: 16 / 9;
-  background: #ffffff;
+  background: #04040a;
   border-radius: 2px;
+  overflow: hidden;
   box-shadow:
     0 0 60px 16px rgba(255, 255, 255, 0.25),
     0 0 150px 44px rgba(180, 200, 255, 0.12);
   z-index: 0;
+}
+
+/* Cada escena apilada; cross-fade por opacidad (la activa arriba). */
+.cine-screen-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+.cine-screen-img.is-active {
+  opacity: 1;
 }
 
 /* Tenue "cono de luz" de la pantalla hacia el público */
@@ -276,6 +338,40 @@ if (import.meta.env?.DEV) {
   pointer-events: none;
   /* sombra sutil bajo cada figura para asentarlas en el "piso" */
   filter: brightness(1);
+}
+
+/* Sprite ANIMADO de festejo: spritesheet horizontal + CSS steps().
+   El div mide un frame natural (fw×fh); se escala a la altura del asiento con
+   transform-origin en los PIES (50% 100%) para mantener el anclaje al piso.
+   background-position-x recorre la tira: steps(frames) → 0, -fw, ... -(frames-1)*fw. */
+.cine-char-anim {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  transform-origin: 50% 100%;
+  animation-name: ch5-festejo;
+  animation-timing-function: steps(var(--frames));
+  animation-iteration-count: infinite;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+@keyframes ch5-festejo {
+  from {
+    background-position-x: 0;
+  }
+  to {
+    background-position-x: var(--travel);
+  }
+}
+
+/* Respeta prefers-reduced-motion: congela en el primer frame. */
+@media (prefers-reduced-motion: reduce) {
+  .cine-char-anim {
+    animation: none;
+  }
 }
 
 /* Sin cambios de layout en mobile por ahora: la escena es full-viewport y se
