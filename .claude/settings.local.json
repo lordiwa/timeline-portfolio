@@ -71,7 +71,17 @@
       "Bash(python -c \"import json;json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\);json.load\\(open\\('src/i18n/en.json',encoding='utf-8'\\)\\);print\\('JSON válido ✓'\\)\")",
       "Bash(Select-Object -Last 15)",
       "PowerShell($p = Get-Content \"C:\\\\Users\\\\RafaelMatovelle\\\\Documents\\\\mato-new-portfolio\\\\package.json\" -Raw | ConvertFrom-Json; $p.scripts | Format-List)",
-      "Bash(python -c \"import json; d=json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\); p=d.get\\('projects',{}\\); [print\\(k,'=>',repr\\(v\\)\\) for k,v in p.items\\(\\) if 'ch4' in k]; print\\('--- chapter 4 flavor/title ---'\\); c=d.get\\('chapters',{}\\).get\\('4',{}\\); print\\(c\\)\")"
+      "Bash(python -c \"import json; d=json.load\\(open\\('src/i18n/es.json',encoding='utf-8'\\)\\); p=d.get\\('projects',{}\\); [print\\(k,'=>',repr\\(v\\)\\) for k,v in p.items\\(\\) if 'ch4' in k]; print\\('--- chapter 4 flavor/title ---'\\); c=d.get\\('chapters',{}\\).get\\('4',{}\\); print\\(c\\)\")",
+      "Bash(claude plugin *)",
+      "Read(//c/Users/srpar/.claude/plugins/cache/hivemind-marketplace/hivemind/**)",
+      "Read(//c/Users/srpar/.claude/plugins/cache/hivemind-marketplace/hivemind/0.11.0/dist/**)",
+      "Read(//c/Users/srpar/.claude/plugins/cache/hivemind-marketplace/hivemind/0.10.0/dist/**)",
+      "Bash(CLAUDE_PROJECT_DIR=\"D:/timeline-portfolio\" node *)",
+      "PowerShell(Get-NetTCPConnection *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(git pull *)",
+      "PowerShell(git *)",
+      "Bash(python *)"
     ]
   }
 }
