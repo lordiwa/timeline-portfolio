@@ -1,17 +1,23 @@
 <!--
-  Chapter5Content.vue — ch5 "2022 Modern" · PRUEBA DE CONCEPTO "cine" (Rafael 2026-07-07).
+  Chapter5Content.vue — ch5 "2022 Modern" · escena "cine" (Rafael 2026-07-07).
 
-  Concepto: la sección es una sala de cine vista desde atrás. El "público" son los
-  25 personajes de pixellab en su vista de espaldas (rotación norte, bajados a
-  public/assets/ch5-cinema/). Se despliegan escalonados con profundidad (fan shape
-  fondo→frente) mirando hacia el fondo de la sección, donde por ahora hay un
-  CUADRADO BLANCO = placeholder de la futura "tele"/pantalla.
+  Concepto: sala de cine (gran hall) vista desde atrás. El "público" son 125 personajes
+  únicos de pixellab repartidos por la alfombra frente a una pantalla que cicla escenas
+  de la época (transmisiones ONLINE de recintos vacíos — pandemia 2022).
 
-  - Texto (título/flavor/bio/proyectos) OCULTO hasta decidir qué contenido va:
-    gateado con `v-if="showText"` (showText=false) — NO borrado, solo escondido.
-  - Fondo oscuro tipo sala (stage opaco cubre el bg claro global de [data-chapter=5]).
-  - Primer objetivo: "cuadrar" a todos mirando la pantalla con buena profundidad.
-    Iterativo con Rafael — las posiciones se derivan de ROWS + config abajo.
+  MULTITUD VIVA (Rafael 2026-07-07d): cada personaje cambia de ESTADO al azar cada 1.5–3s
+  (puede repetir el mismo estado → todos se mueven distinto). Estados:
+    idleBack  — quieto de espaldas (norte)
+    idleFront — quieto mirando al usuario (sur)
+    rotR/rotL — girar a la derecha / izquierda (recorre las 8 direcciones)
+    osc       — media vuelta a un lado y media al otro
+    festejo   — anim de celebración (6º estado, sheet en anim/)
+  Se usan las 8 vistas direccionales que pixellab ya generó por personaje
+  (public/assets/ch5-cinema/rot/{slug}.png = tira de 8 frames, sentido horario desde norte)
+  + el spritesheet de festejo (anim/{slug}.png). Manifest: src/data/ch5CrowdManifest.json.
+
+  El render lo maneja UN solo bucle rAF que escribe el DOM directo (no reactividad Vue)
+  para no recalcular 140+ nodos por frame. Texto original oculto (showText=false).
 -->
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
@@ -19,26 +25,16 @@ import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
-import animManifest from '@/data/ch5AnimManifest.json'
+import crowdManifest from '@/data/ch5CrowdManifest.json'
 import ProjectCard from './ProjectCard.vue'
 import ScrollRevealCard from './ScrollRevealCard.vue'
 
 const { t } = useI18n()
 
-// Slideshow de la pantalla: escenas de la época (2022 pandemia) transmitidas ONLINE,
-// recintos VACÍOS sin público (Rafael 2026-07-07: "no se podía ir a lugares públicos,
-// todo se transmitía online y vacío"). Cross-fade cada ~4.5s.
+// ─── Slideshow de la pantalla (escenas online/vacías) — cross-fade cada 4.5s ───
 const screenScenes = ['box', 'mma', 'concierto', 'lab', 'covid']
 const screenIdx = ref(0)
 let screenTimer = null
-onMounted(() => {
-  screenTimer = setInterval(() => {
-    screenIdx.value = (screenIdx.value + 1) % screenScenes.length
-  }, 4500)
-})
-onBeforeUnmount(() => {
-  if (screenTimer) clearInterval(screenTimer)
-})
 
 const chapter = chapters[5]
 const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
@@ -47,19 +43,13 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 // Texto oculto hasta decidir qué contenido va (Rafael 2026-07-07).
 const showText = false
 
-// Público: personajes de pixellab, vista de espaldas (rotación norte).
-// = 25 beat-em-up reusados + 100 temáticos groomeados (ver .planning/ch5-cinema/CHARACTER-ROSTER.md).
-// COMPLETO: 125 únicos → ratio 146/125 = 1.168 ≤ 1.2 (el guard de dev ya no avisa).
-// Backfill de los 100 temáticos completado 2026-07-07 pese al incidente de pixellab (fallos que no
-// gastan cuota; se reintentó en lotes chicos). ids finales en .planning/ch5-cinema/IDS.tsv.
+// Público: 125 personajes únicos de pixellab (25 beat-em-up + 100 temáticos).
 const CAST = [
-  // — 25 existentes (beat-em-up) —
   'all-around', 'player-brawler', 'bboy-skater', 'bboy-kungfu', 'ninja',
   'zoner', 'female-1', 'female-2', 'female-3', 'balanced',
   'tank', 'grappler', 'warden', 'charger', 'shield-drone',
   'empire-drone', 'idle-a', 'attack1', 'walk-a', 'idle-b',
   'fighter', 'flyer', 'monk', 'eyeball', 'monitor-frame',
-  // — 100 temáticos (groomeados, ver CHARACTER-ROSTER.md) —
   'pulga-gigante', 'centauro-reversa', 'androide-hippie', 'simio-terno', 'mono-terno',
   'alce-terno', 'pulpo-bibliotecario', 'cactus-samurai', 'tiburon-oficinista', 'gato-astronauta',
   'rana-predicadora', 'buho-detective', 'zombi-vegetariano', 'mantis-evangelista', 'cangrejo-boxeador',
@@ -82,15 +72,10 @@ const CAST = [
   'toro-octagono', 'tucan-reggaeton', 'virus-rockstar', 'volcan-hawaiano', 'yeti-solar',
 ]
 
-// Nº de anillos concéntricos del enjambre radial alrededor de la pantalla.
 const NRINGS = 11
 
-// Duración del bucle de festejo (s); cada asiento arranca en una fase distinta
-// (animDelay) para que la multitud NO lata en sincronía (se ve orgánica).
-const ANIM_DURATION = 0.9
-
-// PRNG determinista (mulberry32) con semilla fija → dispersión "aleatoria" pero
-// estable entre renders (nada de layout que baila en cada repintado).
+// PRNG determinista (mulberry32) → dispersión estable entre renders (el LAYOUT no baila;
+// la ANIMACIÓN sí es aleatoria en runtime, ver abajo).
 function mulberry32(a) {
   return function () {
     a |= 0
@@ -101,11 +86,7 @@ function mulberry32(a) {
   }
 }
 
-// Bolsa barajada anti-repetición (regla de Rafael: "no repetir en un ratio > 1.2").
-// En vez de muestreo CON reemplazo (`CAST[rng()*len]`, que puede sacar un personaje 5
-// veces y otro 0), se baraja el CAST (Fisher–Yates con el mismo PRNG) y se reparte 1 por
-// asiento; al agotar la bolsa se rebaraja. Así cada personaje aparece ⌊N/U⌋..⌈N/U⌉ veces
-// (diferencia máx. 1). Con U=125 únicos y ~146 asientos, 146/125 = 1.168 ≤ 1.2. ✔
+// Bolsa barajada anti-repetición: reparte cada personaje ⌊N/U⌋..⌈N/U⌉ veces (dif. máx 1).
 function makeBag(items, rng) {
   let pool = []
   return () => {
@@ -122,45 +103,40 @@ function makeBag(items, rng) {
   }
 }
 
-// Enjambre RADIAL alrededor de la pantalla (Rafael 2026-07-07: "un círculo concéntrico
-// que se hace menos acumulado hacia afuera pq todos quieren ir hacia la pantalla").
-// Foco = centro de la pantalla. Anillos concéntricos que se abren hacia abajo/los lados:
-//  - interior (pegado a la pantalla): MUY apretado + pequeño + oscuro (lejos, al fondo).
-//  - exterior: espaciado crece (menos acumulado), tamaño y brillo crecen (más cerca).
-// Reusa los 25 PNG → el navegador solo carga 25 imágenes.
+// Enjambre radial hacia la pantalla, pero MÁS SEPARADO y RETROCEDIDO de la pantalla
+// (Rafael 2026-07-07d: "los muy cercanos a la pantalla retrocédelos; acomódalos aleatorios
+// dentro de la alfombra y atrás y abajo del escenario; puedes separarlos más").
 function buildCrowd() {
   const rng = mulberry32(0x5ce07)
-  const draw = makeBag(CAST, rng)                // reparto parejo (ratio ≤ 1.2)
+  const draw = makeBag(CAST, rng)
   const Fx = 50
-  const Fy = 48                                  // foco (línea de pies del anillo interior) MÁS abajo → banda baja
+  const Fy = 52 // foco más abajo → banda retrocede de la pantalla
   const out = []
   for (let i = 0; i < NRINGS; i++) {
-    const t = NRINGS === 1 ? 0 : i / (NRINGS - 1) // 0 interior (pantalla) .. 1 exterior
-    const rx = 8 + t * 18                         // radio horiz %: CONTENIDO en la alfombra (no a los muros)
-    const ry = 15 + t * 35                        // radio vert %: banda compacta baja (altura sin cambios)
-    const halfA = ((34 + t * 18) * Math.PI) / 180 // semiapertura moderada → llena el centro, no los extremos
-    const baseH = 30 + t * 109                    // alto px: multitud pequeña, cámara cerca
-    const bright = 0.5 + t * 0.5                  // interior oscuro (fondo) .. exterior claro
-    // MÁS LLENO y con el centro denso (Rafael): mucha gente en todos los anillos,
-    // scatter angular/radial, contenida en la alfombra con clamp de altura.
-    const count = Math.max(9, Math.round(12 + 16 * (1 - t)))
+    const t = NRINGS === 1 ? 0 : i / (NRINGS - 1) // 0 interior (pantalla) .. 1 exterior (cámara)
+    const rx = 11 + t * 27 // radio horiz %: más ancho → más separación lateral
+    const ry = 13 + t * 40 // radio vert %
+    const halfA = ((42 + t * 20) * Math.PI) / 180 // abanico más abierto
+    const baseH = 28 + t * 104
+    const bright = 0.5 + t * 0.5
+    const count = Math.max(8, Math.round(9 + 13 * (1 - t))) // algo menos denso → separados
     for (let c = 0; c < count; c++) {
       const aFrac = count === 1 ? 0.5 : c / (count - 1)
-      const ang = (aFrac - 0.5) * 2 * halfA + (rng() - 0.5) * halfA * 0.34 // reparto + scatter angular
-      const rj = 1 + (rng() - 0.5) * 0.22         // scatter radial (±11%)
-      let x = Fx + rx * rj * Math.sin(ang) + (rng() - 0.5) * 4 // + jitter horizontal pequeño
+      const ang = (aFrac - 0.5) * 2 * halfA + (rng() - 0.5) * halfA * 0.42
+      const rj = 1 + (rng() - 0.5) * 0.28
+      const x = Fx + rx * rj * Math.sin(ang) + (rng() - 0.5) * 7
       let y = Fy + ry * rj * Math.cos(ang)
-      y = Math.min(100, Math.max(60, y))          // CLAMP altura a la ALFOMBRA (no trepan junto a la pantalla)
-      const sizeMul = 0.66 + rng() * 0.64         // variación de tamaño
-      const slug = draw()                         // personaje de la bolsa barajada (reparto parejo)
+      y = Math.min(104, Math.max(63, y)) // clamp: nadie pegado a la pantalla (min 63), llega al borde
+      const sizeMul = 0.66 + rng() * 0.64
+      const slug = draw()
       out.push({
         slug,
         x,
         y,
         h: baseH * sizeMul,
-        z: Math.round(y * 100),                   // z-order por posición vertical: más abajo = más cerca = encima
+        z: Math.round(y * 100),
         bright: Math.min(1, bright + (rng() - 0.5) * 0.12),
-        animDelay: rng() * ANIM_DURATION,         // desfase de fase del festejo (desincroniza la multitud)
+        seed: (rng() * 1e9) | 0, // semilla de desfase de la animación
       })
     }
   }
@@ -169,14 +145,233 @@ function buildCrowd() {
 
 const seats = buildCrowd()
 
-// Guard de dev: si alguien sube los anillos o baja el CAST rompiendo el ratio ≤ 1.2, avisa.
+// Guard de dev: ratio de repetición.
 if (import.meta.env?.DEV) {
   const ratio = seats.length / CAST.length
   console.assert(
-    ratio <= 1.8, // Rafael pidió multitud LLENA → tope relajado a 1.8 (bolsa barajada reparte parejo)
-    `[ch5] ratio de repetición ${ratio.toFixed(2)} > 1.8 — subí el CAST (hoy ${CAST.length}) o bajá los asientos (${seats.length}).`,
+    ratio <= 1.8,
+    `[ch5] ratio de repetición ${ratio.toFixed(2)} > 1.8 — subí el CAST (${CAST.length}) o bajá asientos (${seats.length}).`,
   )
 }
+
+// Estilo base de cada personaje (parte estática; el frame lo mueve el bucle rAF).
+function seatBaseStyle(seat) {
+  const m = crowdManifest[seat.slug]
+  if (!m) return {}
+  const k = seat.h / m.rh
+  return {
+    left: seat.x + '%',
+    top: seat.y + '%',
+    width: m.rw + 'px',
+    height: m.rh + 'px',
+    backgroundImage: `url(/assets/ch5-cinema/rot/${seat.slug}.png)`,
+    transform: `translate(-50%, -100%) scale(${k})`,
+    zIndex: seat.z,
+    filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
+  }
+}
+
+// ─────────────── Máquina de estados de la multitud (runtime, no reactivo) ───────────────
+const audienceRef = ref(null)
+let rafId = null
+let runtime = [] // por asiento: estado + facing continuo; se muta y escribe al DOM
+
+const STATES = ['idleBack', 'idleFront', 'rotR', 'rotL', 'osc', 'festejo']
+
+function rand(seed) {
+  // solo para inicialización determinista; el runtime usa Math.random
+  const r = mulberry32(seed)
+  return r()
+}
+
+// Modelo acción→reposo (Rafael 2026-07-07d: "ejecutar la animación UNA vez, esperar el
+// tiempo, y ejecutar otra"). Cada personaje: fase 'act' = ejecuta UN gesto una sola vez;
+// al terminar pasa a 'rest' = quieto en la pose final durante 1.5–3s; luego elige otro.
+function pickAction(c) {
+  c.phase = 'act'
+  c.state = STATES[(Math.random() * STATES.length) | 0] // uniforme, puede repetir
+  if (c.state === 'idleBack') {
+    c.target = 0 // gira a quedar de espaldas y se queda
+  } else if (c.state === 'idleFront') {
+    c.target = 4 // gira a mirar al usuario y se queda
+  } else if (c.state === 'rotR') {
+    c.sign = 1
+    c.turnRem = 4 // media vuelta (180°) a la derecha, una vez
+  } else if (c.state === 'rotL') {
+    c.sign = -1
+    c.turnRem = 4 // media vuelta a la izquierda, una vez
+  } else if (c.state === 'osc') {
+    c.sign = 1
+    c.turnRem = 4 // media vuelta a un lado…
+    c.oscPhase = 0 // …y luego media vuelta al otro (vuelve al inicio)
+  } else if (c.state === 'festejo') {
+    c.fFrame = 0
+    c.fAcc = 0 // reproduce el ciclo de festejo UNA vez
+  }
+}
+
+function finishAction(c, now) {
+  c.phase = 'rest'
+  c.restUntil = now + 1500 + Math.random() * 1500 // espera 1.5–3s quieto
+  if (c.state === 'festejo') {
+    // tras festejar vuelve al sprite de rotación mirando de espaldas (norte)
+    c.state = 'idleBack'
+    c.dir = 0
+  }
+}
+
+// Giro por el camino más corto (solo para idle: llegar a target y parar).
+function seekDone(c, dt) {
+  let diff = (((c.target - c.dir) % 8) + 12) % 8
+  if (diff > 4) diff -= 8
+  const step = c.turn * dt
+  if (Math.abs(diff) <= step) {
+    c.dir = c.target
+    return true
+  }
+  c.dir = (c.dir + Math.sign(diff) * step + 8) % 8
+  return false
+}
+
+function renderChar(c) {
+  const m = c.m
+  if (c.state === 'festejo') {
+    if (c.mode !== 'fest') {
+      c.el.style.backgroundImage = `url(/assets/ch5-cinema/anim/${c.slug}.png)`
+      c.el.style.width = m.fw + 'px'
+      c.el.style.height = m.fh + 'px'
+      c.el.style.transform = `translate(-50%, -100%) scale(${c.seat.h / m.fh})`
+      c.mode = 'fest'
+      c.lastFrame = -1
+    }
+    if (c.fFrame !== c.lastFrame) {
+      c.el.style.backgroundPositionX = `-${c.fFrame * m.fw}px`
+      c.lastFrame = c.fFrame
+    }
+  } else {
+    if (c.mode !== 'rot') {
+      c.el.style.backgroundImage = `url(/assets/ch5-cinema/rot/${c.slug}.png)`
+      c.el.style.width = m.rw + 'px'
+      c.el.style.height = m.rh + 'px'
+      c.el.style.transform = `translate(-50%, -100%) scale(${c.seat.h / m.rh})`
+      c.mode = 'rot'
+      c.lastFrame = -1
+    }
+    const frame = ((Math.round(c.dir) % 8) + 8) % 8
+    if (frame !== c.lastFrame) {
+      c.el.style.backgroundPositionX = `-${frame * m.rw}px`
+      c.lastFrame = frame
+    }
+  }
+}
+
+function tick(now) {
+  for (const c of runtime) {
+    const dt = Math.min(0.05, (now - c.t) / 1000) // clamp dt (evita saltos tras tab oculto)
+    c.t = now
+
+    if (c.phase === 'rest') {
+      if (now >= c.restUntil) pickAction(c) // terminó la espera → nuevo gesto
+      renderChar(c)
+      continue // en reposo NO se mueve (queda quieto en la pose)
+    }
+
+    // fase 'act': ejecuta el gesto UNA vez; al completarlo pasa a reposo
+    const step = c.turn * dt
+    switch (c.state) {
+      case 'idleBack':
+      case 'idleFront':
+        if (seekDone(c, dt)) finishAction(c, now)
+        break
+      case 'rotR':
+      case 'rotL': {
+        const adv = Math.min(step, c.turnRem)
+        c.dir = (c.dir + c.sign * adv + 8) % 8
+        c.turnRem -= adv
+        if (c.turnRem <= 1e-4) finishAction(c, now)
+        break
+      }
+      case 'osc': {
+        const adv = Math.min(step, c.turnRem)
+        c.dir = (c.dir + c.sign * adv + 8) % 8
+        c.turnRem -= adv
+        if (c.turnRem <= 1e-4) {
+          if (c.oscPhase === 0) {
+            c.oscPhase = 1 // segunda media vuelta, al otro lado
+            c.sign = -c.sign
+            c.turnRem = 4
+          } else {
+            finishAction(c, now)
+          }
+        }
+        break
+      }
+      case 'festejo':
+        c.fAcc += dt
+        while (c.fAcc >= 1 / c.fFps) {
+          c.fFrame += 1
+          c.fAcc -= 1 / c.fFps
+          if (c.fFrame >= c.m.ff) {
+            // ciclo completo una vez → reposo
+            finishAction(c, now)
+            break
+          }
+        }
+        break
+    }
+    renderChar(c)
+  }
+  rafId = requestAnimationFrame(tick)
+}
+
+onMounted(() => {
+  screenTimer = setInterval(() => {
+    screenIdx.value = (screenIdx.value + 1) % screenScenes.length
+  }, 4500)
+
+  const reduce =
+    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  const root = audienceRef.value
+  if (!root) return
+  const els = root.querySelectorAll('.cine-char-live')
+  const now = typeof performance !== 'undefined' ? performance.now() : 0
+  runtime = []
+  els.forEach((el) => {
+    const idx = Number(el.dataset.idx)
+    const seat = seats[idx]
+    const m = crowdManifest[seat.slug]
+    if (!m) return
+    const c = {
+      el,
+      seat,
+      slug: seat.slug,
+      m,
+      dir: 0, // 0 = norte (de espaldas)
+      state: 'idleBack',
+      phase: 'rest', // arranca quieto…
+      restUntil: now + rand(seat.seed ^ 0x9e3779b9) * 2500, // …con espera inicial escalonada
+      target: 0,
+      sign: 1,
+      turnRem: 0,
+      oscPhase: 0,
+      turn: 3 + rand(seat.seed) * 1.6, // 3–4.6 dir/s (giro calmado, cada quien distinto)
+      fFrame: 0,
+      fAcc: 0,
+      fFps: 9 + rand(seat.seed ^ 0x1234) * 3, // 9–12 fps de festejo
+      mode: 'rot',
+      lastFrame: -1,
+      t: now,
+    }
+    runtime.push(c)
+  })
+
+  if (!reduce) rafId = requestAnimationFrame(tick)
+})
+
+onBeforeUnmount(() => {
+  if (screenTimer) clearInterval(screenTimer)
+  if (rafId) cancelAnimationFrame(rafId)
+})
 </script>
 
 <template>
@@ -193,28 +388,15 @@ if (import.meta.env?.DEV) {
       />
     </div>
 
-    <!-- Público de espaldas festejando. Cada asiento con sheet en el manifest usa el
-         render animado (spritesheet + CSS steps); los que aún no tienen sheet caen a
-         <img> estático (fallback temporal hasta completar 125/125). -->
-    <div class="cine-audience" aria-hidden="true">
+    <!-- Público VIVO: cada asiento con manifest usa el <div> animado por el bucle rAF;
+         los que (aún) no tengan sheets caen a <img> estático de espaldas (fallback). -->
+    <div ref="audienceRef" class="cine-audience" aria-hidden="true">
       <template v-for="(seat, idx) in seats" :key="idx">
         <div
-          v-if="animManifest[seat.slug]"
-          class="cine-char-anim"
-          :style="{
-            left: seat.x + '%',
-            top: seat.y + '%',
-            width: animManifest[seat.slug].fw + 'px',
-            height: animManifest[seat.slug].fh + 'px',
-            backgroundImage: `url(/assets/ch5-cinema/anim/${seat.slug}.png)`,
-            '--frames': animManifest[seat.slug].frames,
-            '--travel': `-${animManifest[seat.slug].frames * animManifest[seat.slug].fw}px`,
-            animationDuration: ANIM_DURATION + 's',
-            animationDelay: `-${seat.animDelay}s`,
-            transform: `translate(-50%, -100%) scale(${seat.h / animManifest[seat.slug].fh})`,
-            zIndex: seat.z,
-            filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
-          }"
+          v-if="crowdManifest[seat.slug]"
+          class="cine-char-live"
+          :data-idx="idx"
+          :style="seatBaseStyle(seat)"
         />
         <img
           v-else
@@ -263,8 +445,7 @@ if (import.meta.env?.DEV) {
 
 <style scoped>
 /* ─────────────────────────────────────────────────────────────
- * .ch5-cine — sala de cine oscura (prueba de concepto)
- * Stage opaco: cubre el bg claro global de [data-chapter="5"].
+ * .ch5-cine — sala de cine oscura
  * ───────────────────────────────────────────────────────────── */
 .ch5-cine {
   position: relative;
@@ -280,8 +461,7 @@ if (import.meta.env?.DEV) {
     #04040a;
 }
 
-/* Pantalla: superpuesta EXACTAMENTE sobre la pantalla pintada del hall (rectángulo gris).
-   Slideshow de escenas de época (box/MMA/concierto/lab/COVID), todas online/vacías. */
+/* Pantalla: superpuesta sobre la pantalla pintada del hall. Slideshow de escenas. */
 .cine-screen {
   position: absolute;
   top: 38%;
@@ -297,8 +477,6 @@ if (import.meta.env?.DEV) {
     0 0 150px 44px rgba(180, 200, 255, 0.12);
   z-index: 0;
 }
-
-/* Cada escena apilada; cross-fade por opacidad (la activa arriba). */
 .cine-screen-img {
   position: absolute;
   inset: 0;
@@ -318,7 +496,7 @@ if (import.meta.env?.DEV) {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(60% 55% at 50% 18%, rgba(200, 215, 255, 0.10), transparent 70%);
+  background: radial-gradient(60% 55% at 50% 18%, rgba(200, 215, 255, 0.1), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -328,52 +506,27 @@ if (import.meta.env?.DEV) {
   inset: 0;
 }
 
+/* Sprite estático de fallback (sin sheets) — de espaldas */
 .cine-char {
   position: absolute;
-  transform: translate(-50%, -100%); /* ancla por los PIES: y = línea del piso (no flotan) */
+  transform: translate(-50%, -100%);
   width: auto;
   image-rendering: pixelated;
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
-  /* sombra sutil bajo cada figura para asentarlas en el "piso" */
-  filter: brightness(1);
 }
 
-/* Sprite ANIMADO de festejo: spritesheet horizontal + CSS steps().
-   El div mide un frame natural (fw×fh); se escala a la altura del asiento con
-   transform-origin en los PIES (50% 100%) para mantener el anclaje al piso.
-   background-position-x recorre la tira: steps(frames) → 0, -fw, ... -(frames-1)*fw. */
-.cine-char-anim {
+/* Sprite VIVO: el bucle rAF cambia background-image (rot/festejo) y background-position-x
+   (frame). El anclaje por los PIES lo da transform-origin 50% 100% + translate/scale. */
+.cine-char-live {
   position: absolute;
   background-repeat: no-repeat;
   background-position: 0 0;
   image-rendering: pixelated;
   transform-origin: 50% 100%;
-  animation-name: ch5-festejo;
-  animation-timing-function: steps(var(--frames));
-  animation-iteration-count: infinite;
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
 }
-
-@keyframes ch5-festejo {
-  from {
-    background-position-x: 0;
-  }
-  to {
-    background-position-x: var(--travel);
-  }
-}
-
-/* Respeta prefers-reduced-motion: congela en el primer frame. */
-@media (prefers-reduced-motion: reduce) {
-  .cine-char-anim {
-    animation: none;
-  }
-}
-
-/* Sin cambios de layout en mobile por ahora: la escena es full-viewport y se
- * reescala sola con vw/%. (Prueba de concepto — pulido responsive luego.) */
 </style>
