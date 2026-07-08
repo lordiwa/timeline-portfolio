@@ -124,9 +124,15 @@ function buildCrowd() {
       const aFrac = count === 1 ? 0.5 : c / (count - 1)
       const ang = (aFrac - 0.5) * 2 * halfA + (rng() - 0.5) * halfA * 0.42
       const rj = 1 + (rng() - 0.5) * 0.28
-      const x = Fx + rx * rj * Math.sin(ang) + (rng() - 0.5) * 7
+      let x = Fx + rx * rj * Math.sin(ang) + (rng() - 0.5) * 7
       let y = Fy + ry * rj * Math.cos(ang)
       y = Math.min(104, Math.max(63, y)) // clamp: nadie pegado a la pantalla (min 63), llega al borde
+      // Clamp TRAPEZOIDAL a la alfombra: el ancho permitido se angosta hacia el fondo
+      // (el hall es más angosto atrás y ahí hay MUEBLES). Evita que nadie "flote" sobre
+      // las mesas/sofás laterales (Rafael 2026-07-07: "canguro flotando sobre una mesa").
+      const yNorm = (y - 63) / 41 // 0 atrás .. 1 adelante
+      const halfW = 24 + yNorm * 20 // semiancho: 24% atrás → 44% adelante
+      x = Math.min(50 + halfW, Math.max(50 - halfW, x))
       const sizeMul = 0.66 + rng() * 0.64
       const slug = draw()
       out.push({
