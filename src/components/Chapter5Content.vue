@@ -116,26 +116,26 @@ function buildCrowd() {
   const rng = mulberry32(0x5ce07)
   const draw = makeBag(CAST, rng)                // reparto parejo (ratio ≤ 1.2)
   const Fx = 50
-  const Fy = 23                                  // foco justo bajo la pantalla (%)
+  const Fy = 48                                  // foco (línea de pies del anillo interior) MÁS abajo → banda baja
   const out = []
   for (let i = 0; i < NRINGS; i++) {
     const t = NRINGS === 1 ? 0 : i / (NRINGS - 1) // 0 interior (pantalla) .. 1 exterior
-    const rx = 11 + t * 22                        // radio horiz %: círculo chico, poco ancho a los lados
-    const ry = 16 + t * 22                        // radio vert %: compacto; interior justo bajo el borde de la pantalla
-    const halfA = ((34 + t * 20) * Math.PI) / 180 // semiapertura CERRADA: la multitud queda DEBAJO de la pantalla, no sube por los lados
-    const baseH = 34 + t * 118                    // alto px: interior chico (lejos) .. exterior grande
+    const rx = 8 + t * 18                         // radio horiz %: CONTENIDO en la alfombra (no a los muros)
+    const ry = 15 + t * 35                        // radio vert %: banda compacta baja (altura sin cambios)
+    const halfA = ((34 + t * 18) * Math.PI) / 180 // semiapertura moderada → llena el centro, no los extremos
+    const baseH = 30 + t * 109                    // alto px: multitud pequeña, cámara cerca
     const bright = 0.5 + t * 0.5                  // interior oscuro (fondo) .. exterior claro
-    // Población CONCENTRADA hacia la pantalla: MUCHOS en los anillos interiores
-    // (crush pegado a la pantalla), POCOS en los exteriores (Rafael 2026-07-07:
-    // "círculo más chico, más personas cerca de la pantalla, menos lejos").
-    const count = Math.max(3, Math.round(4 + 20 * Math.pow(1 - t, 1.2)))
+    // MÁS LLENO y con el centro denso (Rafael): mucha gente en todos los anillos,
+    // scatter angular/radial, contenida en la alfombra con clamp de altura.
+    const count = Math.max(9, Math.round(12 + 16 * (1 - t)))
     for (let c = 0; c < count; c++) {
       const aFrac = count === 1 ? 0.5 : c / (count - 1)
-      const ang = (aFrac - 0.5) * 2 * halfA + (rng() - 0.5) * halfA * 0.14 // reparto en el arco + jitter angular
-      const rj = 1 + (rng() - 0.5) * 0.12         // jitter radial ±6%
-      const x = Fx + rx * rj * Math.sin(ang)      // ang=0 → recto hacia abajo desde la pantalla
-      const y = Fy + ry * rj * Math.cos(ang)
-      const sizeMul = 0.82 + rng() * 0.36         // variación de tamaño
+      const ang = (aFrac - 0.5) * 2 * halfA + (rng() - 0.5) * halfA * 0.34 // reparto + scatter angular
+      const rj = 1 + (rng() - 0.5) * 0.22         // scatter radial (±11%)
+      let x = Fx + rx * rj * Math.sin(ang) + (rng() - 0.5) * 4 // + jitter horizontal pequeño
+      let y = Fy + ry * rj * Math.cos(ang)
+      y = Math.min(100, Math.max(60, y))          // CLAMP altura a la ALFOMBRA (no trepan junto a la pantalla)
+      const sizeMul = 0.66 + rng() * 0.64         // variación de tamaño
       const slug = draw()                         // personaje de la bolsa barajada (reparto parejo)
       out.push({
         slug,
@@ -157,8 +157,8 @@ const seats = buildCrowd()
 if (import.meta.env?.DEV) {
   const ratio = seats.length / CAST.length
   console.assert(
-    ratio <= 1.2,
-    `[ch5] ratio de repetición ${ratio.toFixed(2)} > 1.2 — subí el CAST (hoy ${CAST.length}) o bajá los asientos (${seats.length}).`,
+    ratio <= 1.8, // Rafael pidió multitud LLENA → tope relajado a 1.8 (bolsa barajada reparte parejo)
+    `[ch5] ratio de repetición ${ratio.toFixed(2)} > 1.8 — subí el CAST (hoy ${CAST.length}) o bajá los asientos (${seats.length}).`,
   )
 }
 </script>
@@ -234,19 +234,20 @@ if (import.meta.env?.DEV) {
     #04040a;
 }
 
-/* Rectángulo blanco = futura "tele"/pantalla de cine al fondo-centro (16:9) */
+/* Pantalla: superpuesta EXACTAMENTE sobre la pantalla pintada del hall (rectángulo gris).
+   Aquí irá el slideshow de escenas (box/MMA/conciertos/COVID). */
 .cine-screen {
   position: absolute;
-  top: 7%;
+  top: 38%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(42vw, 460px);
+  width: min(17vw, 300px);
   aspect-ratio: 16 / 9;
   background: #ffffff;
   border-radius: 2px;
   box-shadow:
-    0 0 90px 24px rgba(255, 255, 255, 0.28),
-    0 0 220px 60px rgba(180, 200, 255, 0.14);
+    0 0 60px 16px rgba(255, 255, 255, 0.25),
+    0 0 150px 44px rgba(180, 200, 255, 0.12);
   z-index: 0;
 }
 
@@ -267,7 +268,7 @@ if (import.meta.env?.DEV) {
 
 .cine-char {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -100%); /* ancla por los PIES: y = línea del piso (no flotan) */
   width: auto;
   image-rendering: pixelated;
   -webkit-user-select: none;
