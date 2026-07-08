@@ -1,0 +1,877 @@
+{
+"aguacate-galan": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"aguila-alturas": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"alce-terno": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"all-around": {
+"ff": 9,
+"fh": 252,
+"fw": 252,
+"rh": 252,
+"rw": 252
+},
+"alpaca-influencer": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"androide-hippie": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"ardilla-culturista": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"attack1": {
+"ff": 18,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"avestruz-kickboxer": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"balanced": {
+"ff": 9,
+"fh": 192,
+"fw": 192,
+"rh": 192,
+"rw": 192
+},
+"bboy-kungfu": {
+"ff": 9,
+"fh": 80,
+"fw": 80,
+"rh": 80,
+"rw": 80
+},
+"bboy-skater": {
+"ff": 9,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"bisonte-motero": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"bong-jazz": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"brownie-relajado": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"buho-detective": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"cabra-metalera": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"cactus-disco": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"cactus-samurai": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"camaleon-influencer": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"camello-dj": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"cangrejo-boxeador": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"canguro-grappler": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"cannabis-guardian": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"cebra-codigobarras": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"centauro-reversa": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"cerdo-banquero": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"cerebro-graduado": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"champinon-copa": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"charger": {
+"ff": 9,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"cogollo-boxeador": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"cubrebocas-justiciero": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"dado-suerte": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"dona-cuarentena": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"dragon-vegano": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"empire-drone": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"erizo-punk": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"escarabajo-aristocrata": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"esqueleto-dj": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"estrella-fugaz": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"eyeball": {
+"ff": 9,
+"fh": 248,
+"fw": 248,
+"rh": 248,
+"rw": 248
+},
+"fantasma-fiestero": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"female-1": {
+"ff": 9,
+"fh": 188,
+"fw": 188,
+"rh": 188,
+"rw": 188
+},
+"female-2": {
+"ff": 9,
+"fh": 188,
+"fw": 188,
+"rh": 188,
+"rw": 188
+},
+"female-3": {
+"ff": 9,
+"fh": 188,
+"fw": 188,
+"rh": 188,
+"rw": 188
+},
+"fighter": {
+"ff": 36,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"flamenco-yoga": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"flyer": {
+"ff": 18,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"foca-comediante": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"gallo-striker": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"gato-astronauta": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"gel-musculoso": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"girasol-vampiro": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"globo-helio": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"gorila-muaythai": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"grappler": {
+"ff": 9,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"grinder-breakdancer": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"guante-mimo": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"hipopotamo-tango": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"hoja-surfista": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"idle-a": {
+"ff": 9,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"idle-b": {
+"ff": 18,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"iguana-rockera": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"jeringa-ninja": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"koala-insomne": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"lemur-raver": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"leon-karaoke": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"loro-poliglota": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"mantis-evangelista": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"mapache-gourmet": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"maria-diva": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"masa-madre": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"medusa-ballet": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"momia-pijama": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"monitor-frame": {
+"ff": 9,
+"fh": 236,
+"fw": 236,
+"rh": 236,
+"rw": 236
+},
+"monk": {
+"ff": 36,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"mono-terno": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"muela-rey": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"murcielago-barista": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"ninja": {
+"ff": 9,
+"fh": 152,
+"fw": 152,
+"rh": 152,
+"rw": 152
+},
+"nube-paraguas": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"nutria-pirata": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"ornitorrinco-espia": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"oso-pesado": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"panda-contador": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"papel-coronado": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"pavo-real": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"pez-globo-ansioso": {
+"ff": 9,
+"fh": 36,
+"fw": 36,
+"rh": 36,
+"rw": 36
+},
+"pinata-andante": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"pinguino-luchador": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"pizza-rockera": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"planta-rasta": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"player-brawler": {
+"ff": 9,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"porro-aventurero": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"pulga-gigante": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"pulpo-bibliotecario": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"qr-menu": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"rana-predicadora": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"rinoceronte-noqueador": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"robot-jardinero": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"robot-serpentinas": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"sapo-opera": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"semilla-bebe": {
+"ff": 9,
+"fh": 24,
+"fw": 24,
+"rh": 24,
+"rw": 24
+},
+"shield-drone": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"simio-terno": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"sombrero-mago": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"suricata-paranoico": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"taco-mariachi": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"tank": {
+"ff": 9,
+"fh": 224,
+"fw": 224,
+"rh": 224,
+"rw": 224
+},
+"tejon-enmascarado": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"termometro-ansioso": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"tiburon-oficinista": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"toro-octagono": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"tortuga-sumo": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"tucan-reggaeton": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"vacuna-heroe": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"virus-rockstar": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"volcan-hawaiano": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"walk-a": {
+"ff": 18,
+"fh": 92,
+"fw": 92,
+"rh": 92,
+"rw": 92
+},
+"warden": {
+"ff": 9,
+"fh": 252,
+"fw": 252,
+"rh": 252,
+"rw": 252
+},
+"yeti-solar": {
+"ff": 9,
+"fh": 68,
+"fw": 68,
+"rh": 68,
+"rw": 68
+},
+"zanahoria-musculosa": {
+"ff": 9,
+"fh": 48,
+"fw": 48,
+"rh": 48,
+"rw": 48
+},
+"zombi-vegetariano": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+},
+"zoner": {
+"ff": 9,
+"fh": 184,
+"fw": 184,
+"rh": 184,
+"rw": 184
+},
+"zorro-broker": {
+"ff": 9,
+"fh": 56,
+"fw": 56,
+"rh": 56,
+"rw": 56
+}
+}
