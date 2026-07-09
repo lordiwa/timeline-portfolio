@@ -44,6 +44,12 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     ch6-bg-nebulae-mid.png + ch6-bg-nebulae-mid-t.png (versión recortada/trimmed)
 //     ch6-planet-{ar-vr,remoose,software-mind}.png
 //     ch6-ship-{1,2}.png
+//   - 6 era agentic ch6 (ERA-AGNT-01, 2026-07-09 — Rafael + super robot + enjambre):
+//     · ch6-robot.png (super robot de espaldas, pixellab v3)
+//     · ch6-rafael.png (Rafael comandante de espaldas)
+//     · ch6-drone-{a,b}.png (drones agente del enjambre)
+//     · ch6-structures-t.png (megaestructura orbital, silueta transparente)
+//     · ch6-platform.png (plataforma-mirador procedural)
 //   - 5 Phase 6 ch0 DOS demo reel (TerminalScroll auto-rotating programs):
 //     · ch0-game-{california,warcraft,starcraft,magic}.png (pixel art game screens)
 //     · ch0-os-win95.png (Windows 95 desktop final)
@@ -70,7 +76,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch4-near.png (partículas/fragmentos próximos, transparente — primer plano c0)
 //     Reemplazan al ch4-bg.png iter2 (movido a old/ vía §6.5).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading)|drone-[ab]|platform|rafael|structures-t)\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).
