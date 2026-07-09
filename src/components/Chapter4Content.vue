@@ -357,11 +357,12 @@ onBeforeUnmount(() => {
 }
 
 /* ── Portal pulse — overlay circular de energía sobre el anillo del portal ─── */
-/* Posición estimada "abajo-derecha" del PNG ch4-portal.png (ajustar si cambia arte). */
+/* Centro del anillo real medido en navegador a 1920×911 (2026-07-09b): ~83%/79%.
+   El estimado inicial 70%/62% quedaba arriba-izquierda del anillo. */
 .ch4-portal-pulse {
   position: absolute;
-  left: 70%;
-  top: 62%;
+  left: 81%;
+  top: 75%;
   width: 26%;
   aspect-ratio: 1;
   border-radius: 50%;
