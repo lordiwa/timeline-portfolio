@@ -170,6 +170,26 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 
 ---
 
+## ch4-bust.png — iter5 → iter6 (2026-07-09)
+
+- **Versión guardada:** `old/ch4-bust-2026-07-09-iter5.png`
+- **Razón del cambio:** ch4-bust iter5 aparece CANOSO/envejecido — pelo grisáceo ondulado claro que rompe la cronología. ch4 va entre ch3 y ch5; debería ser el mismo hombre de ch3 apenas 3-5 años mayor (pelo castaño oscuro, quizá algo más largo que ch3, transicionando hacia el look de ch5 con pelo más largo). Feedback planner 2026-07-09.
+- **Qué se intentará diferente:** forge_sprite model "banana-2" con ch3-bust.png como referencia multimodal directa. Hombre ~35 años, MISMO pelo castaño casi-negro #1A0805, SIN canas, SIN pelo claro, pelo algo más largo que ch3 (rizos pasando levemente las orejas), barba castaña como ch3, piel morena cálida #FBB782/#ED9766/#B35A48, ojos sage #8A9E86. Ropa casual oscura (no la chaqueta futurista de ch6). Énfasis fuerte en "NO grey hair, NO light brown, SAME dark almost-black hair as ch3".
+- **Resultado:** ACEPTADO — 2 intentos. Intento 1: pelo demasiado claro (marrón medio/grisáceo, mismo problema recurrente). Intento 2: referencias ch3+ch5 combinadas → pelo castaño oscuro casi-negro correcto, rizos naturales ligeramente más largos que ch3, cara y barba coherentes con la línea cronológica. Camisa salió clara (no navy) pero no era el problema crítico — el pelo es lo que importa para la cronología. optimize_sprite aplicado (0% savings, ya optimizado por banana-2). 17,519 bytes.
+- **Commit hash post-regen:** pendiente
+
+---
+
+## ch6-bust.png — green-shirt → iter-synthwave (2026-07-09)
+
+- **Versión guardada:** `old/ch6-bust-2026-07-09-green-shirt.png` (última iteración: "drawn-green-shirt" commit `fd7bf3b`)
+- **Razón del cambio:** La ropa en ch6 era una mancha plana sin detalle de camisa/chaqueta. Además se elimina la camisa verde (que era de ch5 también) para diferenciar las eras. ch6 es la "era agentic" — el personaje debe verse como comandante de flota de agentes, futurista. Feedback planner 2026-07-09.
+- **Qué se intentará diferente:** forge_sprite model "banana-2" con ch5-bust.png + ch6-bust-2026-07-09-green-shirt.png como referencias multimodales. MISMA cara/pelo largo/barba que la referencia de ch6 archivada. Ropa: chaqueta técnica oscura con acentos cian neón #4dffff y detalles magenta #ff3ca6 (paleta synthwave ch6). Vibe: comandante elegante de flota de robots, no militar. Pixel art retrato RPG head-and-shoulders 96x96.
+- **Resultado:** ACEPTADO — 3 intentos. Intento 1: chaqueta blanca/clara (banana-2 problema documentado). Intento 2: chaqueta aún clara con algo de detalle. Intento 3: prompt con "PITCH BLACK jacket" y descripción más agresiva → chaqueta oscura con acentos cian neón visibles en collar y pecho, detalle magenta en hombro. Cara/pelo largo/barba correctos en todos los intentos. Vibe synthwave/commander logrado. optimize_sprite aplicado (0% savings, ya optimizado). 24,405 bytes.
+- **Commit hash post-regen:** pendiente
+
+---
+
 ## ch5-bust.png — iter4 → iter5 (2026-05-14)
 
 - **Versión guardada:** `old/ch5-bust-2026-05-14-iter4.png` (15,626 bytes — generado por commit `ae07e13`)
