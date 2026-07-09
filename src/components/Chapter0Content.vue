@@ -68,6 +68,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
  * padding-top: espacio para StickyAvatar 80×96 + margen
  * ───────────────────────────────────────────────────────────────────────── */
 .ch0-layout {
+  position: relative;
   display: grid;
   grid-template-columns: 200px 1fr;
   gap: var(--sp-lg);
@@ -77,6 +78,44 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   padding-bottom: var(--sp-lg);
   height: 100%;
   overflow-y: hidden;
+}
+
+/* ── Vignette (oscuridad suave en bordes de la pantalla CRT) ── */
+.ch0-layout::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Scanlines horizontales estáticas (período 2px, opacidad 0.07) ── */
+/* Estáticas — no necesitan PRM. */
+.ch0-layout::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.07) 0px,
+    rgba(0, 0, 0, 0.07) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ambas columnas deben elevarse sobre los pseudo-elementos ::before/::after */
+.ch0-meta,
+.ch0-content {
+  position: relative;
+  z-index: 2;
 }
 
 .ch0-meta {
@@ -91,6 +130,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   font-size: 2rem;
   margin: 0;
   color: var(--c-accent);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--c-accent) 55%, transparent);
 }
 
 .ch0-era {
@@ -98,6 +138,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   font-size: 1.5rem;
   margin: 0;
   color: var(--c-fg);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--c-fg) 45%, transparent);
 }
 
 .ch0-content {
@@ -120,6 +161,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   color: var(--c-fg);
   margin: 0 0 var(--sp-md) 0;
   letter-spacing: 0.01em;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--c-fg) 55%, transparent);
 }
 
 .ch0-bio p:last-child {
@@ -133,6 +175,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
   opacity: 0.6;
   margin: 0;
   font-style: italic;
+  text-shadow: 0 0 5px color-mix(in srgb, var(--c-fg) 40%, transparent);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

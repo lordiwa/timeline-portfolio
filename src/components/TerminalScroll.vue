@@ -287,10 +287,63 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   color: var(--c-fg);
   background: var(--c-bg);
   padding: var(--sp-lg);
-  border: 1px solid var(--c-border);
-  border-radius: 4px;
+  /* ── Bisel CRT: border-radius generoso + borde oscuro tipo carcasa ── */
+  border-radius: 16px;
+  border: 4px solid #1a1a1a;
+  outline: 1px solid #0a0a0a;
   min-height: 220px;
   overflow: hidden;
+  /* ── Inner box-shadow: ilusión de pantalla curva + bisel interior ── */
+  box-shadow:
+    inset 0 0 32px rgba(0, 0, 0, 0.7),
+    inset 0 2px 8px rgba(255, 255, 255, 0.04),
+    0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Reflejo diagonal muy sutil arriba-izquierda (pantalla curva CRT) ── */
+/* Estático — no necesita PRM. */
+.terminal-scroll::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.012) 28%,
+    transparent 50%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ── Flicker de fósforo — opacity imperceptible pero vivo (~8s) ── */
+/* Apagado bajo prefers-reduced-motion. Solo afecta al wrapper del terminal,
+   no al texto (evita reflows). */
+.terminal-scroll::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 4;
+  animation: phosphor-flicker 8s steps(1) infinite;
+}
+
+@keyframes phosphor-flicker {
+  0%   { opacity: 1; }
+  6%   { opacity: 0.988; }
+  7%   { opacity: 1; }
+  34%  { opacity: 1; }
+  34.5%{ opacity: 0.985; }
+  35%  { opacity: 1; }
+  61%  { opacity: 1; }
+  61.4%{ opacity: 0.991; }
+  61.8%{ opacity: 1; }
+  88%  { opacity: 1; }
+  88.3%{ opacity: 0.987; }
+  88.7%{ opacity: 1; }
+  100% { opacity: 1; }
 }
 
 .terminal-output {
@@ -315,10 +368,11 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   opacity: 1;
 }
 
-/* Cursor CRT cuadrado — blink steps(2) clásico DOS */
+/* Cursor CRT cuadrado — blink steps(2) clásico DOS + glow de fósforo */
 .terminal-cursor {
   display: inline-block;
   animation: terminal-cursor-blink 1s steps(2) infinite;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--c-fg) 70%, transparent);
 }
 
 /* Blackout layer durante LOADING/EXIT — black instant (era DOS, no fade) */
@@ -358,6 +412,7 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
 /* ─────────────────────────────────────────────────────────────────────────
  * D4-10a PRM branch — sin parpadeo, banner reveal instantáneo.
  * El typing dinámico también respeta PRM via prefersReduced.value en script.
+ * El flicker de fósforo (::after) también se apaga aquí.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .terminal-line {
@@ -367,6 +422,9 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   .terminal-cursor {
     animation: none;
     opacity: 1;
+  }
+  .terminal-scroll::after {
+    animation: none;
   }
 }
 </style>
