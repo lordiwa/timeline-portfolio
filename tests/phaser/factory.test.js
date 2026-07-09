@@ -36,11 +36,13 @@ describe('phaser factory (PHA-01..03) — RED W0 → verde W2', () => {
     ).toMatch(/Phaser\.Scale\.NONE/)
   })
 
-  it('T2: Math.floor presente — PHA-03 integer zoom formula', () => {
+  it('T2: zoom fraccional hi-bit — Math.max(1, Math.min(...)) sin Math.floor (HI-BIT-01 2026-07-09b)', () => {
+    // PHA-03 integer-zoom superseded: con arte a doble densidad el zoom fraccional
+    // ya no produce blur perceptible. La fórmula pasa de Math.floor a Math.max/Math.min.
     expect(
       src,
-      'computeZoom() debe usar Math.floor(vw/480, vh/270) || 1 — PHA-03. W2 crea este archivo.'
-    ).toMatch(/Math\.floor\s*\(/)
+      'computeZoom() debe usar Math.max(1, Math.min(vw/BASE_W, vh/BASE_H)) — zoom fraccional fill (HI-BIT-01). W2 crea este archivo.'
+    ).toMatch(/Math\.max\s*\(\s*1[\s\S]*Math\.min/)
   })
 
   it('T3: pixelArt: true presente — PHA-03 pixel-art rendering', () => {

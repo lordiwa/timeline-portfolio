@@ -11,6 +11,9 @@
 //   - D5-10: bridge events SIN prefijo `vue:` ('show-project', 'arrival-complete', 'locale-changed')
 //   - ERA-AGNT-01 (2026-07-09): Rafael + super robot en plataforma-mirador orquestrando
 //     enjambre de drones que construyen mundos nuevos; megaestructura orbital en horizonte.
+//   - HI-BIT-01 (2026-07-09b): mundo 960×540 con fondos doble densidad (regenerados a
+//     resolución nativa 2×); sprites chunky ×2 via setScale(2). PHA-03 integer-zoom
+//     superseded — zoom fraccional fill ya no produce blur perceptible con arte hi-bit.
 //
 // Anti-patterns enforced (PHA-08 — verificados por regex de ausencia en
 // tests/phaser/no-character-animation.test.js):
@@ -28,34 +31,33 @@ import Phaser from 'phaser'
 import { i18n } from '@/i18n'
 import { projects } from '@/data/projects'
 
-// Constantes de layout — sintonizables si Rafael feedback W5.
-const BASE_W = 480
-const BASE_H = 270
+// Constantes de layout hi-bit (HI-BIT-01) — 960×540 = 480×270 × doble densidad.
+const BASE_W = 960
+const BASE_H = 540
 
-// Vertical descent total: 3 viewport heights = 810 px. Los 3 planets se distribuyen
-// dentro de este rango usando planetOrbit (0..1 normalized en src/data/projects.js).
-const ARRIVAL_DESCENT = BASE_H * 3 // 810
+// Vertical descent total: 3 viewport heights = 1620 px.
+const ARRIVAL_DESCENT = BASE_H * 3 // 1620
 
-// Cámara final: scrollY = ARRIVAL_DESCENT - 135 (centra el último planet en viewport).
-const CAMERA_FINAL_Y = ARRIVAL_DESCENT - 135
+// Cámara final: scrollY centra el postal (último planet en viewport).
+const CAMERA_FINAL_Y = ARRIVAL_DESCENT - BASE_H / 2 // 1350
 
-// Arrival duration default (Claude's discretion D5-08, plan §interfaces Open Q6 RESOLVED).
+// Arrival duration default.
 const ARRIVAL_DURATION_MS = 3500
 
 // Ships timing — D5-05.
 const SHIP1_DURATION_MS = 12000 // LTR (banda superior, ~12s)
 const SHIP2_DURATION_MS = 18000 // RTL (banda inferior, ~18s — mayor profundidad)
 
-// Hit area halo extra (D5-06 mandate +~16px padding sobre el sprite radius).
-const PLANET_HALO_PX = 16
+// Hit area halo extra (D5-06 — planetas 192×192 nativos, sin scale).
+const PLANET_HALO_PX = 24
 
 // Ships estáticas posiciones bajo PRM (D5-08).
-const PRM_SHIP1_X = 120
-const PRM_SHIP2_X = 360
+const PRM_SHIP1_X = 240
+const PRM_SHIP2_X = 720
 
 // Zigzag de planetas (ERA-AGNT-01) — posiciones X indexadas por orden cronológico (sort planetOrbit asc).
-// idx 0: orbit más baja (ar-vr, y≈297), idx 1: media (remoose, y≈540), idx 2: alta (software-mind, y≈783).
-const PLANET_XS = [310, 150, 300]
+// idx 0: orbit 0.2 (ar-vr, y≈594), idx 1: orbit 0.5 (remoose, y≈1080), idx 2: orbit 0.8 (software-mind, y≈1566).
+const PLANET_XS = [620, 300, 600]
 
 export class SpaceScene extends Phaser.Scene {
   constructor() {
@@ -72,33 +74,24 @@ export class SpaceScene extends Phaser.Scene {
     // Main background (always loaded — single-layer fallback baseline).
     this.load.image('ch6-bg', '/assets/ch6-bg.png')
 
-    // Backdrop tall 480×1080 (fix "nebulosa borrosa" 2026-07-09): compuesto a
-    // resolución NATIVA (extensión de espacio profundo arriba + ch6-bg verbatim
-    // abajo). Reemplaza el setDisplaySize ×4 de ch6-bg, que estiraba 270px de
-    // alto a 1080 y convertía estrellas y nebulosa en rayas borrosas.
+    // Backdrop tall 960×1890 hi-bit — cubre descenso completo a resolución nativa.
     this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.png')
 
     // Parallax layers TRANSPARENTES (Open Q4 RESOLVED — best case 3-layer).
-    // Derivadas de las opacas originales (fondo plano → alpha 0 + mosaico
-    // espejado vertical para cubrir el descenso SIN estirar). Las opacas
-    // originales quedaban 100% tapadas por el main bg dibujado al final.
-    // Si los archivos no existen, `loaderror` event silencia el fallo y create()
-    // detecta su ausencia via this.textures.exists() para fallback single-layer.
     this.load.image('ch6-bg-stars-far-t', '/assets/ch6-bg-stars-far-t.png')
     this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.png')
 
-    // 3 planets-proyecto (D5-01 mapping cronológico ascendente).
+    // 3 planets-proyecto — 192×192 nativos hi-bit, sin scale (D5-01).
     this.load.image('ch6-planet-ar-vr', '/assets/ch6-planet-ar-vr.png')
     this.load.image('ch6-planet-remoose', '/assets/ch6-planet-remoose.png')
     this.load.image('ch6-planet-software-mind', '/assets/ch6-planet-software-mind.png')
 
-    // 2 ships (D5-05).
+    // 2 ships (D5-05) — mismos archivos, se muestran ×2 via setScale.
     this.load.image('ch6-ship-1', '/assets/ch6-ship-1.png')
     this.load.image('ch6-ship-2', '/assets/ch6-ship-2.png')
 
     // Era agentic assets — postal final ch6 (ERA-AGNT-01, 2026-07-09).
-    // Cargados con fallback silencioso: si alguno falta, create() lo omite
-    // via this.textures.exists() sin romper la escena.
+    // Fallback silencioso: si alguno falta, create() lo omite via textures.exists().
     this.load.image('ch6-robot', '/assets/ch6-robot.png')
     this.load.image('ch6-rafael', '/assets/ch6-rafael.png')
     this.load.image('ch6-drone-a', '/assets/ch6-drone-a.png')
@@ -106,8 +99,7 @@ export class SpaceScene extends Phaser.Scene {
     this.load.image('ch6-structures-t', '/assets/ch6-structures-t.png')
     this.load.image('ch6-platform', '/assets/ch6-platform.png')
 
-    // Silent fail para assets opcionales — no romper scene si Adobe MCP no entregó
-    // las capas (W1 best case 3-layer; worst case 1-layer fallback).
+    // Silent fail para assets opcionales — no romper scene si algún asset no existe.
     this.load.on('loaderror', (file) => {
       // No-op intencional. Las texture keys ausentes se detectan en create()
       // via this.textures.exists() — fallback single-layer ya cubierto.
@@ -124,31 +116,22 @@ export class SpaceScene extends Phaser.Scene {
     // Parallax layers (D5-02 multi-capa parallax)
     // ─────────────────────────────────────────────────────────────────
 
-    // Fix "nebulosa borrosa" 2026-07-09 — composición del fondo re-hecha:
-    //   1. TODO a resolución nativa 1:1 — cero setDisplaySize. El estirado ×4
-    //      (270→1080) del asset era la borrosidad: estrellas → rayas verticales.
-    //   2. Backdrop opaco PRIMERO, capas transparentes DESPUÉS. Antes el main
-    //      bg opaco se dibujaba al final y tapaba ambas capas parallax.
-    //   3. Geometría: origin(0.5, 0) en y=0 con alturas que cubren el rango
-    //      real de cámara [0..CAMERA_FINAL_Y+BASE_H]. Antes (centro en y=135,
-    //      span -405..675) el viewport final del arrival quedaba SIN fondo.
     const hasTall = this.textures.exists('ch6-bg-tall')
     const hasStarsT = this.textures.exists('ch6-bg-stars-far-t')
     const hasNebulaeT = this.textures.exists('ch6-bg-nebulae-mid-t')
 
     // Borde inferior del mundo visible (viewport final del arrival).
-    const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 945
+    const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 1890
 
     // Bajo PRM (D5-08): scrollFactor 1.0 todas las capas (sin diferencial).
     const starsFactor = prefersReduced ? 1.0 : 0.2
     const nebulaeFactor = prefersReduced ? 1.0 : 0.5
 
     if (hasTall) {
-      // Backdrop 480×1080 nativo — cubre el descenso completo y termina en la
-      // "postal" original (ch6-bg verbatim) exactamente donde aterriza el arrival.
+      // Backdrop 960×1890 nativo hi-bit — cubre el descenso completo.
       this.add.image(BASE_W / 2, 0, 'ch6-bg-tall').setOrigin(0.5, 0).setScrollFactor(1.0)
     } else {
-      // Fallback legacy single-layer (asset tall ausente): comportamiento previo.
+      // Fallback legacy single-layer (asset tall ausente).
       this.add
         .image(BASE_W / 2, BASE_H / 2, 'ch6-bg')
         .setScrollFactor(1.0)
@@ -156,11 +139,6 @@ export class SpaceScene extends Phaser.Scene {
         .setDisplaySize(BASE_W, BASE_H * 4)
     }
 
-    // Capas transparentes sobre el backdrop. Altura de cobertura necesaria con
-    // scrollFactor f: BASE_H + f·CAMERA_FINAL_Y (405 stars / 608 nebulae) —
-    // ambos assets la superan sin estirar (540 / 810, mosaico espejado).
-    // Bajo PRM (factor 1.0 + cámara ya en final): anclar al fondo del mundo
-    // para que cubran el viewport final.
     if (hasStarsT) {
       const h = this.textures.get('ch6-bg-stars-far-t').getSourceImage().height
       this.add
@@ -175,18 +153,17 @@ export class SpaceScene extends Phaser.Scene {
         .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-nebulae-mid-t')
         .setOrigin(0.5, 0)
         .setScrollFactor(nebulaeFactor)
-        // 0.65 → 0.5 (2026-07-09b): en el descenso competían con los planetas.
-        .setAlpha(0.5)
+        .setAlpha(0.65)
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Megaestructura orbital (ERA-AGNT-01) — horizonte derecho del postal,
-    // detrás de los planetas. depth 8.
+    // Megaestructura orbital (ERA-AGNT-01) — horizonte derecho del postal.
+    // 688×384 nativa hi-bit, sin scale. depth 8.
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-structures-t')) {
       this.add
-        .image(330, 740, 'ch6-structures-t')
+        .image(660, 1480, 'ch6-structures-t')
         .setDepth(8)
         .setScrollFactor(1.0)
         .setAlpha(0.92)
@@ -194,6 +171,8 @@ export class SpaceScene extends Phaser.Scene {
 
     // ─────────────────────────────────────────────────────────────────
     // 3 planets — distribuidos en zigzag (D5-01 + Pattern 7 + ERA-AGNT-01)
+    // Planetas 192×192 nativos hi-bit, sin scale. PLANET_HALO_PX 24.
+    // Y = orbit * ARRIVAL_DESCENT + BASE_H/2 (= 270 — centra orbit en su franja).
     // ─────────────────────────────────────────────────────────────────
 
     this.projectsData = projects.filter((p) => p.chapterEra === 6)
@@ -202,14 +181,13 @@ export class SpaceScene extends Phaser.Scene {
 
     this.projectsData.forEach((proj, idx) => {
       const textureKey = `ch6-planet-${proj.id.replace('ch6-', '')}`
-      // Posición X en zigzag (PLANET_XS) para composición visual más dinámica.
       const planetX = PLANET_XS[idx] ?? BASE_W / 2
       const planet = this.add.sprite(
         planetX,
-        proj.planetOrbit * ARRIVAL_DESCENT + 135, // Y derived from data
+        proj.planetOrbit * ARRIVAL_DESCENT + BASE_H / 2, // Y = orbit*1620 + 270
         textureKey
       )
-      planet.setScrollFactor(1.0) // world-space — camera reveals as it descends
+      planet.setScrollFactor(1.0)
       planet.setDepth(20)
 
       // Hit area generosa: circle radius = halfWidth + halo (D5-06).
@@ -220,13 +198,14 @@ export class SpaceScene extends Phaser.Scene {
       )
 
       // Tooltip (Phaser Text — D5-10 in-Phaser; mantra/overlay viven en Vue).
+      // fontSize 20px + padding mayores compensan el zoom fraccional (~1.7×) vs anterior (3×).
       const tooltip = this.add
         .text(0, 0, '', {
           fontFamily: 'Audiowide, sans-serif', // D5-04 synthwave font
-          fontSize: '12px',
+          fontSize: '20px',
           color: '#4dffff', // cyan accent D5-04
           backgroundColor: '#1a0e3d', // deep purple D5-04
-          padding: { x: 6, y: 3 },
+          padding: { x: 10, y: 5 },
         })
         .setScrollFactor(0) // sticky-to-camera
         .setDepth(100)
@@ -238,7 +217,7 @@ export class SpaceScene extends Phaser.Scene {
         this.input.setDefaultCursor('pointer')
         tooltip.setText(i18n.global.t(proj.titleKey))
         // Posición dinámica: si el planeta está a la derecha del centro,
-        // el tooltip se muestra a su izquierda para no salirse de los 480px.
+        // el tooltip se muestra a su izquierda para no salirse de los 960px.
         if (planet.x > BASE_W / 2) {
           tooltip.setOrigin(1, 0.5)
           tooltip.setPosition(planet.x - planet.width / 2 - 4, planet.y)
@@ -265,18 +244,21 @@ export class SpaceScene extends Phaser.Scene {
 
     // ─────────────────────────────────────────────────────────────────
     // 2 ships — horizontal loop (D5-05 + Pattern 8)
+    // setScale(2) — mismos archivos, doble tamaño visual chunky.
     // ─────────────────────────────────────────────────────────────────
 
     const ship1 = this.add
-      .image(-50, 80, 'ch6-ship-1')
-      .setScrollFactor(0) // sticky-to-camera — siempre visible en viewport
+      .image(-100, 160, 'ch6-ship-1')
+      .setScrollFactor(0) // sticky-to-camera
+      .setScale(2)
       .setDepth(50)
 
     const ship2 = this.add
-      .image(BASE_W + 50, 200, 'ch6-ship-2')
+      .image(BASE_W + 100, 400, 'ch6-ship-2')
       .setScrollFactor(0)
+      .setScale(2)
       .setDepth(50)
-      .setFlipX(true) // mira a la izquierda — RTL
+      .setFlipX(true) // RTL
 
     if (prefersReduced) {
       // D5-08 — ships estáticas en posiciones decorativas fijas.
@@ -286,56 +268,65 @@ export class SpaceScene extends Phaser.Scene {
       // LTR loop ~12s.
       this.tweens.add({
         targets: ship1,
-        x: BASE_W + 50,
+        x: BASE_W + 100,
         duration: SHIP1_DURATION_MS,
         repeat: -1,
         ease: 'Linear',
         onRepeat: () => {
-          ship1.setX(-50)
+          ship1.setX(-100)
         },
       })
       // RTL loop ~18s (más lento — mayor profundidad).
       this.tweens.add({
         targets: ship2,
-        x: -50,
+        x: -100,
         duration: SHIP2_DURATION_MS,
         repeat: -1,
         ease: 'Linear',
         onRepeat: () => {
-          ship2.setX(BASE_W + 50)
+          ship2.setX(BASE_W + 100)
         },
       })
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Plataforma-mirador (ERA-AGNT-01, v2 2026-07-09b) — suelo con banda de
-    // superficie caminable + labio neon + fascia con pilares.
-    // PNG 480×72 centrado en y=909 → cubre y 873..945. Banda de suelo
-    // world y 881..893 — los pies pisan DENTRO de la banda (y≈889).
+    // Plataforma-mirador (ERA-AGNT-01) — cubierta con barandilla neon.
+    // 960×144 nativa hi-bit, sin scale. Deck en y≈1762..1786. depth 30.
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-platform')) {
       this.add
-        .image(240, 909, 'ch6-platform')
+        .image(480, 1818, 'ch6-platform')
         .setDepth(30)
         .setScrollFactor(1.0)
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Héroes en el deck (ERA-AGNT-01) — Rafael y super robot de espaldas,
-    // mirando al horizonte orbital. Pies en y≈889 (dentro de la banda de
-    // suelo 881..893) + sombras de contacto elípticas — v2 grounding fix
-    // (feedback Rafael 2026-07-09: "los personajes están en el aire").
-    // Robot 92×124: origen default 0.5 → pies en y 827+62=889.
-    // Rafael 26×48: origen default 0.5 → pies en y 865+24=889.
+    // Sombras de los héroes (depth 31 — sobre plataforma 30, bajo héroes 35).
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-robot')) {
-      // Sombra de contacto — ancla visualmente los pies al suelo.
-      this.add.ellipse(95, 890, 60, 9, 0x05030f, 0.45).setDepth(33).setScrollFactor(1.0)
+      this.add.ellipse(190, 1780, 120, 18, 0x000000, 0.4)
+        .setDepth(31)
+        .setScrollFactor(1.0)
+    }
+    if (this.textures.exists('ch6-rafael')) {
+      this.add.ellipse(304, 1780, 48, 12, 0x000000, 0.35)
+        .setDepth(31)
+        .setScrollFactor(1.0)
+    }
 
+    // ─────────────────────────────────────────────────────────────────
+    // Héroes en el deck (ERA-AGNT-01) — Rafael y super robot de espaldas.
+    // setScale(2) — mismos archivos nativos, doble tamaño visual chunky.
+    // Robot 92×124 nativo → scale(2) → rendered 184×248 → pies 1654+124=1778 ✓
+    // Rafael 26×48  nativo → scale(2) → rendered 52×96  → pies 1730+48=1778 ✓
+    // ─────────────────────────────────────────────────────────────────
+
+    if (this.textures.exists('ch6-robot')) {
       const robot = this.add
-        .image(95, 827, 'ch6-robot')
+        .image(190, 1654, 'ch6-robot')
+        .setScale(2)
         .setDepth(35)
         .setScrollFactor(1.0)
 
@@ -343,7 +334,7 @@ export class SpaceScene extends Phaser.Scene {
       if (!prefersReduced) {
         this.tweens.add({
           targets: robot,
-          y: 825.5,
+          y: 1651,
           duration: 3200,
           ease: 'Sine.easeInOut',
           yoyo: true,
@@ -353,10 +344,9 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     if (this.textures.exists('ch6-rafael')) {
-      this.add.ellipse(152, 890, 24, 6, 0x05030f, 0.45).setDepth(33).setScrollFactor(1.0)
-
       this.add
-        .image(152, 865, 'ch6-rafael')
+        .image(304, 1730, 'ch6-rafael')
+        .setScale(2)
         .setDepth(35)
         .setScrollFactor(1.0)
       // Rafael permanece estático — testigo silencioso de lo que se construye.
@@ -364,19 +354,18 @@ export class SpaceScene extends Phaser.Scene {
 
     // ─────────────────────────────────────────────────────────────────
     // Enjambre de drones-agente (ERA-AGNT-01) — depth 25.
-    // Drones 0-2: en el postal entre plataforma y megaestructura (van y vienen).
+    // setScale(2) — mismos archivos, doble tamaño visual.
+    // Drones 0-2: en el postal entre plataforma y megaestructura.
     // Drones 3-4: acompañan planetas 2 y 1 durante el descenso.
-    // Cada dron tiene oscilación Y independiente + deriva X lenta.
-    // Drones tipo-b llevan carga → balanceo angular adicional.
     // ─────────────────────────────────────────────────────────────────
 
     const DRONE_DEFS = [
       // { key, x, y, yA: amp Y, yD: dur Y, xA: amp X, xD: dur X, aA: amp angle, aD: dur angle }
-      { key: 'ch6-drone-b', x: 200, y: 850, yA: 8,  yD: 1800, xA: 40, xD: 5000, aA: 4, aD: 4000 },
-      { key: 'ch6-drone-a', x: 265, y: 800, yA: 6,  yD: 2200, xA: 30, xD: 6000, aA: 0, aD: 0    },
-      { key: 'ch6-drone-b', x: 330, y: 840, yA: 10, yD: 1600, xA: 50, xD: 4500, aA: 4, aD: 5500 },
-      { key: 'ch6-drone-a', x: 170, y: 520, yA: 7,  yD: 2400, xA: 25, xD: 7000, aA: 0, aD: 0    },
-      { key: 'ch6-drone-b', x: 130, y: 290, yA: 9,  yD: 1400, xA: 60, xD: 3800, aA: 4, aD: 6000 },
+      { key: 'ch6-drone-b', x: 400, y: 1700, yA: 16, yD: 1800, xA: 80,  xD: 5000, aA: 4, aD: 4000 },
+      { key: 'ch6-drone-a', x: 530, y: 1600, yA: 12, yD: 2200, xA: 60,  xD: 6000, aA: 0, aD: 0    },
+      { key: 'ch6-drone-b', x: 660, y: 1680, yA: 20, yD: 1600, xA: 100, xD: 4500, aA: 4, aD: 5500 },
+      { key: 'ch6-drone-a', x: 340, y: 1040, yA: 14, yD: 2400, xA: 50,  xD: 7000, aA: 0, aD: 0    },
+      { key: 'ch6-drone-b', x: 260, y: 580,  yA: 18, yD: 1400, xA: 120, xD: 3800, aA: 4, aD: 6000 },
     ]
 
     DRONE_DEFS.forEach((def) => {
@@ -384,6 +373,7 @@ export class SpaceScene extends Phaser.Scene {
 
       const drone = this.add
         .image(def.x, def.y, def.key)
+        .setScale(2)
         .setDepth(25)
         .setScrollFactor(1.0)
 
@@ -422,25 +412,22 @@ export class SpaceScene extends Phaser.Scene {
 
     // ─────────────────────────────────────────────────────────────────
     // Haz holográfico de mando (ERA-AGNT-01) — depth 34. World-space.
-    // Línea cian (0x4dffff) desde cabeza del robot (95, 790) hacia
-    // planeta 3 (300, 783) + línea corta hacia dron obrero (200, 850).
-    // Visualización de "Rafael + robot orquestan el enjambre".
-    // Solo visible en el postal (y 675..945) — no necesita clip extra,
-    // la cámara lo revela naturalmente al terminar el arrival.
+    // Línea cian (0x4dffff) lineStyle(2) desde cabeza del robot (190, 1544)
+    // hacia planeta 3 (600, 1566) + línea corta hacia dron obrero (400, 1700).
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-robot')) {
       const beam = this.add.graphics()
       beam.setDepth(34)
       beam.setScrollFactor(1.0)
-      beam.lineStyle(1, 0x4dffff, 1)
+      beam.lineStyle(2, 0x4dffff, 1)
       beam.beginPath()
-      beam.moveTo(95, 772)
-      beam.lineTo(300, 783)
+      beam.moveTo(190, 1544)
+      beam.lineTo(600, 1566)
       beam.strokePath()
       beam.beginPath()
-      beam.moveTo(95, 772)
-      beam.lineTo(200, 850)
+      beam.moveTo(190, 1544)
+      beam.lineTo(400, 1700)
       beam.strokePath()
 
       if (prefersReduced) {
@@ -488,8 +475,7 @@ export class SpaceScene extends Phaser.Scene {
 
     this.game.events.on('locale-changed', this.handleLocaleChange, this)
 
-    // Cleanup explícito en SHUTDOWN — game.events vive en game-level event bus,
-    // requires remove explícito (no se limpia automáticamente con scene.destroy()).
+    // Cleanup explícito en SHUTDOWN — game.events vive en game-level event bus.
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('locale-changed', this.handleLocaleChange, this)
     })
@@ -506,11 +492,7 @@ export class SpaceScene extends Phaser.Scene {
 
   /**
    * Re-traduce tooltips visibles cuando Vue emite `locale-changed`.
-   * Pattern 5: el bridge desde Chapter6Content.vue (Plan 05-04) dispara
-   * `game.value?.events.emit('locale-changed', newLocale)` en watch(locale).
-   *
-   * @param {string} _locale - locale code (es|en) — no se usa directamente porque
-   *   i18n.global.t() ya respeta el state del singleton tras Vue reactivity flush.
+   * @param {string} _locale - locale code (es|en) — i18n.global.t() ya es reactivo.
    */
   handleLocaleChange(_locale) {
     this.tooltipTexts.forEach(({ tooltip, titleKey }) => {

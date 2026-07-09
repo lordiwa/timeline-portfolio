@@ -8,10 +8,14 @@
 //   T2: source-regex — el callback recalcula newZoom + invoca `game.value.scale.setZoom(...)`
 //       sólo si cambia el zoom (evita thrashing).
 //
+// CAMBIO de contrato 2026-07-09b (HI-BIT-01):
+//   Antes: formula Math.min(Math.floor...) || 1; guard `newZoom !== game.value.scale.zoom`.
+//   Ahora: formula Math.max(1, Math.min(...)) sin Math.floor; guard Math.abs(...) > 0.01
+//   Razón: zoom fraccional fill requiere epsilon comparison (floats); sin Math.floor.
+//
 // Rationale (RESEARCH §Pattern 4):
 //   - ResizeObserver requiere un Element, no window. `document.documentElement` es safe.
-//   - El callback debe verificar `newZoom !== game.value.scale.zoom` antes de setZoom
-//     para evitar re-render innecesarios (Pitfall 8).
+//   - El callback debe verificar zoom delta antes de setZoom para evitar thrashing.
 //
 // RED scaffold W0 — verde tras W3 crea Chapter6Content.vue con useResizeObserver.
 
@@ -38,23 +42,23 @@ describe('Chapter6Content.vue ResizeObserver (PHA-09 + MOB-03) — RED W0 → ve
     ).toBeNull()
   })
 
-  it('T2: callback recalcula zoom + invoca game.scale.setZoom solo si difiere', () => {
+  it('T2: callback recalcula zoom fraccional + invoca game.scale.setZoom solo si difiere', () => {
     if (src.length === 0) {
       expect(src, 'src/components/Chapter6Content.vue debe existir (W3 lo crea).').not.toBe('')
       return
     }
     // El handler debe contener:
-    //  - cálculo newZoom (Math.min + Math.floor)
-    //  - comparación `newZoom !== game.value.scale.zoom` (guard against thrash)
+    //  - cálculo newZoom (Math.max + Math.min, sin Math.floor — HI-BIT-01)
+    //  - comparación epsilon `Math.abs(newZoom - game.value.scale.zoom) > 0.01` (anti-thrash floats)
     //  - llamada `game.value.scale.setZoom(newZoom)`
     expect(
       src,
-      'Callback resize debe declarar `newZoom` calculado con Math.min/Math.floor. W3 crea.'
-    ).toMatch(/newZoom\s*=\s*Math\.min\s*\([\s\S]*?Math\.floor/)
+      'Callback resize debe declarar `newZoom` calculado con Math.max/Math.min (zoom fraccional hi-bit, sin Math.floor). W3 crea.'
+    ).toMatch(/newZoom\s*=\s*Math\.max\s*\(\s*1[\s\S]*?Math\.min/)
     expect(
       src,
-      'Callback resize debe comparar `newZoom !== game.value.scale.zoom` antes de setZoom (anti-thrash).'
-    ).toMatch(/newZoom\s*!==\s*game\.value\.scale\.zoom/)
+      'Callback resize debe comparar `Math.abs(newZoom - game.value.scale.zoom) > 0.01` antes de setZoom (epsilon anti-thrash con floats).'
+    ).toMatch(/Math\.abs\s*\(\s*newZoom\s*-\s*game\.value\.scale\.zoom/)
     expect(
       src,
       'Callback resize debe invocar `game.value.scale.setZoom(newZoom)`. W3 crea.'

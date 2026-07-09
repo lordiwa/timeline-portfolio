@@ -55,10 +55,11 @@ import { useResizeObserver } from '@vueuse/core'
 import { projects } from '@/data/projects'
 import ProjectOverlay from './ProjectOverlay.vue'
 
-// Resolución virtual base — debe matchear src/phaser/index.js (BASE_W/BASE_H).
+// Resolución virtual hi-bit — debe matchear src/phaser/index.js (BASE_W/BASE_H).
 // Duplicada localmente para evitar importar el factory top-level (rompería PHA-04 lazy).
-const BASE_W = 480
-const BASE_H = 270
+// HI-BIT-01 (2026-07-09b): 960×540 = doble densidad, zoom fraccional fill.
+const BASE_W = 960
+const BASE_H = 540
 
 // Composables — inject de App.vue (provistos en Phase 1).
 const { activeChapter } = inject('scrollState')
@@ -82,14 +83,14 @@ const activeProject = ref(null)
 const ch6Projects = computed(() => projects.filter((p) => p.chapterEra === 6))
 
 /**
- * Compute integer zoom multiplier — duplicado de src/phaser/index.js computeZoom.
+ * Compute zoom fill fraccional — duplicado de src/phaser/index.js computeZoom.
  * Local copy para evitar importar el factory top-level (PHA-04 lazy mandate).
- * Fórmula: min(floor(vw/480), floor(vh/270)) || 1 (PHA-03 + Pitfall 8 guard).
+ * Fórmula: max(1, min(vw/960, vh/540)) — HI-BIT-01 (zoom fraccional, sin Math.floor).
  */
 function computeZoom() {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  return Math.min(Math.floor(vw / BASE_W), Math.floor(vh / BASE_H)) || 1
+  return Math.max(1, Math.min(vw / BASE_W, vh / BASE_H))
 }
 
 // D5-11 / PHA-04 — watch immediate maneja:
@@ -143,18 +144,15 @@ watch(locale, (newLocale) => {
 })
 
 // PHA-09 + extends MOB-03 (Phase 1 ResizeObserver pattern):
-// Recalcula integer zoom cuando el viewport cambia + invoca setZoom solo si
-// difiere del actual (Pitfall 8 — anti-thrash guard previene re-render loop).
+// Recalcula zoom fraccional cuando el viewport cambia + invoca setZoom solo si
+// difiere del actual (Pitfall 8 — anti-thrash guard, epsilon 0.01 para floats).
 //
 // document.documentElement NO window — ResizeObserver requiere Element observable;
 // window no es Element (CSSOM spec).
 useResizeObserver(document.documentElement, () => {
   if (!game.value) return
-  const newZoom = Math.min(
-    Math.floor(window.innerWidth / BASE_W),
-    Math.floor(window.innerHeight / BASE_H),
-  ) || 1
-  if (newZoom !== game.value.scale.zoom) {
+  const newZoom = Math.max(1, Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H))
+  if (Math.abs(newZoom - game.value.scale.zoom) > 0.01) {
     game.value.scale.setZoom(newZoom)
   }
 })

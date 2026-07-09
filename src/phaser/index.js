@@ -5,7 +5,7 @@
 //
 // Responsabilidades de este módulo (factory):
 //   - Exportar `createGame(parentEl, { prefersReduced })` que retorna `new Phaser.Game(config)`.
-//   - Resolver el zoom integer (Math.floor) que evita sub-pixel blur (PHA-03).
+//   - Resolver el zoom fill fraccional que se adapta al viewport (HI-BIT-01 2026-07-09b).
 //   - Setear `prefersReduced` en `game.registry` vía `callbacks.preBoot` (Pattern 9 Option B)
 //     para que SpaceScene pueda branch sin prop drilling ni Vue composables.
 //
@@ -21,25 +21,27 @@
 import Phaser from 'phaser'
 import { SpaceScene } from './SpaceScene.js'
 
-// Resolución virtual base — CLAUDE.md §1 (480×270 = 16:9 zoom×3 default).
-const BASE_W = 480
-const BASE_H = 270
+// Resolución virtual hi-bit (HI-BIT-01 2026-07-09b) — 960×540 = 480×270 × doble densidad.
+// PHA-03 integer-zoom superseded: con arte a doble densidad, el zoom fraccional fill
+// ya no produce blur perceptible (roundPixels + pixelArt siguen activos como seguro).
+const BASE_W = 960
+const BASE_H = 540
 
 /**
- * Compute integer zoom multiplier para el canvas Phaser display size.
+ * Compute zoom fill fraccional para el canvas Phaser display size.
  *
- * Fórmula: min(floor(vw/480), floor(vh/270)) || 1
- *   - `Math.floor` evita escalas fraccionales (sub-pixel blur en pixel art) — PHA-03.
+ * Fórmula: max(1, min(vw/960, vh/540))
  *   - `Math.min` mantiene aspect ratio 16:9; el side menor manda.
- *   - `|| 1` defensive — si viewport < 480×270 (extreme mobile), zoom=0 produciría
- *     canvas 0×0 invisible. Mínimo 1× (downscale visible es preferible).
+ *   - `Math.max(1, ...)` defensive — si viewport < 960×540 el canvas hace downscale
+ *     en vez de producir un canvas 0×0 invisible.
+ *   - Sin `Math.floor`: arte a doble densidad absorbe el sub-pixel sin blur perceptible.
  *
- * @returns {number} integer zoom >= 1
+ * @returns {number} zoom fraccional >= 1
  */
 function computeZoom() {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  return Math.min(Math.floor(vw / BASE_W), Math.floor(vh / BASE_H)) || 1
+  return Math.max(1, Math.min(vw / BASE_W, vh / BASE_H))
 }
 
 /**
