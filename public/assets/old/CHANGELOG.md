@@ -612,3 +612,20 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Por qué se revirtió:** la iter3 de path salió 1024×1024 con ~70% de suelo opaco (iter2 era 1376×768 con suelo solo abajo) → al renderizar cover full-viewport el suelo ámbar INUNDÓ toda la escena (cielo/ruinas/amanecer enterrados). Además la paleta derivó a ámbar-dorado global contra el brief ("conservar paleta").
 - **Lección (validación de composición):** para capas parallax NUNCA instalar sin componer antes un mock PIL de las 3 capas al aspect del viewport y revisarlo visualmente (disciplina ya usada en ch6). Exigir aspect 1376×768 y verificar fracción de suelo (<45% de alto) antes de sobrescribir. Los presets de bg de forge_sprite se ignoran a menudo → verificar canal alpha con PIL (lección de ch3-hires, sigue válida).
 - **Commit hash del cambio:** (commit de esta reversión)
+
+---
+
+## ch3 parallax (sky/mountains/path) — iter2 → iter4 (2026-07-09)
+
+- **Versiones guardadas:** `old/ch3-{sky,mountains,path}-2026-07-09-iter2.png` (ya archivadas, no movidas de nuevo)
+- **Razón del cambio:** iter2 tenía pixel pintado gordo (bloques 4-8px). Rafael quiere "10 de poder" con grano fino 1-2px estilo SNES 32-bit. Iter3 intentó esto pero falló (path 1024×1024 con 70% suelo opaco, revertida).
+- **Proceso iter4:**
+  - **sky:** `forge_background` 16:9 `banana-2` style `snes`. Prompt: crepúsculo purpúreo-carmesí izquierda + amanecer dorado + cyan en horizonte. 1376×768, 778KB. Grano fino SNES logrado en primer intento. PASS.
+  - **mountains (intento 1):** `forge_sprite` size:0 aspect 16:9 → salió 1376×1376 (cuadrado). Contenido opaco ocupaba y=304..1071 = 767px de alto (demasiado). Mock PIL mostró contenido blanco/gris cubriendo el sky. FALLA, descartado.
+  - **mountains (intento 2):** `forge_background` 16:9 `banana-2` style `snes` con cielo flat uniforme #7EB8C4 explícito + castillo en ruinas en el 35% inferior. PIL flood-fill tolerance=55 para remover el sky. Resultado: 1376×768, contenido inicia en y=387 (50% desde arriba), cubre 50%. PASS-BORDERLINE para composición.
+  - **path (intento 1):** `forge_sprite` size:0 aspect 16:9 → salió 1376×1376 (cuadrado). Mismo problema que mountains. FALLA, descartado.
+  - **path (intento 2):** `forge_background` 16:9 `banana-2` style `snes` con cielo flat uniforme explícito + suelo quemado con armas/cascos/escudos en 35% inferior. PIL flood-fill tolerance=35. Resultado: 1376×768, contenido inicia en y=438 (57% desde arriba), cubre 43%. PASS ambas verificaciones.
+  - **Mock PIL:** las 3 capas compuestas vía `alpha_composite`. Sky épico visible, ruinas al horizonte, suelo de batalla denso anclado abajo. Paleta: drama post-batalla fiel a iter2. Grano fino SNES confirmado. PASS.
+- **Capas actualizadas:** sky, mountains, path — TODAS a iter4. Ninguna quedó en iter2.
+- **Nota técnica:** `forge_sprite` con aspect 16:9 size:0 genera consistentemente imágenes cuadradas (1376×1376) con el contenido centrado verticalmente, lo que impide una composición válida de parallax. Para capas parallax usar `forge_background` con cielo flat descriptivo + PIL flood-fill posterior.
+- **Commit hash post-regen:** pendiente
