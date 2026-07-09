@@ -403,6 +403,22 @@ onBeforeUnmount(() => {
       </template>
     </div>
 
+    <!-- Cono de luz del proyector — haz azul-blanco desde la cabina hacia la pantalla.
+         clip-path triangular: estrecho abajo (cabina ~50%, 89%) → ancho arriba (pantalla ~43-57%, 40%).
+         Parpadeo irregular a 7.3 s; estático bajo prefers-reduced-motion. -->
+    <div class="cine-projector-cone" aria-hidden="true">
+      <!-- Motas de polvo flotando dentro del haz -->
+      <span class="cine-dust"></span>
+      <span class="cine-dust"></span>
+      <span class="cine-dust"></span>
+      <span class="cine-dust"></span>
+      <span class="cine-dust"></span>
+    </div>
+
+    <!-- Baño de luz de la pantalla sobre la sala — radial desde la zona de pantalla.
+         Respira cada 5 s simulando cambio de brillo del contenido. -->
+    <div class="cine-screen-light" aria-hidden="true"></div>
+
     <!-- Contenido original preservado pero oculto hasta decidir qué va (showText=false) -->
     <template v-if="showText">
       <aside class="ch5-meta">
@@ -517,5 +533,117 @@ onBeforeUnmount(() => {
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Overlays atmosféricos de cine
+ * ───────────────────────────────────────────────────────────── */
+
+/* === Cono de luz del proyector ===
+   Forma triangular estrecha en la cabina (abajo-centro) y ancha en la pantalla (arriba).
+   El gradiente desvanece la luz en los extremos del haz.
+   z-index 10500 → flota sobre todos los personajes (max z ~10400). */
+.cine-projector-cone {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10500;
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    rgba(190, 210, 255, 0.65) 35%,
+    rgba(205, 225, 255, 0.95) 68%,
+    rgba(215, 235, 255, 0.5) 100%
+  );
+  /* Cono: base estrecha en cabina (≈48-52% en y 89%) → apertura pantalla (≈43-57% en y 40%) */
+  clip-path: polygon(43% 40%, 57% 40%, 52% 89%, 48% 89%);
+  opacity: 0.09;
+  animation: projector-flicker 7.3s linear infinite;
+}
+
+/* === Baño de luz de pantalla sobre la sala ===
+   Gradiente radial centrado en la posición de la pantalla (50% 40%).
+   Respira suavemente simulando el cambio de brillo del contenido on-screen. */
+.cine-screen-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10499;
+  background: radial-gradient(
+    ellipse 45% 55% at 50% 40%,
+    rgba(170, 195, 255, 0.9) 0%,
+    rgba(150, 180, 255, 0.5) 38%,
+    transparent 70%
+  );
+  opacity: 0.06;
+  animation: screen-breathe 5s ease-in-out infinite;
+}
+
+/* === Motas de polvo en el haz ===
+   Cada partícula flota hacia arriba con desplazamiento lateral distinto.
+   opacity ≤ 0.3 para no competir con la luz principal. */
+.cine-dust {
+  position: absolute;
+  width: 1.5px;
+  height: 1.5px;
+  border-radius: 50%;
+  background: #ddeeff;
+  pointer-events: none;
+  opacity: 0;
+  animation: dust-float var(--dur, 9s) ease-in-out var(--delay, 0s) infinite;
+}
+
+/* Posiciones y parámetros individuales por mota (dentro del área del cono) */
+.cine-dust:nth-child(1) { left: 47.5%; top: 78%; --delay: 0s;   --dur: 9s;  --dx: 3px; }
+.cine-dust:nth-child(2) { left: 51%;   top: 65%; --delay: 2.3s; --dur: 7s;  --dx: -4px; }
+.cine-dust:nth-child(3) { left: 49%;   top: 82%; --delay: 4.1s; --dur: 11s; --dx: 5px; }
+.cine-dust:nth-child(4) { left: 50%;   top: 70%; --delay: 1.2s; --dur: 8s;  --dx: -2px; }
+.cine-dust:nth-child(5) { left: 48.5%; top: 57%; --delay: 3.7s; --dur: 10s; --dx: 4px; }
+
+/* === Keyframes === */
+
+/* Parpadeo irregular de proyector analógico (~7s loop con drops y picos no periódicos) */
+@keyframes projector-flicker {
+  0%, 100% { opacity: 0.09; }
+  8%        { opacity: 0.055; }
+  9%        { opacity: 0.10; }
+  27%       { opacity: 0.075; }
+  28%       { opacity: 0.052; }
+  29%       { opacity: 0.095; }
+  50%       { opacity: 0.08; }
+  51%       { opacity: 0.10; }
+  74%       { opacity: 0.07; }
+  75%       { opacity: 0.09; }
+}
+
+/* Respiración lenta de la pantalla (0.06 → 0.09 en opacity del elemento) */
+@keyframes screen-breathe {
+  0%, 100% { opacity: 0.06; }
+  50%       { opacity: 0.09; }
+}
+
+/* Flotación de polvo: sube ~35px con deriva lateral; fade in/out suave */
+@keyframes dust-float {
+  0%   { opacity: 0;    transform: translateY(0)     translateX(0); }
+  10%  { opacity: 0.28; }
+  85%  { opacity: 0.15; }
+  100% { opacity: 0;    transform: translateY(-35px) translateX(var(--dx, 4px)); }
+}
+
+/* === prefers-reduced-motion ===
+   Overlays de luz quedan estáticos en su opacity base (la luz existe, solo no parpadea).
+   El polvo desaparece (requiere movimiento para tener sentido visual). */
+@media (prefers-reduced-motion: reduce) {
+  .cine-projector-cone {
+    animation: none;
+    opacity: 0.085;
+  }
+  .cine-screen-light {
+    animation: none;
+    opacity: 0.06;
+  }
+  .cine-dust {
+    display: none;
+  }
 }
 </style>
