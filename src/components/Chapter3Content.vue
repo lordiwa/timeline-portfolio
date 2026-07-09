@@ -49,6 +49,33 @@ const markers = [
   { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '35%', left: '85%', size: 100 },
 ]
 
+// Brasas ascendentes — ambientación campo de batalla ardiente
+const embers = [
+  { left: '5%',  delay: '-3s',  dur: '11s', size: '3px', color: '#ff9a3c', dx: '10px'  },
+  { left: '11%', delay: '-8s',  dur: '14s', size: '2px', color: '#ffd95c', dx: '-8px'  },
+  { left: '18%', delay: '-1s',  dur: '9s',  size: '4px', color: '#ff5a3c', dx: '14px'  },
+  { left: '25%', delay: '-5s',  dur: '16s', size: '2px', color: '#ff9a3c', dx: '-12px' },
+  { left: '33%', delay: '-11s', dur: '12s', size: '3px', color: '#ffd95c', dx: '8px'   },
+  { left: '41%', delay: '-2s',  dur: '18s', size: '2px', color: '#ff5a3c', dx: '-6px'  },
+  { left: '52%', delay: '-7s',  dur: '10s', size: '4px', color: '#ff9a3c', dx: '16px'  },
+  { left: '60%', delay: '-14s', dur: '13s', size: '2px', color: '#ffd95c', dx: '-10px' },
+  { left: '67%', delay: '-4s',  dur: '22s', size: '3px', color: '#ff5a3c', dx: '12px'  },
+  { left: '74%', delay: '-9s',  dur: '15s', size: '2px', color: '#ffd95c', dx: '-14px' },
+  { left: '82%', delay: '-6s',  dur: '11s', size: '4px', color: '#ff9a3c', dx: '8px'   },
+  { left: '89%', delay: '-12s', dur: '17s', size: '3px', color: '#ff5a3c', dx: '-8px'  },
+]
+
+// Ceniza descendente — motas grises cayendo lento
+const ashes = [
+  { left: '8%',  delay: '-4s',  dur: '18s', size: '2px' },
+  { left: '22%', delay: '-9s',  dur: '24s', size: '3px' },
+  { left: '38%', delay: '-2s',  dur: '20s', size: '2px' },
+  { left: '55%', delay: '-7s',  dur: '22s', size: '2px' },
+  { left: '69%', delay: '-13s', dur: '26s', size: '3px' },
+  { left: '78%', delay: '-5s',  dur: '19s', size: '2px' },
+  { left: '93%', delay: '-11s', dur: '21s', size: '2px' },
+]
+
 // ── Estado del cuento ─────────────────────────────────────────────────────────
 const activeStory = ref(null)      // índice abierto (0..4) o null
 const visited = ref(new Set())     // emblemas ya leídos
@@ -143,6 +170,39 @@ onBeforeUnmount(() => {
         class="ch3-spark"
         :style="{ left: sp.left, '--sp-delay': sp.delay, '--sp-dur': sp.dur, '--sp-size': sp.size }"
       ></span>
+
+      <!-- Brasas y ceniza — campo de batalla ardiente. Desactivado bajo PRM. -->
+      <template v-if="!reduced()">
+        <div class="ch3-embers" aria-hidden="true">
+          <span
+            v-for="(em, i) in embers"
+            :key="`ember-${i}`"
+            class="ch3-ember"
+            :style="{
+              left: em.left,
+              '--em-delay': em.delay,
+              '--em-dur': em.dur,
+              '--em-size': em.size,
+              '--em-color': em.color,
+              '--em-dx': em.dx,
+            }"
+          ></span>
+        </div>
+        <div class="ch3-ashes" aria-hidden="true">
+          <span
+            v-for="(ash, i) in ashes"
+            :key="`ash-${i}`"
+            class="ch3-ash"
+            :style="{
+              left: ash.left,
+              '--ash-delay': ash.delay,
+              '--ash-dur': ash.dur,
+              '--ash-size': ash.size,
+            }"
+          ></span>
+        </div>
+        <div class="ch3-haze" aria-hidden="true"></div>
+      </template>
     </div>
 
     <!-- ── Contenido: hint sutil + emblemas clicables ────────────────────── -->
@@ -624,6 +684,80 @@ onBeforeUnmount(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * Brasas ascendentes y ceniza descendente — atmósfera campo de batalla.
+ * Solo transform/opacity (composited). Eliminadas del DOM bajo PRM via v-if.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch3-embers,
+.ch3-ashes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ch3-ember {
+  position: absolute;
+  bottom: 15%;
+  width: var(--em-size, 3px);
+  height: var(--em-size, 3px);
+  border-radius: 50%;
+  background: var(--em-color, #ff9a3c);
+  box-shadow:
+    0 0 4px 2px var(--em-color, #ff9a3c),
+    0 0 10px 3px rgba(255, 120, 30, 0.45);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: ch3-ember-rise var(--em-dur, 12s) ease-in-out var(--em-delay, 0s) infinite;
+}
+
+@keyframes ch3-ember-rise {
+  0%   { opacity: 0;    transform: translateY(0)       translateX(0)                               scale(1);    }
+  8%   { opacity: 0.85; }
+  25%  {               transform: translateY(-25vh)   translateX(var(--em-dx, 8px))              scale(0.92); }
+  50%  { opacity: 0.65; transform: translateY(-55vh)   translateX(0)                               scale(0.84); }
+  75%  { opacity: 0.35; transform: translateY(-82vh)   translateX(calc(var(--em-dx, 8px) * -0.6)) scale(0.72); }
+  100% { opacity: 0;    transform: translateY(-112vh)  translateX(0)                               scale(0.5);  }
+}
+
+.ch3-ash {
+  position: absolute;
+  top: -2%;
+  width: var(--ash-size, 2px);
+  height: var(--ash-size, 2px);
+  border-radius: 1px;
+  background: #8a8a92;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: ch3-ash-fall var(--ash-dur, 20s) ease-in-out var(--ash-delay, 0s) infinite;
+}
+
+@keyframes ch3-ash-fall {
+  0%   { opacity: 0;    transform: translateY(0)      translateX(0)    rotate(0deg);   }
+  10%  { opacity: 0.5; }
+  35%  {               transform: translateY(28vh)   translateX(8px)  rotate(40deg);  }
+  60%  { opacity: 0.35; transform: translateY(58vh)   translateX(-6px) rotate(80deg);  }
+  85%  { opacity: 0.2;  transform: translateY(88vh)   translateX(10px) rotate(130deg); }
+  100% { opacity: 0;    transform: translateY(108vh)  translateX(0)    rotate(180deg); }
+}
+
+.ch3-haze {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(255, 110, 30, 0.08) 0%,
+    rgba(255, 90, 20, 0.04) 35%,
+    transparent 60%
+  );
+  animation: ch3-haze-pulse 6s ease-in-out infinite;
+}
+
+@keyframes ch3-haze-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * PRM — desactiva todo el movimiento.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -640,6 +774,8 @@ onBeforeUnmount(() => {
   .ch3-panel-fade-leave-active .ch3-panel { animation: none !important; transition: none !important; }
   .ch3-layer { transform: none !important; }
   .ch3-fx--lasers::before, .ch3-fx--lasers::after, .ch3-spark { opacity: 0 !important; }
+  .ch3-ember, .ch3-ash { animation: none !important; opacity: 0 !important; }
+  .ch3-haze { animation: none !important; opacity: 0 !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
