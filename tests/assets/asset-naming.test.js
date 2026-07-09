@@ -38,8 +38,10 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //   - 4 ch4 parallax layers: ch4-bg-stars-far.{png|jpg}, ch4-bg-planet-mid.{png|jpg},
 //     ch4-fg-panels.png, ch4-fg-ships.png  (los fg necesitan alpha → png; bg opacos → jpg)
 //   - 1 ch5 hero: ch5-hero.png (alpha needed if used as overlay)
-//   - 8 Phase 5 ch6 (D5-04 synthwave + D5-01 3 planets):
-//     ch6-bg.png + ch6-bg-stars-far.png + ch6-bg-nebulae-mid.png
+//   - 11 Phase 5 ch6 (D5-04 synthwave + D5-01 3 planets + reconstrucción nebulosa 2026-07-09):
+//     ch6-bg.png + ch6-bg-tall.png (versión tall recompuesta a resolución nativa)
+//     ch6-bg-stars-far.png + ch6-bg-stars-far-t.png (versión recortada/trimmed)
+//     ch6-bg-nebulae-mid.png + ch6-bg-nebulae-mid-t.png (versión recortada/trimmed)
 //     ch6-planet-{ar-vr,remoose,software-mind}.png
 //     ch6-ship-{1,2}.png
 //   - 5 Phase 6 ch0 DOS demo reel (TerminalScroll auto-rotating programs):
@@ -68,7 +70,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch4-near.png (partículas/fragmentos próximos, transparente — primer plano c0)
 //     Reemplazan al ch4-bg.png iter2 (movido a old/ vía §6.5).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-stars-far|bg-planet-mid|bg-nebulae-mid|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading))\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

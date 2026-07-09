@@ -85,20 +85,33 @@ function mountCh5({ locale = 'es' } = {}) {
 
 describe('Chapter5Content.vue', () => {
   // ───────────────────────────────────────────────
-  // T1 DOM contract
+  // T1 DOM contract — layout cine (showText=false por defecto 2026-07-07)
+  //
+  // El capítulo 5 pasó a una escena de cine con multitud de pixellab (2026-07-07).
+  // El bloque de texto original (ch5-meta, ch5-content, ch5-projects) se preservó
+  // en el SFC pero queda detrás de showText=false hasta que Rafael decida qué va.
+  // Los tests reflejan la realidad por defecto: solo el stage del cine se renderiza.
   // ───────────────────────────────────────────────
-  it('T1 DOM: .ch5-layout existe con .ch5-meta y .ch5-content', () => {
+  it('T1 DOM: .ch5-layout existe con estructura cine (showText=false por defecto — 2026-07-07)', () => {
     const { wrapper } = mountCh5()
     expect(wrapper.find('.ch5-layout').exists()).toBe(true)
-    expect(wrapper.find('.ch5-meta').exists()).toBe(true)
-    expect(wrapper.find('.ch5-content').exists()).toBe(true)
+    // Escena cine siempre visible: pantalla y público
+    expect(wrapper.find('.cine-screen').exists()).toBe(true)
+    expect(wrapper.find('.cine-audience').exists()).toBe(true)
+    // Texto original oculto (showText=false — decisión deliberada Rafael 2026-07-07)
+    expect(wrapper.find('.ch5-meta').exists()).toBe(false)
+    expect(wrapper.find('.ch5-content').exists()).toBe(false)
   })
 
-  it('T1 DOM: .ch5-meta NO contiene inline avatar (Rafael 2026-05-15 — solo StickyAvatar); .ch5-projects existe (mock 3 ch5)', () => {
+  it('T1 DOM: sin avatar inline; .ch5-projects oculto y cine-audience visible (showText=false — 2026-07-07)', () => {
     const { wrapper } = mountCh5()
+    // No hay avatar inline en ningún layout de ch5 (sigue en StickyAvatar)
     expect(wrapper.find('.ch5-meta img.ch5-avatar').exists()).toBe(false)
     expect(wrapper.find('img.ch5-avatar').exists()).toBe(false)
-    expect(wrapper.find('.ch5-projects').exists()).toBe(true)
+    // Con showText=false el bloque de proyectos no se renderiza (deliberado 2026-07-07)
+    expect(wrapper.find('.ch5-projects').exists()).toBe(false)
+    // En su lugar: el público del cine está presente
+    expect(wrapper.find('.cine-audience').exists()).toBe(true)
   })
 
   // ───────────────────────────────────────────────
@@ -108,49 +121,59 @@ describe('Chapter5Content.vue', () => {
 
   // ───────────────────────────────────────────────
   // T3 ScrollRevealCard count
+  // Adaptado 2026-07-09: showText=false → 0 cards por defecto.
   // ───────────────────────────────────────────────
-  it('T3: count <ScrollRevealCard> = 1 header + N projects ch5 (mock 3 ch5 + 1 ch4 → 4 total)', () => {
+  it('T3: con showText=false (por defecto) NO hay ScrollRevealCards — cine layout 2026-07-07', () => {
     const { wrapper } = mountCh5()
     const cards = wrapper.findAllComponents(ScrollRevealCard)
-    // 1 header card + 3 ch5 projects (filter excluye ch4-x)
-    expect(cards.length).toBe(4)
+    // showText=false: el bloque completo de contenido está oculto → 0 cards
+    expect(cards.length).toBe(0)
   })
+
+  it.todo(
+    'T3b: con showText=true → 1 header card + 3 project cards (4 total) — reactivar cuando showText sea prop configurable'
+  )
 
   // ───────────────────────────────────────────────
   // T4 projects filter ch5
+  // Adaptado 2026-07-09: showText=false → 0 ProjectCards visibles.
   // ───────────────────────────────────────────────
-  it('T4 projects filter: chapterEra===5 → 3 ProjectCards (filter ch4-x)', () => {
+  it('T4 projects filter: con showText=false no se renderizan ProjectCards (cine layout 2026-07-07)', () => {
     const { wrapper } = mountCh5()
-    expect(wrapper.findAllComponents(ProjectCard).length).toBe(3)
+    // Con showText=false el bloque de proyectos está oculto: 0 ProjectCards
+    expect(wrapper.findAllComponents(ProjectCard).length).toBe(0)
   })
+
+  it.todo(
+    'T4b: con showText=true → chapterEra===5 filtra 3 ProjectCards (excluye ch4-x) — reactivar cuando showText sea prop configurable'
+  )
 
   // ───────────────────────────────────────────────
   // T5 reactive locale
+  // Adaptado 2026-07-09: showText=false → .ch5-flavor no se renderiza.
+  // Test rediseñado: verificar que el componente monta sin errores en ES y EN,
+  // y que el stage del cine existe en ambos locales.
   // ───────────────────────────────────────────────
-  it('T5 reactive: locale ES→EN actualiza flavor + bio sin re-mount', async () => {
-    const { wrapper, i18n } = mountCh5({ locale: 'es' })
-    const flavorEs = wrapper.find('.ch5-flavor').text()
+  it('T5 reactive: componente monta en ES y EN sin errores; .ch5-flavor oculto (showText=false — 2026-07-07)', async () => {
+    const { wrapper: wEs } = mountCh5({ locale: 'es' })
+    expect(wEs.find('.ch5-layout').exists()).toBe(true)
+    expect(wEs.find('.cine-screen').exists()).toBe(true)
+    // .ch5-flavor existe en el SFC pero condicionado a showText=true → no se renderiza
+    expect(wEs.find('.ch5-flavor').exists()).toBe(false)
 
-    i18n.global.locale.value = 'en'
-    await flushPromises()
-
-    const flavorEn = wrapper.find('.ch5-flavor').text()
-    expect(flavorEn.length).toBeGreaterThan(0)
-    expect(typeof flavorEs).toBe('string')
+    const { wrapper: wEn } = mountCh5({ locale: 'en' })
+    expect(wEn.find('.ch5-layout').exists()).toBe(true)
+    expect(wEn.find('.cine-screen').exists()).toBe(true)
+    expect(wEn.find('.ch5-flavor').exists()).toBe(false)
   })
 
   // ───────────────────────────────────────────────
   // T6 staggered delays
+  // Deprecado 2026-07-09: con showText=false no hay ScrollRevealCards que verificar.
   // ───────────────────────────────────────────────
-  it('T6 staggered: ScrollRevealCard project delays = 100*(idx+1) → 100, 200, 300', () => {
-    const { wrapper } = mountCh5()
-    const cards = wrapper.findAllComponents(ScrollRevealCard)
-    // index 0 = header (delay 0); index 1..3 = projects (delay 100, 200, 300)
-    expect(cards.at(0).props('delay')).toBe(0)
-    expect(cards.at(1).props('delay')).toBe(100)
-    expect(cards.at(2).props('delay')).toBe(200)
-    expect(cards.at(3).props('delay')).toBe(300)
-  })
+  it.todo(
+    'T6 staggered: ScrollRevealCard delays 100/200/300 — deprecado; reactivar cuando showText=true sea posible en test (cine ch5 2026-07-07)'
+  )
 
   // ───────────────────────────────────────────────
   // T7 sin background-image directo (viene de BackgroundLayers)

@@ -64,11 +64,16 @@ describe('ScrollShell theme isolation — Phase 4 cross-chapter', () => {
     expect(ch3.find('.ch4-layout').exists()).toBe(false)
   })
 
-  // T4: section ch5 contiene .scroll-reveal-card (header reveal card al menos)
-  it('T4: section[data-chapter="5"] contiene .scroll-reveal-card', () => {
+  // T4: section ch5 contiene estructura cine (adaptado 2026-07-09)
+  // El capítulo 5 usa layout de sala de cine con showText=false por defecto (2026-07-07).
+  // El bloque de texto (incluyendo ScrollRevealCards) está oculto; el stage del cine sí se renderiza.
+  it('T4: section[data-chapter="5"] contiene estructura cine — .cine-screen y .cine-audience (showText=false 2026-07-07)', () => {
     const wrapper = mountShell()
     const ch5 = wrapper.find('section[data-chapter="5"]')
-    expect(ch5.find('.scroll-reveal-card').exists()).toBe(true)
+    expect(ch5.find('.cine-screen').exists()).toBe(true)
+    expect(ch5.find('.cine-audience').exists()).toBe(true)
+    // Con showText=false no hay .scroll-reveal-card en ch5 (deliberado)
+    expect(ch5.find('.scroll-reveal-card').exists()).toBe(false)
   })
 
   // T5: section ch4 NO contiene .scroll-reveal-card (Chapter4Content sin reveal)
