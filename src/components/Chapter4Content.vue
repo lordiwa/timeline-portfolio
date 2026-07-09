@@ -100,6 +100,8 @@ onBeforeUnmount(() => {
     <!-- ── Parallax stack (decorativo, detrás del contenido) ─────────────────── -->
     <div ref="parallaxRef" class="ch4-parallax" aria-hidden="true">
       <div class="ch4-layer ch4-layer--portal"></div>
+      <!-- Pulso de energía sobre el anillo del portal — overlay circular decorativo -->
+      <div class="ch4-portal-pulse" aria-hidden="true"></div>
       <div class="ch4-layer ch4-layer--matrix"></div>
       <div class="ch4-layer ch4-layer--glyphs">
         <span
@@ -108,6 +110,18 @@ onBeforeUnmount(() => {
           class="ch4-glyph"
           :style="{ left: g.left, top: g.top, '--g-delay': g.delay, '--g-dur': g.dur, '--g-size': g.size }"
         >{{ g.ch }}</span>
+      </div>
+      <!-- Partículas holográficas — dots 2px, rombos wireframe y cruces cian -->
+      <div class="ch4-particles" aria-hidden="true">
+        <div class="ch4-p ch4-p--dot" style="--px:61%;--py:44%;--pd:0.5s;--pdur:3.5s;"></div>
+        <div class="ch4-p ch4-p--dot" style="--px:79%;--py:57%;--pd:1.8s;--pdur:4.2s;"></div>
+        <div class="ch4-p ch4-p--dot" style="--px:67%;--py:74%;--pd:0.9s;--pdur:3.8s;"></div>
+        <div class="ch4-p ch4-p--rhombus" style="--px:63%;--py:52%;--pd:2.1s;--pdur:5s;"></div>
+        <div class="ch4-p ch4-p--rhombus" style="--px:76%;--py:61%;--pd:0.3s;--pdur:4.5s;"></div>
+        <div class="ch4-p ch4-p--rhombus" style="--px:71%;--py:39%;--pd:3.4s;--pdur:6s;"></div>
+        <div class="ch4-p ch4-p--rhombus" style="--px:81%;--py:48%;--pd:1.2s;--pdur:5.5s;"></div>
+        <span class="ch4-p ch4-p--cross" style="--px:66%;--py:66%;--pd:2.8s;--pdur:4.8s;">+</span>
+        <span class="ch4-p ch4-p--cross" style="--px:74%;--py:43%;--pd:0.6s;--pdur:5.2s;">+</span>
       </div>
       <div class="ch4-layer ch4-layer--character">
         <div class="ch4-character-art"></div>
@@ -342,6 +356,87 @@ onBeforeUnmount(() => {
   );
 }
 
+/* ── Portal pulse — overlay circular de energía sobre el anillo del portal ─── */
+/* Posición estimada "abajo-derecha" del PNG ch4-portal.png (ajustar si cambia arte). */
+.ch4-portal-pulse {
+  position: absolute;
+  left: 70%;
+  top: 62%;
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 255, 255, 0.30) 0%, rgba(0, 255, 255, 0.10) 50%, transparent 70%);
+  transform: translate(-50%, -50%) scale(1);
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  animation: ch4-portal-pulse 4s ease-in-out infinite;
+}
+@keyframes ch4-portal-pulse {
+  0%, 100% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.98); }
+  50%       { opacity: 0.40; transform: translate(-50%, -50%) scale(1.03); }
+}
+
+/* ── Partículas holográficas — dots 2px, rombos wireframe, cruces ──────────── */
+.ch4-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.ch4-p {
+  position: absolute;
+  left: var(--px, 70%);
+  top: var(--py, 50%);
+  animation-duration: var(--pdur, 4s);
+  animation-delay: var(--pd, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.ch4-p--dot {
+  width: 2px;
+  height: 2px;
+  background: rgba(0, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 3px rgba(0, 255, 255, 0.8);
+  animation-name: ch4-p-float;
+}
+.ch4-p--rhombus {
+  width: 8px;
+  height: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.65);
+  background: transparent;
+  animation-name: ch4-p-float-rhombus;
+}
+.ch4-p--cross {
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: rgba(0, 255, 255, 0.65);
+  text-shadow: 0 0 4px rgba(0, 255, 255, 0.55);
+  animation-name: ch4-p-float;
+}
+@keyframes ch4-p-float {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  15%       { opacity: 0.45; }
+  50%       { opacity: 0.35; transform: translateY(-7px) translateX(3px); }
+  85%       { opacity: 0.40; }
+}
+@keyframes ch4-p-float-rhombus {
+  0%, 100% { opacity: 0; transform: rotate(45deg) translateY(0); }
+  15%       { opacity: 0.40; }
+  50%       { opacity: 0.30; transform: rotate(45deg) translateY(-5px); }
+  85%       { opacity: 0.35; }
+}
+
+/* ── Hover glow en las project cards (FloatingPanel) ──────────────────────── */
+.ch4-layout :deep(.floating-panel) {
+  transition: box-shadow 200ms ease;
+}
+.ch4-layout :deep(.floating-panel):hover {
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.35), 0 0 5px rgba(0, 255, 255, 0.15);
+}
+
 /* ── Contenido — dentro de la columna flotante ─────────────────────────────── */
 .ch4-content {
   display: flex;
@@ -424,11 +519,17 @@ onBeforeUnmount(() => {
   .ch4-layer,
   .ch4-character-art,
   .ch4-glyph,
-  .ch4-panel-column { animation: none !important; transition: none !important; }
+  .ch4-panel-column,
+  .ch4-portal-pulse,
+  .ch4-p { animation: none !important; transition: none !important; }
   .ch4-layer { transform: none !important; }
   .ch4-character-art { transform: none !important; }
   .ch4-panel-column { transform: none !important; }
   .ch4-glyph { opacity: 0.3 !important; }
+  /* Pulso estático — energía visible pero sin movimiento */
+  .ch4-portal-pulse { opacity: 0.15 !important; transform: translate(-50%, -50%) !important; }
+  /* Partículas ocultas bajo PRM — muy difíciles de seguir estáticas */
+  .ch4-p { opacity: 0 !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────
