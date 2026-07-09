@@ -67,11 +67,20 @@ export class SpaceScene extends Phaser.Scene {
     // Main background (always loaded — single-layer fallback baseline).
     this.load.image('ch6-bg', '/assets/ch6-bg.png')
 
-    // Optional parallax layers (Open Q4 RESOLVED — best case 3-layer post W1).
+    // Backdrop tall 480×1080 (fix "nebulosa borrosa" 2026-07-09): compuesto a
+    // resolución NATIVA (extensión de espacio profundo arriba + ch6-bg verbatim
+    // abajo). Reemplaza el setDisplaySize ×4 de ch6-bg, que estiraba 270px de
+    // alto a 1080 y convertía estrellas y nebulosa en rayas borrosas.
+    this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.png')
+
+    // Parallax layers TRANSPARENTES (Open Q4 RESOLVED — best case 3-layer).
+    // Derivadas de las opacas originales (fondo plano → alpha 0 + mosaico
+    // espejado vertical para cubrir el descenso SIN estirar). Las opacas
+    // originales quedaban 100% tapadas por el main bg dibujado al final.
     // Si los archivos no existen, `loaderror` event silencia el fallo y create()
     // detecta su ausencia via this.textures.exists() para fallback single-layer.
-    this.load.image('ch6-bg-stars-far', '/assets/ch6-bg-stars-far.png')
-    this.load.image('ch6-bg-nebulae-mid', '/assets/ch6-bg-nebulae-mid.png')
+    this.load.image('ch6-bg-stars-far-t', '/assets/ch6-bg-stars-far-t.png')
+    this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.png')
 
     // 3 planets-proyecto (D5-01 mapping cronológico ascendente).
     this.load.image('ch6-planet-ar-vr', '/assets/ch6-planet-ar-vr.png')
@@ -100,35 +109,59 @@ export class SpaceScene extends Phaser.Scene {
     // Parallax layers (D5-02 multi-capa parallax)
     // ─────────────────────────────────────────────────────────────────
 
-    const hasStarsFar = this.textures.exists('ch6-bg-stars-far')
-    const hasNebulaeMid = this.textures.exists('ch6-bg-nebulae-mid')
+    // Fix "nebulosa borrosa" 2026-07-09 — composición del fondo re-hecha:
+    //   1. TODO a resolución nativa 1:1 — cero setDisplaySize. El estirado ×4
+    //      (270→1080) del asset era la borrosidad: estrellas → rayas verticales.
+    //   2. Backdrop opaco PRIMERO, capas transparentes DESPUÉS. Antes el main
+    //      bg opaco se dibujaba al final y tapaba ambas capas parallax.
+    //   3. Geometría: origin(0.5, 0) en y=0 con alturas que cubren el rango
+    //      real de cámara [0..CAMERA_FINAL_Y+BASE_H]. Antes (centro en y=135,
+    //      span -405..675) el viewport final del arrival quedaba SIN fondo.
+    const hasTall = this.textures.exists('ch6-bg-tall')
+    const hasStarsT = this.textures.exists('ch6-bg-stars-far-t')
+    const hasNebulaeT = this.textures.exists('ch6-bg-nebulae-mid-t')
+
+    // Borde inferior del mundo visible (viewport final del arrival).
+    const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 945
 
     // Bajo PRM (D5-08): scrollFactor 1.0 todas las capas (sin diferencial).
     const starsFactor = prefersReduced ? 1.0 : 0.2
     const nebulaeFactor = prefersReduced ? 1.0 : 0.5
 
-    if (hasStarsFar) {
+    if (hasTall) {
+      // Backdrop 480×1080 nativo — cubre el descenso completo y termina en la
+      // "postal" original (ch6-bg verbatim) exactamente donde aterriza el arrival.
+      this.add.image(BASE_W / 2, 0, 'ch6-bg-tall').setOrigin(0.5, 0).setScrollFactor(1.0)
+    } else {
+      // Fallback legacy single-layer (asset tall ausente): comportamiento previo.
       this.add
-        .image(BASE_W / 2, BASE_H / 2, 'ch6-bg-stars-far')
-        .setScrollFactor(starsFactor)
-        .setOrigin(0.5, 0.5)
-        .setDisplaySize(BASE_W, BASE_H * 4) // cubrir descenso completo
-    }
-
-    if (hasNebulaeMid) {
-      this.add
-        .image(BASE_W / 2, BASE_H / 2, 'ch6-bg-nebulae-mid')
-        .setScrollFactor(nebulaeFactor)
+        .image(BASE_W / 2, BASE_H / 2, 'ch6-bg')
+        .setScrollFactor(1.0)
         .setOrigin(0.5, 0.5)
         .setDisplaySize(BASE_W, BASE_H * 4)
     }
 
-    // Main bg — world-space (scrollFactor 1.0). Cubre todo el descenso.
-    this.add
-      .image(BASE_W / 2, BASE_H / 2, 'ch6-bg')
-      .setScrollFactor(1.0)
-      .setOrigin(0.5, 0.5)
-      .setDisplaySize(BASE_W, BASE_H * 4)
+    // Capas transparentes sobre el backdrop. Altura de cobertura necesaria con
+    // scrollFactor f: BASE_H + f·CAMERA_FINAL_Y (405 stars / 608 nebulae) —
+    // ambos assets la superan sin estirar (540 / 810, mosaico espejado).
+    // Bajo PRM (factor 1.0 + cámara ya en final): anclar al fondo del mundo
+    // para que cubran el viewport final.
+    if (hasStarsT) {
+      const h = this.textures.get('ch6-bg-stars-far-t').getSourceImage().height
+      this.add
+        .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-stars-far-t')
+        .setOrigin(0.5, 0)
+        .setScrollFactor(starsFactor)
+    }
+
+    if (hasNebulaeT) {
+      const h = this.textures.get('ch6-bg-nebulae-mid-t').getSourceImage().height
+      this.add
+        .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-nebulae-mid-t')
+        .setOrigin(0.5, 0)
+        .setScrollFactor(nebulaeFactor)
+        .setAlpha(0.65)
+    }
 
     // ─────────────────────────────────────────────────────────────────
     // 3 planets — distribuidos verticalmente (D5-01 + Pattern 7)
