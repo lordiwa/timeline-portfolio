@@ -603,3 +603,12 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael 2026-07-09: "los artes de 2026 siguen pixelados... estás dándome un 2/10, quiero 10 de poder". Causa raíz: mundo 480×270 × zoom 3 — techo físico de densidad de detalle en fondos.
 - **Qué se intentó diferente:** refactor HI-BIT — mundo 960×540. Base nueva nano-banana nativa 1376×768 con prompt de grano fino ("fine 1px grain, 32-bit era detail density") BOX-downscale a 960×540; tall 960×1890 (scripts/build_ch6_bg.py v2); starfield parallax procedural fino; nebulosas extraídas de la banda de la base. Planetas regenerados a 192px (nativos 1024 → BOX 192, referencias de las iter2 para identidad). Megaestructura re-derivada ÷2 (688×384). Plataforma procedural a 960×144. Pesos: cuantización 256 colores (tall/bg) + posterize 4bit (nebulosas) → set completo ~1.2MB (dieta final pendiente para Phase 6 deploy).
 - **Commit hash del cambio:** (commit de este drop)
+
+---
+
+## ch3 parallax (sky/mountains/path) — iter3 REVERTIDA → iter2 restaurada (2026-07-09)
+
+- **iter3 archivada como:** `old/ch3-{sky,mountains,path}-2026-07-09-iter3-failed.png`
+- **Por qué se revirtió:** la iter3 de path salió 1024×1024 con ~70% de suelo opaco (iter2 era 1376×768 con suelo solo abajo) → al renderizar cover full-viewport el suelo ámbar INUNDÓ toda la escena (cielo/ruinas/amanecer enterrados). Además la paleta derivó a ámbar-dorado global contra el brief ("conservar paleta").
+- **Lección (validación de composición):** para capas parallax NUNCA instalar sin componer antes un mock PIL de las 3 capas al aspect del viewport y revisarlo visualmente (disciplina ya usada en ch6). Exigir aspect 1376×768 y verificar fracción de suelo (<45% de alto) antes de sobrescribir. Los presets de bg de forge_sprite se ignoran a menudo → verificar canal alpha con PIL (lección de ch3-hires, sigue válida).
+- **Commit hash del cambio:** (commit de esta reversión)
