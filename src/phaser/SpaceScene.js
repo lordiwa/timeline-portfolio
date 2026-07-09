@@ -9,12 +9,13 @@
 //   - D5-06: click planet → bridge event; tooltip hover desktop only
 //   - D5-08: PRM heuristic — instant cut + ships estáticas + tweens.timeScale=0 cinturón
 //   - D5-10: bridge events SIN prefijo `vue:` ('show-project', 'arrival-complete', 'locale-changed')
+//   - ERA-AGNT-01 (2026-07-09): Rafael + super robot en plataforma-mirador orquestrando
+//     enjambre de drones que construyen mundos nuevos; megaestructura orbital en horizonte.
 //
 // Anti-patterns enforced (PHA-08 — verificados por regex de ausencia en
 // tests/phaser/no-character-animation.test.js):
-//   - Sin Phaser anim system (no character animation)
-//   - Sin atlas multi-cell (single-image sprites only — ver CLAUDE.md §6.4)
-//   - Sin anim play calls
+//   - Sin sistema de movimiento basado en fotogramas (single-image sprites only — ver CLAUDE.md §6.4)
+//   - Solo tweens de posición/alpha/scale/angle para todos los objetos
 //   - Sin captura de wheel/touchmove (Pitfall 6 — rompería scroll-snap del documento)
 //
 // Verified contracts:
@@ -51,6 +52,10 @@ const PLANET_HALO_PX = 16
 // Ships estáticas posiciones bajo PRM (D5-08).
 const PRM_SHIP1_X = 120
 const PRM_SHIP2_X = 360
+
+// Zigzag de planetas (ERA-AGNT-01) — posiciones X indexadas por orden cronológico (sort planetOrbit asc).
+// idx 0: orbit más baja (ar-vr, y≈297), idx 1: media (remoose, y≈540), idx 2: alta (software-mind, y≈783).
+const PLANET_XS = [310, 150, 300]
 
 export class SpaceScene extends Phaser.Scene {
   constructor() {
@@ -91,8 +96,18 @@ export class SpaceScene extends Phaser.Scene {
     this.load.image('ch6-ship-1', '/assets/ch6-ship-1.png')
     this.load.image('ch6-ship-2', '/assets/ch6-ship-2.png')
 
-    // Silent fail para parallax opcionales — no romper scene si Adobe MCP no entregó
-    // las 2 capas (W1 best case 3-layer; worst case 1-layer fallback).
+    // Era agentic assets — postal final ch6 (ERA-AGNT-01, 2026-07-09).
+    // Cargados con fallback silencioso: si alguno falta, create() lo omite
+    // via this.textures.exists() sin romper la escena.
+    this.load.image('ch6-robot', '/assets/ch6-robot.png')
+    this.load.image('ch6-rafael', '/assets/ch6-rafael.png')
+    this.load.image('ch6-drone-a', '/assets/ch6-drone-a.png')
+    this.load.image('ch6-drone-b', '/assets/ch6-drone-b.png')
+    this.load.image('ch6-structures-t', '/assets/ch6-structures-t.png')
+    this.load.image('ch6-platform', '/assets/ch6-platform.png')
+
+    // Silent fail para assets opcionales — no romper scene si Adobe MCP no entregó
+    // las capas (W1 best case 3-layer; worst case 1-layer fallback).
     this.load.on('loaderror', (file) => {
       // No-op intencional. Las texture keys ausentes se detectan en create()
       // via this.textures.exists() — fallback single-layer ya cubierto.
@@ -164,7 +179,20 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // 3 planets — distribuidos verticalmente (D5-01 + Pattern 7)
+    // Megaestructura orbital (ERA-AGNT-01) — horizonte derecho del postal,
+    // detrás de los planetas. depth 8.
+    // ─────────────────────────────────────────────────────────────────
+
+    if (this.textures.exists('ch6-structures-t')) {
+      this.add
+        .image(330, 740, 'ch6-structures-t')
+        .setDepth(8)
+        .setScrollFactor(1.0)
+        .setAlpha(0.92)
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // 3 planets — distribuidos en zigzag (D5-01 + Pattern 7 + ERA-AGNT-01)
     // ─────────────────────────────────────────────────────────────────
 
     this.projectsData = projects.filter((p) => p.chapterEra === 6)
@@ -173,8 +201,10 @@ export class SpaceScene extends Phaser.Scene {
 
     this.projectsData.forEach((proj, idx) => {
       const textureKey = `ch6-planet-${proj.id.replace('ch6-', '')}`
+      // Posición X en zigzag (PLANET_XS) para composición visual más dinámica.
+      const planetX = PLANET_XS[idx] ?? BASE_W / 2
       const planet = this.add.sprite(
-        BASE_W / 2, // center X
+        planetX,
         proj.planetOrbit * ARRIVAL_DESCENT + 135, // Y derived from data
         textureKey
       )
@@ -197,7 +227,6 @@ export class SpaceScene extends Phaser.Scene {
           backgroundColor: '#1a0e3d', // deep purple D5-04
           padding: { x: 6, y: 3 },
         })
-        .setOrigin(0, 0.5)
         .setScrollFactor(0) // sticky-to-camera
         .setDepth(100)
         .setVisible(false)
@@ -207,7 +236,15 @@ export class SpaceScene extends Phaser.Scene {
         if (this.sys.game.device.input.touch) return
         this.input.setDefaultCursor('pointer')
         tooltip.setText(i18n.global.t(proj.titleKey))
-        tooltip.setPosition(planet.x + planet.width / 2 + 4, planet.y)
+        // Posición dinámica: si el planeta está a la derecha del centro,
+        // el tooltip se muestra a su izquierda para no salirse de los 480px.
+        if (planet.x > BASE_W / 2) {
+          tooltip.setOrigin(1, 0.5)
+          tooltip.setPosition(planet.x - planet.width / 2 - 4, planet.y)
+        } else {
+          tooltip.setOrigin(0, 0.5)
+          tooltip.setPosition(planet.x + planet.width / 2 + 4, planet.y)
+        }
         tooltip.setVisible(true)
       })
 
@@ -267,6 +304,152 @@ export class SpaceScene extends Phaser.Scene {
           ship2.setX(BASE_W + 50)
         },
       })
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Plataforma-mirador (ERA-AGNT-01) — cubierta con barandilla neon.
+    // RAIL_Y=10: superficie del deck a 10px del borde superior del PNG.
+    // PNG 480×56 centrado en y=917 → cubre y 889..945. Deck en y≈899.
+    // ─────────────────────────────────────────────────────────────────
+
+    if (this.textures.exists('ch6-platform')) {
+      this.add
+        .image(240, 917, 'ch6-platform')
+        .setDepth(30)
+        .setScrollFactor(1.0)
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Héroes en el deck (ERA-AGNT-01) — Rafael y super robot de espaldas,
+    // mirando al horizonte orbital.
+    // Robot 92×124: origen default 0.5 → pies en y 837+62=899 (deck).
+    // Rafael 26×48: origen default 0.5 → pies en y 875+24=899 (deck).
+    // Robot a la izquierda, Rafael a su derecha.
+    // ─────────────────────────────────────────────────────────────────
+
+    if (this.textures.exists('ch6-robot')) {
+      const robot = this.add
+        .image(95, 837, 'ch6-robot')
+        .setDepth(35)
+        .setScrollFactor(1.0)
+
+      // Vibración sutil del robot — solo cuando PRM está desactivado.
+      if (!prefersReduced) {
+        this.tweens.add({
+          targets: robot,
+          y: 835.5,
+          duration: 3200,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        })
+      }
+    }
+
+    if (this.textures.exists('ch6-rafael')) {
+      this.add
+        .image(152, 875, 'ch6-rafael')
+        .setDepth(35)
+        .setScrollFactor(1.0)
+      // Rafael permanece estático — testigo silencioso de lo que se construye.
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Enjambre de drones-agente (ERA-AGNT-01) — depth 25.
+    // Drones 0-2: en el postal entre plataforma y megaestructura (van y vienen).
+    // Drones 3-4: acompañan planetas 2 y 1 durante el descenso.
+    // Cada dron tiene oscilación Y independiente + deriva X lenta.
+    // Drones tipo-b llevan carga → balanceo angular adicional.
+    // ─────────────────────────────────────────────────────────────────
+
+    const DRONE_DEFS = [
+      // { key, x, y, yA: amp Y, yD: dur Y, xA: amp X, xD: dur X, aA: amp angle, aD: dur angle }
+      { key: 'ch6-drone-b', x: 200, y: 850, yA: 8,  yD: 1800, xA: 40, xD: 5000, aA: 4, aD: 4000 },
+      { key: 'ch6-drone-a', x: 265, y: 800, yA: 6,  yD: 2200, xA: 30, xD: 6000, aA: 0, aD: 0    },
+      { key: 'ch6-drone-b', x: 330, y: 840, yA: 10, yD: 1600, xA: 50, xD: 4500, aA: 4, aD: 5500 },
+      { key: 'ch6-drone-a', x: 170, y: 520, yA: 7,  yD: 2400, xA: 25, xD: 7000, aA: 0, aD: 0    },
+      { key: 'ch6-drone-b', x: 130, y: 290, yA: 9,  yD: 1400, xA: 60, xD: 3800, aA: 4, aD: 6000 },
+    ]
+
+    DRONE_DEFS.forEach((def) => {
+      if (!this.textures.exists(def.key)) return
+
+      const drone = this.add
+        .image(def.x, def.y, def.key)
+        .setDepth(25)
+        .setScrollFactor(1.0)
+
+      if (!prefersReduced) {
+        // Oscilación vertical independiente.
+        this.tweens.add({
+          targets: drone,
+          y: def.y - def.yA,
+          duration: def.yD,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        })
+        // Deriva horizontal lenta.
+        this.tweens.add({
+          targets: drone,
+          x: def.x + def.xA,
+          duration: def.xD,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        })
+        // Balanceo angular: solo drones tipo-b (llevan carga pesada).
+        if (def.aA > 0) {
+          this.tweens.add({
+            targets: drone,
+            angle: def.aA,
+            duration: def.aD,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+          })
+        }
+      }
+    })
+
+    // ─────────────────────────────────────────────────────────────────
+    // Haz holográfico de mando (ERA-AGNT-01) — depth 34. World-space.
+    // Línea cian (0x4dffff) desde cabeza del robot (95, 790) hacia
+    // planeta 3 (300, 783) + línea corta hacia dron obrero (200, 850).
+    // Visualización de "Rafael + robot orquestan el enjambre".
+    // Solo visible en el postal (y 675..945) — no necesita clip extra,
+    // la cámara lo revela naturalmente al terminar el arrival.
+    // ─────────────────────────────────────────────────────────────────
+
+    if (this.textures.exists('ch6-robot')) {
+      const beam = this.add.graphics()
+      beam.setDepth(34)
+      beam.setScrollFactor(1.0)
+      beam.lineStyle(1, 0x4dffff, 1)
+      beam.beginPath()
+      beam.moveTo(95, 790)
+      beam.lineTo(300, 783)
+      beam.strokePath()
+      beam.beginPath()
+      beam.moveTo(95, 790)
+      beam.lineTo(200, 850)
+      beam.strokePath()
+
+      if (prefersReduced) {
+        // Alpha fija bajo PRM — no parpadea.
+        beam.setAlpha(0.22)
+      } else {
+        // Parpadeo suave: 0.12 → 0.32 yoyo (2s).
+        beam.setAlpha(0.12)
+        this.tweens.add({
+          targets: beam,
+          alpha: 0.32,
+          duration: 2000,
+          ease: 'Sine.easeInOut',
+          yoyo: true,
+          repeat: -1,
+        })
+      }
     }
 
     // ─────────────────────────────────────────────────────────────────
