@@ -567,3 +567,39 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael 2026-07-09: "los personajes están en el aire" — la franja v1 (56px, borde neon bajo los pies) se leía como alambre, sin suelo.
 - **Qué se intentó diferente:** v2 procedural 480×72 — banda de suelo caminable (los pies pisan dentro, y 881..893 world), labio neon POR DEBAJO, fascia panelada con 2 pilares que anclan al frame, barandilla lejana escasa. + sombras de contacto elípticas en escena y héroes bajados (pies y≈889).
 - **Commit hash del cambio:** (commit de este fix)
+
+---
+
+## ch3-sky.png — iter2 → iter3 (2026-07-09)
+
+- **Versión guardada:** `old/ch3-sky-2026-07-09-iter2.png` (666366 bytes)
+- **Razón del cambio:** Rafael 2026-07-09: píxeles "pintados" gordos (bloques 4-8px) se ven toscos al estirar a 1920px. El arte sigue siendo demasiado chunky para la densidad visual que se busca ("quiero 10 de poder"). La composición y paleta de iter2 gustan — solo la densidad de grano necesita un salto a 32-bit SNES.
+- **Qué se intentará diferente:** forge_background style "snes" model "banana-2" con referencias a iter2 para conservar composición (humo oscuro izquierda, amanecer HTML5 cyan-dorado derecha). Prompt exige explícitamente "fine 1px pixel grain, highly detailed, intricate dithering, SNES 32-bit detail density" y prohíbe "chunky pixels, big blocky outlines, thick outlines, low-res look".
+- **Commit hash post-regen:** (pendiente)
+
+---
+
+## ch3-mountains.png — iter2 → iter3 (2026-07-09)
+
+- **Versión guardada:** `old/ch3-mountains-2026-07-09-iter2.png` (807178 bytes)
+- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo. Adicionalmente, iter2 tiene lineart interno en el castillo (ventanas, huecos en torres) que en §6.1 se documenta como causa de negative space en capas parallax intermedias.
+- **Qué se intentará diferente:** forge_sprite size:0 background "sky" style "snes" model "banana-2" con referencias a iter2. Se refuerza §6.1: silueta sólida sin negative space interno — castillo relleno plano con shading tonal (no outlines internos que creen huecos). Fine grain idéntico al sky iter3.
+- **Commit hash post-regen:** (pendiente)
+
+---
+
+## ch3-path.png — iter2 → iter3 (2026-07-09)
+
+- **Versión guardada:** `old/ch3-path-2026-07-09-iter2.png` (1202416 bytes)
+- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo. La tierra quemada con camino/armas/estandartes tiene buena composición pero los bloques de dithering son demasiado grandes.
+- **Qué se intentará diferente:** forge_sprite size:0 background "sky" style "snes" model "banana-2" con referencias a iter2. Fine grain en toda la superficie: tierra quemada con micro-dithering, props (espadas, cascos, estandartes) con detalle 1px. El cielo plano teal del top se elimina con bg removal automático.
+- **Commit hash post-regen:** (pendiente)
+
+---
+
+## ch6 set completo — HI-BIT 960×540 (2026-07-09, tercera ronda)
+
+- **Versiones guardadas:** `old/ch6-bg-2026-07-09-hibit-prev.png`, `old/ch6-bg-tall-2026-07-09-hibit-prev.png`, `old/ch6-bg-stars-far-t-2026-07-09-hibit-prev.png`, `old/ch6-bg-nebulae-mid-t-2026-07-09-hibit-prev.png`, `old/ch6-planet-{ar-vr,remoose,software-mind}-2026-07-09-iter2.png`, `old/ch6-structures-t-2026-07-09-iter1.png`, `old/ch6-platform-2026-07-09-iter2.png`
+- **Razón del cambio:** Rafael 2026-07-09: "los artes de 2026 siguen pixelados... estás dándome un 2/10, quiero 10 de poder". Causa raíz: mundo 480×270 × zoom 3 — techo físico de densidad de detalle en fondos.
+- **Qué se intentó diferente:** refactor HI-BIT — mundo 960×540. Base nueva nano-banana nativa 1376×768 con prompt de grano fino ("fine 1px grain, 32-bit era detail density") BOX-downscale a 960×540; tall 960×1890 (scripts/build_ch6_bg.py v2); starfield parallax procedural fino; nebulosas extraídas de la banda de la base. Planetas regenerados a 192px (nativos 1024 → BOX 192, referencias de las iter2 para identidad). Megaestructura re-derivada ÷2 (688×384). Plataforma procedural a 960×144. Pesos: cuantización 256 colores (tall/bg) + posterize 4bit (nebulosas) → set completo ~1.2MB (dieta final pendiente para Phase 6 deploy).
+- **Commit hash del cambio:** (commit de este drop)

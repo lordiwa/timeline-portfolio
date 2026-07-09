@@ -69,8 +69,8 @@ for y in range(st.height):
                 round(DARK[2] + (LITE[2] - DARK[2]) * lum),
                 255,
             )
-# ÷4 nearest — pixel art limpio, ~344px de ancho (lejanía)
-st = st.resize((st.width // 4, st.height // 4), Image.NEAREST)
+# ÷2 nearest (hi-bit 2026-07-09b: mundo 960 — mismo tamaño relativo, doble detalle)
+st = st.resize((st.width // 2, st.height // 2), Image.NEAREST)
 st.save(f"{ASSETS}/ch6-structures-t.png", optimize=True)
 
 # ── 4. plataforma-mirador procedural 480x72 (v2 2026-07-09b) ─────────────────
@@ -80,10 +80,12 @@ st.save(f"{ASSETS}/ch6-structures-t.png", optimize=True)
 # con paneles y 2 pilares de soporte. Barandilla lejana escasa arriba.
 import random
 rng = random.Random(0xA6E7)
-PW, PH = 480, 72
-RAIL_H = 8           # barandilla lejana (transparente entre postes)
-FLOOR_TOP = RAIL_H   # y=8: borde superior del suelo (highlight)
-LIP_Y = 20           # y=20: labio neon frontal (BAJO la banda de suelo)
+# hi-bit 2026-07-09b: mundo 960×540 — plataforma a 960×144 (1px aquí = 1px
+# de mundo fino; misma proporción visual que la v2 de 480, doble densidad).
+PW, PH = 960, 144
+RAIL_H = 16          # barandilla lejana (transparente entre postes)
+FLOOR_TOP = RAIL_H   # borde superior del suelo (highlight)
+LIP_Y = 40           # labio neon frontal (BAJO la banda de suelo)
 plat = Image.new("RGBA", (PW, PH), (0, 0, 0, 0))
 pp = plat.load()
 FLOOR_A = (52, 40, 96)    # superficie iluminada por el horizonte
@@ -93,8 +95,8 @@ FASCIA_B = (10, 8, 26)
 HILITE = (120, 104, 176)
 CYAN = (77, 255, 255)
 MAGENTA = (255, 60, 166)
-# barandilla lejana: postes finos cada 96px + pasamanos tenue
-for bx in range(24, PW, 96):
+# barandilla lejana: postes finos cada 192px + pasamanos tenue
+for bx in range(48, PW, 192):
     for yy in range(0, RAIL_H):
         pp[bx, yy] = (46, 36, 90, 255)
     pp[bx, 0] = (*CYAN, 255)
@@ -109,8 +111,8 @@ for y in range(FLOOR_TOP, LIP_Y):
         pp[x, y] = (*c, 255)
 for x in range(PW):
     pp[x, FLOOR_TOP] = (*HILITE, 255)           # borde superior highlight
-# juntas del suelo (perspectiva sutil: verticales cada 48px)
-for jx in range(12, PW, 48):
+# juntas del suelo (perspectiva sutil: verticales cada 96px)
+for jx in range(24, PW, 96):
     for yy in range(FLOOR_TOP + 1, LIP_Y):
         r, g, b, a = pp[jx, yy]
         pp[jx, yy] = (max(0, r - 14), max(0, g - 11), max(0, b - 16), a)
@@ -126,14 +128,14 @@ for y in range(LIP_Y + 2, PH):
     c = tuple(round(FASCIA_A[i] + (FASCIA_B[i] - FASCIA_A[i]) * t) for i in range(3))
     for x in range(PW):
         pp[x, y] = (*c, 255)
-for jx in range(0, PW, 60):
+for jx in range(0, PW, 120):
     for yy in range(LIP_Y + 2, PH):
         r, g, b, a = pp[jx, yy]
         pp[jx, yy] = (max(0, r - 8), max(0, g - 6), max(0, b - 10), a)
 # 2 pilares de soporte que ensanchan hacia abajo (anclan la plataforma al frame)
-for cx in (120, 360):
+for cx in (240, 720):
     for yy in range(LIP_Y + 2, PH):
-        w = 10 + round((yy - LIP_Y) * 0.5)
+        w = 20 + round((yy - LIP_Y) * 0.5)
         for xx in range(max(0, cx - w), min(PW, cx + w)):
             r, g, b, a = pp[xx, yy]
             pp[xx, yy] = (min(255, r + 10), min(255, g + 8), min(255, b + 14), a)
@@ -142,7 +144,7 @@ for cx in (120, 360):
             if 0 <= edge < PW:
                 pp[edge, yy] = (HILITE[0] // 2, HILITE[1] // 2, HILITE[2] // 2, 255)
 # LEDs de estado en la fascia
-for _ in range(22):
+for _ in range(44):
     lx, ly = rng.randint(4, PW - 5), rng.randint(LIP_Y + 5, PH - 4)
     pp[lx, ly] = (*(CYAN if rng.random() < 0.5 else MAGENTA), 255)
 plat.save(f"{ASSETS}/ch6-platform.png", optimize=True)
