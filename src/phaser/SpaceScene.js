@@ -153,7 +153,9 @@ export class SpaceScene extends Phaser.Scene {
         .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-nebulae-mid-t')
         .setOrigin(0.5, 0)
         .setScrollFactor(nebulaeFactor)
-        .setAlpha(0.65)
+        // 0.5 (no 0.65): en el descenso competían con los planetas — decisión
+        // 2026-07-09b (b7c5098), re-aplicada tras el refactor hi-bit.
+        .setAlpha(0.5)
     }
 
     // ─────────────────────────────────────────────────────────────────
