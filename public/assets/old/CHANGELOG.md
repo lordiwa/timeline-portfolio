@@ -551,3 +551,19 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Qué se intentará diferente:** 48px con siluetas legibles — ship-1 courier púrpura con estela cian; ship-2 shuttle teal con motor dorado. forge_sprite estilo neon/clean.
 - **Resultado:** ship-1 al primer intento; ship-2 necesitó 2 (iter "new" salió arcoíris ilegible, "new2" limpio con prompt de silueta simple).
 - **Commit hash del cambio:** (se completa en el commit de este drop)
+
+---
+
+## ch6 ships (1 / 2) — iter2 → iter3 (2026-07-09, misma sesión)
+
+- **Versiones guardadas:** `old/ch6-ship-1-2026-07-09-iter2.png`, `old/ch6-ship-2-2026-07-09-iter2.png`
+- **Razón del cambio:** Rafael 2026-07-09: "tal vez rehacer las naves o algo" — las iter2 de pixelforge seguían flojas (ship-1 sliver plano).
+- **Qué se intentó diferente:** pixellab create_1_direction_object view sidescroller, 16 candidatos en un job, curados a mano — ship-1: interceptor flecha magenta con cabina cian (61×30); ship-2: carguero ciruela con ojos de buey cian (58×32). Caption-text baked recortado con PIL (crop y<50 + trim).
+- **Commit hash del cambio:** (commit de este fix)
+
+## ch6-platform.png — iter1 → iter2 (2026-07-09, misma sesión)
+
+- **Versión guardada:** `old/ch6-platform-2026-07-09-iter1.png`
+- **Razón del cambio:** Rafael 2026-07-09: "los personajes están en el aire" — la franja v1 (56px, borde neon bajo los pies) se leía como alambre, sin suelo.
+- **Qué se intentó diferente:** v2 procedural 480×72 — banda de suelo caminable (los pies pisan dentro, y 881..893 world), labio neon POR DEBAJO, fascia panelada con 2 pilares que anclan al frame, barandilla lejana escasa. + sombras de contacto elípticas en escena y héroes bajados (pies y≈889).
+- **Commit hash del cambio:** (commit de este fix)

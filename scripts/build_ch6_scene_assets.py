@@ -73,45 +73,77 @@ for y in range(st.height):
 st = st.resize((st.width // 4, st.height // 4), Image.NEAREST)
 st.save(f"{ASSETS}/ch6-structures-t.png", optimize=True)
 
-# ── 4. plataforma-mirador procedural 480x56 ──────────────────────────────────
+# ── 4. plataforma-mirador procedural 480x72 (v2 2026-07-09b) ─────────────────
+# v1 (56px) era una franja plana con el borde neon justo bajo los pies — los
+# personajes "flotaban" (feedback Rafael). v2 da SUELO legible: banda de
+# superficie (los pies pisan DENTRO de ella), labio neon por debajo, fascia
+# con paneles y 2 pilares de soporte. Barandilla lejana escasa arriba.
 import random
 rng = random.Random(0xA6E7)
-PW, PH = 480, 56
-RAIL_Y = 10          # y de la barandilla superior (transparente encima)
+PW, PH = 480, 72
+RAIL_H = 8           # barandilla lejana (transparente entre postes)
+FLOOR_TOP = RAIL_H   # y=8: borde superior del suelo (highlight)
+LIP_Y = 20           # y=20: labio neon frontal (BAJO la banda de suelo)
 plat = Image.new("RGBA", (PW, PH), (0, 0, 0, 0))
 pp = plat.load()
-DECK_TOP = (24, 18, 52)
-DECK_BOT = (13, 10, 32)
+FLOOR_A = (52, 40, 96)    # superficie iluminada por el horizonte
+FLOOR_B = (38, 29, 74)
+FASCIA_A = (22, 16, 48)
+FASCIA_B = (10, 8, 26)
+HILITE = (120, 104, 176)
 CYAN = (77, 255, 255)
 MAGENTA = (255, 60, 166)
-for y in range(RAIL_Y, PH):
-    t = (y - RAIL_Y) / (PH - RAIL_Y - 1)
-    c = tuple(round(DECK_TOP[i] + (DECK_BOT[i] - DECK_TOP[i]) * t) for i in range(3))
+# barandilla lejana: postes finos cada 96px + pasamanos tenue
+for bx in range(24, PW, 96):
+    for yy in range(0, RAIL_H):
+        pp[bx, yy] = (46, 36, 90, 255)
+    pp[bx, 0] = (*CYAN, 255)
+for x in range(PW):
+    if pp[x, 2][3] == 0:
+        pp[x, 2] = (44, 34, 84, 200)
+# banda de suelo (superficie caminable)
+for y in range(FLOOR_TOP, LIP_Y):
+    t = (y - FLOOR_TOP) / (LIP_Y - FLOOR_TOP - 1)
+    c = tuple(round(FLOOR_A[i] + (FLOOR_B[i] - FLOOR_A[i]) * t) for i in range(3))
     for x in range(PW):
         pp[x, y] = (*c, 255)
-# borde neon cian de la cubierta (rim light del horizonte)
 for x in range(PW):
-    pp[x, RAIL_Y] = (*CYAN, 255)
-    pp[x, RAIL_Y + 1] = (
-        (CYAN[0] + DECK_TOP[0]) // 2, (CYAN[1] + DECK_TOP[1]) // 2,
-        (CYAN[2] + DECK_TOP[2]) // 2, 255)
-# postes de barandilla finos con remate cian (por encima del deck)
-for bx in range(8, PW, 32):
-    for yy in range(0, RAIL_Y):
-        pp[bx, yy] = (46, 34, 88, 255)
-    pp[bx, 0] = (*CYAN, 255)
-# travesaño superior de la barandilla
+    pp[x, FLOOR_TOP] = (*HILITE, 255)           # borde superior highlight
+# juntas del suelo (perspectiva sutil: verticales cada 48px)
+for jx in range(12, PW, 48):
+    for yy in range(FLOOR_TOP + 1, LIP_Y):
+        r, g, b, a = pp[jx, yy]
+        pp[jx, yy] = (max(0, r - 14), max(0, g - 11), max(0, b - 16), a)
+# labio neon frontal
 for x in range(PW):
-    if pp[x, 3][3] == 0:
-        pp[x, 3] = (58, 44, 104, 255)
-# juntas de paneles verticales sobre el deck
+    pp[x, LIP_Y] = (*CYAN, 255)
+    pp[x, LIP_Y + 1] = (
+        (CYAN[0] + FASCIA_A[0]) // 2, (CYAN[1] + FASCIA_A[1]) // 2,
+        (CYAN[2] + FASCIA_A[2]) // 2, 255)
+# fascia frontal con gradiente + paneles
+for y in range(LIP_Y + 2, PH):
+    t = (y - LIP_Y - 2) / (PH - LIP_Y - 3)
+    c = tuple(round(FASCIA_A[i] + (FASCIA_B[i] - FASCIA_A[i]) * t) for i in range(3))
+    for x in range(PW):
+        pp[x, y] = (*c, 255)
 for jx in range(0, PW, 60):
-    for yy in range(RAIL_Y + 2, PH):
+    for yy in range(LIP_Y + 2, PH):
         r, g, b, a = pp[jx, yy]
         pp[jx, yy] = (max(0, r - 8), max(0, g - 6), max(0, b - 10), a)
-# LEDs de estado magenta/cian dispersos en la cubierta
-for _ in range(26):
-    lx, ly = rng.randint(4, PW - 5), rng.randint(RAIL_Y + 6, PH - 4)
+# 2 pilares de soporte que ensanchan hacia abajo (anclan la plataforma al frame)
+for cx in (120, 360):
+    for yy in range(LIP_Y + 2, PH):
+        w = 10 + round((yy - LIP_Y) * 0.5)
+        for xx in range(max(0, cx - w), min(PW, cx + w)):
+            r, g, b, a = pp[xx, yy]
+            pp[xx, yy] = (min(255, r + 10), min(255, g + 8), min(255, b + 14), a)
+        # aristas del pilar
+        for edge in (cx - w, cx + w - 1):
+            if 0 <= edge < PW:
+                pp[edge, yy] = (HILITE[0] // 2, HILITE[1] // 2, HILITE[2] // 2, 255)
+# LEDs de estado en la fascia
+for _ in range(22):
+    lx, ly = rng.randint(4, PW - 5), rng.randint(LIP_Y + 5, PH - 4)
     pp[lx, ly] = (*(CYAN if rng.random() < 0.5 else MAGENTA), 255)
 plat.save(f"{ASSETS}/ch6-platform.png", optimize=True)
 

@@ -175,7 +175,8 @@ export class SpaceScene extends Phaser.Scene {
         .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-nebulae-mid-t')
         .setOrigin(0.5, 0)
         .setScrollFactor(nebulaeFactor)
-        .setAlpha(0.65)
+        // 0.65 → 0.5 (2026-07-09b): en el descenso competían con los planetas.
+        .setAlpha(0.5)
     }
 
     // ─────────────────────────────────────────────────────────────────
@@ -307,29 +308,34 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Plataforma-mirador (ERA-AGNT-01) — cubierta con barandilla neon.
-    // RAIL_Y=10: superficie del deck a 10px del borde superior del PNG.
-    // PNG 480×56 centrado en y=917 → cubre y 889..945. Deck en y≈899.
+    // Plataforma-mirador (ERA-AGNT-01, v2 2026-07-09b) — suelo con banda de
+    // superficie caminable + labio neon + fascia con pilares.
+    // PNG 480×72 centrado en y=909 → cubre y 873..945. Banda de suelo
+    // world y 881..893 — los pies pisan DENTRO de la banda (y≈889).
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-platform')) {
       this.add
-        .image(240, 917, 'ch6-platform')
+        .image(240, 909, 'ch6-platform')
         .setDepth(30)
         .setScrollFactor(1.0)
     }
 
     // ─────────────────────────────────────────────────────────────────
     // Héroes en el deck (ERA-AGNT-01) — Rafael y super robot de espaldas,
-    // mirando al horizonte orbital.
-    // Robot 92×124: origen default 0.5 → pies en y 837+62=899 (deck).
-    // Rafael 26×48: origen default 0.5 → pies en y 875+24=899 (deck).
-    // Robot a la izquierda, Rafael a su derecha.
+    // mirando al horizonte orbital. Pies en y≈889 (dentro de la banda de
+    // suelo 881..893) + sombras de contacto elípticas — v2 grounding fix
+    // (feedback Rafael 2026-07-09: "los personajes están en el aire").
+    // Robot 92×124: origen default 0.5 → pies en y 827+62=889.
+    // Rafael 26×48: origen default 0.5 → pies en y 865+24=889.
     // ─────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-robot')) {
+      // Sombra de contacto — ancla visualmente los pies al suelo.
+      this.add.ellipse(95, 890, 60, 9, 0x05030f, 0.45).setDepth(33).setScrollFactor(1.0)
+
       const robot = this.add
-        .image(95, 837, 'ch6-robot')
+        .image(95, 827, 'ch6-robot')
         .setDepth(35)
         .setScrollFactor(1.0)
 
@@ -337,7 +343,7 @@ export class SpaceScene extends Phaser.Scene {
       if (!prefersReduced) {
         this.tweens.add({
           targets: robot,
-          y: 835.5,
+          y: 825.5,
           duration: 3200,
           ease: 'Sine.easeInOut',
           yoyo: true,
@@ -347,8 +353,10 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     if (this.textures.exists('ch6-rafael')) {
+      this.add.ellipse(152, 890, 24, 6, 0x05030f, 0.45).setDepth(33).setScrollFactor(1.0)
+
       this.add
-        .image(152, 875, 'ch6-rafael')
+        .image(152, 865, 'ch6-rafael')
         .setDepth(35)
         .setScrollFactor(1.0)
       // Rafael permanece estático — testigo silencioso de lo que se construye.
@@ -427,11 +435,11 @@ export class SpaceScene extends Phaser.Scene {
       beam.setScrollFactor(1.0)
       beam.lineStyle(1, 0x4dffff, 1)
       beam.beginPath()
-      beam.moveTo(95, 790)
+      beam.moveTo(95, 772)
       beam.lineTo(300, 783)
       beam.strokePath()
       beam.beginPath()
-      beam.moveTo(95, 790)
+      beam.moveTo(95, 772)
       beam.lineTo(200, 850)
       beam.strokePath()
 
