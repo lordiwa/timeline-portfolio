@@ -24,7 +24,13 @@ import { existsSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const ASSETS_DIR = resolve(process.cwd(), 'public/assets')
-const SIZE_BUDGET_BYTES = 80 * 1024 // 80 KB Phase 6 budget per asset
+const SIZE_BUDGET_BYTES = 80 * 1024 // 80 KB Phase 6 budget per asset (capas legacy 480×270)
+
+// HI-BIT-01 (2026-07-09b, mandato Rafael "10 de poder"): ch6-bg pasó a 960×540
+// con densidad de detalle doble — el budget de 80KB era para el asset de 480×270.
+// Budget hi-bit provisional 300KB; la dieta real (WebP/paleta) es tarea de la
+// Phase 6 deploy (ver SESSION-HANDOFF-2026-07-09b).
+const HIBIT_BG_BUDGET_BYTES = 300 * 1024
 
 describe('ch6 assets existence + size budget (Phase 5 W1 gate)', () => {
   // T1 — ch6-bg.png existe
@@ -63,8 +69,8 @@ describe('ch6 assets existence + size budget (Phase 5 W1 gate)', () => {
     ).toEqual([])
   })
 
-  // T4 — ch6-bg.png ≤80 KB (Phase 6 budget carry-forward)
-  it('T4: ch6-bg.png ≤80 KB (Phase 6 budget — Pitfall 12)', () => {
+  // T4 — ch6-bg.png ≤300 KB (budget hi-bit — ver HIBIT_BG_BUDGET_BYTES arriba)
+  it('T4: ch6-bg.png ≤300 KB (budget hi-bit 960×540 — dieta final en Phase 6)', () => {
     const path = resolve(ASSETS_DIR, 'ch6-bg.png')
     if (!existsSync(path)) {
       // RED esperado en W0; W1 hace que exista y este branch ya no se ejecuta.
@@ -77,9 +83,9 @@ describe('ch6 assets existence + size budget (Phase 5 W1 gate)', () => {
     const size = statSync(path).size
     expect(
       size,
-      `ch6-bg.png size=${size} bytes excede budget ${SIZE_BUDGET_BYTES} bytes (80KB). ` +
-        `Phase 6 deploy bloqueado si bg >80KB. Ajustar Adobe MCP downscale o paleta indexada.`
-    ).toBeLessThanOrEqual(SIZE_BUDGET_BYTES)
+      `ch6-bg.png size=${size} bytes excede budget hi-bit ${HIBIT_BG_BUDGET_BYTES} bytes (300KB). ` +
+        `Si crece más, aplicar dieta (WebP/paleta) sin bajar la densidad de detalle hi-bit.`
+    ).toBeLessThanOrEqual(HIBIT_BG_BUDGET_BYTES)
   })
 
   // T5 — conditional: ch6-bg-stars-far.png (si existe) ≤80 KB
