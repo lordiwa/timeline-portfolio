@@ -628,4 +628,4 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   - **Mock PIL:** las 3 capas compuestas vía `alpha_composite`. Sky épico visible, ruinas al horizonte, suelo de batalla denso anclado abajo. Paleta: drama post-batalla fiel a iter2. Grano fino SNES confirmado. PASS.
 - **Capas actualizadas:** sky, mountains, path — TODAS a iter4. Ninguna quedó en iter2.
 - **Nota técnica:** `forge_sprite` con aspect 16:9 size:0 genera consistentemente imágenes cuadradas (1376×1376) con el contenido centrado verticalmente, lo que impide una composición válida de parallax. Para capas parallax usar `forge_background` con cielo flat descriptivo + PIL flood-fill posterior.
-- **Commit hash post-regen:** pendiente
+- **Commit hash post-regen:** `648a573`
