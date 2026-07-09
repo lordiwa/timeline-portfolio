@@ -162,10 +162,39 @@ def to_alpha(img, boost=6.0, alpha_mul=1.0, floor=0):
             op[x, y] = (c[0], c[1], c[2], a)
     return out
 
-# banda de nebulosa de la base (evita el horizonte cian de abajo)
+# banda de nebulosa de la base (evita el horizonte cian de abajo).
+# floor alto (56): solo los núcleos brillantes rosas pasan — sin el velo turbio
+# mauve/oliva que arrastraba floor=34 (QA 2026-07-09b). Además filtro de tono:
+# solo píxeles cálidos (r > g) — descarta restos verdosos/oliva de estrellas.
 band = bg.crop((0, 90, W, 90 + H // 2)).resize((W, H), Image.BOX)
-neb_t = vfade(mirror_stack(to_alpha(band, boost=4.5, alpha_mul=0.8, floor=34), 3), 1.0, 0.18)  # 960x1620
+neb_raw = to_alpha(band, boost=4.0, alpha_mul=0.75, floor=56)
+np_ = neb_raw.load()
+for y in range(neb_raw.height):
+    for x in range(neb_raw.width):
+        r, g, b, a = np_[x, y]
+        if a and g >= r:
+            np_[x, y] = (r, g, b, 0)
+neb_t = vfade(mirror_stack(neb_raw, 3), 1.0, 0.18)  # 960x1620
 neb_t.save(f"{ASSETS}/ch6-bg-nebulae-mid-t.png", optimize=True)
+
+# ── 4. dieta de peso (horneada en el script — NO como paso manual) ───────────
+# bg/tall: paleta adaptativa 256 con dither. nebulosas: posterize 4bit + poda
+# de alpha débil. Presupuesto test: ch6-bg ≤300KB (tests/assets/ch6-assets T4).
+for name in ("ch6-bg.png", "ch6-bg-tall.png"):
+    im = Image.open(f"{ASSETS}/{name}").convert("RGB")
+    im.quantize(colors=256, method=Image.MEDIANCUT, dither=Image.FLOYDSTEINBERG).save(
+        f"{ASSETS}/{name}", optimize=True)
+
+neb_img = Image.open(f"{ASSETS}/ch6-bg-nebulae-mid-t.png")
+np2 = neb_img.load()
+for y in range(neb_img.height):
+    for x in range(neb_img.width):
+        r, g, b, a = np2[x, y]
+        if a < 24:
+            np2[x, y] = (0, 0, 0, 0)
+        else:
+            np2[x, y] = (r >> 4 << 4, g >> 4 << 4, b >> 4 << 4, a >> 4 << 4)
+neb_img.save(f"{ASSETS}/ch6-bg-nebulae-mid-t.png", optimize=True)
 
 for f in ["ch6-bg.png", "ch6-bg-tall.png", "ch6-bg-stars-far-t.png", "ch6-bg-nebulae-mid-t.png"]:
     p = f"{ASSETS}/{f}"
