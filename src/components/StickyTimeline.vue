@@ -74,14 +74,20 @@ function onTickClick(N) {
 
 <style scoped>
 /* ─────────────────────────────────────────────────────────────────────────
- * StickyTimeline shell — vertical, izquierda, centrada.
- * - position: fixed; left: var(--sp-md); top: 50% + translateY(-50%) para
- *   centrar el bloque sin importar la cantidad de chapters.
- * - z-index 40: bajo SkipLink (50), sobre chapters (0). Compatible con
- *   BackgroundLayers (-1) y LangToggle (40 también, ubicación distinta).
- * - El contenedor tiene fondo --c-surface + border, redondeado para look de
- *   panel/dock. Phase 2 ya reasigna --c-surface por chapter — el panel se
- *   tiñe automáticamente al cambiar de chapter.
+ * StickyTimeline — "espina temporal" (redesign visual 2026-07-09).
+ *
+ * Concepto: la nave/cabina que lleva al visitante a través de las eras.
+ * Material: vidrio oscuro/claro derivado de --c-bg + tinte del --c-accent
+ * del chapter activo via color-mix — el panel se re-tematiza solo, sin
+ * tokens nuevos por chapter. Una espina vertical conecta 7 nodos-era:
+ * nodos PASADOS rellenos (via :has()), nodo ACTIVO con glow, FUTUROS huecos.
+ * La estructura codifica cronología real (no decoración).
+ *
+ * Fix contraste (bug "blanco sobre blanco" en themes claros ch3/ch5):
+ * el estado activo ya NO usa --c-track-active/-–c-bg — usa un pill
+ * color-mix(accent 14%) + texto accent/fg, legible en claro y oscuro.
+ *
+ * - position/z-index/44px touch targets: contratos UI-SPEC §3 preservados.
  * ───────────────────────────────────────────────────────────────────────── */
 .sticky-timeline {
   position: fixed;
@@ -89,75 +95,150 @@ function onTickClick(N) {
   left: var(--sp-md);
   transform: translateY(-50%);
   z-index: 40;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
+  /* --hud-fg: fg RESUELTO a nivel panel (theme activo via html[data-chapter]).
+     Los .tick-button llevan su propio data-chapter y re-scopean --c-fg al de
+     SU era (ej. ch5 claro → fg oscuro → invisible sobre panel oscuro). Capturar
+     el valor aquí y usar var(--hud-fg) en las filas inmuniza el texto a ese
+     re-scope; los rombos SÍ usan el --c-accent propio de cada era (deliberado:
+     cada nodo viste el color de su era). */
+  --hud-fg: var(--c-fg);
+  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
+  border-radius: 14px;
   padding: var(--sp-sm);
+  box-shadow:
+    0 16px 40px -16px rgba(0, 0, 0, 0.55),
+    0 0 24px -8px color-mix(in srgb, var(--c-accent) 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
+  transition: background 300ms ease, border-color 300ms ease, box-shadow 300ms ease;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Lista vertical de ticks. flex-direction: column con gap pequeño entre
- * botones. Sin marker — el active state se transmite via aria-current.
+ * Lista vertical + espina. La espina (::before) corre por el centro de la
+ * columna de nodos: gradiente accent→neutro que sugiere el viaje pendiente.
  * ───────────────────────────────────────────────────────────────────────── */
 .timeline-ticks {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--sp-xs);
+  gap: 2px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
+.timeline-ticks::before {
+  content: '';
+  position: absolute;
+  /* centro de la columna del nodo: padding-left botón 8px + mitad de 9px */
+  left: 12px;
+  top: 20px;
+  bottom: 20px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--c-accent) 60%, transparent),
+    color-mix(in srgb, var(--c-fg) 22%, transparent)
+  );
+  pointer-events: none;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
- * Tick button — fila horizontal año + era. min-width / min-height 44px
- * (touch target UI-SPEC §3 ex). Inactivo: --c-muted. Hover: --c-tick-hover.
- * Activo (aria-current="true"): fondo --c-track-active + color --c-bg.
- * Transitions 150ms ease (D-05 interaction-derived, se mantiene bajo PRM).
+ * Tick button — [nodo] año ERA. min-width/min-height 44px preservados.
+ * Nodo = ::before rombo pixel (cuadrado rotado 45°), 3 estados:
+ *   futuro: hueco borde neutro · pasado: relleno accent apagado ·
+ *   activo: accent pleno + glow.
  * ───────────────────────────────────────────────────────────────────────── */
 .tick-button {
+  position: relative;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
-  gap: var(--sp-sm);
+  align-items: center;
+  gap: 10px;
   background: none;
   border: none;
-  color: var(--c-muted);
+  color: color-mix(in srgb, var(--hud-fg) 52%, transparent);
   cursor: pointer;
-  padding: var(--sp-xs) var(--sp-sm);
+  padding: var(--sp-xs) 10px var(--sp-xs) var(--sp-sm);
   min-width: 44px;
   min-height: 44px;
   text-align: left;
-  border-radius: 4px;
+  border-radius: 8px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  transition: background 150ms ease, color 150ms ease;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+/* Nodo-era (rombo) */
+.tick-button::before {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border: 1.5px solid color-mix(in srgb, var(--hud-fg) 38%, transparent);
+  background: transparent;
+  border-radius: 1px;
+  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Eras ya recorridas — nodo relleno (accent apagado). :has() selecciona los
+   <li> que tienen un sibling posterior conteniendo el aria-current. */
+.timeline-tick:has(~ .timeline-tick .tick-button[aria-current="true"]) .tick-button::before {
+  background: color-mix(in srgb, var(--c-accent) 55%, var(--c-bg));
+  border-color: color-mix(in srgb, var(--c-accent) 70%, transparent);
 }
 
 .tick-button:hover {
-  color: var(--c-tick-hover);
+  color: var(--hud-fg);
+  background: color-mix(in srgb, var(--c-accent) 9%, transparent);
 }
 
+.tick-button:hover::before {
+  border-color: var(--c-accent);
+}
+
+/* Activo — pill accent-tinted + nodo con glow. Legible en claro Y oscuro:
+   texto = fg/accent del theme (nunca bg-sobre-bg). */
 .tick-button[aria-current="true"] {
-  background: var(--c-track-active);
-  color: var(--c-bg);
+  background: color-mix(in srgb, var(--c-accent) 15%, transparent);
+  color: var(--hud-fg);
+  transform: translateX(2px);
+}
+
+.tick-button[aria-current="true"]::before {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--c-accent) 85%, transparent),
+    0 0 3px var(--c-accent);
 }
 
 .tick-year {
   font-size: 12px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
 }
 
 .tick-era {
-  font-size: 13px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
 }
 
-.tick-button[aria-current="true"] .tick-year,
+.tick-button[aria-current="true"] .tick-year {
+  color: var(--hud-fg);
+}
+
 .tick-button[aria-current="true"] .tick-era {
-  color: var(--c-bg);
+  color: var(--c-accent);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Mobile <600px (UI-SPEC §9): compactar a year-only para no ocupar viewport.
- * Padding/inset menores; era oculta; el año queda como dot-numérico.
+ * Padding/inset menores; era oculta; espina y nodos se mantienen.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
   .sticky-timeline {
@@ -167,15 +248,24 @@ function onTickClick(N) {
   .tick-button {
     min-width: 44px;
     padding: var(--sp-xs);
-    justify-content: center;
+    justify-content: flex-start;
   }
   .tick-era {
     display: none;
+  }
+  .timeline-ticks::before {
+    left: 8px;
   }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * PRM — los hover/focus transitions ≤150ms SE MANTIENEN (D-05 interaction-
  * derived). Solo scrollToChapter cambia behavior (D-04, en el script).
+ * Los transitions de re-tematización del panel (300ms) se desactivan.
  * ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sticky-timeline {
+    transition: none;
+  }
+}
 </style>

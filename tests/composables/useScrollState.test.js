@@ -4,7 +4,7 @@
 // Cobertura:
 // - exports + interfaz pública (refs readonly + scrollToChapter)
 // - default activeChapter=3, default scrollProgress=0
-// - deep-link ?ch=N → scrollToChapter(N, 'auto') vía spy sobre HTMLElement.prototype.scrollIntoView
+// - deep-link ?ch=N → scrollToChapter(N, 'instant') vía spy sobre HTMLElement.prototype.scrollIntoView
 // - validación de rangos (?ch=99, ?ch=abc, ?ch=, missing → fallback ch3)
 // - scrollToChapter(N, 'smooth') invoca scrollIntoView correcto
 // - IntersectionObserver actualiza activeChapter cuando intersectionRatio ≥ 0.6
@@ -126,7 +126,7 @@ describe('useScrollState', () => {
     window.history.replaceState({}, '', '/?ch=0')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(0, 'auto')
+    assertNavigatedTo(0, 'instant')
     wrapper.unmount()
   })
 
@@ -137,7 +137,7 @@ describe('useScrollState', () => {
     window.history.replaceState({}, '', '/?ch=99')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'auto')
+    assertNavigatedTo(3, 'instant')
     wrapper.unmount()
   })
 
@@ -148,7 +148,7 @@ describe('useScrollState', () => {
     window.history.replaceState({}, '', '/?ch=abc')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'auto')
+    assertNavigatedTo(3, 'instant')
     wrapper.unmount()
   })
 
@@ -159,7 +159,7 @@ describe('useScrollState', () => {
     window.history.replaceState({}, '', '/?ch=')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'auto')
+    assertNavigatedTo(3, 'instant')
     wrapper.unmount()
   })
 
@@ -170,7 +170,7 @@ describe('useScrollState', () => {
     window.history.replaceState({}, '', '/')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'auto')
+    assertNavigatedTo(3, 'instant')
     wrapper.unmount()
   })
 

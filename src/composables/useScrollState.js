@@ -78,9 +78,17 @@ export function useScrollState(shellRef) {
     // Doble RAF: deja que el browser termine snap layout antes de scrollIntoView.
     // Está aquí (no dentro de scrollToChapter) porque otros callers
     // (tick click, keyboard) NO deben pagar 2 frames de latencia.
+    //
+    // Fix landing desync (2026-07-09): behavior 'auto' NO es "jump instantáneo" —
+    // scrollIntoView({behavior:'auto'}) consulta el CSS scroll-behavior del
+    // contenedor, y .scroll-shell declara `scroll-behavior: smooth` (App.vue).
+    // Resultado: el landing 0→ch3 era un viaje ANIMADO de ~2s interrumpible
+    // (cualquier layout/snap lo cortaba a mitad → contenido ch0 con theme ch3).
+    // 'instant' fuerza el salto en un frame, inmune al CSS smooth — la intención
+    // original documentada de este deep-link.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        scrollToChapter(initial, 'auto')
+        scrollToChapter(initial, 'instant')
       })
     })
   }

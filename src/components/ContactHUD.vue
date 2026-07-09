@@ -121,17 +121,31 @@ const githubDisabled = computed(() => !contact.githubUrl || contact.githubUrl ==
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: 8px;
-  color: var(--c-fg);
+  /* Material HUD era-tinted (redesign 2026-07-09) — mismo vidrio que
+     LangToggle/StickyTimeline. Iconos siempre legibles: color --c-fg. */
+  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
+  border-radius: 10px;
+  color: color-mix(in srgb, var(--c-fg) 75%, transparent);
   text-decoration: none;
-  transition: background 150ms ease, color 150ms ease;
+  box-shadow:
+    0 10px 28px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease,
+    box-shadow 150ms ease, transform 150ms ease;
 }
 
 .contact-icon:hover:not([aria-disabled='true']) {
-  background: var(--c-accent, var(--c-tick-hover, var(--c-surface)));
+  background: color-mix(in srgb, var(--c-accent) 88%, var(--c-bg));
+  border-color: var(--c-accent);
   color: var(--c-bg);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 28px -12px rgba(0, 0, 0, 0.6),
+    0 0 18px -4px color-mix(in srgb, var(--c-accent) 55%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
 }
 
 .contact-icon[aria-disabled='true'] {

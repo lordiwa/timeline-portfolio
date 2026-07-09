@@ -61,34 +61,47 @@ function toggle() {
   align-items: center;
   gap: var(--sp-xs);
   padding: var(--sp-sm) var(--sp-md);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  /* Material HUD era-tinted (redesign 2026-07-09) — vidrio de cabina:
+     bg del theme translúcido + blur + hairline accent. Se re-tematiza solo. */
+  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
   border-radius: 999px;
   color: var(--c-fg);
-  font-family: var(--font-body, ui-monospace);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.08em;
   cursor: pointer;
   min-width: 44px;
   min-height: 44px;
   justify-content: center;
-  transition: background 150ms ease, color 150ms ease;
+  box-shadow:
+    0 10px 28px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .lang-active {
-  color: var(--c-fg);
+  color: var(--c-accent);
 }
 
 .lang-inactive {
-  color: var(--c-muted);
+  color: color-mix(in srgb, var(--c-fg) 45%, transparent);
 }
 
 .lang-sep {
-  color: var(--c-muted);
+  color: color-mix(in srgb, var(--c-fg) 30%, transparent);
 }
 
 .lang-toggle:hover {
-  background: var(--c-tick-hover, var(--c-surface));
+  background: color-mix(in srgb, var(--c-accent) 12%, color-mix(in srgb, var(--c-bg) 74%, transparent));
+  border-color: color-mix(in srgb, var(--c-accent) 60%, transparent);
+  box-shadow:
+    0 10px 28px -14px rgba(0, 0, 0, 0.55),
+    0 0 16px -4px color-mix(in srgb, var(--c-accent) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

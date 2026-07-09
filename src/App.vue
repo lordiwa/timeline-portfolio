@@ -68,6 +68,19 @@ watch(locale, (l) => {
   document.documentElement.lang = l
 }, { immediate: true })
 
+// Redesign 2026-07-09 — theming de HUDs fijos era-reactivo.
+// Los HUDs (StickyTimeline/StickyAvatar/LangToggle/ContactHUD/GlobalMantra)
+// viven FUERA de las <section data-chapter> — antes resolvían siempre los
+// tokens neutros de :root y nunca se re-tematizaban. Estampar el chapter activo
+// en <html> via data-ACTIVE-chapter (atributo DISTINTO a data-chapter, para no
+// activar selectores de componentes como `[data-chapter="5"] .project-card`
+// fuera de su section) hace cascada de los tokens del theme activo
+// (:root[data-active-chapter="N"] en chapter-themes.css) hacia todo el árbol.
+// Las sections y .bg-layer llevan su PROPIO data-chapter — scope intacto.
+watch(scrollState.activeChapter, (N) => {
+  if (Number.isInteger(N)) document.documentElement.dataset.activeChapter = String(N)
+}, { immediate: true })
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ResizeObserver defensive — MOB-03 (UI-SPEC §9, RESEARCH §Área 7).
 // Refs internos NO consumidos en Phase 1; Phase 5 (Phaser scene) los necesita
@@ -154,27 +167,39 @@ useHead({
   sobreescribirá por [data-chapter="N"] selectors a nivel de tema.
 -->
 <style>
-:root {
-  /* Spacing — UI-SPEC §3 */
-  --sp-xs: 4px;
-  --sp-sm: 8px;
-  --sp-md: 16px;
-  --sp-lg: 24px;
-  --sp-xl: 32px;
-  --sp-2xl: 48px;
-  --sp-3xl: 64px;
+/* Tokens neutros en @layer reset (redesign 2026-07-09): antes este :root era
+   un-layered y por cascade layering le GANABA a los tokens era-reactivos
+   :root[data-active-chapter="N"] (@layer themes) de chapter-themes.css —
+   los HUDs fijos nunca se re-tematizaban. reset < themes en el orden
+   declarado (`@layer reset, themes, components, utilities`). */
+@layer reset {
+  :root {
+    /* Spacing — UI-SPEC §3 */
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 16px;
+    --sp-lg: 24px;
+    --sp-xl: 32px;
+    --sp-2xl: 48px;
+    --sp-3xl: 64px;
 
-  /* Color (paleta neutra Phase 1) — UI-SPEC §4 */
-  --c-bg: #0b0b16;
-  --c-fg: #e7e7f0;
-  --c-surface: #1a1a2e;
-  --c-border: #2e2e4a;
-  --c-track: #2e2e4a;
-  --c-track-active: #e7e7f0;
-  --c-marker: #a0a0c0;
-  --c-focus: #7dd3fc;
-  --c-muted: #6b6b8a;
-  --c-tick-hover: #c0c0d8;
+    /* Color (paleta neutra Phase 1) — UI-SPEC §4 */
+    --c-bg: #0b0b16;
+    --c-fg: #e7e7f0;
+    --c-surface: #1a1a2e;
+    --c-border: #2e2e4a;
+    --c-track: #2e2e4a;
+    --c-track-active: #e7e7f0;
+    --c-marker: #a0a0c0;
+    --c-focus: #7dd3fc;
+    --c-muted: #6b6b8a;
+    --c-tick-hover: #c0c0d8;
+    /* Accent neutro fallback (redesign 2026-07-09): los HUDs fijos derivan
+       bordes/glows de --c-accent via color-mix; antes del primer stamp de
+       html[data-active-chapter] (o si JS no corre) este valor evita
+       declaraciones inválidas-at-computed-value. Familia del --c-focus cyan. */
+    --c-accent: #7dd3fc;
+  }
 }
 
 /* PRM defensive CSS-side — D-01 (UI-SPEC §8 + RESEARCH §Área 5).

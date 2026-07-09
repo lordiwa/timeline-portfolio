@@ -29,11 +29,19 @@ const { t } = useI18n()
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  padding: 0 var(--sp-md);
+  /* Píldora de vidrio (redesign 2026-07-09): antes el texto flotaba desnudo
+     sobre arte pixel ocupado y se perdía. El velo translúcido + blur lo hace
+     legible en los 7 chapters sin robar protagonismo (sigue discreto). */
+  padding: 5px 14px;
+  background: color-mix(in srgb, var(--c-bg) 55%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid color-mix(in srgb, var(--c-mantra, var(--c-fg)) 22%, transparent);
+  border-radius: 999px;
   font-family: var(--font-body, sans-serif);
   font-size: 0.85rem;
   color: var(--c-mantra, var(--c-fg));
-  opacity: 0.55;
+  opacity: 0.8;
   text-align: center;
   white-space: nowrap;
   pointer-events: none;
@@ -42,7 +50,7 @@ const { t } = useI18n()
   /* z-index 30 — debajo de StickyAvatar/Timeline/HUDs (40) y SkipLink (50),
      pero encima del scroll-shell content (auto/0). */
   letter-spacing: 0.02em;
-  transition: color 200ms ease, opacity 200ms ease;
+  transition: color 200ms ease, opacity 200ms ease, background 200ms ease, border-color 200ms ease;
 }
 
 /* Mobile <600px: aún más pequeño + alineado a viewport bottom con padding mayor

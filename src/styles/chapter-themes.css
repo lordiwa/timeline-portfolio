@@ -156,6 +156,62 @@
        paleta D5-04 4-color (mejor compresión que JPEG para gradients lisos). */
   }
 
+  /* ──────────────────────────────────────────────────────────────────────
+   * Tokens era-reactivos a nivel :root — HUDs fijos (redesign 2026-07-09)
+   *
+   * App.vue estampa html[data-active-chapter="N"] con el chapter activo para
+   * que los HUDs fijos (StickyTimeline/StickyAvatar/LangToggle/ContactHUD/
+   * GlobalMantra), que viven FUERA de las <section data-chapter>, hereden el
+   * theme de la era activa. Atributo DISTINTO a data-chapter a propósito:
+   * usar el mismo activaría selectores de componentes ([data-chapter="5"]
+   * .project-card, etc.) fuera de su section.
+   *
+   * ⚠️ MANTENIMIENTO: estos valores DUPLICAN verbatim los tokens de los
+   * bloques [data-chapter="N"] de arriba — si cambias un token allá,
+   * cámbialo acá. Deliberadamente SIN --bg-image (contaminaría los
+   * .bg-layer de otros chapters via herencia) y SIN --font-body en claves
+   * ilegibles (los HUDs usan ui-monospace propio).
+   * ────────────────────────────────────────────────────────────────────── */
+  :root[data-active-chapter="0"] {
+    --c-bg: #000000; --c-fg: #ffffff; --c-accent: #aaaaaa;
+    --c-border: #555555; --c-focus: #ffffff;
+  }
+  :root[data-active-chapter="1"] {
+    --c-bg: #000080; --c-fg: #ff00ff; --c-accent: #ffff00;
+    --c-border: #ffffff; --c-focus: #ffffff;
+  }
+  /* ch2 — EXCEPCIÓN deliberada: el theme de la section quedó púrpura/naranja
+     (stub Flash) pero la escena real es el stage Y2K cyber (Phase 04.1:
+     azul hielo + cromo + neón). HUD en la paleta Y2K real. */
+  :root[data-active-chapter="2"] {
+    --c-bg: #050a18; --c-fg: #f8fcff; --c-accent: #5af2ff;
+    --c-border: #4a6890; --c-focus: #b8ff3a; --c-surface: #0e1c34;
+  }
+  /* ch3 — EXCEPCIÓN deliberada: el theme de la section quedó Web 2.0 pastel
+     (stub) pero la escena real es el campo de batalla "La muerte de Flash"
+     (oscuro, ember/oro épico). HUD ember oscuro + oro. */
+  :root[data-active-chapter="3"] {
+    --c-bg: #1c100c; --c-fg: #f3e4d0; --c-accent: #ffa94d;
+    --c-border: #4a2e22; --c-focus: #ffa94d; --c-surface: #241410;
+  }
+  :root[data-active-chapter="4"] {
+    --c-bg: #0a0f2e; --c-fg: #b0d0ff; --c-accent: #00ffff;
+    --c-border: #2050a0; --c-focus: #00ffff; --c-surface: #142050;
+  }
+  /* ch5 — EXCEPCIÓN deliberada al "verbatim": el theme de la section quedó
+     white-SaaS (stub Phase 2) pero la escena real es el CINE OSCURO
+     (Rafael 2026-07-07). Un HUD blanco flotando sobre el hall oscuro
+     rompería la inmersión — paleta HUD madera-oscura + indigo moderno. */
+  :root[data-active-chapter="5"] {
+    --c-bg: #171009; --c-fg: #efe7db; --c-accent: #818cf8;
+    --c-border: #3a2e22; --c-focus: #818cf8; --c-surface: #221a12;
+  }
+  :root[data-active-chapter="6"] {
+    --c-bg: #1a0e3d; --c-fg: #c0e0ff; --c-accent: #4dffff;
+    --c-accent-2: #ff3ca6; --c-mantra: #ffd95c;
+    --c-border: #4dffff; --c-focus: #ffd95c; --c-surface: #0a061f;
+  }
+
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────────────

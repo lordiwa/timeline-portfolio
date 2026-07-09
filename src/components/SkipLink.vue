@@ -89,14 +89,22 @@ defineExpose({ handleScrollOnce })
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  background: var(--c-surface);
+  /* Material HUD era-tinted (redesign 2026-07-09) — visible-at-load se
+     mantiene (A11Y-01 locked); solo cambia el vestido: vidrio + accent. */
+  background: color-mix(in srgb, var(--c-bg) 78%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   color: var(--c-fg);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.06em;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  padding: var(--sp-sm) var(--sp-md);
-  border: 1px solid var(--c-border);
-  border-radius: 4px;
+  padding: var(--sp-xs) var(--sp-md);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
+  border-radius: 999px;
+  box-shadow:
+    0 10px 28px -14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 10%, transparent);
   text-decoration: none;
   white-space: nowrap;
   opacity: 1;

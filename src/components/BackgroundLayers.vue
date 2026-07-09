@@ -94,4 +94,24 @@ const { layerA, layerB } = inject('bgMorph')
     transition: opacity 150ms ease;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Vignette cinematográfica global (redesign 2026-07-09).
+ * Pseudo-elemento sobre ambas capas: oscurece sutilmente los bordes del
+ * viewport y enfoca la mirada al centro. Funciona en themes oscuros Y claros
+ * (multiply sobre blanco = gris suave). Cero DOM nuevo, cero interacción
+ * (el wrapper ya es pointer-events:none + aria-hidden).
+ * ───────────────────────────────────────────────────────────────────────── */
+.bg-layers::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 95% at 50% 42%,
+    transparent 58%,
+    rgba(4, 4, 14, 0.34) 100%
+  );
+  mix-blend-mode: multiply;
+}
 </style>

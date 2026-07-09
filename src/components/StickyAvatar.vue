@@ -119,7 +119,43 @@ watch(prefersReduced, (isPRM) => {
   z-index: 40;
   width: 80px;
   height: 96px;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45));
 }
+
+/* Marco exterior era-tinted (redesign 2026-07-09) — retrato de RPG.
+   Hairline accent + glow suave que se re-tematiza con el chapter activo.
+   Pseudo-elemento: cero cambios de DOM/contratos (80×96 intactos). */
+.sticky-avatar::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 48%, transparent);
+  border-radius: 9px;
+  pointer-events: none;
+  box-shadow:
+    0 0 16px -2px color-mix(in srgb, var(--c-accent) 35%, transparent),
+    inset 0 0 8px color-mix(in srgb, var(--c-accent) 12%, transparent);
+  transition: border-color 300ms ease, box-shadow 300ms ease;
+}
+
+/* Muescas de esquina (top-left / bottom-right) — detalle de cabina, asimétrico
+   y discreto. Mismo lenguaje que los corner brackets del stage ch2. */
+.sticky-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) top left / 100% 2px no-repeat,
+    linear-gradient(to bottom, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) top left / 2px 100% no-repeat,
+    linear-gradient(to left, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) bottom right / 100% 2px no-repeat,
+    linear-gradient(to top, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) bottom right / 2px 100% no-repeat;
+  opacity: 0.85;
+  transition: opacity 300ms ease;
+}
+
+/* PRM de los pseudo-elementos del marco: fusionado en el bloque PRM único
+   al final del archivo (el test PRM asserta sobre el primer @media block). */
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Placeholder gris — UI-SPEC §7.2.
@@ -134,11 +170,17 @@ watch(prefersReduced, (isPRM) => {
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  transition: opacity 100ms ease;
+  /* Fondo del retrato: superficie del theme con velo accent arriba — le da
+     "luz de escena" al bust sin tocar el asset (redesign 2026-07-09). */
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--c-accent) 16%, transparent), transparent 60%),
+    color-mix(in srgb, var(--c-surface, var(--c-bg)) 92%, var(--c-accent) 8%);
+  border: 1px solid color-mix(in srgb, var(--c-accent) 40%, var(--c-border));
+  border-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--c-fg) 12%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: opacity 100ms ease, border-color 300ms ease;
   display: block;
 }
 
@@ -168,6 +210,10 @@ watch(prefersReduced, (isPRM) => {
  * ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .avatar-bust {
+    transition: none;
+  }
+  .sticky-avatar::before,
+  .sticky-avatar::after {
     transition: none;
   }
 }
