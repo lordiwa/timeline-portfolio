@@ -573,8 +573,8 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 ## ch3-sky.png — iter2 → iter3 (2026-07-09)
 
 - **Versión guardada:** `old/ch3-sky-2026-07-09-iter2.png` (666366 bytes)
-- **Razón del cambio:** Rafael 2026-07-09: píxeles "pintados" gordos (bloques 4-8px) se ven toscos al estirar a 1920px. El arte sigue siendo demasiado chunky para la densidad visual que se busca ("quiero 10 de poder"). La composición y paleta de iter2 gustan — solo la densidad de grano necesita un salto a 32-bit SNES.
-- **Qué se intentará diferente:** forge_background style "snes" model "banana-2" con referencias a iter2 para conservar composición (humo oscuro izquierda, amanecer HTML5 cyan-dorado derecha). Prompt exige explícitamente "fine 1px pixel grain, highly detailed, intricate dithering, SNES 32-bit detail density" y prohíbe "chunky pixels, big blocky outlines, thick outlines, low-res look".
+- **Razón del cambio:** Rafael 2026-07-09: píxeles "pintados" gordos (bloques 4-8px) se ven toscos al estirar a 1920px ("quiero 10 de poder"). La composición y paleta de iter2 gustan — solo la densidad de grano necesita un salto a 32-bit SNES.
+- **Qué se hizo:** forge_background style "snes" model "banana-2". Prompt exigía "fine 1px pixel grain, SNES 32-bit detail density, intricate dithering" y prohibía "chunky pixels, thick outlines". 1 intento — PASS. 1376×768, 887KB. Dithering 1-2px en volúmenes de nube, drama mejorado: tormenta humo oscuro purpúreo-carmesí izquierda + rayos dorados espectaculares + amanecer cyan derecha. Claro upgrade sobre iter2.
 - **Commit hash post-regen:** (pendiente)
 
 ---
@@ -582,8 +582,8 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 ## ch3-mountains.png — iter2 → iter3 (2026-07-09)
 
 - **Versión guardada:** `old/ch3-mountains-2026-07-09-iter2.png` (807178 bytes)
-- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo. Adicionalmente, iter2 tiene lineart interno en el castillo (ventanas, huecos en torres) que en §6.1 se documenta como causa de negative space en capas parallax intermedias.
-- **Qué se intentará diferente:** forge_sprite size:0 background "sky" style "snes" model "banana-2" con referencias a iter2. Se refuerza §6.1: silueta sólida sin negative space interno — castillo relleno plano con shading tonal (no outlines internos que creen huecos). Fine grain idéntico al sky iter3.
+- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo. iter2 también tiene lineart interno en el castillo (§6.1 issue).
+- **Qué se hizo:** forge_sprite size:0 background "sky" style "snes" model "banana-2", referencias a iter2. 1 intento. El preset "sky" (#4A6B8A) fue ignorado por Gemini — generó background BLANCO. Se aplicó flood-fill PIL desde las esquinas superiores (tolerance=25 sobre blanco) para eliminar el fondo: 491,425 píxeles removidos, 46% del image transparente, 99% del top-25% transparente. 1024×1024, 353KB. Castillo en ruinas sólido, smoke columns delicados finos, silueta sólida §6.1 cumplida. Fondo PIL-limpio.
 - **Commit hash post-regen:** (pendiente)
 
 ---
@@ -591,8 +591,8 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 ## ch3-path.png — iter2 → iter3 (2026-07-09)
 
 - **Versión guardada:** `old/ch3-path-2026-07-09-iter2.png` (1202416 bytes)
-- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo. La tierra quemada con camino/armas/estandartes tiene buena composición pero los bloques de dithering son demasiado grandes.
-- **Qué se intentará diferente:** forge_sprite size:0 background "sky" style "snes" model "banana-2" con referencias a iter2. Fine grain en toda la superficie: tierra quemada con micro-dithering, props (espadas, cascos, estandartes) con detalle 1px. El cielo plano teal del top se elimina con bg removal automático.
+- **Razón del cambio:** Rafael 2026-07-09: misma razón de grano gordo.
+- **Qué se hizo:** forge_sprite size:0 background "sky"→"night" style "snes" model "banana-2", referencias a iter2. 2 intentos: intento 1 (background "sky") generó escena con cielo complejo difícil de limpiar; intento 2 (background "night" #0A0A2E) tuvo mejor composición. Flood-fill PIL desde esquinas superiores (tolerance=35 sobre #080D31): 265,049 px transparentes. El bg removal de forge_sprite dejó 77% semi-transparentes en el suelo (alpha<200) — el dark navy del suelo quemado era similar al bg. Se aplicó solidificación PIL binaria (alpha=0 o 255) en zona de contenido (y≥260): 717,047 píxeles solidificados. Resultado final: 1024×1024, suelo sólido, excelente grano fino en tierra quemada/armas/cascos/estandartes. Paleta shifted a amber-dorado (iluminación del amanecer del ch3-sky). 29% transparente (top), 69% sólido (ground).
 - **Commit hash post-regen:** (pendiente)
 
 ---
