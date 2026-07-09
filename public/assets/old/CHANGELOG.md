@@ -531,3 +531,23 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael 2026-05-28: ch3 ahora es "La muerte de Flash" y debe tener el estilo del fondo de batalla épico de ch2 (Warcraft). iter1 era fantasía pastel clara (cielo aurora + montañas + camino con estandartes) — bonito pero no matchea el tema muerte-de-Flash ni el drama de ch2.
 - **Qué se intentará diferente:** mood "secuela con amanecer HTML5" — campo de batalla DESPUÉS de la guerra: cielo crepuscular humo/brasas que abre a un amanecer HTML5 dorado/cyan en el horizonte; cresta con fortaleza en ruinas humeante; primer plano de tierra quemada con armas/estandartes caídos y escombros. Estilo comic pixel dramático (matchea ch2-flash-war). Emblemas re-tematizados al arco muerte→renacer (Flash caído → reconstrucción → estandarte → orbe → HTML5 naciente). Título "De vuelta al movimiento" → "La muerte de Flash".
 - **Commit hash post-regen:** `9c92672`
+
+---
+
+## ch6 planets (ar-vr / remoose / software-mind) — iter1 → iter2 (2026-07-09)
+
+- **Versiones guardadas:** `old/ch6-planet-ar-vr-2026-07-09-iter1.png`, `old/ch6-planet-remoose-2026-07-09-iter1.png`, `old/ch6-planet-software-mind-2026-07-09-iter1.png`
+- **Razón del cambio:** Rafael 2026-07-09: "el ch6 está feo por el arte" + mandato era agentic. iter1 eran círculos neón planos (~80px) sin narrativa.
+- **Qué se intentará diferente:** 96px, "mundos en construcción" — ar-vr: hemisferio wireframe holográfico + anillo; remoose: arcos de andamiaje orbital con luces de obra; software-mind: superficie de circuitos dorados tipo mente + halo. forge_sprite nano-banana estilo neon, references de los iter1 para paleta.
+- **Resultado:** 1 intento c/u — éxito los 3.
+- **Commit hash del cambio:** (se completa en el commit de este drop)
+
+---
+
+## ch6 ships (1 / 2) — iter1 → iter2 (2026-07-09)
+
+- **Versiones guardadas:** `old/ch6-ship-1-2026-07-09-iter1.png`, `old/ch6-ship-2-2026-07-09-iter1.png`
+- **Razón del cambio:** iter1 eran chispas de 25-27px ilegibles en pantalla (mandato era agentic 2026-07-09).
+- **Qué se intentará diferente:** 48px con siluetas legibles — ship-1 courier púrpura con estela cian; ship-2 shuttle teal con motor dorado. forge_sprite estilo neon/clean.
+- **Resultado:** ship-1 al primer intento; ship-2 necesitó 2 (iter "new" salió arcoíris ilegible, "new2" limpio con prompt de silueta simple).
+- **Commit hash del cambio:** (se completa en el commit de este drop)
