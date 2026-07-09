@@ -77,8 +77,20 @@ watch(locale, (l) => {
 // fuera de su section) hace cascada de los tokens del theme activo
 // (:root[data-active-chapter="N"] en chapter-themes.css) hacia todo el árbol.
 // Las sections y .bg-layer llevan su PROPIO data-chapter — scope intacto.
-watch(scrollState.activeChapter, (N) => {
+//
+// Transiciones de era 2026-07-09 — velo de viaje temporal.
+// Cuando cambia la era, un overlay fixed lanza un pulso radial MUY sutil
+// (opacity 0 → 0.10 → 0, 420ms) en el accent de la era entrante.
+// La clase .era-veil--active activa la animación; animationend la limpia.
+// PRM: desactivado (oldN guard). No dispara en el render inicial (oldN === undefined).
+const veilActive = ref(false)
+
+watch(scrollState.activeChapter, (N, oldN) => {
   if (Number.isInteger(N)) document.documentElement.dataset.activeChapter = String(N)
+  if (oldN !== undefined && N !== oldN && !prm.prefersReduced.value) {
+    veilActive.value = false
+    requestAnimationFrame(() => requestAnimationFrame(() => { veilActive.value = true }))
+  }
 }, { immediate: true })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -159,6 +171,15 @@ useHead({
   <ContactHUD />
   <!-- GlobalMantra: signature cross-chapter (Rafael 2026-05-14 "en todas las fechas"). -->
   <GlobalMantra />
+  <!-- Velo de viaje temporal: pulso radial en --c-accent de la era entrante.
+       z-index 48: sobre HUDs (40) pero bajo .skip-link (50). pointer-events:none.
+       aria-hidden: elemento decorativo puro. animationend limpia la clase. -->
+  <div
+    class="era-veil"
+    :class="{ 'era-veil--active': veilActive }"
+    aria-hidden="true"
+    @animationend="veilActive = false"
+  />
 </template>
 
 <!--
@@ -222,5 +243,40 @@ useHead({
 :focus-visible {
   outline: 3px solid var(--c-focus);
   outline-offset: 3px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Velo de viaje temporal (transiciones de era 2026-07-09).
+ * Overlay fixed full-viewport: pulso radial MUY sutil en --c-accent de la
+ * era entrante. opacity 0 → 0.10 → 0 en 420ms.
+ * Max opacity 0.10 = safe fotosensibilidad (WCAG 2.3.3 < 0.12 threshold).
+ * ────────────────────────────────────────────────────────────────────────── */
+.era-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 48;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 65% 65% at 50% 50%,
+    var(--c-accent) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+}
+
+.era-veil--active {
+  animation: era-veil-pulse 420ms ease-out forwards;
+}
+
+@keyframes era-veil-pulse {
+  0%   { opacity: 0; }
+  38%  { opacity: 0.10; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .era-veil--active {
+    animation: none;
+  }
 }
 </style>

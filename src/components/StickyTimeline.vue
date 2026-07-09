@@ -19,7 +19,7 @@
 // Touch target: cada botón mantiene min-width/min-height 44px (UI-SPEC §3 ex.).
 // Mobile <600px: oculta la era, deja solo el año (compactar columna lateral).
 
-import { inject } from 'vue'
+import { inject, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const chapters = [
@@ -42,6 +42,22 @@ function onTickClick(N) {
   const behavior = prefersReduced.value ? 'auto' : 'smooth'
   scrollToChapter(N, behavior)
 }
+
+// Pulso viajero (transiciones de era 2026-07-09):
+// Cuando el nodo activo cambia, anima un "pop" scale 1→1.35→1 en 300ms
+// y enciende el glow con una ráfaga más intensa.
+// poppingChapter rastrea qué chapter acaba de activarse para aplicar la clase.
+// PRM: desactivado (oldN guard + prefersReduced check).
+const poppingChapter = ref(null)
+
+watch(activeChapter, (newCh, oldCh) => {
+  if (prefersReduced.value) return
+  if (oldCh === undefined || newCh === oldCh) return
+  poppingChapter.value = newCh
+  setTimeout(() => {
+    if (poppingChapter.value === newCh) poppingChapter.value = null
+  }, 320)
+})
 </script>
 
 <template>
@@ -59,6 +75,7 @@ function onTickClick(N) {
       >
         <button
           class="tick-button"
+          :class="{ 'tick-button--popping': ch.id === poppingChapter }"
           :data-chapter="ch.id"
           :aria-label="t('ui.timeline.tickAria', { era: ch.era, year: ch.year })"
           :aria-current="activeChapter === ch.id ? 'true' : undefined"
@@ -267,5 +284,41 @@ function onTickClick(N) {
   .sticky-timeline {
     transition: none;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Pulso viajero en la espina (transiciones de era 2026-07-09).
+ * Cuando el nodo activo cambia: pop scale 1→1.35→1 (300ms spring) y
+ * ráfaga de glow más intensa en el rombo (::before).
+ * La clase .tick-button--popping se aplica solo al nodo que acaba de
+ * activarse (JS watch sobre activeChapter, 320ms timeout).
+ * PRM: el watcher JS no aplica la clase bajo prefersReduced — nunca llega aquí.
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes node-pop {
+  0%   { transform: translateX(2px) scale(1); }
+  40%  { transform: translateX(2px) scale(1.35); }
+  100% { transform: translateX(2px) scale(1); }
+}
+
+@keyframes glow-burst {
+  0%   { box-shadow: none; }
+  50%  {
+    box-shadow:
+      0 0 22px color-mix(in srgb, var(--c-accent) 100%, transparent),
+      0 0 8px var(--c-accent);
+  }
+  100% {
+    box-shadow:
+      0 0 10px color-mix(in srgb, var(--c-accent) 85%, transparent),
+      0 0 3px var(--c-accent);
+  }
+}
+
+.tick-button--popping[aria-current="true"] {
+  animation: node-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.tick-button--popping[aria-current="true"]::before {
+  animation: glow-burst 300ms ease-out forwards;
 }
 </style>

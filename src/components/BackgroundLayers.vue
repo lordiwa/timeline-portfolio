@@ -19,9 +19,29 @@
 //   .bg-layer:  position:absolute; inset:0; background:var(--c-bg); transition:opacity 200ms ease
 //   @media(prefers-reduced-motion:reduce): transition:opacity 150ms ease (D-03 cross-cutting)
 
-import { inject } from 'vue'
+import { inject, ref, watch } from 'vue'
 
 const { layerA, layerB } = inject('bgMorph')
+
+// Ken Burns 2026-07-09: cuando una capa recibe un chapter nuevo (incoming),
+// dispara drift scale 1.035 → 1.0 en 1.2s ease-out (solo transform).
+// prm inyectado con fallback para entornos de test sin provide('prm').
+const { prefersReduced } = inject('prm', { prefersReduced: ref(false) })
+
+const kbA = ref(false)
+const kbB = ref(false)
+
+watch(layerA.chapter, (newCh, oldCh) => {
+  if (prefersReduced.value || newCh === null || newCh === oldCh) return
+  kbA.value = false
+  requestAnimationFrame(() => requestAnimationFrame(() => { kbA.value = true }))
+})
+
+watch(layerB.chapter, (newCh, oldCh) => {
+  if (prefersReduced.value || newCh === null || newCh === oldCh) return
+  kbB.value = false
+  requestAnimationFrame(() => requestAnimationFrame(() => { kbB.value = true }))
+})
 </script>
 
 <template>
@@ -30,11 +50,13 @@ const { layerA, layerB } = inject('bgMorph')
   <div class="bg-layers" aria-hidden="true">
     <div
       class="bg-layer bg-layer-a"
+      :class="{ 'bg-layer--kb': kbA }"
       :data-chapter="layerA.chapter.value"
       :style="{ opacity: layerA.opacity.value }"
     ></div>
     <div
       class="bg-layer bg-layer-b"
+      :class="{ 'bg-layer--kb': kbB }"
       :data-chapter="layerB.chapter.value"
       :style="{ opacity: layerB.opacity.value }"
     ></div>
@@ -113,5 +135,27 @@ const { layerA, layerB } = inject('bgMorph')
     rgba(4, 4, 14, 0.34) 100%
   );
   mix-blend-mode: multiply;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Ken Burns (transiciones de era 2026-07-09).
+ * La capa incoming arranca en scale(1.035) y drifta suavemente a scale(1.0)
+ * en 1.2s ease-out. Solo transform: sin impacto en opacity ni layout.
+ * .bg-layer--kb se añade via JS watch en layerN.chapter; se retira al acabar.
+ * PRM: el watcher JS ya no aplica kbN=true bajo prefersReduced — no llega aquí.
+ * ────────────────────────────────────────────────────────────────────────── */
+@keyframes ken-burns {
+  from { transform: scale(1.035); }
+  to   { transform: scale(1); }
+}
+
+.bg-layer--kb {
+  animation: ken-burns 1.2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-layer--kb {
+    animation: none;
+  }
 }
 </style>

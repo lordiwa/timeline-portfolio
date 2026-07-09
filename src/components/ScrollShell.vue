@@ -171,3 +171,88 @@ defineExpose({ shellEl })
   margin: 0;
 }
 </style>
+
+<!-- ───────────────────────────────────────────────────────────────────────
+     Entrada de contenido con stagger (transiciones de era 2026-07-09).
+     CSS global (sin scoped) para que los selectores traversan el shadow
+     de componentes hijos. Targets: grandchildren de .chapter-section
+     (= hijos del root del ChapterNContent), nth-child 1-5, delay escalonado
+     de 60ms cada uno.
+
+     ch2 (Flash/MatchGame WebGL) y ch5 (cine Phaser) excluidos para no
+     interferir con sus escenas full-bleed.
+
+     PRM: bloque @media al final cancela todo con !important.
+     ─────────────────────────────────────────────────────────────────────── -->
+<style>
+@keyframes chapter-content-enter {
+  from { opacity: 0.92; transform: translateY(8px); }
+  to   { opacity: 1;    transform: translateY(0); }
+}
+
+/* Base: grandchildren de secciones inactivas (exc. ch2, ch5) ligeramente apagados */
+.chapter-section:not([data-chapter="2"]):not([data-chapter="5"]) > * > * {
+  opacity: 0.92;
+  transition: opacity 400ms ease, transform 400ms ease;
+}
+
+/* ─── nth-child 1 — delay 0ms ───────────────────────────────────────────── */
+:root[data-active-chapter="0"] .chapter-section[data-chapter="0"] > * > *:nth-child(1),
+:root[data-active-chapter="1"] .chapter-section[data-chapter="1"] > * > *:nth-child(1),
+:root[data-active-chapter="3"] .chapter-section[data-chapter="3"] > * > *:nth-child(1),
+:root[data-active-chapter="4"] .chapter-section[data-chapter="4"] > * > *:nth-child(1),
+:root[data-active-chapter="6"] .chapter-section[data-chapter="6"] > * > *:nth-child(1) {
+  animation: chapter-content-enter 480ms ease both;
+  animation-delay: 0ms;
+}
+
+/* ─── nth-child 2 — delay 60ms ──────────────────────────────────────────── */
+:root[data-active-chapter="0"] .chapter-section[data-chapter="0"] > * > *:nth-child(2),
+:root[data-active-chapter="1"] .chapter-section[data-chapter="1"] > * > *:nth-child(2),
+:root[data-active-chapter="3"] .chapter-section[data-chapter="3"] > * > *:nth-child(2),
+:root[data-active-chapter="4"] .chapter-section[data-chapter="4"] > * > *:nth-child(2),
+:root[data-active-chapter="6"] .chapter-section[data-chapter="6"] > * > *:nth-child(2) {
+  animation: chapter-content-enter 480ms ease both;
+  animation-delay: 60ms;
+}
+
+/* ─── nth-child 3 — delay 120ms ─────────────────────────────────────────── */
+:root[data-active-chapter="0"] .chapter-section[data-chapter="0"] > * > *:nth-child(3),
+:root[data-active-chapter="1"] .chapter-section[data-chapter="1"] > * > *:nth-child(3),
+:root[data-active-chapter="3"] .chapter-section[data-chapter="3"] > * > *:nth-child(3),
+:root[data-active-chapter="4"] .chapter-section[data-chapter="4"] > * > *:nth-child(3),
+:root[data-active-chapter="6"] .chapter-section[data-chapter="6"] > * > *:nth-child(3) {
+  animation: chapter-content-enter 480ms ease both;
+  animation-delay: 120ms;
+}
+
+/* ─── nth-child 4 — delay 180ms ─────────────────────────────────────────── */
+:root[data-active-chapter="0"] .chapter-section[data-chapter="0"] > * > *:nth-child(4),
+:root[data-active-chapter="1"] .chapter-section[data-chapter="1"] > * > *:nth-child(4),
+:root[data-active-chapter="3"] .chapter-section[data-chapter="3"] > * > *:nth-child(4),
+:root[data-active-chapter="4"] .chapter-section[data-chapter="4"] > * > *:nth-child(4),
+:root[data-active-chapter="6"] .chapter-section[data-chapter="6"] > * > *:nth-child(4) {
+  animation: chapter-content-enter 480ms ease both;
+  animation-delay: 180ms;
+}
+
+/* ─── nth-child 5 — delay 240ms (max stagger) ───────────────────────────── */
+:root[data-active-chapter="0"] .chapter-section[data-chapter="0"] > * > *:nth-child(5),
+:root[data-active-chapter="1"] .chapter-section[data-chapter="1"] > * > *:nth-child(5),
+:root[data-active-chapter="3"] .chapter-section[data-chapter="3"] > * > *:nth-child(5),
+:root[data-active-chapter="4"] .chapter-section[data-chapter="4"] > * > *:nth-child(5),
+:root[data-active-chapter="6"] .chapter-section[data-chapter="6"] > * > *:nth-child(5) {
+  animation: chapter-content-enter 480ms ease both;
+  animation-delay: 240ms;
+}
+
+/* PRM: cancela animaciones y dim — visibilidad inmediata completa */
+@media (prefers-reduced-motion: reduce) {
+  .chapter-section > * > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+</style>
