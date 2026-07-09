@@ -101,6 +101,41 @@ const oldGifs = [
 
       <!-- ch1 no tiene proyectos (CONTENT-CHECKLIST §2.6) — NO renderea .ch1-projects -->
     </div>
+
+    <!-- Retro widgets: hit counter + webring + badges 88×31 (zona inferior vacía).
+         position: absolute dentro de .ch1-layout (position: relative).
+         z-index: 2 → visibles encima de GIFs (z:0) sin tapar texto (z:1). -->
+    <div class="ch1-retro-widgets">
+      <!-- Fila 1: odómetro de visitas + webring -->
+      <div class="ch1-widgets-row">
+        <div class="ch1-hit-counter" aria-hidden="true">
+          <span class="ch1-hc-label">Visitantes:</span>
+          <span class="ch1-digit">0</span>
+          <span class="ch1-digit">0</span>
+          <span class="ch1-digit">4</span>
+          <span class="ch1-digit">2</span>
+          <span class="ch1-digit">0</span>
+          <span class="ch1-digit">7</span>
+        </div>
+        <nav class="ch1-webring" :aria-label="t('chapters.1.webringAria')">
+          <a href="#" class="ch1-webring-link" @click.prevent>&#171;&nbsp;Anterior</a>
+          <span class="ch1-webring-title">RING DE WEBS ECUADOR</span>
+          <a href="#" class="ch1-webring-link" @click.prevent>Siguiente&nbsp;&#187;</a>
+        </nav>
+      </div>
+      <!-- Fila 2: tira de badges 88×31 -->
+      <div class="ch1-badges" aria-hidden="true">
+        <div class="ch1-badge ch1-badge--netscape">BEST VIEWED IN<br>NETSCAPE 4.0</div>
+        <div class="ch1-badge ch1-badge--valid">HTML 4.0<br>VALID!</div>
+        <div class="ch1-badge ch1-badge--res">800&times;600</div>
+        <div class="ch1-badge ch1-badge--counter">FREE HIT<br>COUNTER</div>
+        <div class="ch1-badge ch1-badge--midi">MIDI ON &#9834;</div>
+      </div>
+    </div>
+
+    <!-- Barra en construcción — franja diagonal amarillo/negro, borde inferior del layout.
+         PRM: animación desactivada vía @media prefers-reduced-motion (barra siempre visible). -->
+    <div class="ch1-under-construction" aria-hidden="true"></div>
   </div>
 </template>
 
@@ -316,5 +351,159 @@ const oldGifs = [
   .ch1-gif--goku      { bottom: 18%; right: 4%; width: 72px; }
   .ch1-gif--milk      { top: 56%;   right: 4px; width: 44px; }
   .ch1-gif--cornholio { bottom: 80px; left: 8px; width: 48px; }
+
+  /* Retro widgets: ocultar en mobile — espacio insuficiente con content scroll */
+  .ch1-retro-widgets { display: none; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Retro widgets: hit counter + webring + badges 88×31
+ * Todos position: absolute dentro de .ch1-layout (position: relative).
+ * z-index: 2 — encima de GIFs (z:0) y debajo de nada (texto z:1 no solapa).
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch1-retro-widgets {
+  position: absolute;
+  bottom: 10px; /* encima de la barra en-construcción (8px) + 2px margen */
+  left: 170px;  /* clear del sticky timeline (~160px) */
+  right: var(--sp-lg);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.ch1-widgets-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+/* Hit counter estilo odómetro */
+.ch1-hit-counter {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: #111;
+  border: 2px outset #555;
+  border-radius: 2px;
+  padding: 2px 5px;
+}
+
+.ch1-hc-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9px;
+  color: #999;
+  white-space: nowrap;
+  margin-right: 3px;
+}
+
+.ch1-digit {
+  display: inline-block;
+  width: 12px;
+  height: 18px;
+  background: #000;
+  border: 1px solid #333;
+  color: #00ff00;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 18px;
+}
+
+/* Webring box */
+.ch1-webring {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid #555;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+.ch1-webring-title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9px;
+  color: #ffff00;
+  font-weight: bold;
+}
+
+.ch1-webring-link {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9px;
+  color: #4488ff;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ch1-webring-link:visited {
+  color: #aa66ff;
+}
+
+/* Badges 88×31 era GeoCities */
+.ch1-badges {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.ch1-badge {
+  width: 88px;
+  height: 31px;
+  border: 1px solid currentColor;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 7px;
+  font-weight: bold;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  padding: 1px;
+  box-sizing: border-box;
+}
+
+.ch1-badge--netscape { background: #000080; color: #00ffff; }
+.ch1-badge--valid    { background: #003300; color: #00ff00; }
+.ch1-badge--res      { background: #4b0082; color: #ffff00; }
+.ch1-badge--counter  { background: #800000; color: #ff8800; }
+.ch1-badge--midi     { background: #001a33; color: #00ccff; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Barra "En construcción" — franja diagonal amarillo/negro
+ * Borde inferior del layout, height 8px, animación lenta ~20s.
+ * PRM: @media prefers-reduced-motion detiene la animación (barra sigue visible).
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch1-under-construction {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffcc00 0,
+    #ffcc00 8px,
+    #111 8px,
+    #111 16px
+  );
+  animation: ch1-construction-scroll 20s linear infinite;
+  z-index: 3;
+  pointer-events: none;
+}
+
+@keyframes ch1-construction-scroll {
+  from { background-position: 0 0; }
+  to   { background-position: 64px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ch1-under-construction {
+    animation: none;
+  }
 }
 </style>
