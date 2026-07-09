@@ -363,7 +363,9 @@ const oldGifs = [
  * ───────────────────────────────────────────────────────────────────────── */
 .ch1-retro-widgets {
   position: absolute;
-  bottom: 10px; /* encima de la barra en-construcción (8px) + 2px margen */
+  /* 56px: despeja la píldora GlobalMantra fija (bottom-center, ~40px de alto)
+     que solapaba la fila de badges (visto en QA 2026-07-09b). */
+  bottom: 56px;
   left: 170px;  /* clear del sticky timeline (~160px) */
   right: var(--sp-lg);
   z-index: 2;
