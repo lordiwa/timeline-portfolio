@@ -671,3 +671,20 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   (I 12%,74% · II 33%,77% · III 52%,72% · IV 72%,76%), solo el V flota en el cielo del
   este (88%,34%). PASS.
 - **Commit hash del cambio:** `563e54f` (arte) + `bb7cf59` (escena de entrada + recomposición)
+
+## ch3-window.png — NUEVO (procedural, 2026-07-09) + guerra protagonista ch2
+
+- **Contexto:** Rafael 2026-07-09: correlacionar ch2↔ch3 — "la guerra de Flash contra Apple
+  [protagonista en el ABOUT de ch2] y después ch3 tiene el ui roto encima de la escena como
+  quien ve por una ventana de un edificio destruido... ese cambio sobrenatural".
+- **ch3-window.png:** marco de browser Y2K MUERTO (title bar colgando -5°, botones muertos,
+  scrollbar quebrada, mordidas, grietas, rim ámbar) generado 100% procedural con PIL —
+  `scripts/build_ch3_window.py` (determinista, seed 20130409). Se hizo procedural porque
+  los créditos Gemini de pixelforge se agotaron (429 RESOURCE_EXHAUSTED) — y resultó ideal:
+  geometría exacta + lenguaje visual idéntico a las capas (silueta ciruela + rim #de8a4a).
+  Primera generación — no aplica §6.5. Enum de naming: token `window` añadido.
+- **Experiencia completa:** ch2 ABOUT = guerra full-bleed (meteoros/relámpagos/incendio CSS,
+  bio como PARTES DE GUERRA); cruce ch2→ch3 = drenado grayscale + ráfaga de ceniza; llegada
+  ch3 = escena vista a través del browser muerto, que se desmorona al primer click o a los
+  6.5s (cristales caen al agua → ondas).
+- **Commit hash del cambio:** (commits de este drop)
