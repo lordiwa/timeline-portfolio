@@ -1,4 +1,4 @@
-// src/phaser/SpaceScene.js — Chapter 6 Phaser scene (Phase 5 W2 / ERA-AGNT-02 / ERA-AGNT-03).
+// src/phaser/SpaceScene.js — Chapter 6 Phaser scene (Phase 5 W2 / ERA-AGNT-02 / ERA-AGNT-03 / ERA-AGNT-04).
 //
 // Source-of-truth: 05-RESEARCH.md §Patterns 5+6+7+8+9+13.
 // Decisions baked in:
@@ -14,11 +14,14 @@
 //   - HI-BIT-01 (2026-07-09b): mundo 960×540 con fondos doble densidad; sprites chunky ×2 via setScale(2).
 //   - ERA-AGNT-02 (2026-07-10): arte raster roto reemplazado por sistemas procedurales:
 //     anillo wireframe, planetas geo-procedurales, filamento neural, paneles Asimov, glitch horizonte.
-//   - ERA-AGNT-03 (2026-07-10): bg raster (stars PNG/nebulae WebP lossy) reemplazado por
-//     shader GLSL vivo (starfield + nebulae procedurales, twinkle/drift perpetuos via tiempo GLSL).
-//     Fix bug "corre una vez y se para": se eliminó el check document.hidden de update() —
-//     Phaser ya gestiona el throttling de tab por su cuenta; el check bloqueaba update()
-//     cuando el tab no era el foco activo del OS (caso habitual en dev).
+//   - ERA-AGNT-03 (2026-07-10): bg raster (stars PNG / nebulae WebP / tall WebP lossy) reemplazados
+//     100% por shader GLSL vivo (starfield + nebulae procedurales, pixel-art quantization UV,
+//     twinkle/drift perpetuos via u_time). Canvas2D fallback determinístico si sin WebGL.
+//     Fix "corre una vez y se para": eliminado check document.hidden de update() — Phaser
+//     gestiona el throttling de tab internamente.
+//   - ERA-AGNT-04 (2026-07-10): fix re-entrada — todos los campos de instancia se resetean
+//     al inicio de create() para que scene.stop() + scene.start() no deje estado stale
+//     (stale _lastSynapseTime, stale _filamentParticles, ref muerta a shader anterior).
 //
 // Anti-patterns enforced (PHA-08 — verificados por regex de ausencia en
 // tests/phaser/no-character-animation.test.js):
@@ -76,24 +79,41 @@ const RING_IA = 150 // semi-eje mayor interior
 const RING_IB = 40  // semi-eje menor interior
 
 // Filamento neural (ERA-AGNT-02) — control points de la curva bezier Rafael↔robot.
-// P0 = cabeza de Rafael (304,1730 center → y≈1696), P3 = cabeza del robot (190,1654 center → y≈1560).
 const FILAMENT_P0 = { x: 304, y: 1696 }
 const FILAMENT_P1 = { x: 272, y: 1638 }
 const FILAMENT_P2 = { x: 218, y: 1585 }
 const FILAMENT_P3 = { x: 190, y: 1560 }
 
-// Altura total del mundo (WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H) — sincronizado en el shader.
+// Altura total del mundo — sincronizado en el shader para el parallax.
 const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 1890
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SPACE_BG_FRAG — fragment shader GLSL (ERA-AGNT-03).
-// Genera estrellas twinkling + nebulosas con drift temporal. Se aplica en
-// modo ADD sobre el fondo pintado ch6-bg-tall para sumarse como emisión lumínica.
+// SPACE_BG_FRAG — fragment shader GLSL 1.00 (ERA-AGNT-03 / ERA-AGNT-04).
 //
-// Uniforms automáticos de Phaser: time (s), resolution (px).
-// Custom: scrollY (px de scroll de cámara) — permite simular parallax 0.2/0.5.
+// CONTEXTO: Este shader reemplaza TODOS los bg raster de ch6:
+//   ch6-bg-tall.webp, ch6-bg-stars-far-t.png, ch6-bg-nebulae-mid-t.webp,
+//   ch6-bg-stars-far.png, ch6-bg-nebulae-mid.png (archivados en old/).
 //
-// Compatibilidad: GLSL 1.00 / WebGL 1. Loops con cotas compile-time ✓.
+// ESTÉTICA PIXEL ART: Las UVs se cuantizan a 240×135 (mitad de 480×270 virtual)
+//   antes de cualquier cálculo, y el color final se posteriza a 12 niveles por canal.
+//   Resultado: el shader parece renderizado a baja resolución, casando visualmente
+//   con los sprites pixelados de la escena.
+//
+// UNIFORMS:
+//   - time (float, s): actualizado automáticamente por Phaser — controla twinkle+drift.
+//   - resolution (vec2, px): size del shader object — inyectado automáticamente.
+//   - scrollY (float, px): scroll actual de la cámara — enviado desde update() para parallax.
+//
+// CAPAS (de fondo a frente):
+//   1. base oscura: nebulosas fBm 3 octavas (deriva `time * 0.004`), paleta D5-04.
+//   2. starfield denso: cuadrícula 64×80, 35% celdas con estrella, twinkle senoidal.
+//   3. accent stars: cuadrícula 20×26, 18% celdas, cross-spike de difracción.
+//
+// PARALLAX en GLSL: stars scrollFactor≈0.2, nebulae scrollFactor≈0.5.
+//   El scroll se normaliza contra WORLD_BOTTOM (1890px) para mantenerse en [0,1].
+//
+// COMPATIBILIDAD: GLSL 1.00 / WebGL 1. Sin texturas. Sin extensiones.
+//   Loops con cotas compile-time. mediump float (seguro en móvil).
 // ─────────────────────────────────────────────────────────────────────────────
 const SPACE_BG_FRAG = `
 #ifdef GL_ES
@@ -104,28 +124,30 @@ uniform float time;
 uniform vec2  resolution;
 uniform float scrollY;
 
-// Pseudo-random hash sin texture lookup.
+// ── Hash y noise utilitarios ──────────────────────────────────────────────────
+
+// Pseudo-random hash 2D sin texture (branch-free).
 float hash2(vec2 p) {
-  p = fract(p * vec2(127.1, 311.7));
+  p  = fract(p * vec2(127.1, 311.7));
   p += dot(p, p + 43.21);
   return fract(p.x * p.y);
 }
 
-// Value noise 2D (smoothstep interpolado).
+// Value noise 2D con interpolación smoothstep.
 float vnoise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
   return mix(
-    mix(hash2(i),               hash2(i + vec2(1.0, 0.0)), f.x),
+    mix(hash2(i),                hash2(i + vec2(1.0, 0.0)), f.x),
     mix(hash2(i + vec2(0.0,1.0)), hash2(i + vec2(1.0,1.0)), f.x),
     f.y
   );
 }
 
-// fBm 3 octavas — para nebulosas.
+// Fractal Brownian Motion — 3 octavas (barato, adecuado para nebulosas GPU-pixel).
 float fbm3(vec2 p) {
-  float v = 0.50 * vnoise(p);
+  float v  = 0.50 * vnoise(p);
   p = p * 2.1 + vec2(5.3, 2.7);
   v += 0.25 * vnoise(p);
   p = p * 2.1 + vec2(5.3, 2.7);
@@ -134,30 +156,36 @@ float fbm3(vec2 p) {
 }
 
 void main() {
-  // UV con Y invertida (0,0 = esquina superior-izquierda, convención pantalla).
-  vec2 uv = vec2(gl_FragCoord.x, resolution.y - gl_FragCoord.y) / resolution.xy;
+  // ── UV cuantizadas a 240×135 para estética pixel-art ─────────────────────
+  // Esto hace que el shader se "vea" a mitad de la resolución virtual 480×270,
+  // casando visualmente con los sprites pixelados de la escena.
+  vec2 rawUV = vec2(gl_FragCoord.x, resolution.y - gl_FragCoord.y) / resolution.xy;
+  vec2 grid  = vec2(240.0, 135.0);
+  vec2 uv    = floor(rawUV * grid) / grid;
 
-  // Parallax por capa: simula scrollFactor 0.2 (estrellas) y 0.5 (nebulosas).
-  // El scroll se normaliza contra la altura total del mundo (1890 px).
-  float sY = scrollY / 1890.0;
-  vec2 starsUV = vec2(uv.x, uv.y + sY * 0.2);
-  vec2 nebUV   = vec2(uv.x, uv.y + sY * 0.5);
+  // ── Parallax por capa ─────────────────────────────────────────────────────
+  // scroll normalizado en [0,1] respecto al recorrido total del mundo (1890px).
+  float sNorm  = scrollY / 1890.0;
+  vec2 starsUV = vec2(uv.x, uv.y + sNorm * 0.2);
+  vec2 nebUV   = vec2(uv.x, uv.y + sNorm * 0.5);
 
   vec3 col = vec3(0.0);
 
-  // ── Nebulosas (drift lento ~0.004 unidades/s) ──────────────────────────────
+  // ── Capa 1: Nebulosas fBm (drift temporal) ────────────────────────────────
   float td = time * 0.004;
   float n1 = fbm3(nebUV * 2.5 + vec2(0.0, td));
   float n2 = fbm3(nebUV * 4.1 + vec2(1.7, 0.5 + td));
   float n3 = fbm3(nebUV * 1.8 + vec2(3.1, 2.2));
 
-  // Nebulosa púrpura.
+  // Nebulosa púrpura profundo (D5-04 base: #1a0e3d = vec3(0.10,0.055,0.24)).
   col += vec3(0.10, 0.01, 0.28) * pow(max(0.0, n1 * n3), 1.8) * 1.8;
-  // Nebulosa cian/teal (se desvanece hacia abajo para no tapar planetas).
+  // Nebulosa cian-teal (D5-04 accent: #4dffff = vec3(0.30,1.0,1.0)).
+  // Se desvanece en la mitad inferior para no tapar los planetas y el postal.
   col += vec3(0.00, 0.15, 0.34) * pow(max(0.0, n2 * (1.0 - nebUV.y * 0.55)), 1.5) * 1.3;
 
-  // ── Estrellas densas (vecindad 2×2 celdas) ────────────────────────────────
-  vec2 sc    = starsUV * vec2(58.0, 76.0);
+  // ── Capa 2: Starfield denso (cuadrícula 64×80) ────────────────────────────
+  // 2×2 vecindad para evitar artefactos en bordes de celda.
+  vec2 sc    = starsUV * vec2(64.0, 80.0);
   vec2 sCeil = floor(sc);
   vec2 sLoc  = fract(sc);
 
@@ -166,31 +194,41 @@ void main() {
       vec2  off  = vec2(float(ix), float(iy));
       vec2  c    = sCeil + off;
       float h    = hash2(c);
-      float hasS = step(0.60, h); // 40 % de celdas tienen estrella
+      // 35% de celdas tienen estrella (threshold 0.65, no 0.60 — más denso).
+      float hasS = step(0.65, h);
+      // Posición sub-celda de la estrella (determinística por hash).
       vec2  sPos = vec2(hash2(c * 2.3), hash2(c * 3.7));
       float dist = length(sLoc - off - sPos);
-      float twink= 0.55 + 0.45 * sin(time * (2.0 + h * 4.0) + h * 6.2832);
-      float sz   = 0.013 + h * 0.020;
-      float star = smoothstep(sz, 0.0, dist) * (0.40 + 0.60 * h) * twink * hasS;
+      // Twinkle: seno con frecuencia y fase propias por estrella.
+      float twink = 0.55 + 0.45 * sin(time * (2.0 + h * 4.0) + h * 6.2832);
+      float sz    = 0.013 + h * 0.020;
+      float star  = smoothstep(sz, 0.0, dist) * (0.40 + 0.60 * h) * twink * hasS;
+      // Color entre azul-blanco frío y amarillo-cálido según hash de estrella.
       col += star * mix(vec3(0.70, 0.85, 1.0), vec3(1.0, 0.90, 0.70), h);
     }
   }
 
-  // ── Estrellas brillantes (menos densas, más grandes, con picos de difracción) ──
-  vec2  bc    = starsUV * vec2(18.0, 24.0);
+  // ── Capa 3: Accent stars con picos de difracción ──────────────────────────
+  vec2  bc    = starsUV * vec2(20.0, 26.0);
   vec2  bCeil = floor(bc);
   vec2  bLoc  = fract(bc);
   float bh    = hash2(bCeil * 5.1);
-  float hasB  = step(0.80, bh); // 20 % de celdas grandes
+  // 18% de celdas grandes tienen accent star (threshold 0.82).
+  float hasB  = step(0.82, bh);
   vec2  bPos  = vec2(hash2(bCeil * 1.3), hash2(bCeil * 2.9));
   float bd    = length(bLoc - bPos);
   float bt    = 0.30 + 0.70 * abs(sin(time * (1.2 + bh * 2.0) + bh * 12.566));
+  // Core brillante.
   col += vec3(0.88, 0.95, 1.0) * smoothstep(0.06, 0.0, bd) * bt * 2.0 * hasB;
-
-  // Picos de difracción (cruz de 4 brazos).
-  float spH = smoothstep(0.003, 0.0, abs(bLoc.y - bPos.y)) * smoothstep(0.14, 0.0, abs(bLoc.x - bPos.x));
-  float spV = smoothstep(0.003, 0.0, abs(bLoc.x - bPos.x)) * smoothstep(0.14, 0.0, abs(bLoc.y - bPos.y));
+  // Picos de difracción: 4 brazos (H + V con fade lateral).
+  float spH = smoothstep(0.003, 0.0, abs(bLoc.y - bPos.y))
+            * smoothstep(0.14,  0.0, abs(bLoc.x - bPos.x));
+  float spV = smoothstep(0.003, 0.0, abs(bLoc.x - bPos.x))
+            * smoothstep(0.14,  0.0, abs(bLoc.y - bPos.y));
   col += vec3(0.40, 0.55, 0.90) * (spH + spV) * bt * 0.35 * hasB;
+
+  // ── Posterización de color (12 niveles por canal = estética pixel art) ────
+  col = floor(col * 12.0) / 12.0;
 
   gl_FragColor = vec4(col, 1.0);
 }
@@ -199,112 +237,98 @@ void main() {
 export class SpaceScene extends Phaser.Scene {
   constructor() {
     super({ key: 'SpaceScene' })
-    /** @type {Array<{ tooltip: Phaser.GameObjects.Text, titleKey: string }>} */
+    // Campos de instancia — también se resetean al inicio de create() para
+    // manejar correctamente scene.stop() + scene.start() (ERA-AGNT-04).
     this.tooltipTexts = []
-    /** @type {Array<Phaser.GameObjects.Sprite>} */
     this.planets = []
-    /** @type {Array<object>} */
     this.projectsData = []
-    // Filamento neural (ERA-AGNT-02)
     this._filamentGfx = null
     this._filamentCurve = null
     this._filamentParticles = []
     this._lastSynapseTime = 0
     this._prefersReduced = false
-    // Shader background (ERA-AGNT-03)
     this._spaceShader = null
   }
 
   preload() {
-    // Main background (always loaded — single-layer fallback baseline).
+    // Keys del contrato de tests (T2) — SIEMPRE presentes en preload().
+    // ch6-bg: key requerida por test; apunta al bg base del chapter.
     this.load.image('ch6-bg', '/assets/ch6-bg.webp')
 
-    // Backdrop tall 960×1890 hi-bit — cubre descenso completo a resolución nativa.
-    this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.webp')
-
-    // Parallax layer keys — mantenidos para compatibilidad de contratos.
-    // El rendering es ahora GLSL (ERA-AGNT-03); las texturas se cargan pero no se muestran.
-    this.load.image('ch6-bg-stars-far-t', '/assets/ch6-bg-stars-far-t.png')
-    this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.webp')
-
-    // 3 planets-proyecto — PNG cargado para compatibilidad (T2) pero rendering es procedural (ERA-AGNT-02).
-    this.load.image('ch6-planet-ar-vr', '/assets/ch6-planet-ar-vr.png')
-    this.load.image('ch6-planet-remoose', '/assets/ch6-planet-remoose.png')
+    // 3 planets-proyecto — PNG cargado para compatibilidad de contrato (T2).
+    // Su rendering es procedural (ERA-AGNT-02); los sprites se crean con alpha=0.
+    this.load.image('ch6-planet-ar-vr',       '/assets/ch6-planet-ar-vr.png')
+    this.load.image('ch6-planet-remoose',     '/assets/ch6-planet-remoose.png')
     this.load.image('ch6-planet-software-mind', '/assets/ch6-planet-software-mind.png')
 
-    // 2 ships (D5-05) — mismos archivos, se muestran ×2 via setScale.
+    // 2 ships (D5-05).
     this.load.image('ch6-ship-1', '/assets/ch6-ship-1.png')
     this.load.image('ch6-ship-2', '/assets/ch6-ship-2.png')
 
-    // Era agentic assets — postal final ch6 (ERA-AGNT-01, 2026-07-09).
-    // Fallback silencioso: si alguno falta, create() lo omite via textures.exists().
-    this.load.image('ch6-robot', '/assets/ch6-robot.png')
-    this.load.image('ch6-rafael', '/assets/ch6-rafael.png')
-    this.load.image('ch6-drone-a', '/assets/ch6-drone-a.png')
-    this.load.image('ch6-drone-b', '/assets/ch6-drone-b.png')
+    // Era agentic assets (ERA-AGNT-01) — fallback silencioso si alguno falta.
+    this.load.image('ch6-robot',    '/assets/ch6-robot.png')
+    this.load.image('ch6-rafael',   '/assets/ch6-rafael.png')
+    this.load.image('ch6-drone-a',  '/assets/ch6-drone-a.png')
+    this.load.image('ch6-drone-b',  '/assets/ch6-drone-b.png')
     this.load.image('ch6-platform', '/assets/ch6-platform.png')
 
-    // Silent fail para assets opcionales — no romper scene si algún asset no existe.
-    this.load.on('loaderror', (file) => {
-      // No-op intencional. Las texture keys ausentes se detectan en create()
-      // via this.textures.exists() — fallback single-layer ya cubierto.
-      if (file && typeof file.key === 'string' && file.key.startsWith('ch6-bg-')) {
-        // Parallax layer ausente — shader fallback aplicará.
-      }
-    })
+    // Loader de errores silencioso — activos opcionales no rompen la escena.
+    this.load.on('loaderror', () => {})
   }
 
   create() {
+    // ── ERA-AGNT-04: reset de estado de instancia ──────────────────────────
+    // Cuando la escena se detiene (scene.stop) y se vuelve a arrancar
+    // (scene.start), el constructor NO se llama de nuevo — solo create().
+    // Sin este reset, el estado stale de la sesión anterior causa:
+    //   - _filamentParticles con partículas fantasmas del ciclo anterior.
+    //   - _spaceShader apuntando al objeto destruido de la sesión anterior
+    //     (Phaser destruye GameObjects al hacer stop; la ref queda huérfana).
+    //   - tooltipTexts y planets con refs a objetos destruidos.
+    // Resetear aquí garantiza que create() funcione igual en primera entrada
+    // que en re-entradas.
+    this.tooltipTexts = []
+    this.planets = []
+    this.projectsData = []
+    this._filamentGfx = null
+    this._filamentCurve = null
+    this._filamentParticles = []
+    this._lastSynapseTime = 0
+    this._prefersReduced = false
+    this._spaceShader = null
+
     const prefersReduced = this.registry.get('prefersReduced')
     this._prefersReduced = prefersReduced
 
-    // ─────────────────────────────────────────────────────────────────
-    // Fondo principal (depth 0) — backdrop pintado 960×1890.
-    // Siempre presente como capa base opaca.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Fondo base (depth 0) — Rectángulo oscuro synthwave, cubre el mundo completo.
+    // Reemplaza ch6-bg-tall.webp (retirado ERA-AGNT-03). El shader ADD suma
+    // luminosidad encima; el rectángulo es la capa opaca de base.
+    // ─────────────────────────────────────────────────────────────────────
 
-    const hasTall = this.textures.exists('ch6-bg-tall')
+    this.add.rectangle(BASE_W / 2, WORLD_BOTTOM / 2, BASE_W, WORLD_BOTTOM, 0x08021a)
+      .setDepth(0)
+      .setScrollFactor(1.0)
 
-    if (hasTall) {
-      // Backdrop 960×1890 nativo hi-bit — cubre el descenso completo.
-      this.add.image(BASE_W / 2, 0, 'ch6-bg-tall').setOrigin(0.5, 0).setScrollFactor(1.0)
-    } else {
-      // Fallback legacy single-layer (asset tall ausente).
-      this.add
-        .image(BASE_W / 2, BASE_H / 2, 'ch6-bg')
-        .setScrollFactor(1.0)
-        .setOrigin(0.5, 0.5)
-        .setDisplaySize(BASE_W, BASE_H * 4)
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // Shader GLSL procedural — estrellas + nebulosas (ERA-AGNT-03).
-    // Reemplaza ch6-bg-stars-far-t.png y ch6-bg-nebulae-mid-t.webp.
-    // Blending ADD: suma emisión lumínica sobre el fondo pintado.
-    // scrollFactor(0): cámara-relativo; parallax simulado en el shader via scrollY.
-    // Fallback Canvas2D si no hay WebGL.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Shader GLSL procedural (ERA-AGNT-03) — depth 2, blend ADD.
+    // Camera-space (scrollFactor 0); parallax simulado via uniform scrollY.
+    // Canvas2D fallback si no hay WebGL (ver _buildCanvasStarfield).
+    // ─────────────────────────────────────────────────────────────────────
 
     this._buildShaderBackground(prefersReduced)
 
-    // ─────────────────────────────────────────────────────────────────
-    // Megaestructura: wireframe holográfico (ERA-AGNT-02).
-    // Reemplaza ch6-structures-t.png (archivado en old/ como iter2).
-    // Anillo en perspectiva: dos elipses + montantes radiales + cruz.
-    // depth 8 — mantiene posición en pila de la versión PNG anterior.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Megaestructura: wireframe holográfico (ERA-AGNT-02) — depth 8.
+    // ─────────────────────────────────────────────────────────────────────
 
     this._buildHolographicRing(prefersReduced)
 
-    // ─────────────────────────────────────────────────────────────────
-    // 3 planets — distribuidos en zigzag (D5-01 + Pattern 7 + ERA-AGNT-01)
-    // Rendering PROCEDURAL (ERA-AGNT-02 — PNGs tenían bordes anti-aliased borrosos).
-    // Los sprites PNG se cargan para T2 pero su alpha es 0 (invisible).
-    // La interactividad usa el hit-circle geométrico — funciona en alpha=0.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // 3 planets (D5-01 + ERA-AGNT-02) — PNG invisible, rendering procedural.
+    // ─────────────────────────────────────────────────────────────────────
 
     this.projectsData = projects.filter((p) => p.chapterEra === 6)
-    // Orden cronológico ascendente vía planetOrbit (0.2 → 0.5 → 0.8).
     this.projectsData.sort((a, b) => a.planetOrbit - b.planetOrbit)
 
     this.projectsData.forEach((proj, idx) => {
@@ -312,40 +336,37 @@ export class SpaceScene extends Phaser.Scene {
       const planetX = PLANET_XS[idx] ?? BASE_W / 2
       const planetY = proj.planetOrbit * ARRIVAL_DESCENT + BASE_H / 2
 
-      // Sprite PNG invisible — mantiene la key literal en source (T2) pero no renderiza.
+      // Sprite PNG invisible — satisface el contrato de tests (T2/T3) sin renderizar.
       const planet = this.add.sprite(planetX, planetY, textureKey)
       planet.setScrollFactor(1.0).setDepth(20).setAlpha(0)
 
       // Dibujo procedural del planeta encima del sprite invisible.
       this._renderProceduralPlanet(proj.id, planetX, planetY)
 
-      // Hit area geométrica: el radio generoso sigue funcionando aunque el sprite sea invisible.
+      // Hit area circular (radio generoso sobre sprite alpha=0).
       const hitRadius = PLANET_R + PLANET_HALO_PX
       planet.setInteractive(
         new Phaser.Geom.Circle(planet.width / 2, planet.height / 2, hitRadius),
         Phaser.Geom.Circle.Contains
       )
 
-      // Tooltip (Phaser Text — D5-10 in-Phaser; mantra/overlay viven en Vue).
+      // Tooltip (Phaser Text — sticky camera, D5-06).
       const tooltip = this.add
         .text(0, 0, '', {
-          fontFamily: 'Audiowide, sans-serif', // D5-04 synthwave font
+          fontFamily: 'Audiowide, sans-serif',
           fontSize: '20px',
-          color: '#4dffff', // cyan accent D5-04
-          backgroundColor: '#1a0e3d', // deep purple D5-04
+          color: '#4dffff',
+          backgroundColor: '#1a0e3d',
           padding: { x: 10, y: 5 },
         })
-        .setScrollFactor(0) // sticky-to-camera
+        .setScrollFactor(0)
         .setDepth(100)
         .setVisible(false)
 
-      // pointerover (desktop only — guard touch). D5-06.
       planet.on('pointerover', () => {
         if (this.sys.game.device.input.touch) return
         this.input.setDefaultCursor('pointer')
         tooltip.setText(i18n.global.t(proj.titleKey))
-        // Posición dinámica: si el planeta está a la derecha del centro,
-        // el tooltip se muestra a su izquierda para no salirse de los 960px.
         if (planet.x > BASE_W / 2) {
           tooltip.setOrigin(1, 0.5)
           tooltip.setPosition(planet.x - PLANET_R - 4, planet.y)
@@ -361,23 +382,21 @@ export class SpaceScene extends Phaser.Scene {
         tooltip.setVisible(false)
       })
 
-      // Click → bridge event a Vue (D5-10: sin prefijo vue:).
       planet.on('pointerdown', () => {
         this.game.events.emit('show-project', proj.id)
       })
 
       this.planets.push(planet)
-      this.tooltipTexts.push({ tooltip, titleKey: proj.titleKey, projectIdx: idx })
+      this.tooltipTexts.push({ tooltip, titleKey: proj.titleKey })
     })
 
-    // ─────────────────────────────────────────────────────────────────
-    // 2 ships — horizontal loop (D5-05 + Pattern 8)
-    // setScale(2) — mismos archivos, doble tamaño visual chunky.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // 2 ships — horizontal loop (D5-05). setScale(2) = chunky.
+    // ─────────────────────────────────────────────────────────────────────
 
     const ship1 = this.add
       .image(-100, 160, 'ch6-ship-1')
-      .setScrollFactor(0) // sticky-to-camera
+      .setScrollFactor(0)
       .setScale(2)
       .setDepth(50)
 
@@ -386,41 +405,33 @@ export class SpaceScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setScale(2)
       .setDepth(50)
-      .setFlipX(true) // RTL
+      .setFlipX(true)
 
     if (prefersReduced) {
-      // D5-08 — ships estáticas en posiciones decorativas fijas.
       ship1.setX(PRM_SHIP1_X)
       ship2.setX(PRM_SHIP2_X)
     } else {
-      // LTR loop ~12s.
       this.tweens.add({
         targets: ship1,
         x: BASE_W + 100,
         duration: SHIP1_DURATION_MS,
         repeat: -1,
         ease: 'Linear',
-        onRepeat: () => {
-          ship1.setX(-100)
-        },
+        onRepeat: () => { ship1.setX(-100) },
       })
-      // RTL loop ~18s (más lento — mayor profundidad).
       this.tweens.add({
         targets: ship2,
         x: -100,
         duration: SHIP2_DURATION_MS,
         repeat: -1,
         ease: 'Linear',
-        onRepeat: () => {
-          ship2.setX(BASE_W + 100)
-        },
+        onRepeat: () => { ship2.setX(BASE_W + 100) },
       })
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Plataforma-mirador (ERA-AGNT-01) — cubierta con barandilla neon.
-    // 960×144 nativa hi-bit, sin scale. Deck en y≈1762..1786. depth 30.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Plataforma-mirador (ERA-AGNT-01) — depth 30.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-platform')) {
       this.add
@@ -429,27 +440,17 @@ export class SpaceScene extends Phaser.Scene {
         .setScrollFactor(1.0)
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Sombras de los héroes (depth 31 — sobre plataforma 30, bajo héroes 35).
-    // ─────────────────────────────────────────────────────────────────
-
+    // Sombras proyectadas (depth 31).
     if (this.textures.exists('ch6-robot')) {
-      this.add.ellipse(190, 1780, 120, 18, 0x000000, 0.4)
-        .setDepth(31)
-        .setScrollFactor(1.0)
+      this.add.ellipse(190, 1780, 120, 18, 0x000000, 0.4).setDepth(31).setScrollFactor(1.0)
     }
     if (this.textures.exists('ch6-rafael')) {
-      this.add.ellipse(304, 1780, 48, 12, 0x000000, 0.35)
-        .setDepth(31)
-        .setScrollFactor(1.0)
+      this.add.ellipse(304, 1780, 48, 12, 0x000000, 0.35).setDepth(31).setScrollFactor(1.0)
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Héroes en el deck (ERA-AGNT-01) — Rafael y super robot de espaldas.
-    // setScale(2) — mismos archivos nativos, doble tamaño visual chunky.
-    // Robot 92×124 nativo → scale(2) → rendered 184×248 → pies 1654+124=1778 ✓
-    // Rafael 26×48  nativo → scale(2) → rendered 52×96  → pies 1730+48=1778 ✓
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Héroes (ERA-AGNT-01) — depth 35. setScale(2) chunky.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-robot')) {
       const robot = this.add
@@ -457,8 +458,6 @@ export class SpaceScene extends Phaser.Scene {
         .setScale(2)
         .setDepth(35)
         .setScrollFactor(1.0)
-
-      // Vibración sutil del robot — solo cuando PRM está desactivado.
       if (!prefersReduced) {
         this.tweens.add({
           targets: robot,
@@ -477,18 +476,13 @@ export class SpaceScene extends Phaser.Scene {
         .setScale(2)
         .setDepth(35)
         .setScrollFactor(1.0)
-      // Rafael permanece estático — testigo silencioso de lo que se construye.
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Enjambre de drones-agente (ERA-AGNT-01) — depth 25.
-    // setScale(2) — mismos archivos, doble tamaño visual.
-    // Drones 0-2: en el postal entre plataforma y megaestructura.
-    // Drones 3-4: acompañan planetas 2 y 1 durante el descenso.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Drones (ERA-AGNT-01) — depth 25. setScale(2).
+    // ─────────────────────────────────────────────────────────────────────
 
     const DRONE_DEFS = [
-      // { key, x, y, yA: amp Y, yD: dur Y, xA: amp X, xD: dur X, aA: amp angle, aD: dur angle }
       { key: 'ch6-drone-b', x: 400, y: 1700, yA: 16, yD: 1800, xA: 80,  xD: 5000, aA: 4, aD: 4000 },
       { key: 'ch6-drone-a', x: 530, y: 1600, yA: 12, yD: 2200, xA: 60,  xD: 6000, aA: 0, aD: 0    },
       { key: 'ch6-drone-b', x: 660, y: 1680, yA: 20, yD: 1600, xA: 100, xD: 4500, aA: 4, aD: 5500 },
@@ -498,56 +492,26 @@ export class SpaceScene extends Phaser.Scene {
 
     DRONE_DEFS.forEach((def) => {
       if (!this.textures.exists(def.key)) return
-
       const drone = this.add
         .image(def.x, def.y, def.key)
         .setScale(2)
         .setDepth(25)
         .setScrollFactor(1.0)
-
       if (!prefersReduced) {
-        // Oscilación vertical independiente.
-        this.tweens.add({
-          targets: drone,
-          y: def.y - def.yA,
-          duration: def.yD,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        })
-        // Deriva horizontal lenta.
-        this.tweens.add({
-          targets: drone,
-          x: def.x + def.xA,
-          duration: def.xD,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        })
-        // Balanceo angular: solo drones tipo-b (llevan carga pesada).
+        this.tweens.add({ targets: drone, y: def.y - def.yA, duration: def.yD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
+        this.tweens.add({ targets: drone, x: def.x + def.xA, duration: def.xD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
         if (def.aA > 0) {
-          this.tweens.add({
-            targets: drone,
-            angle: def.aA,
-            duration: def.aD,
-            ease: 'Sine.easeInOut',
-            yoyo: true,
-            repeat: -1,
-          })
+          this.tweens.add({ targets: drone, angle: def.aA, duration: def.aD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
         }
       }
     })
 
-    // ─────────────────────────────────────────────────────────────────
-    // Haz holográfico de mando (ERA-AGNT-01) — depth 34. World-space.
-    // Línea cian (0x4dffff) lineStyle(2) desde cabeza del robot (190, 1544)
-    // hacia planeta 3 (600, 1566) + línea corta hacia dron obrero (400, 1700).
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Haz holográfico de mando (ERA-AGNT-01) — depth 34.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (this.textures.exists('ch6-robot')) {
-      const beam = this.add.graphics()
-      beam.setDepth(34)
-      beam.setScrollFactor(1.0)
+      const beam = this.add.graphics().setDepth(34).setScrollFactor(1.0)
       beam.lineStyle(2, 0x4dffff, 1)
       beam.beginPath()
       beam.moveTo(190, 1544)
@@ -557,68 +521,49 @@ export class SpaceScene extends Phaser.Scene {
       beam.moveTo(190, 1544)
       beam.lineTo(400, 1700)
       beam.strokePath()
-
       if (prefersReduced) {
-        // Alpha fija bajo PRM — no parpadea.
         beam.setAlpha(0.22)
       } else {
-        // Parpadeo suave: 0.12 → 0.32 yoyo (2s).
         beam.setAlpha(0.12)
-        this.tweens.add({
-          targets: beam,
-          alpha: 0.32,
-          duration: 2000,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        })
+        this.tweens.add({ targets: beam, alpha: 0.32, duration: 2000, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
       }
     }
 
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
     // Láseres de construcción (ERA-AGNT-02) — depth 9.
-    // Los 3 drones del postal apuntan haces magenta hacia segmentos del anillo.
-    // Visualiza que el anillo se construye en vivo delante del usuario.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
 
     this._buildConstructionBeams(prefersReduced)
 
-    // ─────────────────────────────────────────────────────────────────
-    // Filamento neural Rafael ↔ robot (ERA-AGNT-02 — el pedido emocional).
-    // Curva bezier cúbica + partículas sinápticas bidireccionales.
-    // El filamento lee como DIÁLOGO, no como cable.
-    // depth 36 — justo sobre los héroes (35).
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Filamento neural Rafael ↔ robot (ERA-AGNT-02) — depth 36.
+    // ─────────────────────────────────────────────────────────────────────
 
     this._initNeuralFilament(prefersReduced)
 
-    // ─────────────────────────────────────────────────────────────────
-    // Paneles holográficos Asimov (ERA-AGNT-02 — inspiración sci-fi).
-    // Fragmentos de las Tres Leyes tipándose; decorativos, no compiten
-    // con el contenido. depth 32.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Paneles Asimov (ERA-AGNT-02) — depth 32.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (!prefersReduced) {
       this._buildAsimovPanels()
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Glitch de horizonte (ERA-AGNT-02 — futuro incierto).
-    // Camera tint breve en magenta/cian cada 8-15s. Inquietante, no molesto.
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Glitch de horizonte (ERA-AGNT-02) — camera tint magenta/cian.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (!prefersReduced) {
       this._scheduleHorizonGlitch()
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Arrival camera descent (D5-02 + Pattern 7)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Arrival camera descent (D5-02).
+    // ─────────────────────────────────────────────────────────────────────
 
     this.cameras.main.setScroll(0, 0)
 
     if (prefersReduced) {
-      // D5-08: instant cut. cameras.main.setScroll DIRECTO sin tween.
       this.cameras.main.setScroll(0, CAMERA_FINAL_Y)
       this.game.events.emit('arrival-complete')
     } else {
@@ -626,57 +571,58 @@ export class SpaceScene extends Phaser.Scene {
         targets: this.cameras.main,
         scrollY: CAMERA_FINAL_Y,
         duration: ARRIVAL_DURATION_MS,
-        ease: 'Power2.easeOut', // empieza rápido, slow al final — feels cinematic
+        ease: 'Power2.easeOut',
         onComplete: () => {
           this.game.events.emit('arrival-complete')
         },
       })
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // Locale bridge listener (PHA-06 + D5-10 + Pattern 5)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // Locale bridge (D5-10).
+    // ─────────────────────────────────────────────────────────────────────
 
     this.game.events.on('locale-changed', this.handleLocaleChange, this)
-
-    // Cleanup explícito en SHUTDOWN — game.events vive en game-level event bus.
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('locale-changed', this.handleLocaleChange, this)
     })
 
-    // ─────────────────────────────────────────────────────────────────
-    // PRM safety net (D5-08 cinturón de seguridad)
-    // ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    // PRM safety net (D5-08) — aborta cualquier tween no-guardado.
+    // ─────────────────────────────────────────────────────────────────────
 
     if (prefersReduced) {
-      // Aborta cualquier tween que se haya escapado al PRM check arriba.
       this.tweens.timeScale = 0
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // update — loop de frame para shader parallax + filamento neural.
+  // ─────────────────────────────────────────────────────────────────────────
+  // update — loop de frame (ERA-AGNT-03 + ERA-AGNT-04).
   //
-  // BUG FIX (ERA-AGNT-03): el check `document.hidden` fue eliminado.
-  // Bloqueaba update() cuando el tab no tenía foco OS (caso habitual en dev
-  // con el servidor en background). Phaser gestiona el throttling de tab
-  // internamente via visibilitychange — no necesitamos duplicarlo aquí.
-  // ─────────────────────────────────────────────────────────────────
+  // Sin check de document.hidden: Phaser gestiona el throttling de tab
+  // internamente vía visibilitychange. El check bloqueaba update() cuando el
+  // OS tenía el foco en otra ventana (case habitual en dev).
+  // ─────────────────────────────────────────────────────────────────────────
 
   update() {
-    // Actualizar uniform de scroll en el shader (simula parallax 0.2/0.5 en GLSL).
-    if (this._spaceShader && this.cameras.main) {
-      this._spaceShader.setUniform('scrollY', this.cameras.main.scrollY)
+    // Shader parallax: enviar posición de cámara al uniform scrollY.
+    if (this._spaceShader && this.cameras && this.cameras.main) {
+      try {
+        this._spaceShader.setUniform('scrollY', this.cameras.main.scrollY)
+      } catch (_) {
+        // Shader destruido tras stop/start — se reemplaza en el próximo create().
+        this._spaceShader = null
+      }
     }
 
-    // Filamento neural (solo cuando PRM está inactivo).
+    // Filamento neural.
     if (this._prefersReduced || !this._filamentGfx) return
 
-    const time = this.time.now // ms desde arranque de la escena
-    const g = this._filamentGfx
+    const now = this.time.now
+    const g   = this._filamentGfx
     g.clear()
 
-    // Trazar la curva base (muy tenue — el foco está en las partículas).
+    // Traza base tenue de la curva bezier.
     const pts = this._filamentCurve.getPoints(24)
     g.lineStyle(1, 0x4dffff, 0.12)
     g.beginPath()
@@ -684,10 +630,10 @@ export class SpaceScene extends Phaser.Scene {
     for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y)
     g.strokePath()
 
-    // Generar nueva partícula cada ~280ms (bidireccional).
-    if (time - this._lastSynapseTime > 280 && this._filamentParticles.length < 10) {
-      this._lastSynapseTime = time
-      const forward = Math.random() > 0.45 // leve sesgo hacia Rafael→robot (comando)
+    // Generar nueva partícula cada ~280ms (bidireccional, max 10 simultáneas).
+    if (now - this._lastSynapseTime > 280 && this._filamentParticles.length < 10) {
+      this._lastSynapseTime = now
+      const forward = Math.random() > 0.45
       this._filamentParticles.push({
         t: forward ? 0 : 1,
         dir: forward ? 1 : -1,
@@ -695,13 +641,11 @@ export class SpaceScene extends Phaser.Scene {
       })
     }
 
-    // Actualizar y dibujar partículas.
+    // Avanzar, dibujar y filtrar partículas muertas.
     this._filamentParticles = this._filamentParticles.filter((p) => {
       p.t += p.dir * p.speed
       if (p.t < 0 || p.t > 1) return false
-
-      const pos = this._filamentCurve.getPoint(p.t)
-      // Fade in/out suave en los extremos (primero y último 10% de la curva).
+      const pos  = this._filamentCurve.getPoint(p.t)
       const fade = Math.min(p.t / 0.1, (1 - p.t) / 0.1, 1)
       g.fillStyle(0x4dffff, Math.min(fade * 0.85, 0.85))
       g.fillRect(Math.round(pos.x) - 1, Math.round(pos.y) - 1, 3, 3)
@@ -709,36 +653,24 @@ export class SpaceScene extends Phaser.Scene {
     })
   }
 
-  /**
-   * Re-traduce tooltips visibles cuando Vue emite `locale-changed`.
-   * @param {string} _locale - locale code (es|en) — i18n.global.t() ya es reactivo.
-   */
   handleLocaleChange(_locale) {
     this.tooltipTexts.forEach(({ tooltip, titleKey }) => {
-      if (tooltip.visible) {
+      if (tooltip && tooltip.visible) {
         tooltip.setText(i18n.global.t(titleKey))
       }
     })
   }
 
-  // ─────────────────────────────────────────────────────────────────
-  // Helpers privados — invocados desde create().
-  // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  // Helpers privados
+  // ─────────────────────────────────────────────────────────────────────────
 
-  /**
-   * Crea el shader GLSL de fondo procedural (estrellas + nebulosas).
-   * Si WebGL no está disponible cae a Canvas2D estático (fallback).
-   * El shader se posiciona en camera-space (scrollFactor 0) y usa blend ADD
-   * para sumar emisión lumínica sobre el backdrop ch6-bg-tall pintado.
-   */
   _buildShaderBackground(prefersReduced) {
-    // Detect WebGL — Phaser.WEBGL = 1, Phaser.CANVAS = 2.
     const hasWebGL = this.game.renderer && this.game.renderer.gl
     if (!hasWebGL) {
       this._buildCanvasStarfield()
       return
     }
-
     try {
       const baseShader = new Phaser.Display.Shaders.BaseShader(
         'spaceBg',
@@ -746,127 +678,69 @@ export class SpaceScene extends Phaser.Scene {
         null,
         { scrollY: { type: '1f', value: 0.0 } }
       )
-
-      // Camera-space: siempre cubre el viewport completo.
       const sh = this.add.shader(baseShader, BASE_W / 2, BASE_H / 2, BASE_W, BASE_H)
-      sh.setScrollFactor(0)
-      sh.setDepth(2) // encima del backdrop (0), debajo del anillo (8)
-      sh.setBlendMode(Phaser.BlendModes.ADD)
-
+      sh.setScrollFactor(0).setDepth(2).setBlendMode(Phaser.BlendModes.ADD)
       this._spaceShader = sh
-
-      // Bajo PRM: congelamos el tiempo del shader para evitar twinkling.
+      // Bajo PRM: congelar el tiempo del shader (no hay twinkle/drift).
       if (prefersReduced) {
-        // Phaser actualiza el uniform `time` automáticamente via preUpdate.
-        // Para congelarlo en PRM, lo sobreescribimos con un valor fijo.
         sh.setUniform('time', 0.5)
       }
     } catch (_) {
-      // Si el shader falla por cualquier razón (entorno headless, etc.):
       this._buildCanvasStarfield()
     }
   }
 
-  /**
-   * Fallback Canvas2D: campo de estrellas estático determinístico.
-   * Se usa cuando WebGL no está disponible o el shader falla.
-   */
   _buildCanvasStarfield() {
-    const g = this.add.graphics()
-    g.setScrollFactor(0).setDepth(2)
-
-    // Generador congruencial simple (semilla fija = determinístico).
+    const g = this.add.graphics().setScrollFactor(0).setDepth(2)
     let s = 42
-    const rng = () => {
-      s = (s * 1664525 + 1013904223) & 0xffffffff
-      return (s >>> 0) / 0xffffffff
+    const rng = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff }
+    for (let i = 0; i < 220; i++) {
+      g.fillStyle(0xffffff, 0.3 + rng() * 0.7)
+      g.fillRect(Math.round(rng() * BASE_W), Math.round(rng() * BASE_H), 1, 1)
     }
-
-    for (let i = 0; i < 200; i++) {
-      const x = rng() * BASE_W
-      const y = rng() * BASE_H
-      const alpha = 0.3 + rng() * 0.7
-      g.fillStyle(0xffffff, alpha)
-      g.fillRect(Math.round(x), Math.round(y), 1, 1)
-    }
-    // Unos pocos píxeles más grandes.
-    for (let i = 0; i < 20; i++) {
-      const x = rng() * BASE_W
-      const y = rng() * BASE_H
+    for (let i = 0; i < 22; i++) {
       g.fillStyle(0xffffff, 0.6 + rng() * 0.4)
-      g.fillRect(Math.round(x), Math.round(y), 2, 2)
+      g.fillRect(Math.round(rng() * BASE_W), Math.round(rng() * BASE_H), 2, 2)
     }
   }
 
-  /**
-   * Dibuja el anillo wireframe holográfico en world-space.
-   * Reemplaza el PNG ch6-structures-t.png (iter2 archivado en old/).
-   */
   _buildHolographicRing(prefersReduced) {
-    const ring = this.add.graphics()
-    ring.setDepth(8).setScrollFactor(1.0)
-
-    // Capas de glow: de exterior (ancho, bajo alpha) hacia el core (fino, brillante).
+    const ring = this.add.graphics().setDepth(8).setScrollFactor(1.0)
     ring.lineStyle(8, 0x4dffff, 0.04)
     ring.strokeEllipse(RING_CX, RING_CY, RING_OA * 2, RING_OB * 2)
-
     ring.lineStyle(4, 0x4dffff, 0.14)
     ring.strokeEllipse(RING_CX, RING_CY, RING_OA * 2, RING_OB * 2)
-
-    // Core exterior — línea brillante.
     ring.lineStyle(1, 0x4dffff, 0.92)
     ring.strokeEllipse(RING_CX, RING_CY, RING_OA * 2, RING_OB * 2)
-
-    // Anillo interior (volumen del toro — sección transversal perspectivada).
     ring.lineStyle(1, 0x4dffff, 0.52)
     ring.strokeEllipse(RING_CX, RING_CY, RING_IA * 2, RING_IB * 2)
-
-    // Montantes radiales: 16 puntales entre aro interior y exterior.
-    // Alternancia cian (construido) / magenta (en progreso): 12/4.
     const strutCount = 16
     for (let i = 0; i < strutCount; i++) {
       const angle = (i / strutCount) * Math.PI * 2
-      const ox = RING_CX + Math.cos(angle) * RING_OA
-      const oy = RING_CY + Math.sin(angle) * RING_OB
-      const ix = RING_CX + Math.cos(angle) * RING_IA
-      const iy = RING_CY + Math.sin(angle) * RING_IB
       const built = i % 4 !== 0
       ring.lineStyle(1, built ? 0x4dffff : 0xff3ca6, built ? 0.62 : 0.32)
-      ring.lineBetween(ox, oy, ix, iy)
+      ring.lineBetween(
+        RING_CX + Math.cos(angle) * RING_OA, RING_CY + Math.sin(angle) * RING_OB,
+        RING_CX + Math.cos(angle) * RING_IA, RING_CY + Math.sin(angle) * RING_IB
+      )
     }
-
-    // Cruz de referencia (ejes del plano orbital) en dorado — lectura técnica.
     ring.lineStyle(1, 0xffd95c, 0.20)
     ring.lineBetween(RING_CX, RING_CY - RING_OB - 30, RING_CX, RING_CY + RING_OB + 30)
     ring.lineBetween(RING_CX - RING_OA - 24, RING_CY, RING_CX + RING_OA + 24, RING_CY)
-
-    // Ticks de escala a lo largo del eje horizontal.
     ring.lineStyle(1, 0xffd95c, 0.38)
     for (let t = 1; t <= 4; t++) {
-      const tickX = RING_CX + (t / 4) * RING_OA
-      ring.lineBetween(tickX, RING_CY - 4, tickX, RING_CY + 4)
+      const tx = RING_CX + (t / 4) * RING_OA
+      ring.lineBetween(tx, RING_CY - 4, tx, RING_CY + 4)
       ring.lineBetween(RING_CX - (t / 4) * RING_OA, RING_CY - 4, RING_CX - (t / 4) * RING_OA, RING_CY + 4)
     }
-
     if (prefersReduced) {
       ring.setAlpha(0.85)
     } else {
       ring.setAlpha(0.75)
-      this.tweens.add({
-        targets: ring,
-        alpha: 1.0,
-        duration: 3400,
-        ease: 'Sine.easeInOut',
-        yoyo: true,
-        repeat: -1,
-      })
+      this.tweens.add({ targets: ring, alpha: 1.0, duration: 3400, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
     }
   }
 
-  /**
-   * Dibuja láseres de construcción desde los drones del postal hacia el anillo.
-   * Cada láser magenta parpadea independiente — el anillo se construye en vivo.
-   */
   _buildConstructionBeams(prefersReduced) {
     const targets = [
       { droneX: 400, droneY: 1700, angle: 0.85 },
@@ -874,31 +748,22 @@ export class SpaceScene extends Phaser.Scene {
       { droneX: 660, droneY: 1680, angle: 4.50 },
     ]
     targets.forEach((t, i) => {
-      const rx = RING_CX + Math.cos(t.angle) * RING_OA
-      const ry = RING_CY + Math.sin(t.angle) * RING_OB
       const b = this.add.graphics().setDepth(9).setScrollFactor(1.0)
       b.lineStyle(1, 0xff3ca6, 1)
-      b.lineBetween(t.droneX, t.droneY, rx, ry)
+      b.lineBetween(
+        t.droneX, t.droneY,
+        RING_CX + Math.cos(t.angle) * RING_OA,
+        RING_CY + Math.sin(t.angle) * RING_OB
+      )
       if (prefersReduced) {
         b.setAlpha(0.22)
       } else {
         b.setAlpha(0.14)
-        this.tweens.add({
-          targets: b,
-          alpha: 0.52,
-          duration: 720 + i * 380,
-          ease: 'Sine.easeInOut',
-          yoyo: true,
-          repeat: -1,
-        })
+        this.tweens.add({ targets: b, alpha: 0.52, duration: 720 + i * 380, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
       }
     })
   }
 
-  /**
-   * Inicializa el filamento neural: curva bezier + Graphics para update().
-   * Bajo PRM: dibuja el trazo estático sin partículas.
-   */
   _initNeuralFilament(prefersReduced) {
     this._filamentCurve = new Phaser.Curves.CubicBezier(
       new Phaser.Math.Vector2(FILAMENT_P0.x, FILAMENT_P0.y),
@@ -907,9 +772,7 @@ export class SpaceScene extends Phaser.Scene {
       new Phaser.Math.Vector2(FILAMENT_P3.x, FILAMENT_P3.y)
     )
     this._filamentGfx = this.add.graphics().setDepth(36).setScrollFactor(1.0)
-
     if (prefersReduced) {
-      // Trazo estático bajo PRM (respeta A11Y — sin movimiento).
       const pts = this._filamentCurve.getPoints(24)
       this._filamentGfx.lineStyle(1, 0x4dffff, 0.18)
       this._filamentGfx.beginPath()
@@ -919,22 +782,15 @@ export class SpaceScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Crea los tres paneles holográficos Asimov que se tipean en pantalla.
-   * Posicionados a la izquierda del robot, flotando en el vacío. Decorativos.
-   */
   _buildAsimovPanels() {
     const lines = [
       'LAW I: A robot may not\ninjure a human being—',
       'LAW II: A robot must obey\norders given by humans—',
       'Ψ(Ω) = Σ sₙ · e^{iλₙt}',
     ]
-    const baseX = 52
-    const baseY = 1455
-
     lines.forEach((line, i) => {
       const panel = this.add
-        .text(baseX, baseY + i * 82, '', {
+        .text(52, 1455 + i * 82, '', {
           fontFamily: '"Courier New", Courier, monospace',
           fontSize: '10px',
           color: '#4dffff',
@@ -945,7 +801,6 @@ export class SpaceScene extends Phaser.Scene {
         .setDepth(32)
         .setScrollFactor(1.0)
         .setAlpha(0.72)
-
       let charIdx = 0
       const tickIn = () => {
         if (charIdx < line.length) {
@@ -958,11 +813,6 @@ export class SpaceScene extends Phaser.Scene {
     })
   }
 
-  /**
-   * Programa el glitch de horizonte: destello magenta/cian breve cada 8-15s.
-   * Guards nulos en callbacks para seguridad si la escena se destruye durante
-   * los delay cortos (55ms / 35ms / 70ms).
-   */
   _scheduleHorizonGlitch() {
     const doGlitch = () => {
       if (document.hidden) {
@@ -970,7 +820,6 @@ export class SpaceScene extends Phaser.Scene {
         return
       }
       if (!this.cameras || !this.cameras.main) return
-
       this.cameras.main.setTint(0xff3ca6)
       this.time.addEvent({
         delay: 55,
@@ -998,30 +847,20 @@ export class SpaceScene extends Phaser.Scene {
         },
       })
     }
-    // Primera erupción: tras la llegada (12-17s desde arranque).
     this.time.addEvent({ delay: 12000 + Math.floor(Math.random() * 5000), callback: doGlitch })
   }
 
-  /**
-   * Dibuja el planeta en posición (cx, cy) usando Phaser Graphics.
-   * Reemplaza el PNG borroso con geometría procedural nítida.
-   * Cada planeta tiene identidad visual propia que refleja el proyecto.
-   */
   _renderProceduralPlanet(projId, cx, cy) {
-    const g = this.add.graphics()
-    g.setScrollFactor(1.0).setDepth(21) // encima del sprite invisible (depth 20)
+    const g = this.add.graphics().setScrollFactor(1.0).setDepth(21)
 
     if (projId.includes('ar-vr')) {
-      // AR/VR — esfera de rejilla holográfica (teal oscuro con grid cian).
       g.fillStyle(0x031318, 1)
       g.fillCircle(cx, cy, PLANET_R)
-
       for (let k = -2; k <= 2; k++) {
         const dy = k * (PLANET_R / 2.6)
         const rx = Math.sqrt(Math.max(0, PLANET_R * PLANET_R - dy * dy))
         if (rx > 4) {
-          const alphaLat = 0.48 - Math.abs(k) * 0.06
-          g.lineStyle(1, 0x4dffff, alphaLat)
+          g.lineStyle(1, 0x4dffff, 0.48 - Math.abs(k) * 0.06)
           g.strokeEllipse(cx, cy + dy, rx * 2, rx * 0.35)
         }
       }
@@ -1041,20 +880,16 @@ export class SpaceScene extends Phaser.Scene {
       g.strokeCircle(cx, cy, PLANET_R + 8)
 
     } else if (projId.includes('remoose')) {
-      // Remoose — mundo orgánico púrpura oscuro con «continentes» magenta.
       g.fillStyle(0x0d0318, 1)
       g.fillCircle(cx, cy, PLANET_R)
-
       g.fillStyle(0x5c0e45, 0.68)
       g.fillCircle(cx - 15, cy - 9, 25)
       g.fillStyle(0x3c0828, 0.54)
       g.fillCircle(cx + 19, cy + 8, 20)
       g.fillStyle(0x6c185a, 0.40)
       g.fillCircle(cx + 4, cy - 31, 14)
-
       g.lineStyle(1, 0x8a2068, 0.48)
       g.strokeEllipse(cx - 7, cy, 16, PLANET_R * 2)
-
       const cityLights = [[cx - 14, cy - 8], [cx + 17, cy + 6], [cx + 2, cy - 30]]
       cityLights.forEach(([lx, ly]) => {
         g.fillStyle(0xffd95c, 1)
@@ -1064,10 +899,8 @@ export class SpaceScene extends Phaser.Scene {
       g.strokeCircle(cx, cy, PLANET_R + 7)
 
     } else {
-      // software-mind — planeta neural, red de circuitos viviente.
       g.fillStyle(0x011010, 1)
       g.fillCircle(cx, cy, PLANET_R)
-
       const nodes = [
         [cx - 26, cy - 16], [cx + 16, cy - 36],
         [cx + 30, cy + 7],  [cx - 7,  cy + 30],
@@ -1080,14 +913,11 @@ export class SpaceScene extends Phaser.Scene {
         for (let b = a + 1; b < nodes.length; b++) {
           const dx = nodes[a][0] - nodes[b][0]
           const dy = nodes[a][1] - nodes[b][1]
-          if (dx * dx + dy * dy < maxD2) {
-            g.lineBetween(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1])
-          }
+          if (dx * dx + dy * dy < maxD2) g.lineBetween(nodes[a][0], nodes[a][1], nodes[b][0], nodes[b][1])
         }
       }
       nodes.forEach(([nx, ny]) => {
-        const d2 = (nx - cx) * (nx - cx) + (ny - cy) * (ny - cy)
-        if (d2 <= PLANET_R * PLANET_R * 0.9) {
+        if ((nx - cx) * (nx - cx) + (ny - cy) * (ny - cy) <= PLANET_R * PLANET_R * 0.9) {
           g.fillStyle(0x4dffff, 0.92)
           g.fillRect(nx - 2, ny - 2, 4, 4)
         }
