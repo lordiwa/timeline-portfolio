@@ -654,4 +654,4 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Nuevo asset:** `ch3-far.png` (cordillera lejana malva, primera generación — sin iter previa).
   Enum de asset-naming actualizado.
 - **Side-effect perf:** capas de terreno 300-800KB → 6-12KB (siluetas planas comprimen).
-- **Commit hash del cambio:** (commit de este drop)
+- **Commit hash del cambio:** `fbe1961` (arte) + `cbf6ff8` (agua espejo/interactividad iter11)
