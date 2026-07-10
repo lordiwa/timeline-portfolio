@@ -351,10 +351,14 @@ onBeforeUnmount(() => {
   );
 }
 
-/* c3 matrix base — PNG tenue (Fase B). Por ahora transparente, sin artefacto. */
+/* c3 matrix base — Fase B: lluvia de glifos cian sobre negro puro.
+   mix-blend-mode:screen convierte el negro en transparente gratis (sin bg-removal).
+   Opacidad baja: es capa de ambiente, los glifos CSS vivos flotan encima (z2). */
 .ch4-layer--matrix {
   z-index: 1;
-  background-image: none;
+  background-image: url('/assets/ch4-matrix.webp');
+  mix-blend-mode: screen;
+  opacity: 0.35;
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 11px),
     calc((var(--my, 0) + var(--dy, 0)) * 9px),
@@ -410,13 +414,14 @@ onBeforeUnmount(() => {
   50% { transform: translateY(-10px); }
 }
 
-/* c0 near — elementos próximos. Placeholder: un par de partículas neón cercanas. */
+/* c0 near — Fase B: fragmentos holográficos de primer plano (ventanas wireframe rotas,
+   shards de datos cian/magenta). Negro puro = transparente via screen blend.
+   Opacidad alta: capa más cercana, protagonista visual del primer plano. */
 .ch4-layer--near {
   z-index: 4;
-  background-image:
-    radial-gradient(3px 3px at 16% 30%, rgba(0, 255, 255, 0.9) 0%, transparent 60%),
-    radial-gradient(2px 2px at 40% 80%, rgba(176, 208, 255, 0.9) 0%, transparent 60%),
-    radial-gradient(4px 4px at 8% 66%, rgba(0, 255, 255, 0.7) 0%, transparent 55%);
+  background-image: url('/assets/ch4-near.webp');
+  mix-blend-mode: screen;
+  opacity: 0.8;
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 32px),
     calc((var(--my, 0) + var(--dy, 0)) * 22px),
