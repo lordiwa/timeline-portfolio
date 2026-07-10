@@ -353,12 +353,13 @@ onBeforeUnmount(() => {
 
 /* c3 matrix base — Fase B: lluvia de glifos cian sobre negro puro.
    mix-blend-mode:screen convierte el negro en transparente gratis (sin bg-removal).
-   Opacidad baja: es capa de ambiente, los glifos CSS vivos flotan encima (z2). */
+   Opacidad MUY baja: a 0.35 hacía sopa cian detrás del título/paneles
+   (QA visual en navegador 2026-07-10) — ambiente lejano, no protagonista. */
 .ch4-layer--matrix {
   z-index: 1;
   background-image: url('/assets/ch4-matrix.webp');
   mix-blend-mode: screen;
-  opacity: 0.35;
+  opacity: 0.16;
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 11px),
     calc((var(--my, 0) + var(--dy, 0)) * 9px),
@@ -416,12 +417,14 @@ onBeforeUnmount(() => {
 
 /* c0 near — Fase B: fragmentos holográficos de primer plano (ventanas wireframe rotas,
    shards de datos cian/magenta). Negro puro = transparente via screen blend.
-   Opacidad alta: capa más cercana, protagonista visual del primer plano. */
+   Opacidad contenida: a 0.8 la ventana DATA LOSS (escalada cover a viewport)
+   competía con los paneles de contenido (QA visual 2026-07-10) — presencia
+   fantasmal de primer plano, no cartel. */
 .ch4-layer--near {
   z-index: 4;
   background-image: url('/assets/ch4-near.webp');
   mix-blend-mode: screen;
-  opacity: 0.8;
+  opacity: 0.38;
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 32px),
     calc((var(--my, 0) + var(--dy, 0)) * 22px),

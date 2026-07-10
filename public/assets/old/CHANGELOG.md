@@ -747,3 +747,11 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** Rafael: "ch4 ahora tapa a la persona volando". La ventana holográfica cian rota superior-derecha del asset caía exactamente sobre el personaje (sprite en 73%/32%, capa near z4 > character z3, opacity 0.8).
 - **Qué se intentó diferente:** edición quirúrgica con sharp — rect negro x470-790/y30-300 (con mix-blend-mode:screen el negro es transparente). Se conservan ventana central DATA LOSS, shards izquierdos, columna derecha x>790 y crumple magenta bajo los pies.
 - **Commit hash del cambio:** este commit (art(ch4): despejar zona del personaje en capa near iter2)
+
+
+## ch4-near.webp — iter2 → iter3 (2026-07-10)
+
+- **Versión guardada:** `old/ch4-near-2026-07-10-iter2.webp`
+- **Razón del cambio:** Rafael: "sigue sin verse bien". QA visual en navegador (Fable): el crumple magenta 600-720/290-390 y el triángulo cian ~730/250 rozaban pies/piernas del personaje con el cover-scale; además la capa a opacity 0.8 competía con los paneles.
+- **Qué se intentó diferente:** rect negro adicional x540-800/y240-410 (zona bajo el sprite) + opacity de capa 0.8→0.38 y matrix 0.35→0.16 en Chapter4Content.vue (fix CSS acompañante, mismo commit).
+- **Commit hash del cambio:** este commit
