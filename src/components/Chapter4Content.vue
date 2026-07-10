@@ -150,6 +150,41 @@ onBeforeUnmount(() => {
         <div class="ch4-character-art"></div>
       </div>
       <div class="ch4-layer ch4-layer--near"></div>
+      <!--
+        Grid de suelo holográfico en perspectiva — ícono de AR/VR 2015.
+        CSS perspective simula el plano en 3D que converge en el horizonte.
+        Se adapta al universo activo vía [data-universe].
+      -->
+      <div class="ch4-holo-floor" aria-hidden="true"></div>
+      <!-- Viñeta de lente VR — oscurece los bordes como mirar a través de óptica de headset. -->
+      <div class="ch4-vr-vignette" aria-hidden="true"></div>
+    </div>
+
+    <!--
+      HUD era-auténtico 2015 — indicadores de headset AR/VR al estilo Oculus Rift CV1.
+      Fuera del parallax para que se muestre por encima del fondo pero debajo del contenido.
+      Universe-reactive: color de cada esquina cambia con [data-universe].
+    -->
+    <div class="ch4-hud" aria-hidden="true">
+      <div class="ch4-hud-tl">
+        <div class="ch4-hud-line"><span class="ch4-hud-key">TRACKING</span><span class="ch4-hud-dots"> ●●●●○</span></div>
+        <div class="ch4-hud-line"><span class="ch4-hud-key">FOV</span><span class="ch4-hud-val"> 110°</span></div>
+      </div>
+      <div class="ch4-hud-tr">
+        <div class="ch4-hud-line"><span class="ch4-hud-val">78%</span><span class="ch4-hud-key"> BATTERY</span></div>
+        <div class="ch4-hud-line"><span class="ch4-hud-dots">●●●●●</span><span class="ch4-hud-key"> SIGNAL</span></div>
+      </div>
+      <div class="ch4-hud-bl">
+        <div class="ch4-hud-line">
+          <span class="ch4-hud-key">FPS</span><span class="ch4-hud-accent"> 72.4</span>
+          <span class="ch4-hud-sep"> │ </span>
+          <span class="ch4-hud-key">LATENCY</span><span class="ch4-hud-accent"> 11ms</span>
+        </div>
+      </div>
+      <div class="ch4-hud-br">
+        <div class="ch4-hud-model">OCULUS RIFT CV1</div>
+        <div class="ch4-hud-line"><span class="ch4-hud-key">AR/VR</span><span class="ch4-hud-val"> 2015</span></div>
+      </div>
     </div>
 
     <!-- Título grande centrado a todo el ancho de la página. -->
@@ -453,9 +488,126 @@ onBeforeUnmount(() => {
   85%       { opacity: 0.35; }
 }
 
+/* ── Grid de suelo holográfico en perspectiva VR ─────────────────────────── */
+/* La perspectiva CSS convierte el plano horizontal en una cuadrícula que
+   converge en el horizonte — ícono del género AR/VR (Tron, holodeck, 2015). */
+.ch4-holo-floor {
+  position: absolute;
+  bottom: 0;
+  left: -30%;
+  right: -30%;
+  height: 50%;
+  z-index: 5;
+  pointer-events: none;
+  transform: perspective(480px) rotateX(68deg);
+  transform-origin: bottom center;
+  /* Base synthwave: cyan tenue */
+  background-image:
+    linear-gradient(rgba(0, 255, 255, 0.30) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.30) 1px, transparent 1px);
+  background-size: 9% 7%;
+  /* Fade al horizonte — las líneas se difuminan antes de llegar al borde superior */
+  mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
+  mix-blend-mode: screen;
+  opacity: 0.22;
+  /* Scroll de la cuadrícula: sensación de avanzar sobre el suelo holográfico */
+  animation: ch4-floor-scroll 2.5s linear infinite;
+}
+@keyframes ch4-floor-scroll {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 7%; }
+}
+
+/* ── Viñeta de lente VR — bordes oscuros como óptica de headset ──────────── */
+/* Elipse oval (no círculo): imita la forma de las lentes de Oculus Rift CV1.
+   Sutil en U0-U2, ligeramente más marcada en U3 Void para dar angustia. */
+.ch4-vr-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 58% at 50% 50%,
+    transparent 32%,
+    rgba(0, 0, 6, 0.18) 55%,
+    rgba(0, 0, 6, 0.52) 75%,
+    rgba(0, 0, 8, 0.88) 95%
+  );
+}
+
+/* ── HUD era-auténtico 2015 — indicadores estilo Oculus Rift CV1 ─────────── */
+/* Fuera del parallax → z-index del layout (4), debajo del contenido (5).
+   Esquinas: bracket con border-left/top o right/bottom para look HUD industrial. */
+.ch4-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.ch4-hud-tl,
+.ch4-hud-tr,
+.ch4-hud-bl,
+.ch4-hud-br {
+  position: absolute;
+  font-family: 'Audiowide', 'Eurostile', monospace;
+  font-size: 0.48rem;
+  line-height: 1.7;
+  color: rgba(0, 255, 255, 0.48);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition: color 0.4s ease, border-color 0.4s ease;
+}
+.ch4-hud-tl {
+  top: 68px;
+  left: 14px;
+  border-left: 1px solid rgba(0, 255, 255, 0.22);
+  border-top: 1px solid rgba(0, 255, 255, 0.22);
+  padding: 5px 9px;
+}
+.ch4-hud-tr {
+  top: 68px;
+  right: 14px;
+  text-align: right;
+  border-right: 1px solid rgba(0, 255, 255, 0.22);
+  border-top: 1px solid rgba(0, 255, 255, 0.22);
+  padding: 5px 9px;
+}
+.ch4-hud-bl {
+  bottom: 12px;
+  left: 14px;
+  border-left: 1px solid rgba(0, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.22);
+  padding: 5px 9px;
+}
+.ch4-hud-br {
+  bottom: 12px;
+  right: 14px;
+  text-align: right;
+  border-right: 1px solid rgba(0, 255, 255, 0.22);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.22);
+  padding: 5px 9px;
+}
+.ch4-hud-line  { white-space: nowrap; }
+.ch4-hud-key   { opacity: 0.6; }
+.ch4-hud-val   { /* sin cambio extra */ }
+.ch4-hud-dots  { letter-spacing: -0.04em; }
+.ch4-hud-accent {
+  color: var(--c-accent);
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+.ch4-hud-sep   { opacity: 0.38; }
+.ch4-hud-model {
+  font-size: 0.42rem;
+  letter-spacing: 0.18em;
+  opacity: 0.35;
+  margin-bottom: 2px;
+}
+
 /* ── Hover glow en las project cards (FloatingPanel) ──────────────────────── */
 .ch4-layout :deep(.floating-panel) {
-  transition: box-shadow 200ms ease;
+  transition: box-shadow 0.4s ease;
 }
 .ch4-layout :deep(.floating-panel):hover {
   box-shadow: 0 0 16px rgba(0, 255, 255, 0.35), 0 0 5px rgba(0, 255, 255, 0.15);
@@ -573,6 +725,75 @@ onBeforeUnmount(() => {
 .ch4-layout[data-universe="3"] .ch4-p--rhombus { border-color: rgba(204, 0, 20, 0.65); }
 .ch4-layout[data-universe="3"] .ch4-p--cross { color: rgba(204, 0, 20, 0.65); }
 
+/* ── HUD + suelo holográfico + paneles: colores reactivos al universo ────── */
+
+/* U1 Tron — verde fósforo */
+.ch4-layout[data-universe="1"] .ch4-hud-tl,
+.ch4-layout[data-universe="1"] .ch4-hud-tr,
+.ch4-layout[data-universe="1"] .ch4-hud-bl,
+.ch4-layout[data-universe="1"] .ch4-hud-br {
+  color: rgba(0, 255, 77, 0.48);
+  border-color: rgba(0, 255, 77, 0.22);
+}
+.ch4-layout[data-universe="1"] .ch4-hud-accent { color: #00ff4d; text-shadow: 0 0 6px rgba(0, 255, 77, 0.4); }
+.ch4-layout[data-universe="1"] .ch4-holo-floor {
+  background-image:
+    linear-gradient(rgba(0, 255, 77, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 77, 0.38) 1px, transparent 1px);
+  opacity: 0.30;
+}
+.ch4-layout[data-universe="1"] :deep(.floating-panel) {
+  box-shadow: 0 0 14px rgba(0, 255, 77, 0.14), inset 0 0 0 1px rgba(0, 255, 77, 0.18);
+}
+
+/* U2 Vaporwave — lavanda/teal */
+.ch4-layout[data-universe="2"] .ch4-hud-tl,
+.ch4-layout[data-universe="2"] .ch4-hud-tr,
+.ch4-layout[data-universe="2"] .ch4-hud-bl,
+.ch4-layout[data-universe="2"] .ch4-hud-br {
+  color: rgba(230, 102, 255, 0.48);
+  border-color: rgba(230, 102, 255, 0.22);
+}
+.ch4-layout[data-universe="2"] .ch4-hud-accent { color: #e666ff; text-shadow: 0 0 6px rgba(230, 102, 255, 0.4); }
+.ch4-layout[data-universe="2"] .ch4-holo-floor {
+  background-image:
+    linear-gradient(rgba(51, 230, 217, 0.30) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(230, 102, 255, 0.30) 1px, transparent 1px);
+  opacity: 0.24;
+}
+.ch4-layout[data-universe="2"] :deep(.floating-panel) {
+  box-shadow: 0 0 14px rgba(230, 102, 255, 0.14), inset 0 0 0 1px rgba(230, 102, 255, 0.18);
+}
+
+/* U3 Void — rojo profundo */
+.ch4-layout[data-universe="3"] .ch4-hud-tl,
+.ch4-layout[data-universe="3"] .ch4-hud-tr,
+.ch4-layout[data-universe="3"] .ch4-hud-bl,
+.ch4-layout[data-universe="3"] .ch4-hud-br {
+  color: rgba(204, 0, 20, 0.48);
+  border-color: rgba(204, 0, 20, 0.22);
+}
+.ch4-layout[data-universe="3"] .ch4-hud-accent { color: #cc0014; text-shadow: 0 0 6px rgba(204, 0, 20, 0.4); }
+.ch4-layout[data-universe="3"] .ch4-holo-floor {
+  background-image:
+    linear-gradient(rgba(204, 0, 20, 0.36) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(204, 0, 20, 0.36) 1px, transparent 1px);
+  opacity: 0.20;
+}
+.ch4-layout[data-universe="3"] .ch4-vr-vignette {
+  /* U3: vignette más marcada para reforzar la angustia del Vacío */
+  background: radial-gradient(
+    ellipse 70% 58% at 50% 50%,
+    transparent 28%,
+    rgba(10, 0, 0, 0.22) 50%,
+    rgba(10, 0, 0, 0.62) 72%,
+    rgba(12, 0, 0, 0.92) 95%
+  );
+}
+.ch4-layout[data-universe="3"] :deep(.floating-panel) {
+  box-shadow: 0 0 14px rgba(204, 0, 20, 0.14), inset 0 0 0 1px rgba(204, 0, 20, 0.18);
+}
+
 /* ─────────────────────────────────────────────────────────────
  * PRM — congela todo el movimiento del parallax.
  * ───────────────────────────────────────────────────────────── */
@@ -582,6 +803,7 @@ onBeforeUnmount(() => {
   .ch4-glyph,
   .ch4-panel-column,
   .ch4-portal-pulse,
+  .ch4-holo-floor,
   .ch4-p { animation: none !important; transition: none !important; }
   .ch4-layer { transform: none !important; }
   .ch4-character-art { transform: none !important; }
@@ -591,6 +813,11 @@ onBeforeUnmount(() => {
   .ch4-portal-pulse { opacity: 0.15 !important; transform: translate(-50%, -50%) !important; }
   /* Partículas ocultas bajo PRM — muy difíciles de seguir estáticas */
   .ch4-p { opacity: 0 !important; }
+  /* Suelo: perspectiva estática, sin scroll. El transform perspective se conserva para profundidad. */
+  .ch4-holo-floor { opacity: 0.12 !important; }
+  /* HUD y glifos: sin transiciones bajo PRM */
+  .ch4-hud-tl, .ch4-hud-tr, .ch4-hud-bl, .ch4-hud-br,
+  .ch4-hud-accent { transition: none !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -630,5 +857,17 @@ onBeforeUnmount(() => {
     margin: var(--sp-sm) 0 0 0;
     animation: none;
   }
+
+  /* HUD: esquinas muy pequeñas en mobile — reducir font y padding */
+  .ch4-hud-tl,
+  .ch4-hud-tr,
+  .ch4-hud-bl,
+  .ch4-hud-br {
+    font-size: 0.38rem;
+    padding: 3px 5px;
+  }
+
+  /* Suelo: ocultar en mobile — no hay puntero, el efecto queda estático sin sentido */
+  .ch4-holo-floor { display: none; }
 }
 </style>
