@@ -5,8 +5,12 @@
 //   - Observa scrollState.activeChapter
 //   - Hace CROSSFADE equal-power de 2s al cambiar de era
 //   - Solo activa si engine.isUnlocked() (el BootScreen llama unlock primero)
+//   - flush: 'post' — permite que watchers 'pre' de componentes hijo (ej.
+//     Chapter2Content cinemática ch2→ch3) llamen holdEraSwitch() antes de que
+//     este watcher dispare, bloqueando el crossfade automático durante la cinemática.
 //
 // playCurrentEra(n): inicia el track de era n (llamado por BootScreen post-unlock)
+// holdEraSwitch(ms): bloquea el crossfade automático por ms milisegundos (cinemática ch2→ch3)
 // muted: ref reactivo de estado mute
 // toggle(): alterna mute/unmute + actualiza ref
 
@@ -55,6 +59,25 @@ export function useAudio() {
   let _currentSeq = null
   let _previousSeq = null
   let _activeEra = null
+
+  // ── Bloqueo de crossfade automático (cinemática ch2→ch3) ──────────────────
+  // holdEraSwitch(ms) impide que initAudioWatcher dispare playCurrentEra durante
+  // la cinemática. Chapter2Content lo llama en su watcher (flush:'pre') antes de
+  // que initAudioWatcher (flush:'post') tenga oportunidad de disparar.
+  let _eraHeld = false
+  let _holdTimer = null
+
+  /**
+   * Bloquea el crossfade automático del watcher por ms milisegundos.
+   * Llamar desde un watcher 'pre' (ej. Chapter2Content) para que el watcher
+   * 'post' de initAudioWatcher lo respete y se salte el crossfade.
+   * @param {number} ms
+   */
+  function holdEraSwitch(ms) {
+    _eraHeld = true
+    clearTimeout(_holdTimer)
+    _holdTimer = setTimeout(() => { _eraHeld = false }, ms)
+  }
 
   /**
    * Inicia el track de la era n con crossfade equal-power.
@@ -116,13 +139,16 @@ export function useAudio() {
   /**
    * Inicia el watcher de activeChapter.
    * Llamar desde App.vue setup() después de que el scrollState esté disponible.
+   * flush:'post' garantiza que watchers 'pre' de componentes hijo (ej. Chapter2Content)
+   * puedan llamar holdEraSwitch() antes de que este watcher dispare.
    * @param {import('vue').Ref<number>} activeChapterRef
    */
   function initAudioWatcher(activeChapterRef) {
     watch(activeChapterRef, (n) => {
       if (!engine.isUnlocked()) return
+      if (_eraHeld) return  // cinemática en vuelo — holdEraSwitch lo liberará
       playCurrentEra(n)
-    })
+    }, { flush: 'post' })
   }
 
   /** Fija mute/unmute manteniendo el ref reactivo en sincronía con el engine. */
@@ -145,5 +171,6 @@ export function useAudio() {
     initAudioWatcher,
     playCurrentEra,
     stopAll,
+    holdEraSwitch,
   }
 }

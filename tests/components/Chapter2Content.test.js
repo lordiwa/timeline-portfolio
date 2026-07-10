@@ -11,7 +11,8 @@
 // - T6 FlashBanner embebido: <FlashBanner> presente en el DOM
 // - T7 CSS source: chapter-themes.css contiene [data-chapter="2"] .project-card variant Flash-era
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { ref } from 'vue'
 import { mount, flushPromises } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -80,6 +81,22 @@ function mountCh2({ locale = 'es' } = {}) {
 }
 
 describe('Chapter2Content.vue', () => {
+  // ── Limpieza del flag de sesión entre tests ──────────────
+  // La cinemática lee sessionStorage para saber si ya se reprodujo.
+  // Limpiamos antes de cada test para garantizar estado limpio.
+  beforeEach(() => {
+    try { sessionStorage.removeItem('ch2-cinematic-played') } catch {}
+  })
+
+  afterEach(() => {
+    // Teleport pudo haber inyectado .ch2-cin-root al body; limpiarlo.
+    document.body.querySelector('.ch2-cin-root')?.remove()
+    // Restaurar innerWidth al default de jsdom (0)
+    try {
+      Object.defineProperty(window, 'innerWidth', { value: 0, configurable: true, writable: true })
+    } catch {}
+  })
+
   // ─────────────────────────────────────────────────────────
   // T1 DOM
   // ─────────────────────────────────────────────────────────
@@ -243,5 +260,69 @@ describe('Chapter2Content.vue', () => {
     const { wrapper } = mountCh2()
     expect(wrapper.find('.flash-preloader').exists()).toBe(true)
     expect(wrapper.find('.flash-preloader-bar').exists()).toBe(true)
+  })
+
+  // ─────────────────────────────────────────────────────────
+  // T13-T15 Cinemática "La muerte de Flash"
+  // ─────────────────────────────────────────────────────────
+
+  it('T13 cin: .ch2-cin-root NO está en el DOM por defecto (cinematicActive=false)', () => {
+    mountCh2()
+    // El overlay está teleportado al body; buscamos ahí.
+    expect(document.body.querySelector('.ch2-cin-root')).toBeNull()
+  })
+
+  it('T14 cin PRM: bajo prefers-reduced-motion, el cruce ch2→ch3 no activa cinematic ni dying', async () => {
+    const activeChapter = ref(2)
+    const i18n = createTestI18n()
+    const wrapper = mount(Chapter2Content, {
+      global: {
+        plugins: [i18n],
+        provide: {
+          scrollState: { activeChapter },
+          prm: { prefersReduced: ref(true) },
+          audio: { holdEraSwitch: vi.fn(), playCurrentEra: vi.fn() },
+        },
+      },
+    })
+
+    activeChapter.value = 3
+    await flushPromises()
+
+    // Ni overlay ni clase is-dying
+    expect(document.body.querySelector('.ch2-cin-root')).toBeNull()
+    expect(wrapper.find('.flash-y2k-root.is-dying').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('T15 cin desktop: cruce ch2→ch3 (primera vez, desktop ≥600px, sin PRM) muestra overlay', async () => {
+    // Simular ancho de ventana de escritorio
+    Object.defineProperty(window, 'innerWidth', { value: 1200, configurable: true, writable: true })
+
+    const activeChapter = ref(2)
+    const i18n = createTestI18n()
+    const wrapper = mount(Chapter2Content, {
+      global: {
+        plugins: [i18n],
+        provide: {
+          scrollState: { activeChapter },
+          prm: { prefersReduced: ref(false) },
+          audio: { holdEraSwitch: vi.fn(), playCurrentEra: vi.fn() },
+        },
+      },
+    })
+
+    // Antes del cruce: no hay overlay
+    expect(document.body.querySelector('.ch2-cin-root')).toBeNull()
+
+    // Simular cruce ch2→ch3
+    activeChapter.value = 3
+    await flushPromises()
+
+    // El overlay debe haberse montado vía Teleport
+    expect(document.body.querySelector('.ch2-cin-root')).not.toBeNull()
+
+    wrapper.unmount()
   })
 })
