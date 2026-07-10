@@ -29,7 +29,7 @@
   (guard JS + @media). El reflejo queda estático (sigue siendo bello quieto).
 -->
 <script setup>
-import { computed, ref, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, ref, inject, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -42,21 +42,23 @@ const chapter = chapters[3]
 const ch3Projects = computed(() => projects.filter((p) => p.chapterEra === 3))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
-// Emblemas clicables — 1 por párrafo de la historia. Plantados en el escenario iter5.
+// Emblemas clicables — 1 por párrafo de la historia. OBJETOS DEL MUNDO (iter2
+// Kingdom): cuerpo silueta ciruela + acento ámbar. Los I-IV están PLANTADOS en
+// el suelo (no flotan); solo el V flota en el cielo del este (sky: true).
 // pos en % relativo a .ch3-content. Cada uno despliega bioParagraphs[idx].
 const ROMAN = ['I', 'II', 'III', 'IV', 'V']
 // Arco muerte→renacer (Rafael 2026-05-28): 1 emblema por párrafo.
-//   I  Flash caído ......... en silueta CONTRA el disco del sol muriendo
-//   II reconstrucción ...... sobre la orilla, entre los estandartes rotos
-//   III estandarte ......... sobre la ciudadela en ruinas
-//   IV orbe creativo ....... ladera derecha de las ruinas
-//   V  HTML5 naciente ...... alto en el cielo del este (el amanecer que viene)
+//   I  Flash caído ......... estela rota con la "F" de brasas, en la orilla oeste
+//   II reconstrucción ...... yunque con filo ámbar, en el campo entre lanzas
+//   III estandarte ......... pendón oscuro con diamante encendido, al pie de las ruinas
+//   IV orbe creativo ....... atardecer capturado en pedestal, ladera este
+//   V  HTML5 naciente ...... estrella-escudo del alba, alto en el cielo del este
 const markers = [
-  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '52%', left: '24%', size: 112 },
-  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '68%', left: '40%', size: 94 },
-  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '50%', left: '60%', size: 98 },
-  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '65%', left: '74%', size: 88 },
-  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '30%', left: '87%', size: 100 },
+  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '72%', left: '12%', size: 104 },
+  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '75%', left: '33%', size: 96 },
+  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '70%', left: '52%', size: 100 },
+  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '74%', left: '72%', size: 90 },
+  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '30%', left: '88%', size: 96, sky: true },
 ]
 
 // Brasas ascendentes — posguerra: pocas, lentas, dolientes
@@ -123,6 +125,29 @@ function goStory(delta) {
 const prm = inject('prm', null)
 const reduced = () => prm?.prefersReduced?.value ?? false
 
+// ── Escena de entrada (ch3 es el chapter LANDING: esto abre el sitio) ─────────
+// Al activarse el chapter por primera vez el mundo se revela: cielo florece,
+// planos suben escalonados, el agua aparece, el título respira y los emblemas
+// se encienden uno a uno. PRM o sin shell (tests): escena completa sin cine.
+const scrollState = inject('scrollState', null)
+const arrived = ref(!scrollState)     // sin shell → visible de entrada
+const cinematic = ref(false)          // true solo cuando la llegada se anima
+
+if (scrollState?.activeChapter) {
+  watch(
+    scrollState.activeChapter,
+    (n) => {
+      if (n === 3 && !arrived.value) {
+        if (!reduced()) cinematic.value = true
+        arrived.value = true
+      }
+    },
+    { immediate: true }
+  )
+} else {
+  arrived.value = true
+}
+
 const parallaxRef = ref(null)
 let raf = 0
 let sx = 0, mx = 0, my = 0
@@ -181,7 +206,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ch3-stage" @scroll="onScroll" @click="spawnRipple">
+  <div
+    class="ch3-stage"
+    :class="{ 'is-waiting': !arrived, 'is-arriving': cinematic }"
+    @scroll="onScroll"
+    @click="spawnRipple"
+  >
     <!-- ── Parallax stack (pinned) ───────────────────────────────────────── -->
     <div ref="parallaxRef" class="ch3-parallax" aria-hidden="true">
       <div class="ch3-layer ch3-layer--sky"></div>
@@ -267,7 +297,7 @@ onBeforeUnmount(() => {
         :key="m.key"
         type="button"
         class="ch3-mark"
-        :class="{ 'is-visited': visited.has(m.key), 'is-active': activeStory === i }"
+        :class="{ 'ch3-mark--sky': m.sky, 'is-visited': visited.has(m.key), 'is-active': activeStory === i }"
         :style="{ top: m.top, left: m.left, '--mk-size': m.size + 'px', '--mk-i': i }"
         :aria-label="`${ROMAN[i]} — ${t('ui.storyPage', { n: i + 1, total: markers.length })}`"
         @click.stop="openStory(i)"
@@ -641,7 +671,9 @@ onBeforeUnmount(() => {
 }
 @keyframes ch3-hint-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
-/* ── Emblemas clicables ──────────────────────────────────────────────────── */
+/* ── Emblemas clicables — objetos del mundo Kingdom ────────────────────────
+ * I-IV plantados en el suelo (sin bob); solo .ch3-mark--sky flota.
+ * Affordance: brasa que respira detrás + placa rúnica con numeral.           */
 .ch3-mark {
   position: absolute;
   z-index: 2;
@@ -654,10 +686,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
-  animation: ch3-mark-float 5s ease-in-out infinite;
-  animation-delay: calc(var(--mk-i, 0) * 0.6s);
   transition: filter 0.2s ease, transform 0.18s ease;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(255,210,140,0.55));
+  filter: drop-shadow(0 3px 8px rgba(8, 5, 16, 0.7));
+}
+.ch3-mark--sky {
+  animation: ch3-mark-float 6s ease-in-out infinite;
+  animation-delay: calc(var(--mk-i, 0) * 0.6s);
 }
 .ch3-mark-img {
   width: 100%;
@@ -667,72 +701,59 @@ onBeforeUnmount(() => {
   image-rendering: crisp-edges;
   display: block;
 }
-/* Glow celestial detrás del emblema — halo blanco-dorado + cyan suave */
+/* Brasa que respira detrás del objeto — cálida, pequeña, del mundo */
 .ch3-mark::before {
   content: '';
   position: absolute;
-  inset: -30%;
+  inset: -14%;
   border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(255,255,255,0.85) 0%,
-    rgba(255,224,150,0.62) 30%,
-    rgba(255,150,70,0.34) 56%,
-    transparent 74%);
-  opacity: 0.85;
+    rgba(255, 190, 110, 0.38) 0%,
+    rgba(255, 150, 70, 0.16) 48%,
+    transparent 72%);
+  opacity: 0.7;
   z-index: -1;
-  animation: ch3-mark-glow 2.6s ease-in-out infinite;
-  animation-delay: calc(var(--mk-i, 0) * 0.6s);
+  animation: ch3-mark-glow 3.4s ease-in-out infinite;
+  animation-delay: calc(var(--mk-i, 0) * 0.7s);
 }
-/* Rayos celestiales rotando lentamente detrás del emblema */
-.ch3-mark::after {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    transparent 0deg, rgba(255,246,214,0.4) 7deg, transparent 15deg,
-    transparent 36deg, rgba(255,246,214,0.34) 43deg, transparent 51deg,
-    transparent 72deg, rgba(255,246,214,0.34) 79deg, transparent 87deg,
-    transparent 108deg, rgba(255,246,214,0.34) 115deg, transparent 123deg,
-    transparent 144deg, rgba(255,246,214,0.34) 151deg, transparent 159deg,
-    transparent 180deg, rgba(255,246,214,0.34) 187deg, transparent 195deg,
-    transparent 360deg);
-  -webkit-mask: radial-gradient(circle, #000 28%, transparent 66%);
-          mask: radial-gradient(circle, #000 28%, transparent 66%);
-  opacity: 0.5;
-  z-index: -2;
-  animation: ch3-mark-rays 22s linear infinite;
+/* La estrella del alba respira en frío */
+.ch3-mark--sky::before {
+  background: radial-gradient(circle,
+    rgba(190, 235, 255, 0.34) 0%,
+    rgba(150, 210, 255, 0.14) 48%,
+    transparent 72%);
 }
-@keyframes ch3-mark-rays { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-/* Numeral romano flotante */
+/* Placa rúnica con el numeral */
 .ch3-mark-num {
   position: absolute;
-  top: -10px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   font-family: 'Cinzel', serif;
   font-weight: 900;
-  font-size: 0.8rem;
-  color: #fff;
-  background: rgba(58, 47, 74, 0.85);
-  border: 1px solid rgba(255, 236, 190, 0.7);
-  border-radius: 999px;
-  padding: 1px 8px;
-  text-shadow: 0 0 6px rgba(120,245,255,0.7);
+  font-size: 0.72rem;
+  color: #e8c187;
+  background: rgba(22, 16, 30, 0.88);
+  border: 1px solid rgba(222, 138, 74, 0.55);
+  border-radius: 3px;
+  padding: 1px 7px;
+  letter-spacing: 0.08em;
   pointer-events: none;
 }
 .ch3-mark:hover,
 .ch3-mark:focus-visible {
-  transform: translate(-50%, -50%) scale(1.12);
-  filter: drop-shadow(0 0 12px rgba(174,243,255,0.95)) drop-shadow(0 6px 14px rgba(26,26,46,0.4));
+  transform: translate(-50%, -52%) scale(1.1);
+  filter: drop-shadow(0 0 14px rgba(255, 190, 110, 0.85)) drop-shadow(0 5px 12px rgba(8, 5, 16, 0.6));
   outline: none;
 }
-.ch3-mark.is-visited { filter: drop-shadow(0 4px 10px rgba(26,26,46,0.3)) saturate(0.85) brightness(0.96); }
-.ch3-mark.is-visited::before { opacity: 0.25; }
-.ch3-mark.is-active::before { opacity: 0.9; }
+.ch3-mark:hover::before,
+.ch3-mark:focus-visible::before { opacity: 1; }
+.ch3-mark.is-visited { filter: drop-shadow(0 3px 8px rgba(8, 5, 16, 0.5)) saturate(0.8) brightness(0.88); }
+.ch3-mark.is-visited::before { opacity: 0.18; }
+.ch3-mark.is-active::before { opacity: 1; }
 
-@keyframes ch3-mark-float { 0%, 100% { margin-top: 0; } 50% { margin-top: -12px; } }
-@keyframes ch3-mark-glow { 0%, 100% { transform: scale(0.9); opacity: 0.55; } 50% { transform: scale(1.12); opacity: 1; } }
+@keyframes ch3-mark-float { 0%, 100% { margin-top: 0; } 50% { margin-top: -8px; } }
+@keyframes ch3-mark-glow { 0%, 100% { transform: scale(0.92); opacity: 0.5; } 50% { transform: scale(1.08); opacity: 0.85; } }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Recuadro pergamino (panel del cuento)
@@ -939,6 +960,59 @@ onBeforeUnmount(() => {
 @keyframes ch3-haze-pulse {
   0%, 100% { opacity: 0.5; }
   50%       { opacity: 0.9; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Escena de entrada — ch3 es el landing: la apertura del sitio.
+ * .is-waiting: mundo a oscuras (aún no se llegó al chapter).
+ * .is-arriving: coreografía de revelado (una sola vez, animation-fill both):
+ *   cielo florece → planos suben escalonados → agua aparece → título respira
+ *   → emblemas se encienden uno a uno.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch3-stage.is-waiting .ch3-layer,
+.ch3-stage.is-waiting .ch3-fx--magic,
+.ch3-stage.is-waiting .ch3-water,
+.ch3-stage.is-waiting .ch3-hint,
+.ch3-stage.is-waiting .ch3-mark { opacity: 0; }
+
+.ch3-stage.is-arriving .ch3-layer--sky {
+  animation: ch3-arrive-fade 1.6s ease backwards, ch3-sky-drift 90s ease-in-out 1.6s infinite alternate;
+}
+.ch3-stage.is-arriving .ch3-fx--magic {
+  animation: ch3-arrive-fade 2s ease 0.4s backwards, ch3-magic-pulse 8s ease-in-out 2.4s infinite;
+}
+.ch3-stage.is-arriving .ch3-layer--far       { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.25s backwards; }
+.ch3-stage.is-arriving .ch3-layer--mountains { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.45s backwards; }
+.ch3-stage.is-arriving .ch3-layer--path      { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.65s backwards; }
+.ch3-stage.is-arriving .ch3-water            { animation: ch3-arrive-fade 1.4s ease 1s backwards; }
+.ch3-stage.is-arriving .ch3-hint-era         { animation: ch3-arrive-fade 0.9s ease 0.9s backwards; }
+.ch3-stage.is-arriving .ch3-hint-title       { animation: ch3-arrive-title 1.3s cubic-bezier(0.16, 0.8, 0.3, 1) 1.05s backwards; }
+.ch3-stage.is-arriving .ch3-hint-cta {
+  animation: ch3-arrive-fade 1s ease 2.1s backwards, ch3-hint-pulse 3s ease-in-out 3.1s infinite;
+}
+.ch3-stage.is-arriving .ch3-mark {
+  animation: ch3-arrive-mark 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards;
+  animation-delay: calc(1.5s + var(--mk-i, 0) * 0.18s);
+}
+.ch3-stage.is-arriving .ch3-mark--sky {
+  animation: ch3-arrive-mark 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards,
+             ch3-mark-float 6s ease-in-out 2.6s infinite;
+  animation-delay: calc(1.5s + var(--mk-i, 0) * 0.18s), 2.6s;
+}
+
+@keyframes ch3-arrive-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ch3-arrive-rise {
+  from { opacity: 0; transform: translate3d(0, 5%, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes ch3-arrive-title {
+  from { opacity: 0; letter-spacing: 0.22em; transform: translateY(14px); }
+  to   { opacity: 1; letter-spacing: 0.04em; transform: translateY(0); }
+}
+@keyframes ch3-arrive-mark {
+  0%   { opacity: 0; transform: translate(-50%, -44%) scale(0.55); }
+  62%  { opacity: 1; }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

@@ -155,4 +155,21 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
     expect(CH3_SOURCE).toMatch(/@scroll="onScroll"/)
     expect(CH3_SOURCE).toMatch(/function openStory/)
   })
+
+  // ── T7: escena de entrada (ch3 = landing del sitio) ────────────────────────
+  it('T7 entrada: estados is-waiting/is-arriving + watch de activeChapter + fill backwards', () => {
+    expect(CH3_SOURCE).toMatch(/is-waiting/)
+    expect(CH3_SOURCE).toMatch(/is-arriving/)
+    expect(CH3_SOURCE).toMatch(/scrollState\.activeChapter/)
+    expect(CH3_SOURCE).toMatch(/ch3-arrive-mark/)
+    // backwards (no both): al terminar la coreografía el transform vuelve al
+    // parallax de puntero (--mx/--sx) en vez de quedar congelado
+    expect(CH3_SOURCE).not.toMatch(/is-arriving[^}]*animation:[^;]*\bboth\b/)
+  })
+
+  it('T7 entrada: sin scroll shell (tests) la escena está completa — sin is-waiting', () => {
+    const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-waiting')
+    expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-arriving')
+  })
 })
