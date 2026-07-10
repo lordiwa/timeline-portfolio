@@ -180,8 +180,10 @@ watch(
       // Canvas anchor inicial — se aplica cuando Phaser terminó boot y creó el <canvas>.
       // 'ready' es el evento de Phaser.Game que indica boot completo (canvas existe en DOM).
       // Con autoCenter:NO_CENTER Phaser no aplica margins; applyCanvasAnchor controla position.
+      // events.once?.() guard: los mocks de tests proveen events.on pero no once — sin el
+      // guard cada mount emitía un unhandled rejection que ponía la suite en exit 1.
       const capturedGame = game.value
-      capturedGame.events.once('ready', () => {
+      capturedGame.events.once?.('ready', () => {
         applyCanvasAnchor(capturedGame.scale.zoom)
       })
     } else if (v !== 6 && game.value) {
