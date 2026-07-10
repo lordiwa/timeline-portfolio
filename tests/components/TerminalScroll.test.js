@@ -9,6 +9,12 @@
 // - T7 PRM branch: prefersReduced=true → typed text aparece instant sin char-by-char
 // - T8 lifecycle pause: activeChapter cambia a 1 → cycle pausa (no más mutación de img)
 // - T9 no repeat consecutivo: mock Math.random → 6 ciclos sin repetir programa consecutivo
+//
+// Cobertura (T10-T13 — "El Experimento" viñeta 2026-07-10):
+// - T10 experiment trigger: .terminal-exp-line aparece en DOM tras 2 programas del reel
+// - T11 experiment solo 1x: tras finalizar no re-dispara; reel reanuda normalmente
+// - T12 PRM abrevia: con prefersReduced=true el experimento completo termina en <5.5s desde trigger
+// - T13 abort on chapter change: salir de ch0 durante el experiment limpia el DOM y resetea a BANNER
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -230,6 +236,124 @@ describe('TerminalScroll.vue', () => {
       for (let i = 1; i < slugsSeen.length; i++) {
         expect(slugsSeen[i]).not.toBe(slugsSeen[i - 1])
       }
+    })
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T10-T13 — "El Experimento" viñeta DOS (memoria real Rafael, 2026-07-10)
+  //
+  // Timing PRM (prefersReduced=true) con Math.random mockeado [0.1, 0.4, 0.7]
+  // → siempre picks california(0), tim(3), outworld(6) — ninguno tiene bootImg.
+  // - Banner: 100ms
+  // - Por programa (no-win95): IDLE(100)+PROMPT_CWD(50)+LOADING(50)+PROGRAM(2000)+EXIT(50)+CLS(50) = 2300ms
+  // - 2 programas: 100 + 2×2300 = 4700ms → experimento dispara
+  // - Experimento total PRM: ~3930ms → termina en t≈8630ms
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('T10-T13 — El Experimento viñeta (fork bomb infantil)', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      // Mock Math.random para picks predecibles sin bootImg (california/tim/outworld)
+      let callCount = 0
+      vi.spyOn(Math, 'random').mockImplementation(() => {
+        callCount++
+        const seq = [0.1, 0.4, 0.7, 0.1, 0.4, 0.7, 0.1, 0.4]
+        return seq[(callCount - 1) % seq.length] ?? 0.5
+      })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    })
+
+    it('T10 experiment trigger: .terminal-exp-line aparece en DOM tras 2 programas (t≈5500ms)', async () => {
+      const { wrapper } = mountTerminal({ activeChapter: 0, prefersReduced: true })
+
+      // A t=5500ms: experimento arrancó en 4700ms, lleva ~800ms corriendo.
+      // Con 80ms por línea → ~10 líneas de fase 1+2 empujadas.
+      await vi.advanceTimersByTimeAsync(5500)
+      await flushPromises()
+
+      const expLines = wrapper.findAll('.terminal-exp-line')
+      expect(expLines.length).toBeGreaterThan(0)
+
+      // Contenido auténtico DOS: COPY CON, LAB1, file(s) copied, etc.
+      const texts = expLines.map((el) => el.text())
+      expect(
+        texts.some(
+          (t) =>
+            t.includes('COPY') ||
+            t.includes('LAB') ||
+            t.includes('file(s) copied') ||
+            t.includes('MD '),
+        ),
+      ).toBe(true)
+    })
+
+    it('T11 experiment solo 1x: tras finalizar, reel reanuda y no hay más .terminal-exp-line', async () => {
+      const { wrapper } = mountTerminal({ activeChapter: 0, prefersReduced: true })
+
+      // t=14000ms: experimento termina en ~8630ms; después reel continúa sin re-disparar.
+      await vi.advanceTimersByTimeAsync(14000)
+      await flushPromises()
+
+      // No deben quedar líneas del experimento (experimentLines vaciado al terminar)
+      const expLines = wrapper.findAll('.terminal-exp-line')
+      expect(expLines.length).toBe(0)
+
+      // El reel debe haber reanudado — hay img de programa visible (PROGRAM state)
+      // o el terminal está en una fase intermedia del ciclo (typed lines visibles).
+      const img = wrapper.find('.terminal-program-img')
+      const typedVisible = wrapper.findAll('.terminal-typed').some((el) => el.isVisible() && el.text().length > 0)
+      expect(img.exists() || typedVisible).toBe(true)
+    })
+
+    it('T12 PRM abrevia: experimento completo termina en <5.5s desde trigger (t≈8630ms < t=10000ms)', async () => {
+      const { wrapper } = mountTerminal({ activeChapter: 0, prefersReduced: true })
+
+      // Si experimento terminó correctamente, a t=10000ms no habrá .terminal-exp-line
+      // y el reel habrá reanudado (no seguimos en EXPERIMENT state).
+      await vi.advanceTimersByTimeAsync(10000)
+      await flushPromises()
+
+      const expLines = wrapper.findAll('.terminal-exp-line')
+      expect(expLines.length).toBe(0)
+
+      // Verificar que el reel está corriendo (no colgado en un estado fantasma)
+      const blackout = wrapper.find('.terminal-blackout')
+      const img = wrapper.find('.terminal-program-img')
+      const typed = wrapper.findAll('.terminal-typed')
+      const banner = wrapper.findAll('.terminal-line').filter((l) => l.isVisible())
+      // Alguno de estos debe ser verdadero: hay img, hay blackout, hay typed text, o hay banner
+      expect(img.exists() || blackout.exists() || typed.some((el) => el.isVisible()) || banner.length === 4).toBe(true)
+    })
+
+    it('T13 abort on chapter change: salir de ch0 durante experiment limpia DOM y muestra banner', async () => {
+      const { wrapper, activeChapterRef } = mountTerminal({
+        activeChapter: 0,
+        prefersReduced: true,
+      })
+
+      // Avanzar a mid-experiment (t=5500ms → algunas líneas en DOM)
+      await vi.advanceTimersByTimeAsync(5500)
+      await flushPromises()
+      expect(wrapper.findAll('.terminal-exp-line').length).toBeGreaterThan(0)
+
+      // Salir del chapter — stopCycle() debe limpiar todo
+      activeChapterRef.value = 1
+      await flushPromises()
+
+      // Avanzar más: el experiment abortado NO debe seguir mutando el DOM
+      await vi.advanceTimersByTimeAsync(5000)
+      await flushPromises()
+
+      // Limpieza completa: sin líneas del experimento
+      expect(wrapper.findAll('.terminal-exp-line').length).toBe(0)
+
+      // Banner restaurado (state = BANNER tras stopCycle)
+      const bannerLines = wrapper.findAll('.terminal-line')
+      const visibleBanner = bannerLines.filter((l) => l.isVisible())
+      expect(visibleBanner.length).toBe(4)
     })
   })
 })

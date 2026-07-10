@@ -2,18 +2,23 @@
   TerminalScroll.vue — Era-signature component ch0 (Terminal 1995).
 
   Phase 6 refresh 2026-05-14: DOS demo reel auto-rotativo.
+  2026-07-10: viñeta "El Experimento" — fork bomb infantil de Rafael, memoria real.
 
   Comportamiento:
   - BANNER inicial (one-time): muestra "Microsoft(R) MS-DOS(R) Version 6.22" + copyright + prompt
     con keyframes CSS reveal staggered (legacy, 4 .terminal-line spans).
   - Tras el banner: cycle auto-rotativo IDLE → TYPING_CD → PROMPT_CWD → TYPING_EXEC →
     LOADING (blackout) → PROGRAM (pixel art overlay) → EXIT (blackout) → CLS → next random program.
+  - Tras 2 programas: viñeta "El Experimento" (1× por visita a ch0) — script data-driven
+    [{text, cls}] con fases: SETUP → LOOP_BAT → FLOOD → CRASH → REBOOT → CLEANUP.
+    Implementada como runner async independiente (runExperiment) invocado desde runCycle.
   - 3 programas iniciales (California Games II, Warcraft Orcs & Humans, Windows 95), elegidos
     al azar sin repeat consecutivo. Pixel art en /assets/ch0-{game,os}-*.png.
   - Lifecycle: cycle activo solo cuando ch0 es activeChapter (pattern Chapter6Content).
     Pause cuando scrollea fuera; reset al banner cuando vuelve.
   - PRM: bajo prefers-reduced-motion el typing salta a texto completo (sin char-by-char),
     delays acortados a ~50ms cada uno, image display 2s en lugar de 6s.
+    La viñeta completa se abrevia a ~4s (flood 4 líneas, sin crash flicker).
 
   ART-07 reinterpretación: el guard original prohibía pixel art *ambiental* (background ch0).
   Las imágenes ch0-game-* / ch0-os-* son *contenido narrativo dinámico de program-launch*,
@@ -72,11 +77,18 @@ const programs = [
 ]
 
 // State machine.
-// BANNER → IDLE → TYPING_CD → PROMPT_CWD → TYPING_EXEC → LOADING → PROGRAM → EXIT → CLS → IDLE…
+// BANNER → IDLE → TYPING_CD → PROMPT_CWD → TYPING_EXEC → LOADING → [BOOT →] PROGRAM → EXIT → CLS → IDLE…
+// Viñeta: IDLE…(2 programs)… → EXPERIMENT → CRASH_BLACKOUT → EXPERIMENT(reboot/cleanup) → CLS → IDLE…
 const state = ref('BANNER')
 const currentProgramIdx = ref(0)
 const typedCd = ref('')
 const typedExec = ref('')
+
+// "El Experimento" — viñeta data-driven (memoria real Rafael, 1995).
+// Script runner pushes lines to experimentLines; template renders them while state=EXPERIMENT.
+const experimentLines = ref([])   // [{text: string, cls?: string}]
+const isCrashFlicker = ref(false) // intensified crash flicker toggle (false under PRM)
+let experimentDone = false        // session flag — resets in stopCycle() (once per ch0 visit)
 
 // Timers tracking — Set para cleanup atómico en pause/unmount/HMR.
 const timers = new Set()
@@ -126,14 +138,191 @@ async function typeString(str, setter, charDelayMs) {
 // Cada step verifica `myVersion === cycleVersion` antes de mutar state.
 let cycleVersion = 0
 
+// ─────────────────────────────────────────────────────────────────────────────
+// El Experimento — viñeta scriptada, memoria real Rafael (1995).
+// Guión auténtico DOS 6.22. Disparada 1× por visita a ch0, después de 2 programas.
+//
+// Diseño: script data-driven [{text, cls}] empujado por un runner async.
+// Los dos últimos estados de la máquina de estados que se añaden son:
+//   EXPERIMENT    — muestra experimentLines (phases 1-3, reboot, cleanup)
+//   CRASH_BLACKOUT — blackout tras el crash de garbage ASCII
+//
+// PRM: sin flicker, flood a 4 líneas, delays mínimos (~4s total).
+// ─────────────────────────────────────────────────────────────────────────────
+async function runExperiment(myVersion) {
+  if (myVersion !== cycleVersion || activeChapter.value !== 0) return
+
+  experimentDone = true
+  state.value = 'EXPERIMENT'
+  experimentLines.value = []
+  isCrashFlicker.value = false
+
+  const prm = prefersReduced.value
+
+  function alive() {
+    return myVersion === cycleVersion && activeChapter.value === 0
+  }
+
+  // Pushes a single line and waits. Keeps last 22 lines (DOS scroll simulation).
+  async function pushLine(text, cls = '') {
+    if (!alive()) return
+    experimentLines.value.push({ text, cls })
+    if (experimentLines.value.length > 22) {
+      experimentLines.value = experimentLines.value.slice(-22)
+    }
+    await delay(prm ? 80 : 300)
+  }
+
+  // ── PHASE 1: Crear archivo de 1 byte ──────────────────────────────────────
+  await pushLine('C:\\> COPY CON A.DAT')
+  if (!alive()) return
+  await pushLine('1', 'terminal-exp-dim')
+  if (!alive()) return
+  await pushLine('^Z', 'terminal-exp-dim')
+  if (!alive()) return
+  await delay(prm ? 30 : 120)
+  if (!alive()) return
+  experimentLines.value.push({ text: '        1 file(s) copied', cls: '' })
+  await delay(prm ? 80 : 300)
+  if (!alive()) return
+
+  // ── PHASE 2: Carpetas y copias ────────────────────────────────────────────
+  const setupLines = [
+    ['C:\\> MD LAB1', ''],
+    ['C:\\> MD LAB2', ''],
+    ['C:\\> COPY A.DAT LAB1', ''],
+    ['        1 file(s) copied', ''],
+    ['C:\\> COPY A.DAT LAB2', ''],
+    ['        1 file(s) copied', ''],
+    ['C:\\> COPY LAB1\\A.DAT LAB1\\B.DAT', ''],
+    ['        1 file(s) copied', ''],
+  ]
+  for (const [text, cls] of setupLines) {
+    await pushLine(text, cls)
+    if (!alive()) return
+  }
+
+  // ── PHASE 3: CLONE.BAT — el loop fatal ───────────────────────────────────
+  const batLines = [
+    ['C:\\> COPY CON CLONE.BAT', ''],
+    [':LOOP', 'terminal-exp-dim'],
+    ['COPY LAB1\\*.DAT LAB2', 'terminal-exp-dim'],
+    ['COPY LAB2\\*.DAT LAB1', 'terminal-exp-dim'],
+    ['GOTO LOOP', 'terminal-exp-dim'],
+    ['^Z', 'terminal-exp-dim'],
+  ]
+  for (const [text, cls] of batLines) {
+    await pushLine(text, cls)
+    if (!alive()) return
+  }
+  await delay(prm ? 30 : 120)
+  if (!alive()) return
+  experimentLines.value.push({ text: '        1 file(s) copied', cls: '' })
+  await delay(prm ? 80 : 300)
+  if (!alive()) return
+  experimentLines.value.push({ text: 'C:\\> CLONE', cls: '' })
+  await delay(prm ? 80 : 300)
+  if (!alive()) return
+
+  // ── PHASE 4: FLOOD — copias acelerando (delay decreciente) ───────────────
+  const floodCount = prm ? 4 : 16
+  for (let i = 0; i < floodCount; i++) {
+    if (!alive()) return
+    experimentLines.value.push({ text: '        1 file(s) copied', cls: 'terminal-exp-flood' })
+    if (experimentLines.value.length > 22) {
+      experimentLines.value = experimentLines.value.slice(-22)
+    }
+    // Accelerating: 280ms → ~15ms over 16 steps (last few nearly instant)
+    const d = prm ? 55 : Math.max(15, 280 - i * 17)
+    await delay(d)
+  }
+  if (!alive()) return
+
+  // ── PHASE 5: CRASH — garbage ASCII CP437 + flicker ───────────────────────
+  // Flicker intensificado solo fuera de PRM (clase CSS en el wrapper).
+  if (!prm) isCrashFlicker.value = true
+  experimentLines.value.push({ text: '▒▓█╬÷░╠╣║╗╝╚╔═╦╧╤╪┼', cls: 'terminal-exp-crash' })
+  await delay(prm ? 50 : 130)
+  if (!alive()) return
+  experimentLines.value.push({ text: '╬▓▒░█║╠═╣╝╚╔╗╤╪╦┼÷  ', cls: 'terminal-exp-crash' })
+  await delay(prm ? 50 : 85)
+  if (!alive()) return
+  experimentLines.value.push({ text: '█░▒▓╬═║╠╣╝╚╔╗╪┼÷╦╧  ', cls: 'terminal-exp-crash' })
+  await delay(prm ? 50 : 170)
+  if (!alive()) return
+  isCrashFlicker.value = false
+
+  // Freeze → blackout
+  state.value = 'CRASH_BLACKOUT'
+  await delay(prm ? 300 : 1100)
+  if (!alive()) return
+
+  // ── PHASE 6: REBOOT ───────────────────────────────────────────────────────
+  state.value = 'EXPERIMENT'
+  experimentLines.value = []
+
+  const rebootSeq = [
+    ['Starting MS-DOS...', 'terminal-exp-reboot'],
+    ['HIMEM is testing extended memory... done.', 'terminal-exp-reboot'],
+    ['MS-DOS is now running in High Memory Area.', 'terminal-exp-reboot'],
+    ['C:\\>', ''],
+  ]
+  for (const [text, cls] of rebootSeq) {
+    if (!alive()) return
+    experimentLines.value.push({ text, cls })
+    await delay(prm ? 60 : 230)
+  }
+  if (!alive()) return
+  await delay(prm ? 150 : 700)
+  if (!alive()) return
+
+  // ── PHASE 7: CLEANUP — la lección ────────────────────────────────────────
+  const cleanupSeq = [
+    ['C:\\> DEL LAB1\\*.*', ''],
+    ['All files in directory will be deleted!', 'terminal-exp-warning'],
+    ['Are you sure (Y/N)?Y', ''],
+    ['C:\\> DEL LAB2\\*.*', ''],
+    ['All files in directory will be deleted!', 'terminal-exp-warning'],
+    ['Are you sure (Y/N)?Y', ''],
+    ['C:\\> DELTREE /Y LAB1', ''],
+    ['Deleting lab1...', 'terminal-exp-dim'],
+    ['C:\\> DELTREE /Y LAB2', ''],
+    ['Deleting lab2...', 'terminal-exp-dim'],
+    ['C:\\> DEL CLONE.BAT', ''],
+  ]
+  for (const [text, cls] of cleanupSeq) {
+    if (!alive()) return
+    experimentLines.value.push({ text, cls })
+    if (experimentLines.value.length > 22) {
+      experimentLines.value = experimentLines.value.slice(-22)
+    }
+    await delay(prm ? 80 : 280)
+  }
+  if (!alive()) return
+  await delay(prm ? 250 : 900)
+  if (!alive()) return
+
+  // Volver al reel
+  state.value = 'CLS'
+  experimentLines.value = []
+  isCrashFlicker.value = false
+}
+
 async function runCycle() {
   const myVersion = ++cycleVersion
+  let localProgramCount = 0
 
   // Esperar reveal staggered del banner antes de arrancar el primer ciclo.
   await delay(prefersReduced.value ? 100 : 3500)
   if (myVersion !== cycleVersion || activeChapter.value !== 0) return
 
   while (myVersion === cycleVersion && activeChapter.value === 0) {
+    // Viñeta trigger: después de 2 programas, 1× por visita a ch0.
+    if (localProgramCount >= 2 && !experimentDone) {
+      await runExperiment(myVersion)
+      if (myVersion !== cycleVersion || activeChapter.value !== 0) break
+    }
+
     const idx = pickNextProgram()
     currentProgramIdx.value = idx
     const program = programs[idx]
@@ -188,6 +377,8 @@ async function runCycle() {
     typedCd.value = ''
     typedExec.value = ''
     await delay(prefersReduced.value ? 50 : 300)
+
+    localProgramCount++
   }
 }
 
@@ -198,6 +389,9 @@ function stopCycle() {
   typedCd.value = ''
   typedExec.value = ''
   lastProgramIdx = -1
+  experimentDone = false   // reset para la siguiente visita a ch0
+  experimentLines.value = []
+  isCrashFlicker.value = false
 }
 
 // Lifecycle: arranca al mount si ch0 ya está activo (deep-link ?ch=0).
@@ -229,19 +423,28 @@ if (import.meta.hot) {
 // Computed flags para template.
 const currentProgram = computed(() => programs[currentProgramIdx.value])
 const showBanner = computed(() => state.value === 'BANNER')
+const showExperiment = computed(() => state.value === 'EXPERIMENT')
 const showCdLine = computed(() =>
   ['TYPING_CD', 'PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'BOOT', 'PROGRAM', 'EXIT'].includes(state.value),
 )
 const showCwdLine = computed(() =>
   ['PROMPT_CWD', 'TYPING_EXEC', 'LOADING', 'BOOT', 'PROGRAM', 'EXIT'].includes(state.value),
 )
-const showBlackout = computed(() => state.value === 'LOADING' || state.value === 'EXIT')
+// Blackout durante LOADING/EXIT (reel normal) y CRASH_BLACKOUT (viñeta).
+const showBlackout = computed(
+  () => state.value === 'LOADING' || state.value === 'EXIT' || state.value === 'CRASH_BLACKOUT',
+)
 const showBootImage = computed(() => state.value === 'BOOT')
 const showProgramImage = computed(() => state.value === 'PROGRAM')
+// Cursor solo cuando no hay blackout, no hay img de programa, y no estamos en la viñeta.
+const showCursor = computed(() => !showBlackout.value && !showProgramImage.value && !showExperiment.value)
 </script>
 
 <template>
-  <div class="terminal-scroll" role="presentation">
+  <div
+    :class="['terminal-scroll', { 'terminal-scroll--crash': isCrashFlicker }]"
+    role="presentation"
+  >
     <pre class="terminal-output"
       ><span
         v-for="(line, idx) in bannerLines"
@@ -250,14 +453,21 @@ const showProgramImage = computed(() => state.value === 'PROGRAM')
         class="terminal-line"
         :style="{ animationDelay: line.delay + 's' }"
       >{{ t(line.key) }}</span><span
-        v-show="!showBanner && showCdLine"
+        v-if="showExperiment"
+        class="terminal-exp-block"
+      ><span
+          v-for="(line, i) in experimentLines"
+          :key="'exp-' + i"
+          :class="['terminal-typed', 'terminal-exp-line', line.cls || '']"
+        >{{ line.text }}</span></span><span
+        v-show="!showBanner && !showExperiment && showCdLine"
         class="terminal-typed"
       >C:\&gt; {{ typedCd }}</span><span
-        v-show="!showBanner && showCwdLine"
+        v-show="!showBanner && !showExperiment && showCwdLine"
         class="terminal-typed"
       >
 C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
-        v-show="!showBlackout && !showProgramImage"
+        v-show="showCursor"
         class="terminal-cursor"
         aria-hidden="true"
       >█</span></pre>
@@ -336,6 +546,11 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   animation: phosphor-flicker 8s steps(1) infinite;
 }
 
+/* ── Crash flicker intensificado durante la viñeta (no PRM) ── */
+.terminal-scroll--crash::after {
+  animation: crash-flicker 0.12s steps(1) infinite;
+}
+
 @keyframes phosphor-flicker {
   0%   { opacity: 1; }
   6%   { opacity: 0.988; }
@@ -350,6 +565,13 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   88.3%{ opacity: 0.987; }
   88.7%{ opacity: 1; }
   100% { opacity: 1; }
+}
+
+@keyframes crash-flicker {
+  0%  { opacity: 1; }
+  33% { opacity: 0.35; }
+  66% { opacity: 0.82; }
+  100%{ opacity: 1; }
 }
 
 .terminal-output {
@@ -381,7 +603,7 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   text-shadow: 0 0 8px color-mix(in srgb, var(--c-fg) 70%, transparent);
 }
 
-/* Blackout layer durante LOADING/EXIT — black instant (era DOS, no fade) */
+/* Blackout layer durante LOADING/EXIT/CRASH_BLACKOUT — black instant (era DOS, no fade) */
 .terminal-blackout {
   position: absolute;
   inset: 0;
@@ -399,6 +621,40 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
   image-rendering: pixelated;
   background: #000000;
   z-index: 2;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * "El Experimento" — viñeta styles
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* Wrapper transparente del bloque de experimentLines (display: contents) */
+.terminal-exp-block {
+  display: contents;
+}
+
+/* Contenido del BAT (líneas internas, ^Z) — gris para evocar stdin */
+.terminal-exp-dim {
+  color: var(--c-accent); /* #aaaaaa VGA light gray */
+}
+
+/* Líneas del flood — blanco puro, sin diferencia visual (son mensajes normales DOS) */
+.terminal-exp-flood {
+  color: var(--c-fg);
+}
+
+/* Garbage ASCII del crash — tinte rojo para señalizar corrupción */
+.terminal-exp-crash {
+  color: #ff5555;
+}
+
+/* Líneas de reboot — ámbar tipo BIOS, diferencia del prompt normal */
+.terminal-exp-reboot {
+  color: #cccc44;
+}
+
+/* "All files in directory will be deleted!" — advertencia DOS, amarillo */
+.terminal-exp-warning {
+  color: #ffff55;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -430,6 +686,9 @@ C:{{ currentProgram.dir }}&gt; {{ typedExec }}</span><span
     opacity: 1;
   }
   .terminal-scroll::after {
+    animation: none;
+  }
+  .terminal-scroll--crash::after {
     animation: none;
   }
 }
