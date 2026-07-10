@@ -62,155 +62,133 @@ const TRACK_0 = {
   ],
 }
 
-// ─── ch1 · 2001 · GeoCities · Ska-Revival · 152bpm ──────────────────────────
-// Progresión C-G-Am-F (I-V-vi-IV) en Do mayor, 8 compases × 4/4 = 32 beats.
-// Espíritu third-wave ska celebratorio (Save Ferris, No Doubt) — melodía original.
-// Estructura: skank en offbeat + bajo caminante + lead call-response + hats offbeat.
-// C4=60 D4=62 E4=64 F4=65 G4=67 A4=69 B4=71
-// C5=72 D5=74 E5=76 F5=77 G5=79 A5=81
-// C2=36 D2=38 E2=40 F2=41 G2=43 A2=45 B2=47 C3=48 D3=50 E3=52
+// ─── ch1 · 2001 · GeoCities · Punk-Rock Skate · 170bpm ──────────────────────
+// "Niño rebelde descubriendo que es bueno en algo que para otros es difícil."
+// Estilo: Ramones/blink-182/Millencolin era skate 2001. Crudo, rápido, directo.
+// Progresión I-IV-V punk en Do mayor: C(0-7) | F(8-15) | G(16-19) | F(20-23) | C(24-27) | G(28-31)
+// Power chords = raíz+quinta (sin tercera): C4+G4, F4+C5, G4+D5.
+// C4=60 G4=67 | F4=65 C5=72 | G4=67 D5=74 | C2=36 F2=41 G2=43
 const TRACK_1 = {
-  bpm: 152,
+  bpm: 170,
   loopBeats: 32,
   channels: [
     {
-      // Skank: pulse staccato SOLO en los offbeats — firma del ska third-wave.
-      // Acorde completo (raíz+3ª+5ª) en cada "and" del beat.
-      // C(cp1-2): C4-E4-G4 | G(cp3-4): G4-B4-D5 | Am(cp5-6): A4-C5-E5 | F(cp7-8): F4-A4-C5
-      voice: 'pulse',
-      duty: 0.25,
+      // Power chords driving: saw filtrado, down-picking en corcheas constantes.
+      // Raíz+quinta simultáneas en cada corchea (t=0, 0.5, 1, 1.5...).
+      // Acentos en downbeats (vel más alta) vs. upbeats (vel más baja).
+      // Saw con filter ~2200Hz: más gritón y agresivo que pulse — tipo guitarra distorsionada.
+      voice: 'saw',
+      gainDb: -13,
+      attack: 0.003,
+      decay: 0.38,
+      filter: { freq: 2200, Q: 1.8 },
+      notes: [
+        // C power (beats 0-7, 2 compases, 16 ataques en corcheas)
+        ...Array.from({ length: 16 }, (_, i) => [
+          { t: i * 0.5,        dur: 0.42, midi: 60, vel: i % 2 === 0 ? 0.90 : 0.75 },  // C4
+          { t: i * 0.5,        dur: 0.42, midi: 67, vel: i % 2 === 0 ? 0.80 : 0.65 },  // G4
+        ]).flat(),
+        // F power (beats 8-15, 2 compases)
+        ...Array.from({ length: 16 }, (_, i) => [
+          { t: 8 + i * 0.5,   dur: 0.42, midi: 65, vel: i % 2 === 0 ? 0.90 : 0.75 },  // F4
+          { t: 8 + i * 0.5,   dur: 0.42, midi: 72, vel: i % 2 === 0 ? 0.80 : 0.65 },  // C5
+        ]).flat(),
+        // G power (beats 16-19, 1 compás)
+        ...Array.from({ length: 8 }, (_, i) => [
+          { t: 16 + i * 0.5,  dur: 0.42, midi: 67, vel: i % 2 === 0 ? 0.90 : 0.75 },  // G4
+          { t: 16 + i * 0.5,  dur: 0.42, midi: 74, vel: i % 2 === 0 ? 0.80 : 0.65 },  // D5
+        ]).flat(),
+        // F power (beats 20-23, 1 compás — turnaround)
+        ...Array.from({ length: 8 }, (_, i) => [
+          { t: 20 + i * 0.5,  dur: 0.42, midi: 65, vel: i % 2 === 0 ? 0.85 : 0.70 },  // F4
+          { t: 20 + i * 0.5,  dur: 0.42, midi: 72, vel: i % 2 === 0 ? 0.75 : 0.60 },  // C5
+        ]).flat(),
+        // C power (beats 24-27, 1 compás)
+        ...Array.from({ length: 8 }, (_, i) => [
+          { t: 24 + i * 0.5,  dur: 0.42, midi: 60, vel: i % 2 === 0 ? 0.90 : 0.75 },  // C4
+          { t: 24 + i * 0.5,  dur: 0.42, midi: 67, vel: i % 2 === 0 ? 0.80 : 0.65 },  // G4
+        ]).flat(),
+        // G power (beats 28-31, turnaround final — más fuerte, empuja al loop)
+        ...Array.from({ length: 8 }, (_, i) => [
+          { t: 28 + i * 0.5,  dur: 0.42, midi: 67, vel: i % 2 === 0 ? 0.95 : 0.80 },  // G4
+          { t: 28 + i * 0.5,  dur: 0.42, midi: 74, vel: i % 2 === 0 ? 0.85 : 0.70 },  // D5
+        ]).flat(),
+      ],
+    },
+    {
+      // Bajo punk: tri en corcheas, solo raíz — corre, no camina.
+      // Sigue los cambios de power chord al pie de la letra. Vel constante, crudo.
+      voice: 'tri',
       gainDb: -15,
       attack: 0.005,
-      decay: 0.18,
+      decay: 0.35,
       notes: [
-        // C mayor (offbeats 0.5–7.5)
-        ...steps(0.5, 1, 8, { dur: 0.22, midi: 60, vel: 0.65 }),  // C4
-        ...steps(0.5, 1, 8, { dur: 0.22, midi: 64, vel: 0.60 }),  // E4
-        ...steps(0.5, 1, 8, { dur: 0.22, midi: 67, vel: 0.55 }),  // G4
-        // G mayor (offbeats 8.5–15.5)
-        ...steps(8.5, 1, 8, { dur: 0.22, midi: 67, vel: 0.65 }),  // G4
-        ...steps(8.5, 1, 8, { dur: 0.22, midi: 71, vel: 0.60 }),  // B4
-        ...steps(8.5, 1, 8, { dur: 0.22, midi: 74, vel: 0.55 }),  // D5
-        // Am (offbeats 16.5–23.5)
-        ...steps(16.5, 1, 8, { dur: 0.22, midi: 69, vel: 0.65 }), // A4
-        ...steps(16.5, 1, 8, { dur: 0.22, midi: 72, vel: 0.60 }), // C5
-        ...steps(16.5, 1, 8, { dur: 0.22, midi: 76, vel: 0.55 }), // E5
-        // F mayor (offbeats 24.5–31.5)
-        ...steps(24.5, 1, 8, { dur: 0.22, midi: 65, vel: 0.65 }), // F4
-        ...steps(24.5, 1, 8, { dur: 0.22, midi: 69, vel: 0.60 }), // A4
-        ...steps(24.5, 1, 8, { dur: 0.22, midi: 72, vel: 0.55 }), // C5
+        ...steps(0,  0.5, 16, { dur: 0.42, midi: 36, vel: 0.80 }),  // C2 (beats 0-7)
+        ...steps(8,  0.5, 16, { dur: 0.42, midi: 41, vel: 0.80 }),  // F2 (beats 8-15)
+        ...steps(16, 0.5,  8, { dur: 0.42, midi: 43, vel: 0.80 }),  // G2 (beats 16-19)
+        ...steps(20, 0.5,  8, { dur: 0.42, midi: 41, vel: 0.75 }),  // F2 (beats 20-23)
+        ...steps(24, 0.5,  8, { dur: 0.42, midi: 36, vel: 0.80 }),  // C2 (beats 24-27)
+        ...steps(28, 0.5,  8, { dur: 0.42, midi: 43, vel: 0.85 }),  // G2 (beats 28-31)
       ],
     },
     {
-      // Bajo caminante tri: negras con notas de paso conectando raíces — no solo repetición.
-      // C→G: asciende por la tríada, luego nota de paso cromática.
-      // G→Am: walking descendente con sensible B.
-      // Am→F: notas de paso diatónicas.
-      // F→C: dominante G como pivote de vuelta al tónico.
-      voice: 'tri',
-      gainDb: -16,
-      attack: 0.01,
-      decay: 0.75,
-      notes: [
-        // C (beats 0-7): C E G A | G E G B (anticipa G)
-        { t: 0,  dur: 0.85, midi: 36, vel: 0.80 },  // C2
-        { t: 1,  dur: 0.85, midi: 40, vel: 0.70 },  // E2
-        { t: 2,  dur: 0.85, midi: 43, vel: 0.70 },  // G2
-        { t: 3,  dur: 0.85, midi: 45, vel: 0.65 },  // A2 (paso)
-        { t: 4,  dur: 0.85, midi: 43, vel: 0.75 },  // G2
-        { t: 5,  dur: 0.85, midi: 40, vel: 0.65 },  // E2 (paso)
-        { t: 6,  dur: 0.85, midi: 43, vel: 0.70 },  // G2 (anticipa raíz G)
-        { t: 7,  dur: 0.85, midi: 47, vel: 0.65 },  // B2 (sensible de G)
-        // G (beats 8-15): G B D C | B A G A (anticipa Am)
-        { t: 8,  dur: 0.85, midi: 43, vel: 0.80 },  // G2
-        { t: 9,  dur: 0.85, midi: 47, vel: 0.70 },  // B2
-        { t: 10, dur: 0.85, midi: 50, vel: 0.70 },  // D3 (quinta de G)
-        { t: 11, dur: 0.85, midi: 48, vel: 0.65 },  // C3 (paso descendente)
-        { t: 12, dur: 0.85, midi: 47, vel: 0.75 },  // B2
-        { t: 13, dur: 0.85, midi: 45, vel: 0.65 },  // A2 (paso → Am)
-        { t: 14, dur: 0.85, midi: 47, vel: 0.70 },  // B2 (nota cromática)
-        { t: 15, dur: 0.85, midi: 45, vel: 0.65 },  // A2 (anticipa Am)
-        // Am (beats 16-23): A C E D | C A G F (anticipa F)
-        { t: 16, dur: 0.85, midi: 45, vel: 0.80 },  // A2
-        { t: 17, dur: 0.85, midi: 48, vel: 0.70 },  // C3
-        { t: 18, dur: 0.85, midi: 52, vel: 0.70 },  // E3 (quinta de Am)
-        { t: 19, dur: 0.85, midi: 50, vel: 0.65 },  // D3 (paso)
-        { t: 20, dur: 0.85, midi: 48, vel: 0.75 },  // C3
-        { t: 21, dur: 0.85, midi: 45, vel: 0.65 },  // A2
-        { t: 22, dur: 0.85, midi: 43, vel: 0.70 },  // G2 (paso cromático hacia F)
-        { t: 23, dur: 0.85, midi: 41, vel: 0.65 },  // F2 (anticipa F)
-        // F (beats 24-31): F A C D | C A G D (dominante de vuelta a C)
-        { t: 24, dur: 0.85, midi: 41, vel: 0.80 },  // F2
-        { t: 25, dur: 0.85, midi: 45, vel: 0.70 },  // A2
-        { t: 26, dur: 0.85, midi: 48, vel: 0.70 },  // C3 (quinta de F)
-        { t: 27, dur: 0.85, midi: 50, vel: 0.65 },  // D3 (paso)
-        { t: 28, dur: 0.85, midi: 48, vel: 0.75 },  // C3
-        { t: 29, dur: 0.85, midi: 45, vel: 0.65 },  // A2
-        { t: 30, dur: 0.85, midi: 43, vel: 0.70 },  // G2 (dominante → cicla a C)
-        { t: 31, dur: 0.85, midi: 38, vel: 0.65 },  // D2 (sensible cromática)
-      ],
-    },
-    {
-      // Lead "sección de vientos": pulse duty 0.5, timbre brillante tipo trompeta/fiddle.
-      // Melodía ORIGINAL — cuatro frases call-response con silencios entre frases.
-      // Contorno ascendente hasta A5, bounce celebratorio, cierra resolviendo en C5.
-      // Frase A (cp1-2): E5 G5 A5 G5 | E5 D5 C5~ [silencio cp2 beat4]
-      // Frase B (cp3-4): B4 D5 G5 D5 | B4 A4 G4~ [silencio cp4 beat4]
-      // Frase C (cp5-6): C5 E5 A5 G5 | F5 E5 D5~ [silencio cp6 beat4]
-      // Frase D (cp7-8): G5 A5 G5 E5 | D5 C5~~ [silencio 2 tiempos → loop]
-      voice: 'pulse',
-      duty: 0.5,
-      gainDb: -13,
-      attack: 0.01,
-      decay: 0.75,
-      filter: { freq: 3200, Q: 0.8 },
-      notes: [
-        // Frase A — call (compás 1)
-        { t: 0,  dur: 0.85, midi: 76, vel: 0.85 },  // E5
-        { t: 1,  dur: 0.85, midi: 79, vel: 0.90 },  // G5
-        { t: 2,  dur: 0.85, midi: 81, vel: 0.95 },  // A5 (cima)
-        { t: 3,  dur: 0.85, midi: 79, vel: 0.80 },  // G5
-        // Frase A — response (compás 2, silencio en beat 7)
-        { t: 4,  dur: 0.85, midi: 76, vel: 0.80 },  // E5
-        { t: 5,  dur: 0.85, midi: 74, vel: 0.75 },  // D5
-        { t: 6,  dur: 1.80, midi: 72, vel: 0.85 },  // C5 (ligada, respira en beat 7)
-        // Frase B — call (compás 3)
-        { t: 8,  dur: 0.85, midi: 71, vel: 0.80 },  // B4
-        { t: 9,  dur: 0.85, midi: 74, vel: 0.85 },  // D5
-        { t: 10, dur: 0.85, midi: 79, vel: 0.90 },  // G5
-        { t: 11, dur: 0.85, midi: 74, vel: 0.75 },  // D5
-        // Frase B — response (compás 4, silencio en beat 15)
-        { t: 12, dur: 0.85, midi: 71, vel: 0.75 },  // B4
-        { t: 13, dur: 0.85, midi: 69, vel: 0.70 },  // A4
-        { t: 14, dur: 1.80, midi: 67, vel: 0.80 },  // G4 (ligada, respira en beat 15)
-        // Frase C — call (compás 5)
-        { t: 16, dur: 0.85, midi: 72, vel: 0.85 },  // C5
-        { t: 17, dur: 0.85, midi: 76, vel: 0.90 },  // E5
-        { t: 18, dur: 0.85, midi: 81, vel: 0.95 },  // A5 (cima retomada)
-        { t: 19, dur: 0.85, midi: 79, vel: 0.80 },  // G5
-        // Frase C — response (compás 6, silencio en beat 23)
-        { t: 20, dur: 0.85, midi: 77, vel: 0.80 },  // F5
-        { t: 21, dur: 0.85, midi: 76, vel: 0.75 },  // E5
-        { t: 22, dur: 1.80, midi: 74, vel: 0.85 },  // D5 (ligada, respira en beat 23)
-        // Frase D — resolución (compás 7)
-        { t: 24, dur: 0.85, midi: 79, vel: 0.85 },  // G5
-        { t: 25, dur: 0.85, midi: 81, vel: 0.90 },  // A5 (retoma la cima)
-        { t: 26, dur: 0.85, midi: 79, vel: 0.85 },  // G5
-        { t: 27, dur: 0.85, midi: 76, vel: 0.80 },  // E5
-        // Frase D — cadencia final (compás 8, 2 tiempos de silencio antes del loop)
-        { t: 28, dur: 0.85, midi: 74, vel: 0.80 },  // D5
-        { t: 29, dur: 2.85, midi: 72, vel: 0.90 },  // C5 (larga, resuelve al tónico)
-      ],
-    },
-    {
-      // Hats offbeat noise: refuerzan el skank, carácter ska percusivo
+      // Kick drum: noise lowpass muy grave (100Hz), beats 1 y 3 de cada compás.
+      // En loopBeats=32 (8 compases): kick en 0,2,4,...,30 — 16 kicks totales.
       voice: 'noise',
-      gainDb: -26,
+      gainDb: -16,
+      attack: 0.001,
+      decay: 0.18,
+      filter: { freq: 100, Q: 0.6 },
+      notes: [
+        ...steps(0, 2, 16, { dur: 0.20, midi: 60, vel: 0.92 }),
+      ],
+    },
+    {
+      // Snare: noise resonante (lowpass 1800Hz, Q=4 → pico de "crack").
+      // Beats 2 y 4 de cada compás: 1,3,5,...,31 — 16 snares. Backbeat punk clásico.
+      voice: 'noise',
+      gainDb: -18,
       attack: 0.002,
-      decay: 0.08,
+      decay: 0.12,
+      filter: { freq: 1800, Q: 4 },
+      notes: [
+        ...steps(1, 2, 16, { dur: 0.12, midi: 60, vel: 0.80 }),
+      ],
+    },
+    {
+      // Hats en corcheas: 64 ataques, constante, imparable — energía skate-punk.
+      voice: 'noise',
+      gainDb: -24,
+      attack: 0.002,
+      decay: 0.06,
       filter: { freq: 7000, Q: 0.5 },
       notes: [
-        ...steps(0.5, 1, 32, { dur: 0.07, midi: 60, vel: 0.55 }),
+        ...steps(0, 0.5, 64, { dur: 0.07, midi: 60, vel: 0.55 }),
+      ],
+    },
+    {
+      // Hook de lead: pulse, aparece SOLO en los últimos 8 beats (compases 7-8).
+      // Corto y descarado — tipo intro de guitarra punk, no melodía continua.
+      // Compás 7 (sobre C): ascendente G4→E5 con pausa.
+      // Compás 8 (sobre G): G4→G5 apoteósico, nota larga que cierra el loop.
+      voice: 'pulse',
+      duty: 0.5,
+      gainDb: -12,
+      attack: 0.005,
+      decay: 0.30,
+      notes: [
+        // Compás 7 — riff ascendente sobre C (beats 24-27)
+        { t: 24.0, dur: 0.42, midi: 67, vel: 0.85 },  // G4
+        { t: 24.5, dur: 0.42, midi: 69, vel: 0.80 },  // A4
+        { t: 25.0, dur: 0.42, midi: 72, vel: 0.90 },  // C5
+        { t: 25.5, dur: 0.42, midi: 74, vel: 0.85 },  // D5
+        { t: 26.0, dur: 0.85, midi: 76, vel: 0.95 },  // E5 (aguanta, respira en beat 27)
+        // Compás 8 — hook resolutivo sobre G (beats 28-31)
+        { t: 28.0, dur: 0.42, midi: 67, vel: 0.88 },  // G4
+        { t: 28.5, dur: 0.42, midi: 71, vel: 0.82 },  // B4
+        { t: 29.0, dur: 0.42, midi: 74, vel: 0.90 },  // D5
+        { t: 29.5, dur: 0.42, midi: 79, vel: 0.95 },  // G5 (cima)
+        { t: 30.0, dur: 1.80, midi: 76, vel: 0.90 },  // E5 (larga, prepara el loop)
       ],
     },
   ],
