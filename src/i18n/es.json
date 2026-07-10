@@ -191,5 +191,27 @@
   "seo": {
     "title": "Rafael Matovelle · Full Stack & QA",
     "description": "Portafolio de Rafael Matovelle: ingeniero full stack y QA con raíces en gamedev y tres décadas de tecnología."
+  },
+  "audio": {
+    "soundOn": "Sonido activado — haz clic para silenciar",
+    "soundOff": "Sonido silenciado — haz clic para activar",
+    "soundLocked": "Haz clic para activar el sonido",
+    "toggle": "Alternar sonido"
+  },
+  "boot": {
+    "startWithSound": "INICIAR CON SONIDO",
+    "startMuted": "INICIAR SILENCIADO",
+    "soundHint": "↑↓ para elegir, ENTER o clic para confirmar",
+    "returnVisitorOn": "SOUND: ON   [M] para silenciar",
+    "returnVisitorOff": "SOUND: OFF  [S] para activar",
+    "pressAnyKey": "PRESIONA CUALQUIER TECLA PARA CONTINUAR",
+    "skipLabel": "SALTAR ▸"
+  },
+  "dialup": {
+    "title": "Conexión a GeoCities",
+    "dialing": "Marcando 555-GEOCITIES...",
+    "verifying": "Verificando nombre de usuario y contraseña...",
+    "connected": "Conectado a 56,000 bps",
+    "cancel": "Cancelar"
   }
 }

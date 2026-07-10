@@ -191,5 +191,27 @@
   "seo": {
     "title": "Rafael Matovelle · Full Stack & QA Engineer",
     "description": "Portfolio of Rafael Matovelle: full stack and QA engineer with gamedev roots and three decades in tech."
+  },
+  "audio": {
+    "soundOn": "Sound on — click to mute",
+    "soundOff": "Sound muted — click to enable",
+    "soundLocked": "Click to enable sound",
+    "toggle": "Toggle sound"
+  },
+  "boot": {
+    "startWithSound": "START WITH SOUND",
+    "startMuted": "START MUTED",
+    "soundHint": "↑↓ to choose, ENTER or click to confirm",
+    "returnVisitorOn": "SOUND: ON   [M] to mute",
+    "returnVisitorOff": "SOUND: OFF  [S] to enable",
+    "pressAnyKey": "PRESS ANY KEY TO CONTINUE",
+    "skipLabel": "SKIP ▸"
+  },
+  "dialup": {
+    "title": "Connect to GeoCities",
+    "dialing": "Dialing 555-GEOCITIES...",
+    "verifying": "Verifying username and password...",
+    "connected": "Connected at 56,000 bps",
+    "cancel": "Cancel"
   }
 }

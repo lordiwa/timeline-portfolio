@@ -33,9 +33,11 @@ import StickyTimeline from './components/StickyTimeline.vue'
 import LangToggle from './components/LangToggle.vue'
 import ContactHUD from './components/ContactHUD.vue'
 import GlobalMantra from './components/GlobalMantra.vue'
+import SoundToggle from './components/SoundToggle.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
+import { useAudio } from './composables/useAudio'
 import { seoConfig, buildPersonSchema } from './config/seo'
 
 const shellRef = ref(null)
@@ -51,8 +53,17 @@ function setShellRef(el) {
 const scrollState = useScrollState(shellRef)
 const prm = usePRM()
 
+// ─── Motor de audio procedural ───────────────────────────────────────────────
+// Instanciar ANTES de provide para que BootScreen y SoundToggle puedan inyectar.
+// En entorno test, los imports de engine/sequencer/tracks son mocks o no-op —
+// el BootScreen se auto-omite via IS_TEST_ENV guard.
+const audio = useAudio()
+audio.initAudioWatcher(scrollState.activeChapter)
+
 provide('scrollState', scrollState)
 provide('prm', prm)
+// 'audio' provisto para BootScreen (unlock + playCurrentEra) y SoundToggle (muted, toggle)
+provide('audio', audio)
 
 // Plan 02-04 (W3): useBackgroundMorph — motor de crossfade 2 capas sincronizado
 // con el avatar swap (200ms default, 150ms PRM). Provisto como 'bgMorph' para
@@ -169,6 +180,8 @@ useHead({
   <StickyTimeline />
   <LangToggle />
   <ContactHUD />
+  <!-- SoundToggle: botón HUD bottom-left. z-index 40. -->
+  <SoundToggle />
   <!-- GlobalMantra: signature cross-chapter (Rafael 2026-05-14 "en todas las fechas"). -->
   <GlobalMantra />
   <!-- Velo de viaje temporal: pulso radial en --c-accent de la era entrante.
