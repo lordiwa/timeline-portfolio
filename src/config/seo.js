@@ -13,7 +13,7 @@
 // NO modificar siteUrl hasta Phase 6 deploy (T-SITE-URL-LEAK aceptado).
 
 export const seoConfig = {
-  siteUrl: 'https://SITE_URL',   // Phase 6 — Rafael confirma dominio
+  siteUrl: 'https://multiverse-portfolio.web.app',   // Phase 6 — dominio Firebase Hosting (deploy 2026-07-10)
 
   // Person schema (JSON-LD) — RESEARCH Pattern 2 verbatim
   name: 'Rafael Matovelle',
