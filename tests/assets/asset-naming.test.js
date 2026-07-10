@@ -77,7 +77,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch4-near.png (partículas/fragmentos próximos, transparente — primer plano c0)
 //     Reemplazan al ch4-bg.png iter2 (movido a old/ vía §6.5).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|far|mountains|path|window|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading)|drone-[ab]|platform|rafael|structures-t)\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|far|mountains|path|window|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic|tim|myst|stunts|outworld|doom|prince)|os-(win95|win95-loading)|drone-[ab]|platform|rafael|structures-t)\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

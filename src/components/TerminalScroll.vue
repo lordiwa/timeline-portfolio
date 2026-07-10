@@ -55,7 +55,7 @@ const prefersReduced = injectedPrm?.prefersReduced ?? ref(false)
 // (blackout) y PROGRAM (final). Útil para Windows 95 que tiene splash boot antes del desktop.
 const programs = [
   { slug: 'california', dir: '\\GAMES\\CALGAMES',  exe: 'CALGAMES.EXE', img: '/assets/ch0-game-california.png' },
-  { slug: 'warcraft',   dir: '\\GAMES\\WARCRAFT', exe: 'WAR.EXE',      img: '/assets/ch0-game-warcraft.png' },
+  { slug: 'warcraft',   dir: '\\GAMES\\WARCRAFT',  exe: 'WAR.EXE',      img: '/assets/ch0-game-warcraft.png' },
   {
     slug: 'win95',
     dir: '\\WINDOWS',
@@ -63,6 +63,12 @@ const programs = [
     img: '/assets/ch0-os-win95.png',
     bootImg: '/assets/ch0-os-win95-loading.png',
   },
+  { slug: 'tim',      dir: '\\GAMES\\TIM',      exe: 'TIM.EXE',    img: '/assets/ch0-game-tim.png' },
+  { slug: 'myst',     dir: '\\GAMES\\MYST',     exe: 'MYST.EXE',   img: '/assets/ch0-game-myst.png' },
+  { slug: 'stunts',   dir: '\\GAMES\\STUNTS',   exe: 'STUNTS.EXE', img: '/assets/ch0-game-stunts.png' },
+  { slug: 'outworld', dir: '\\GAMES\\OUTWORLD', exe: 'OUT.EXE',    img: '/assets/ch0-game-outworld.png' },
+  { slug: 'doom',     dir: '\\GAMES\\DOOM',     exe: 'DOOM.EXE',   img: '/assets/ch0-game-doom.png' },
+  { slug: 'prince',   dir: '\\GAMES\\POP',      exe: 'PRINCE.EXE', img: '/assets/ch0-game-prince.png' },
 ]
 
 // State machine.

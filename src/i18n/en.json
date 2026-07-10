@@ -19,6 +19,24 @@
           "win95": {
             "alt": "Pixel art screen of the Windows 95 desktop — teal cyan background, Start button bottom-left, taskbar, My Computer and Recycle Bin icons",
             "bootAlt": "Pixel art loading screen of Windows 95 — light blue sky with clouds, Windows logo fragmented into orange/green/blue/yellow quadrants dissolving into pixels, Microsoft Windows 95 text"
+          },
+          "tim": {
+            "alt": "Pixel art screen of The Incredible Machine (1992) — maze of pulleys, gears and catapults, colorful VGA palette"
+          },
+          "myst": {
+            "alt": "Pixel art screen of Myst title (1993) — surreal island with dock, giant clockwork gear and library, purple and orange sunset sky, VGA 256-color palette"
+          },
+          "stunts": {
+            "alt": "Pixel art screen of Stunts (1990) — red sports car launching off a loop ramp, early flat-shaded 3D graphics, VGA 16-color palette"
+          },
+          "outworld": {
+            "alt": "Pixel art screen of Out of This World / Another World (1991) — dark blue alien landscape, protagonist silhouette facing a black beast, minimalist cinematic polygon style"
+          },
+          "doom": {
+            "alt": "Pixel art screen of Doom title (1993) — space marine with shotgun surrounded by demons, infernal red sky on Mars, VGA 256-color palette"
+          },
+          "prince": {
+            "alt": "Pixel art screen of Prince of Persia (1990) — Persian palace dungeon with torches, sword-wielding prince in side view, stone floors, VGA 16-color palette"
           }
         }
       }
@@ -45,7 +63,10 @@
         "contact": "CONTACT"
       }
     },
-    "3": { "title": "Web 2.0: UX + dev + lead", "era": "Web 2.0" },
+    "3": {
+      "title": "Web 2.0: UX + dev + lead",
+      "era": "Web 2.0"
+    },
     "4": {
       "title": "AR/VR: own company + Metrodigi",
       "era": "AR/VR",
@@ -87,13 +108,27 @@
   "avatar": {
     "ariaTemplate": "Rafael's avatar — chapter {chapter} active",
     "busts": {
-      "0": { "alt": "Rafael at 11 wearing a Jurassic Park cap, in front of a CRT monitor, command-line era (1995)" },
-      "1": { "alt": "Rafael as a shaved-head teenager at 17, on a 90s HTML page with marquees and starry background (2001)" },
-      "2": { "alt": "Rafael at 25 with a shaved head, gameplay programmer in the Flash era, colorful vector banner (2009)" },
-      "3": { "alt": "Rafael at 29 with a full beard and tousled hair, web 2.0 era designer and team lead (2013)" },
-      "4": { "alt": "Rafael at 32 with a full beard, AR/VR era with floating cyan holographic panels (2015-2018)" },
-      "5": { "alt": "Rafael at 38 with a medium beard, modern minimalist era, frontend lead (2022-2023)" },
-      "6": { "alt": "Rafael at 42 with a distinguished beard, QA + AI convergence era, pixel art space ambient (2026)" }
+      "0": {
+        "alt": "Rafael at 11 wearing a Jurassic Park cap, in front of a CRT monitor, command-line era (1995)"
+      },
+      "1": {
+        "alt": "Rafael as a shaved-head teenager at 17, on a 90s HTML page with marquees and starry background (2001)"
+      },
+      "2": {
+        "alt": "Rafael at 25 with a shaved head, gameplay programmer in the Flash era, colorful vector banner (2009)"
+      },
+      "3": {
+        "alt": "Rafael at 29 with a full beard and tousled hair, web 2.0 era designer and team lead (2013)"
+      },
+      "4": {
+        "alt": "Rafael at 32 with a full beard, AR/VR era with floating cyan holographic panels (2015-2018)"
+      },
+      "5": {
+        "alt": "Rafael at 38 with a medium beard, modern minimalist era, frontend lead (2022-2023)"
+      },
+      "6": {
+        "alt": "Rafael at 42 with a distinguished beard, QA + AI convergence era, pixel art space ambient (2026)"
+      }
     }
   },
   "bio": {
