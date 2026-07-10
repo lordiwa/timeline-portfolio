@@ -13,6 +13,10 @@
 
 const STORAGE_KEY = 'rm-sound'
 
+// Volumen maestro por defecto — deliberadamente bajo: la música es ambiente,
+// no protagonista. 1.0 resultaba invasivo (feedback Rafael 2026-07-10).
+const MASTER_VOLUME = 0.4
+
 let _ctx = null
 let _masterGain = null
 let _unlocked = false
@@ -28,7 +32,7 @@ function ensureContext() {
 
   _ctx = new AudioContext()
   _masterGain = _ctx.createGain()
-  _masterGain.gain.value = isMuted() ? 0 : 1
+  _masterGain.gain.value = isMuted() ? 0 : MASTER_VOLUME
   _masterGain.connect(_ctx.destination)
 
   // Suspender cuando el tab queda en background; reanudar al volver.
@@ -72,7 +76,7 @@ function setMuted(bool) {
   const now = ctx.currentTime
   masterGain.gain.cancelScheduledValues(now)
   masterGain.gain.setValueAtTime(masterGain.gain.value, now)
-  masterGain.gain.setTargetAtTime(bool ? 0 : 1, now, 0.05)
+  masterGain.gain.setTargetAtTime(bool ? 0 : MASTER_VOLUME, now, 0.05)
   localStorage.setItem(STORAGE_KEY, bool ? 'off' : 'on')
 }
 

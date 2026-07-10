@@ -68,11 +68,11 @@ describe('engine — setMuted()', () => {
     expect(masterGain.gain.setTargetAtTime).toHaveBeenCalledWith(0, expect.any(Number), 0.05)
   })
 
-  it('T9: setMuted(false) llama setTargetAtTime con valor 1 en master gain', async () => {
+  it('T9: setMuted(false) llama setTargetAtTime con el volumen maestro (0.4) en master gain', async () => {
     await engine.unlock()
     const masterGain = engine.getMasterGain()
     engine.setMuted(false)
-    expect(masterGain.gain.setTargetAtTime).toHaveBeenCalledWith(1, expect.any(Number), 0.05)
+    expect(masterGain.gain.setTargetAtTime).toHaveBeenCalledWith(0.4, expect.any(Number), 0.05)
   })
 
   it('T10: setMuted(true) persiste "off" en localStorage clave rm-sound', async () => {
