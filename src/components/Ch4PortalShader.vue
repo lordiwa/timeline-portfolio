@@ -238,8 +238,9 @@ const FRAG_SRC = /* glsl */ `
     float univId   = mix(u_universeIdN, u_universeId, notSwept);
 
     // ── FLAGS DE UNIVERSO (sin branches GLSL → multiplicar) ────────────────
-    float isTron = 1.0 - smoothstep(0.0, 0.35, abs(univId - 1.0)); // 1 cuando univId≈1
-    float isVoid = 1.0 - smoothstep(0.0, 0.35, abs(univId - 3.0)); // 1 cuando univId≈3
+    float isTron  = 1.0 - smoothstep(0.0, 0.35, abs(univId - 1.0)); // 1 cuando univId≈1
+    float isVapor = 1.0 - smoothstep(0.0, 0.35, abs(univId - 2.0)); // 1 cuando univId≈2
+    float isVoid  = 1.0 - smoothstep(0.0, 0.35, abs(univId - 3.0)); // 1 cuando univId≈3
 
     // ── LENSING + WARP ─────────────────────────────────────────────────────
     float lensStr = 0.048 / (dist * dist + 0.055);
@@ -278,6 +279,32 @@ const FRAG_SRC = /* glsl */ `
     // Grid dibujado en UV lenteada → se distorsiona cerca del portal
     float grid = gridLines(lensedG) * isTron;
 
+    // ── SUELO HOLOGRÁFICO EN PERSPECTIVA ─────────────────────────────────────
+    // Solo en la mitad inferior (uv.y > FLOOR_HORIZON). Proyección perspectiva
+    // correcta: fT crece de 0 (horizonte) a 1 (borde inferior). fInvT = 1/fT da
+    // la escala de compresión: líneas muy juntas en el horizonte, anchas abajo.
+    // U0 synthwave: tenue cian. U1 Tron: intenso. U2: ondulado. U3: roto+glitch.
+    float FLOOR_H = 0.60;
+    float fT      = clamp((uv.y - FLOOR_H) / (1.0 - FLOOR_H), 0.0, 1.0);
+    float fOn     = step(0.002, fT);
+    float fInvT   = min(1.0 / max(fT, 0.006), 90.0);
+    // Espacio de suelo: X perspectivo + Z scrolleando hacia el portal
+    float fX      = (uv.x - 0.5) * fInvT;
+    float fZ      = fInvT - u_time * 0.10;
+    // U2 vaporwave: onda horizontal que deforma el suelo (grid ondulado)
+    fX           += sin(fZ * 2.7 + u_time * 0.50) * 0.09 * isVapor;
+    // Grid: líneas verticales convergentes + horizontales con recesión perspectiva
+    float fgX     = abs(fract(fX * 5.5) - 0.5);
+    float fgZ     = abs(fract(fZ * 3.0) - 0.5);
+    float fGrid   = max(smoothstep(0.046, 0.008, fgX), smoothstep(0.046, 0.008, fgZ));
+    // U3 void: celdas aleatorias eliminadas (suelo roto/fragmentado)
+    float fGlSeed = hash(vec2(floor(fX * 5.5), floor(u_time * 2.0)));
+    fGrid        *= 1.0 - isVoid * step(0.58, fGlSeed);
+    // Fade: aparece suavemente al horizonte, se atenúa en el borde inferior
+    float fFade   = smoothstep(0.0, 0.16, fT) * smoothstep(1.0, 0.72, fT);
+    // Intensidad por universo: U1 Tron es el símbolo (bright), U0 tenue
+    float fInt    = 0.18 + isTron * 0.40 + isVapor * 0.08;
+
     // ── VÓRTICE ESPIRAL ─────────────────────────────────────────────────────
     float spiralTwist = u_time * 0.9 + 3.2 / (dist + 0.048);
     float vortexAngle = angle + spiralTwist * 0.55;
@@ -302,6 +329,9 @@ const FRAG_SRC = /* glsl */ `
 
     // Grid Tron (U1) — color del vórtice del universo
     col += colVortex * grid * 0.75;
+
+    // Suelo holográfico — ancla el vacío a un espacio VR habitable
+    col += colVortex * fGrid * fOn * fFade * fInt;
 
     // Vórtice coloreado por universo
     col += colVortex * vortex * (0.55 + 0.45 * pulse);
@@ -328,7 +358,8 @@ const FRAG_SRC = /* glsl */ `
       + ring    * 0.85
       + core    * 0.75
       + grid    * 0.70
-      + warpEdge * 1.10,  // el flash es opaco
+      + fGrid * fOn * fFade * 0.62  // suelo holográfico
+      + warpEdge * 1.10,            // el flash es opaco
       0.0, 1.0
     );
 

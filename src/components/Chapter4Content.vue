@@ -148,6 +148,16 @@ onBeforeUnmount(() => {
       </div>
       <div class="ch4-layer ch4-layer--character">
         <div class="ch4-character-art"></div>
+        <!-- Brillo del visor VR — resplandor cian pulsante donde están las gafas del sprite -->
+        <div class="ch4-visor-glow" aria-hidden="true"></div>
+        <!-- Streaming de datos: partículas que suben del portal hacia el personaje -->
+        <div class="ch4-data-stream" aria-hidden="true">
+          <div class="ch4-ds ch4-ds--a"></div>
+          <div class="ch4-ds ch4-ds--b"></div>
+          <div class="ch4-ds ch4-ds--c"></div>
+          <div class="ch4-ds ch4-ds--d"></div>
+          <div class="ch4-ds ch4-ds--e"></div>
+        </div>
       </div>
       <div class="ch4-layer ch4-layer--near"></div>
       <!--
@@ -436,6 +446,88 @@ onBeforeUnmount(() => {
   50%       { opacity: 0.40; transform: translate(-50%, -50%) scale(1.03); }
 }
 
+/* ── Visor glow del personaje VR ─────────────────────────────────────────── */
+/* El sprite de ch4-character.webp tiene las gafas VR en la parte alta derecha.
+   background-position: 73% 32%; background-size: auto 50% → el visor está ~72%L ~20%T.
+   mix-blend-mode:screen sobre el sprite → el glow se superpone sin tapar el arte. */
+.ch4-visor-glow {
+  position: absolute;
+  left: 71%;
+  top: 22%;
+  width: 3.8%;
+  aspect-ratio: 2.6 / 1;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 255, 255, 0.80);
+  border-radius: 2px;
+  box-shadow:
+    0 0 6px 2px rgba(0, 255, 255, 0.70),
+    0 0 18px 5px rgba(0, 255, 255, 0.35),
+    0 0 40px 10px rgba(0, 255, 255, 0.12);
+  mix-blend-mode: screen;
+  animation: ch4-visor-pulse 2.4s ease-in-out infinite;
+  z-index: 3;
+  pointer-events: none;
+}
+@keyframes ch4-visor-pulse {
+  0%, 100% { opacity: 0.45; width: 3.8%; }
+  35% { opacity: 0.90; width: 4.2%; }
+  70% { opacity: 0.55; width: 3.9%; }
+}
+
+/* ── Streaming de datos: del portal al personaje ─────────────────────────── */
+/* Partículas-línea que suben desde el portal (81%, 75%) hasta el personaje.
+   Trayectoria diagonal: de abajo-derecha a arriba-izquierda. */
+.ch4-data-stream {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.ch4-ds {
+  position: absolute;
+  width: 1px;
+  height: 22px;
+  background: linear-gradient(to top, transparent 0%, rgba(0,255,255,0.85) 50%, transparent 100%);
+  border-radius: 1px;
+  animation: ch4-ds-rise var(--ds-dur, 2.2s) ease-in var(--ds-delay, 0s) infinite;
+  opacity: 0;
+}
+/* Posiciones: trayectoria portal (81%,75%) → personaje (71%,22%) — path diagonal */
+.ch4-ds--a { left: 80%; top: 74%; --ds-dur: 1.9s; --ds-delay: 0.0s; }
+.ch4-ds--b { left: 78%; top: 70%; --ds-dur: 2.3s; --ds-delay: 0.7s; }
+.ch4-ds--c { left: 76%; top: 64%; --ds-dur: 2.0s; --ds-delay: 1.4s; }
+.ch4-ds--d { left: 74%; top: 55%; --ds-dur: 2.5s; --ds-delay: 0.3s; }
+.ch4-ds--e { left: 73%; top: 44%; --ds-dur: 1.8s; --ds-delay: 1.1s; }
+@keyframes ch4-ds-rise {
+  0%   { opacity: 0;    transform: translateY(0); }
+  15%  { opacity: 0.75; }
+  80%  { opacity: 0.60; }
+  100% { opacity: 0;    transform: translateY(-28px); }
+}
+
+/* Universe-reactive visor y stream */
+.ch4-layout[data-universe="1"] .ch4-visor-glow {
+  background: rgba(0, 255, 77, 0.85);
+  box-shadow: 0 0 6px 2px rgba(0,255,77,0.70), 0 0 18px 5px rgba(0,255,77,0.35), 0 0 40px 10px rgba(0,255,77,0.12);
+}
+.ch4-layout[data-universe="1"] .ch4-ds {
+  background: linear-gradient(to top, transparent 0%, rgba(0,255,77,0.85) 50%, transparent 100%);
+}
+.ch4-layout[data-universe="2"] .ch4-visor-glow {
+  background: rgba(230, 102, 255, 0.85);
+  box-shadow: 0 0 6px 2px rgba(230,102,255,0.70), 0 0 18px 5px rgba(230,102,255,0.35), 0 0 40px 10px rgba(230,102,255,0.12);
+}
+.ch4-layout[data-universe="2"] .ch4-ds {
+  background: linear-gradient(to top, transparent 0%, rgba(230,102,255,0.85) 50%, transparent 100%);
+}
+.ch4-layout[data-universe="3"] .ch4-visor-glow {
+  background: rgba(204, 0, 20, 0.85);
+  box-shadow: 0 0 6px 2px rgba(204,0,20,0.70), 0 0 18px 5px rgba(204,0,20,0.35), 0 0 40px 10px rgba(204,0,20,0.12);
+}
+.ch4-layout[data-universe="3"] .ch4-ds {
+  background: linear-gradient(to top, transparent 0%, rgba(204,0,20,0.85) 50%, transparent 100%);
+}
+
 /* ── Partículas holográficas — dots 2px, rombos wireframe, cruces ──────────── */
 .ch4-particles {
   position: absolute;
@@ -519,21 +611,33 @@ onBeforeUnmount(() => {
   100% { background-position: 0 7%; }
 }
 
-/* ── Viñeta de lente VR — bordes oscuros como óptica de headset ──────────── */
-/* Elipse oval (no círculo): imita la forma de las lentes de Oculus Rift CV1.
-   Sutil en U0-U2, ligeramente más marcada en U3 Void para dar angustia. */
+/* ── Viñeta binocular VR — dos oculares + nariz central + bordes ─────────── */
+/* Dos elipses laterales oscurecen los bordes de cada "ojo".
+   Un strip vertical central sutil simula la nariz del headset.
+   Tiras horizontales superiores e inferiores completan el marco de visor.
+   Resultado: se siente que miras a través de un Oculus Rift CV1. */
 .ch4-vr-vignette {
   position: absolute;
   inset: 0;
   z-index: 6;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 70% 58% at 50% 50%,
-    transparent 32%,
-    rgba(0, 0, 6, 0.18) 55%,
-    rgba(0, 0, 6, 0.52) 75%,
-    rgba(0, 0, 8, 0.88) 95%
-  );
+  background:
+    /* Nariz / división central binocular */
+    radial-gradient(ellipse 7% 75% at 50% 52%, rgba(0,0,8,0.55) 0%, transparent 100%),
+    /* Ocular izquierdo — borde oscuro */
+    radial-gradient(ellipse 44% 65% at 30% 52%, transparent 46%, rgba(0,0,8,0.88) 90%),
+    /* Ocular derecho — borde oscuro */
+    radial-gradient(ellipse 44% 65% at 70% 52%, transparent 46%, rgba(0,0,8,0.88) 90%),
+    /* Banda superior e inferior del visor */
+    radial-gradient(ellipse 100% 55% at 50% 50%, transparent 40%, rgba(0,0,8,0.78) 100%);
+}
+/* U3 Void: vignette más opresiva para reforzar la sensación de vacío */
+.ch4-layout[data-universe="3"] .ch4-vr-vignette {
+  background:
+    radial-gradient(ellipse 7% 75% at 50% 52%, rgba(8,0,0,0.65) 0%, transparent 100%),
+    radial-gradient(ellipse 44% 65% at 30% 52%, transparent 40%, rgba(8,0,0,0.92) 90%),
+    radial-gradient(ellipse 44% 65% at 70% 52%, transparent 40%, rgba(8,0,0,0.92) 90%),
+    radial-gradient(ellipse 100% 55% at 50% 50%, transparent 36%, rgba(8,0,0,0.85) 100%);
 }
 
 /* ── HUD era-auténtico 2015 — indicadores estilo Oculus Rift CV1 ─────────── */
@@ -818,6 +922,9 @@ onBeforeUnmount(() => {
   /* HUD y glifos: sin transiciones bajo PRM */
   .ch4-hud-tl, .ch4-hud-tr, .ch4-hud-bl, .ch4-hud-br,
   .ch4-hud-accent { transition: none !important; }
+  /* Visor y stream: sin animación, sin flash */
+  .ch4-visor-glow { animation: none !important; opacity: 0.35 !important; }
+  .ch4-ds { display: none !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────
