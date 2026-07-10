@@ -34,6 +34,7 @@ import LangToggle from './components/LangToggle.vue'
 import ContactHUD from './components/ContactHUD.vue'
 import GlobalMantra from './components/GlobalMantra.vue'
 import SoundToggle from './components/SoundToggle.vue'
+import BootScreen from './components/BootScreen.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
@@ -173,6 +174,10 @@ useHead({
        BackgroundLayers: position:fixed, z-index:-1, pointer-events:none (no interfiere con tab/click).
        LangToggle: position:fixed top-right. ContactHUD: position:fixed bottom-right. Ambos z-index:40.
        ContactHUD es invariante a chapter (D3-10) — análogo a LangToggle (Phase 2 W1). -->
+  <!-- BootScreen: overlay z-index máximo, primer hijo visible.
+       Se auto-omite en entorno test (IS_TEST guard en onMounted).
+       Llama engine.unlock() + audio.playCurrentEra() al elegir S/M. -->
+  <BootScreen />
   <BackgroundLayers />
   <SkipLink />
   <StickyAvatar />
