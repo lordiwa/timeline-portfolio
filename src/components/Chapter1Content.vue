@@ -94,7 +94,7 @@ const oldGifs = [
           </tr>
           <tr>
             <td>🌐 Explorar Internet</td>
-            <td>📺 Anime</td>
+            <td>🛹 Skateboarding</td>
           </tr>
         </tbody>
       </table>
