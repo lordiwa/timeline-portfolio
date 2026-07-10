@@ -23,7 +23,7 @@
   - T7 [data-chapter="2"] .project-card mantiene linear-gradient.
 -->
 <script setup>
-import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -43,6 +43,42 @@ const { t } = useI18n()
 // sobre cualquier chapter. Solo debe aparecer cuando ch2 está activo (Rafael 2026-06-01).
 const scrollState = inject('scrollState', null)
 const activeChapter = scrollState?.activeChapter ?? ref(2)
+
+// ── La muerte de la era (cruce ch2→ch3, Rafael 2026-07-09) ─────────────────
+// Al salir hacia ch3 la UI Y2K se drena de color y sus píxeles se deshacen en
+// ceniza — la misma ceniza que cae en la posguerra de ch3. PRM: sin efecto.
+const prm = inject('prm', null)
+const reducedMotion = () => prm?.prefersReduced?.value ?? false
+
+const dying = ref(false)
+let dyingTimer = null
+
+// Ceniza del drenado — ráfaga corta, estática por diseño (PRM la omite via v-if)
+const deathAshes = [
+  { left: '4%',  delay: '0s',    dur: '2.2s', size: '3px' },
+  { left: '11%', delay: '0.3s',  dur: '1.9s', size: '2px' },
+  { left: '19%', delay: '0.1s',  dur: '2.4s', size: '3px' },
+  { left: '27%', delay: '0.45s', dur: '2.0s', size: '2px' },
+  { left: '34%', delay: '0.2s',  dur: '2.3s', size: '4px' },
+  { left: '43%', delay: '0s',    dur: '1.8s', size: '2px' },
+  { left: '51%', delay: '0.35s', dur: '2.1s', size: '3px' },
+  { left: '58%', delay: '0.15s', dur: '2.5s', size: '2px' },
+  { left: '66%', delay: '0.5s',  dur: '1.9s', size: '3px' },
+  { left: '73%', delay: '0.05s', dur: '2.2s', size: '2px' },
+  { left: '81%', delay: '0.4s',  dur: '2.0s', size: '4px' },
+  { left: '88%', delay: '0.25s', dur: '2.3s', size: '2px' },
+  { left: '95%', delay: '0.1s',  dur: '2.1s', size: '3px' },
+]
+
+if (scrollState?.activeChapter) {
+  watch(scrollState.activeChapter, (n, o) => {
+    if (o === 2 && n === 3 && !reducedMotion()) {
+      dying.value = true
+      clearTimeout(dyingTimer)
+      dyingTimer = setTimeout(() => { dying.value = false }, 2600)
+    }
+  })
+}
 
 const chapter = chapters[2]
 const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
@@ -85,6 +121,7 @@ onBeforeUnmount(() => {
     observer.disconnect()
     observer = null
   }
+  clearTimeout(dyingTimer)
 })
 </script>
 
@@ -92,7 +129,16 @@ onBeforeUnmount(() => {
   <!-- Desktop ≥600px: Y2K cyber stage full-bleed con sidebar + panels.
        Mobile <600px: notice modal + stacked accesible (CSS-gated via media query).
        .ch2-layout es el selector legacy preservado para tests T1. -->
-  <div ref="stageRef" class="ch2-layout flash-y2k-root">
+  <div ref="stageRef" class="ch2-layout flash-y2k-root" :class="{ 'is-dying': dying }">
+    <!-- Ceniza del drenado — la era deshaciéndose al cruzar a ch3 -->
+    <div v-if="dying" class="ch2-death-ash" aria-hidden="true">
+      <span
+        v-for="(ash, i) in deathAshes"
+        :key="`death-ash-${i}`"
+        class="ch2-death-ash-mote"
+        :style="{ left: ash.left, '--da-delay': ash.delay, '--da-dur': ash.dur, '--da-size': ash.size }"
+      ></span>
+    </div>
     <!-- ─────────────────────────────────────────────────────────
          Desktop layout — sidebar + stage Y2K cyber
          ───────────────────────────────────────────────────────── -->
@@ -177,6 +223,42 @@ onBeforeUnmount(() => {
   height: 100%;
   width: 100%;
   position: relative;
+  transition: filter 1.4s ease;
+}
+
+/* La muerte de la era: el mundo Y2K pierde el color al cruzar a ch3 */
+.flash-y2k-root.is-dying {
+  filter: grayscale(1) brightness(0.8);
+}
+
+.ch2-death-ash {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ch2-death-ash-mote {
+  position: absolute;
+  top: -3%;
+  width: var(--da-size, 2px);
+  height: var(--da-size, 2px);
+  border-radius: 1px;
+  background: #8a8a92;
+  opacity: 0;
+  animation: ch2-death-ash-fall var(--da-dur, 2s) ease-in var(--da-delay, 0s) forwards;
+}
+@keyframes ch2-death-ash-fall {
+  0%   { opacity: 0;   transform: translateY(0)      translateX(0)    rotate(0); }
+  12%  { opacity: 0.8; }
+  60%  { opacity: 0.5; transform: translateY(60vh)   translateX(10px) rotate(90deg); }
+  100% { opacity: 0;   transform: translateY(108vh)  translateX(-6px) rotate(170deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash-y2k-root { transition: none; }
+  .flash-y2k-root.is-dying { filter: none; }
+  .ch2-death-ash-mote { animation: none; opacity: 0; }
 }
 
 .flash-y2k-desktop {
