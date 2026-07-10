@@ -133,12 +133,51 @@ const scrollState = inject('scrollState', null)
 const arrived = ref(!scrollState)     // sin shell → visible de entrada
 const cinematic = ref(false)          // true solo cuando la llegada se anima
 
+// ── Ventana rota (Rafael 2026-07-09): llegas mirando la posguerra a través
+// del browser Y2K muerto (ch3-window.png — la UI es el edificio destruido).
+// Se desmorona sola a los ~6.5s o con tu primer click; los cristales caen al
+// agua y despiertan ondas. Solo en la llegada cinemática (PRM/tests: nunca).
+const windowState = ref('gone')   // 'framed' | 'crumbling' | 'gone'
+// Binding dinámico (evita que transformAssetUrls resuelva el path /assets/ en compile-time)
+const windowSrc = '/assets/ch3-window.png'
+let windowTimer = null
+let crumbleTimer = null
+
+// Cristales CSS que caen al desmoronarse (clip-path irregular, pos en %)
+const shards = [
+  { left: '8%',  top: '6%',  w: 74, h: 46, delay: '0s',    rot: '-38deg', clip: 'polygon(0 18%, 46% 0, 100% 34%, 72% 100%, 12% 82%)' },
+  { left: '30%', top: '3%',  w: 58, h: 38, delay: '0.12s', rot: '52deg',  clip: 'polygon(12% 0, 100% 12%, 78% 92%, 0 68%)' },
+  { left: '62%', top: '5%',  w: 66, h: 42, delay: '0.05s', rot: '-24deg', clip: 'polygon(0 32%, 58% 0, 100% 58%, 44% 100%)' },
+  { left: '86%', top: '12%', w: 52, h: 40, delay: '0.2s',  rot: '44deg',  clip: 'polygon(22% 0, 100% 28%, 66% 100%, 0 74%)' },
+  { left: '5%',  top: '58%', w: 48, h: 36, delay: '0.16s', rot: '-58deg', clip: 'polygon(0 42%, 52% 0, 100% 44%, 58% 100%)' },
+  { left: '92%', top: '52%', w: 56, h: 44, delay: '0.28s', rot: '30deg',  clip: 'polygon(14% 0, 100% 22%, 80% 100%, 0 62%)' },
+]
+
+function crumbleWindow() {
+  if (windowState.value !== 'framed') return
+  clearTimeout(windowTimer)
+  windowState.value = 'crumbling'
+  crumbleTimer = setTimeout(() => {
+    windowState.value = 'gone'
+    // los cristales tocan el agua: ondas donde caen
+    for (const x of [24, 52, 81]) {
+      const id = ++rippleId
+      ripples.value.push({ id, x, y: 30 + (id % 3) * 22 })
+      setTimeout(() => { ripples.value = ripples.value.filter((r) => r.id !== id) }, 1400)
+    }
+  }, 1500)
+}
+
 if (scrollState?.activeChapter) {
   watch(
     scrollState.activeChapter,
     (n) => {
       if (n === 3 && !arrived.value) {
-        if (!reduced()) cinematic.value = true
+        if (!reduced()) {
+          cinematic.value = true
+          windowState.value = 'framed'
+          windowTimer = setTimeout(crumbleWindow, 6500)
+        }
         arrived.value = true
       }
     },
@@ -179,6 +218,12 @@ function onKeydown(e) {
 const ripples = ref([])   // { id, x, y } en % relativos a .ch3-water
 let rippleId = 0
 
+// Primer click con la ventana rota en pie → la desmorona; después, ondas.
+function onStageClick(e) {
+  if (windowState.value === 'framed') { crumbleWindow(); return }
+  spawnRipple(e)
+}
+
 function spawnRipple(e) {
   if (reduced() || isOpen.value) return
   const vh = window.innerHeight
@@ -202,6 +247,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onPointer)
   window.removeEventListener('keydown', onKeydown)
   if (raf) cancelAnimationFrame(raf)
+  clearTimeout(windowTimer)
+  clearTimeout(crumbleTimer)
 })
 </script>
 
@@ -210,7 +257,7 @@ onBeforeUnmount(() => {
     class="ch3-stage"
     :class="{ 'is-waiting': !arrived, 'is-arriving': cinematic }"
     @scroll="onScroll"
-    @click="spawnRipple"
+    @click="onStageClick"
   >
     <!-- ── Parallax stack (pinned) ───────────────────────────────────────── -->
     <div ref="parallaxRef" class="ch3-parallax" aria-hidden="true">
@@ -310,6 +357,31 @@ onBeforeUnmount(() => {
       <div v-if="ch3Projects.length > 0" class="ch3-projects">
         <ProjectCard v-for="project in ch3Projects" :key="project.id" :project="project" />
       </div>
+    </div>
+
+    <!-- ── Ventana rota: el browser muerto a través del cual llegas ──────── -->
+    <div
+      v-if="windowState !== 'gone'"
+      class="ch3-window"
+      :class="{ 'is-crumbling': windowState === 'crumbling' }"
+      aria-hidden="true"
+    >
+      <div class="ch3-window-vignette"></div>
+      <img :src="windowSrc" alt="" class="ch3-window-frame" />
+      <span
+        v-for="(s, i) in shards"
+        :key="`shard-${i}`"
+        class="ch3-shard"
+        :style="{
+          left: s.left,
+          top: s.top,
+          width: s.w + 'px',
+          height: s.h + 'px',
+          clipPath: s.clip,
+          '--sh-delay': s.delay,
+          '--sh-rot': s.rot,
+        }"
+      ></span>
     </div>
 
     <!-- ── Recuadro pergamino: fragmento de la historia ──────────────────── -->
@@ -963,6 +1035,61 @@ onBeforeUnmount(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * Ventana rota — el browser Y2K muerto (ch3-window.png procedural).
+ * Llegas mirando la posguerra a través de él; se desmorona (frame cae,
+ * cristales caen al agua) al primer click o a los ~6.5s.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch3-window {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ch3-window-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 105% at 50% 46%, transparent 58%, rgba(8, 5, 14, 0.44) 82%, rgba(8, 5, 14, 0.78) 100%);
+}
+.ch3-window-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  image-rendering: pixelated;
+  display: block;
+}
+/* Cristales: astillas de vidrio muerto pegadas al marco */
+.ch3-shard {
+  position: absolute;
+  background: linear-gradient(148deg, rgba(220, 232, 255, 0.16) 0%, rgba(190, 205, 240, 0.07) 55%, rgba(255, 190, 120, 0.10) 100%);
+  border: 1px solid rgba(210, 220, 250, 0.22);
+  box-sizing: border-box;
+}
+
+/* Desmoronamiento */
+.ch3-window.is-crumbling .ch3-window-frame {
+  animation: ch3-window-fall 1.4s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
+}
+.ch3-window.is-crumbling .ch3-window-vignette {
+  animation: ch3-window-vanish 1s ease forwards;
+}
+.ch3-window.is-crumbling .ch3-shard {
+  animation: ch3-shard-fall 1.15s cubic-bezier(0.4, 0, 0.9, 0.5) var(--sh-delay, 0s) forwards;
+}
+@keyframes ch3-window-fall {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  18%  { transform: translateY(1.5%) rotate(0.4deg); }
+  100% { transform: translateY(30%) rotate(1.6deg); opacity: 0; }
+}
+@keyframes ch3-window-vanish { to { opacity: 0; } }
+@keyframes ch3-shard-fall {
+  0%   { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(108vh) rotate(var(--sh-rot, 40deg)); opacity: 0.2; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * Escena de entrada — ch3 es el landing: la apertura del sitio.
  * .is-waiting: mundo a oscuras (aún no se llegó al chapter).
  * .is-arriving: coreografía de revelado (una sola vez, animation-fill both):
@@ -1037,6 +1164,7 @@ onBeforeUnmount(() => {
   .ch3-birds, .ch3-ripple { opacity: 0 !important; }
   .ch3-ember, .ch3-ash { animation: none !important; opacity: 0 !important; }
   .ch3-haze { animation: none !important; opacity: 0 !important; }
+  .ch3-window { display: none !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

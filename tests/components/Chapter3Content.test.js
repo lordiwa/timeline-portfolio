@@ -172,4 +172,19 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
     expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-waiting')
     expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-arriving')
   })
+
+  // ── T8: ventana rota (browser Y2K muerto, correlato de ch2) ────────────────
+  it('T8 ventana: solo aparece en la llegada cinemática — ausente por defecto', () => {
+    const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-window').exists()).toBe(false)
+  })
+
+  it('T8 ventana: source referencia ch3-window.png + máquina de estados + cristales', () => {
+    expect(CH3_SOURCE).toMatch(/ch3-window\.png/)
+    expect(CH3_SOURCE).toMatch(/function crumbleWindow/)
+    expect(CH3_SOURCE).toMatch(/\.ch3-shard/)
+    expect(CH3_SOURCE).toMatch(/is-crumbling/)
+    // el primer click desmorona la ventana en vez de crear onda
+    expect(CH3_SOURCE).toMatch(/windowState\.value === 'framed'[\s\S]*?crumbleWindow\(\)/)
+  })
 })
