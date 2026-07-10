@@ -5,19 +5,22 @@
 // vacío" (portal/matrix/glyphs/character/near) con movimiento puntero+drift PRM-aware.
 // T3/T6 actualizados al contrato iter3 (estructura parallax, no single bg).
 //
-// Cobertura T1-T7:
+// Cobertura T1-T8:
 // - T1 DOM contract: .ch4-layout + .ch4-meta + .ch4-content + .ch4-parallax con 4+ capas
 // - T3 estructura parallax: .ch4-layer--{portal,character,near} + glifos matrix + FloatingPanel embeds
 // - T4 projects filter ch4 → solo ch4 items en FloatingPanel (mock 1 ch4 + 1 ch5)
 // - T5 reactive: locale ES→EN, flavor + bio actualizan
 // - T6 CSS source: .ch4-parallax absolute + .ch4-layer transform var(--mx) + PRM freeze
 // - T7 NO usa <ProjectCard> (D4-04 — projects van vía FloatingPanel slot)
+// - T8 multiverso: data-universe attribute actualiza cuando Ch4PortalShader emite universe-change
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Chapter4Content from '@/components/Chapter4Content.vue'
+import Ch4PortalShader from '@/components/Ch4PortalShader.vue'
 import FloatingPanel from '@/components/FloatingPanel.vue'
 import ProjectCard from '@/components/ProjectCard.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
@@ -163,5 +166,37 @@ describe('Chapter4Content.vue', () => {
   it('T7 D4-04: NO usa <ProjectCard> (projects van vía FloatingPanel slot)', () => {
     const { wrapper } = mountCh4()
     expect(wrapper.findAllComponents(ProjectCard).length).toBe(0)
+  })
+
+  // ───────────────────────────────────────────────
+  // T8 multiverso: data-universe reactivo
+  // ───────────────────────────────────────────────
+  it('T8 multiverso: data-universe comienza en 0', () => {
+    const { wrapper } = mountCh4()
+    expect(wrapper.find('.ch4-layout').attributes('data-universe')).toBe('0')
+  })
+
+  it('T8 multiverso: data-universe se actualiza cuando Ch4PortalShader emite universe-change', async () => {
+    const { wrapper } = mountCh4()
+    const shader = wrapper.findComponent(Ch4PortalShader)
+    expect(shader.exists()).toBe(true)
+
+    // Simular que el shader cruza el midpoint de una onda y emite el nuevo universo
+    shader.vm.$emit('universe-change', 2)
+    await nextTick()
+
+    expect(wrapper.find('.ch4-layout').attributes('data-universe')).toBe('2')
+  })
+
+  it('T8 multiverso: glyphs actualizan chars al cambiar universo (U3 → ▒/▓)', async () => {
+    const { wrapper } = mountCh4()
+    const shader = wrapper.findComponent(Ch4PortalShader)
+
+    shader.vm.$emit('universe-change', 3)
+    await nextTick()
+
+    // U3 (void) usa chars ▒/▓ — al menos uno debe aparecer en los glifos renderizados
+    const glyphText = wrapper.findAll('.ch4-glyph').map(g => g.text()).join('')
+    expect(glyphText).toMatch(/[▒▓]/)
   })
 })

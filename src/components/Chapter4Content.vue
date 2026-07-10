@@ -38,22 +38,38 @@ const ch4Projects = computed(() => projects.filter((p) => p.chapterEra === 4))
 // Bio era-specific: AR/VR independiente Ecuador + Metrodigi líder (Rafael 2026-05-14).
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
-// ── Glifos matrix (capa híbrida c3) — sub-capa CSS viva sobre el PNG tenue ──────
-// Posiciones/timings hardcoded (sin Math.random runtime). Caracteres katakana + 0/1.
-const glyphs = [
-  { ch: 'ｱ', left: '10%', top: '22%', delay: '0s',   dur: '7s',  size: '20px' },
-  { ch: '1', left: '18%', top: '64%', delay: '1.8s', dur: '9s',  size: '16px' },
-  { ch: 'ﾂ', left: '27%', top: '38%', delay: '3.2s', dur: '8s',  size: '24px' },
-  { ch: '0', left: '34%', top: '78%', delay: '0.6s', dur: '10s', size: '14px' },
-  { ch: 'ﾈ', left: '44%', top: '18%', delay: '2.4s', dur: '8.5s',size: '22px' },
-  { ch: '1', left: '52%', top: '52%', delay: '4.1s', dur: '7.5s',size: '18px' },
-  { ch: 'ﾚ', left: '61%', top: '30%', delay: '1.2s', dur: '9.5s',size: '20px' },
-  { ch: '0', left: '14%', top: '46%', delay: '5.0s', dur: '8s',  size: '15px' },
-  { ch: 'ﾜ', left: '38%', top: '58%', delay: '2.9s', dur: '10.5s',size: '26px' },
-  { ch: '1', left: '48%', top: '72%', delay: '0.3s', dur: '7s',  size: '16px' },
-  { ch: 'ｷ', left: '23%', top: '12%', delay: '3.7s', dur: '9s',  size: '21px' },
-  { ch: '0', left: '57%', top: '14%', delay: '1.5s', dur: '8.5s',size: '14px' },
+// ── Multiverso: universo activo (actualizado por Ch4PortalShader) ────────────
+// El shader emite 'universe-change' con el índice al cruzar el midpoint de la onda.
+const activeUniverse = ref(0)
+function onUniverseChange(idx) { activeUniverse.value = idx }
+
+// ── Glifos matrix — reactivos al universo (SINGLE SOURCE con shader) ────────
+// Posiciones fijas (evita layout shifts). Sólo el carácter cambia por universo.
+const GLYPH_POSITIONS = [
+  { left: '10%', top: '22%', delay: '0s',   dur: '7s',   size: '20px' },
+  { left: '18%', top: '64%', delay: '1.8s', dur: '9s',   size: '16px' },
+  { left: '27%', top: '38%', delay: '3.2s', dur: '8s',   size: '24px' },
+  { left: '34%', top: '78%', delay: '0.6s', dur: '10s',  size: '14px' },
+  { left: '44%', top: '18%', delay: '2.4s', dur: '8.5s', size: '22px' },
+  { left: '52%', top: '52%', delay: '4.1s', dur: '7.5s', size: '18px' },
+  { left: '61%', top: '30%', delay: '1.2s', dur: '9.5s', size: '20px' },
+  { left: '14%', top: '46%', delay: '5.0s', dur: '8s',   size: '15px' },
+  { left: '38%', top: '58%', delay: '2.9s', dur: '10.5s',size: '26px' },
+  { left: '48%', top: '72%', delay: '0.3s', dur: '7s',   size: '16px' },
+  { left: '23%', top: '12%', delay: '3.7s', dur: '9s',   size: '21px' },
+  { left: '57%', top: '14%', delay: '1.5s', dur: '8.5s', size: '14px' },
 ]
+// Caracteres por universo. Índices coinciden con UNIVERSES en Ch4PortalShader.
+const GLYPH_CHARS = [
+  ['ｱ','1','ﾂ','0','ﾈ','1','ﾚ','0','ﾜ','1','ｷ','0'],     // U0 synthwave — katakana
+  ['0','1','F','A','0','1','B','1','0','1','F','0'],         // U1 tron — hex/binario
+  ['∆','◊','~','◊','∆','~','∆','◊','∆','~','◊','∆'],        // U2 vaporwave — geométrico
+  ['▒','▓','▒','▓','▒','▓','▒','▓','▒','▓','▒','▓'],        // U3 void — bloques corruptos
+]
+const glyphs = computed(() => {
+  const chars = GLYPH_CHARS[activeUniverse.value] ?? GLYPH_CHARS[0]
+  return GLYPH_POSITIONS.map((pos, i) => ({ ...pos, ch: chars[i] }))
+})
 
 // ── Parallax: puntero + drift automático (sine), PRM-aware ──────────────────────
 const prm = inject('prm', null)
@@ -97,7 +113,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ch4-layout">
+  <div class="ch4-layout" :data-universe="activeUniverse">
     <!-- ── Parallax stack (decorativo, detrás del contenido) ─────────────────── -->
     <div ref="parallaxRef" class="ch4-parallax" aria-hidden="true">
       <div class="ch4-layer ch4-layer--portal"></div>
@@ -106,7 +122,7 @@ onBeforeUnmount(() => {
         Z-index 1 — encima del portal PNG (z0), debajo del personaje (z3).
         Si WebGL no está disponible el componente no renderiza nada (fallback silencioso).
       -->
-      <Ch4PortalShader />
+      <Ch4PortalShader @universe-change="onUniverseChange" />
       <!-- Pulso de energía sobre el anillo del portal — overlay circular decorativo -->
       <div class="ch4-portal-pulse" aria-hidden="true"></div>
       <div class="ch4-layer ch4-layer--matrix"></div>
@@ -519,6 +535,43 @@ onBeforeUnmount(() => {
   text-shadow: none;
   font-weight: 700;
 }
+
+/* ─────────────────────────────────────────────────────────────
+ * Multiverso — colores de glifos y partículas reactivos al universo activo.
+ * Las transiciones CSS no funcionan en custom properties sin @property,
+ * así que el shader WebGL es quien provee la transición suave visual.
+ * U0 Synthwave (default) no necesita selector — usa los valores base.
+ * ───────────────────────────────────────────────────────────── */
+.ch4-glyph {
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* U1 Tron — verde fósforo */
+.ch4-layout[data-universe="1"] .ch4-glyph {
+  color: #00ff4d;
+  text-shadow: 0 0 6px rgba(0, 255, 77, 0.9), 0 0 14px rgba(0, 255, 77, 0.5);
+}
+.ch4-layout[data-universe="1"] .ch4-p--dot { background: rgba(0, 255, 77, 0.9); box-shadow: 0 0 3px rgba(0, 255, 77, 0.8); }
+.ch4-layout[data-universe="1"] .ch4-p--rhombus { border-color: rgba(0, 255, 77, 0.65); }
+.ch4-layout[data-universe="1"] .ch4-p--cross { color: rgba(0, 255, 77, 0.65); text-shadow: 0 0 4px rgba(0, 255, 77, 0.55); }
+
+/* U2 Vaporwave — lavanda/teal */
+.ch4-layout[data-universe="2"] .ch4-glyph {
+  color: #e666ff;
+  text-shadow: 0 0 6px rgba(230, 102, 255, 0.9), 0 0 14px rgba(51, 230, 217, 0.5);
+}
+.ch4-layout[data-universe="2"] .ch4-p--dot { background: rgba(51, 230, 217, 0.9); box-shadow: 0 0 3px rgba(51, 230, 217, 0.8); }
+.ch4-layout[data-universe="2"] .ch4-p--rhombus { border-color: rgba(230, 102, 255, 0.65); }
+.ch4-layout[data-universe="2"] .ch4-p--cross { color: rgba(51, 230, 217, 0.65); }
+
+/* U3 Void — rojo profundo */
+.ch4-layout[data-universe="3"] .ch4-glyph {
+  color: #cc0014;
+  text-shadow: 0 0 6px rgba(204, 0, 20, 0.9), 0 0 14px rgba(204, 0, 20, 0.4);
+}
+.ch4-layout[data-universe="3"] .ch4-p--dot { background: rgba(204, 0, 20, 0.9); box-shadow: 0 0 3px rgba(204, 0, 20, 0.8); }
+.ch4-layout[data-universe="3"] .ch4-p--rhombus { border-color: rgba(204, 0, 20, 0.65); }
+.ch4-layout[data-universe="3"] .ch4-p--cross { color: rgba(204, 0, 20, 0.65); }
 
 /* ─────────────────────────────────────────────────────────────
  * PRM — congela todo el movimiento del parallax.
