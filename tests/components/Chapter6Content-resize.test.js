@@ -13,6 +13,13 @@
 //   Ahora: formula Math.max(1, Math.min(...)) sin Math.floor; guard Math.abs(...) > 0.01
 //   Razón: zoom fraccional fill requiere epsilon comparison (floats); sin Math.floor.
 //
+// CAMBIO 2026-07-10 (COVER-01):
+//   Antes: newZoom = Math.max(1, Math.min(vw/BASE_W, vh/BASE_H)) — CONTAIN.
+//   Ahora: newZoom = Math.max(1, vw/BASE_W, vh/BASE_H) — COVER.
+//   Razón: CONTAIN dejaba pillarbox que exponía el bg CSS duplicado (ch6-bg.webp).
+//   El callback también llama applyCanvasAnchor(newZoom) tras setZoom para mantener
+//   el anclaje focal (bottom-anchor + horizontal focal shift en portrait <600px).
+//
 // Rationale (RESEARCH §Pattern 4):
 //   - ResizeObserver requiere un Element, no window. `document.documentElement` es safe.
 //   - El callback debe verificar zoom delta antes de setZoom para evitar thrashing.
@@ -42,19 +49,21 @@ describe('Chapter6Content.vue ResizeObserver (PHA-09 + MOB-03) — RED W0 → ve
     ).toBeNull()
   })
 
-  it('T2: callback recalcula zoom fraccional + invoca game.scale.setZoom solo si difiere', () => {
+  it('T2: callback recalcula zoom COVER + invoca game.scale.setZoom + applyCanvasAnchor', () => {
     if (src.length === 0) {
       expect(src, 'src/components/Chapter6Content.vue debe existir (W3 lo crea).').not.toBe('')
       return
     }
-    // El handler debe contener:
-    //  - cálculo newZoom (Math.max + Math.min, sin Math.floor — HI-BIT-01)
+    // El handler debe contener (COVER-01 2026-07-10):
+    //  - cálculo newZoom COVER: Math.max(1, vw/BASE_W, vh/BASE_H) — sin Math.min (eso sería contain)
     //  - comparación epsilon `Math.abs(newZoom - game.value.scale.zoom) > 0.01` (anti-thrash floats)
-    //  - llamada `game.value.scale.setZoom(newZoom)`
+    //  - llamada `game.value.scale.setZoom(newZoom)` si zoom cambió
+    //  - llamada `applyCanvasAnchor(newZoom)` para reposicionar canvas tras resize
     expect(
       src,
-      'Callback resize debe declarar `newZoom` calculado con Math.max/Math.min (zoom fraccional hi-bit, sin Math.floor). W3 crea.'
-    ).toMatch(/newZoom\s*=\s*Math\.max\s*\(\s*1[\s\S]*?Math\.min/)
+      'Callback resize debe declarar `newZoom` con fórmula COVER: Math.max(1, vw/BASE_W ...). ' +
+        'CONTAIN (Math.min) producia pillarbox (COVER-01). W3 crea.'
+    ).toMatch(/newZoom\s*=\s*Math\.max\s*\(\s*1,\s*window\.innerWidth\s*\/\s*BASE_W/)
     expect(
       src,
       'Callback resize debe comparar `Math.abs(newZoom - game.value.scale.zoom) > 0.01` antes de setZoom (epsilon anti-thrash con floats).'
@@ -63,5 +72,9 @@ describe('Chapter6Content.vue ResizeObserver (PHA-09 + MOB-03) — RED W0 → ve
       src,
       'Callback resize debe invocar `game.value.scale.setZoom(newZoom)`. W3 crea.'
     ).toMatch(/game\.value\.scale\.setZoom\s*\(\s*newZoom\s*\)/)
+    expect(
+      src,
+      'Callback resize debe invocar `applyCanvasAnchor(newZoom)` para mantener bottom-anchor y focal (COVER-01).'
+    ).toMatch(/applyCanvasAnchor\s*\(\s*newZoom\s*\)/)
   })
 })

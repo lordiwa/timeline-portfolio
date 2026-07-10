@@ -1626,10 +1626,22 @@
   [data-chapter="6"] .ch6-canvas-host {
     position: absolute;
     inset: 0;
+    /* overflow:hidden aquí (NO en .ch6-layout — ver comentario D5-09 arriba) clipea
+       el exceso del canvas cover. Con zoom cover el canvas es siempre >= viewport en
+       ambas dimensiones; el exceso vertical (cielo) se recorta aquí; el exceso
+       horizontal (lateral) también. Clipar en el HOST hijo es Pattern 12-safe: no crea
+       el stacking context problemático en el layout padre que causó el bug Phase 4. */
+    overflow: hidden;
   }
 
   [data-chapter="6"] .ch6-canvas-host canvas {
     display: block;
+    /* Anclaje bottom: canvas bottom alineado con el host bottom → el exceso vertical
+       se recorta por arriba (cielo), no por abajo (héroes y postal).
+       `left` es manejado programáticamente por applyCanvasAnchor() en Chapter6Content.vue;
+       NO declarar left/margin-left aquí para no interferir con el JS. */
+    position: absolute;
+    bottom: 0;
     /* image-rendering: pixelated ya global en index.html (CLAUDE.md §1). */
   }
 

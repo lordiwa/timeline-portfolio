@@ -83,14 +83,68 @@ const activeProject = ref(null)
 const ch6Projects = computed(() => projects.filter((p) => p.chapterEra === 6))
 
 /**
- * Compute zoom fill fraccional — duplicado de src/phaser/index.js computeZoom.
+ * Compute zoom COVER fraccional — duplicado de src/phaser/index.js computeZoom.
  * Local copy para evitar importar el factory top-level (PHA-04 lazy mandate).
- * Fórmula: max(1, min(vw/960, vh/540)) — HI-BIT-01 (zoom fraccional, sin Math.floor).
+ * Fórmula COVER: max(1, vw/960, vh/540) — el ratio MAYOR manda; canvas llena el viewport,
+ * el exceso se recorta con overflow:hidden en .ch6-canvas-host.
+ * Reemplaza prior Math.min (CONTAIN) que dejaba pillarbox con bg CSS duplicado.
  */
 function computeZoom() {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  return Math.max(1, Math.min(vw / BASE_W, vh / BASE_H))
+  // COVER: max(vw-ratio, vh-ratio) → canvas fills viewport completely.
+  return Math.max(1, vw / BASE_W, vh / BASE_H)
+}
+
+/**
+ * Aplica el anclaje del canvas en el host: bottom-aligned (clip cielo, no héroes)
+ * y focal horizontal (center desktop, 30% world-left en portrait <600px).
+ *
+ * Debe llamarse tras createGame (en 'ready' event) y tras cada setZoom.
+ * Con Phaser autoCenter:NO_CENTER, Phaser NO toca margin-top/margin-left;
+ * esta función controla el CSS position:absolute directamente.
+ *
+ * Anclaje bottom: canvas taller que host → exceso queda en la parte superior (cielo),
+ * recortado por overflow:hidden del host. Héroes (y≈1654-1730 del mundo) permanecen visibles.
+ *
+ * Focal horizontal:
+ *   - Desktop (hostW >= 600): canvas centrado. 1920×911 → canvas 1920×1080, sin crop horizontal.
+ *   - Portrait (<600px): focal al 30% del mundo (x=288). 400×800 → canvas 1422×800,
+ *     muestra x=153-423 del mundo: robot (x=190) y Rafael (x=304) ambos visibles.
+ *
+ * @param {number} zoomValue — zoom actual (puede diferir de game.value.scale.zoom si se llama
+ *   inmediatamente tras setZoom y Phaser aún no actualizó la propiedad).
+ */
+function applyCanvasAnchor(zoomValue) {
+  if (!canvasHostRef.value) return
+  const canvasEl = canvasHostRef.value.querySelector('canvas')
+  if (!canvasEl) return
+
+  // Limpiar margins que Phaser pudiera haber dejado de un estado anterior.
+  canvasEl.style.marginLeft = '0'
+  canvasEl.style.marginTop = '0'
+
+  const hostW = canvasHostRef.value.offsetWidth
+  const canvasW = BASE_W * zoomValue
+  const horizontalOverflow = canvasW - hostW
+
+  let leftPx
+  if (horizontalOverflow <= 0) {
+    // Canvas más angosto que el host (no debería ocurrir con cover, pero defensivo).
+    leftPx = -horizontalOverflow / 2 // centrar
+  } else {
+    // Canvas desborda en horizontal → decidir punto focal.
+    const isNarrow = hostW < 600 // portrait / mobile angosto
+    // 30% (x=288): mantiene robot (x=190) y Rafael (x=304) dentro de la vista.
+    // 50% (x=480): centro del mundo — desktop tiene crop simétrico, héroes en x<480 visibles.
+    const focalWorldX = isNarrow ? BASE_W * 0.30 : BASE_W * 0.50
+    const focalCanvasX = focalWorldX * zoomValue // px desde borde izq del canvas al foco
+    const rawLeft = hostW / 2 - focalCanvasX // offset canvas izq para centrar el foco
+    // Clamp: canvas nunca debe dejar hueco negro en ningún borde del host.
+    const minLeft = hostW - canvasW // shift máx hacia izquierda (borde derecho alineado)
+    leftPx = Math.max(minLeft, Math.min(0, rawLeft))
+  }
+  canvasEl.style.left = `${leftPx}px`
 }
 
 // D5-11 / PHA-04 — watch immediate maneja:
@@ -122,6 +176,14 @@ watch(
       game.value.events.on('arrival-complete', () => {
         arrivalDone.value = true
       })
+
+      // Canvas anchor inicial — se aplica cuando Phaser terminó boot y creó el <canvas>.
+      // 'ready' es el evento de Phaser.Game que indica boot completo (canvas existe en DOM).
+      // Con autoCenter:NO_CENTER Phaser no aplica margins; applyCanvasAnchor controla position.
+      const capturedGame = game.value
+      capturedGame.events.once('ready', () => {
+        applyCanvasAnchor(capturedGame.scale.zoom)
+      })
     } else if (v !== 6 && game.value) {
       // PHA-02: destroy(true, false) — canvas removed, plugins preserved para re-entry.
       game.value.destroy(true, false)
@@ -144,17 +206,21 @@ watch(locale, (newLocale) => {
 })
 
 // PHA-09 + extends MOB-03 (Phase 1 ResizeObserver pattern):
-// Recalcula zoom fraccional cuando el viewport cambia + invoca setZoom solo si
+// Recalcula zoom COVER cuando el viewport cambia + invoca setZoom solo si
 // difiere del actual (Pitfall 8 — anti-thrash guard, epsilon 0.01 para floats).
+// Tras setZoom (o sin cambio de zoom), reaplica el anchor para actualizar left
+// (el host puede cambiar de ancho sin cambiar el zoom, e.g. sidebar aparece).
 //
 // document.documentElement NO window — ResizeObserver requiere Element observable;
 // window no es Element (CSSOM spec).
 useResizeObserver(document.documentElement, () => {
   if (!game.value) return
-  const newZoom = Math.max(1, Math.min(window.innerWidth / BASE_W, window.innerHeight / BASE_H))
+  const newZoom = Math.max(1, window.innerWidth / BASE_W, window.innerHeight / BASE_H)
   if (Math.abs(newZoom - game.value.scale.zoom) > 0.01) {
     game.value.scale.setZoom(newZoom)
   }
+  // Siempre reaplica el anchor: el hostW puede cambiar sin cambio de zoom.
+  applyCanvasAnchor(newZoom)
 })
 
 // Pitfall 3 + Open Q8 RESOLVED — HMR guard.

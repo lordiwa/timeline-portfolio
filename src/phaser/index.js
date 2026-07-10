@@ -28,20 +28,27 @@ const BASE_W = 960
 const BASE_H = 540
 
 /**
- * Compute zoom fill fraccional para el canvas Phaser display size.
+ * Compute zoom COVER fraccional para el canvas Phaser display size.
  *
- * Fórmula: max(1, min(vw/960, vh/540))
- *   - `Math.min` mantiene aspect ratio 16:9; el side menor manda.
- *   - `Math.max(1, ...)` defensive — si viewport < 960×540 el canvas hace downscale
- *     en vez de producir un canvas 0×0 invisible.
+ * Fórmula: max(1, vw/960, vh/540)
+ *   - `Math.max` con los dos ratios = comportamiento COVER: el lado MAYOR manda.
+ *     El canvas llena el viewport completo; el exceso se recorta (overflow:hidden en host).
+ *   - Reemplaza prior Math.min (CONTAIN) que dejaba pillarbox strips de ~150px en
+ *     viewports no exactamente 16:9, dejando asomar el bg CSS duplicado detrás.
+ *   - `Math.max(1, ...)` defensive — si viewport < 960×540 el canvas downscalea
+ *     a zoom 1 en vez de producir un canvas submínimo.
  *   - Sin `Math.floor`: arte a doble densidad absorbe el sub-pixel sin blur perceptible.
  *
- * @returns {number} zoom fraccional >= 1
+ * Posicionamiento post-zoom: applyCanvasAnchor() en Chapter6Content.vue maneja
+ *   el anclaje bottom (clip cielo, no héroes) y focal horizontal portrait (<600px).
+ *
+ * @returns {number} zoom COVER fraccional >= 1
  */
 function computeZoom() {
   const vw = window.innerWidth
   const vh = window.innerHeight
-  return Math.max(1, Math.min(vw / BASE_W, vh / BASE_H))
+  // COVER: max(vw-ratio, vh-ratio) → canvas fills viewport completely, excess cropped.
+  return Math.max(1, vw / BASE_W, vh / BASE_H)
 }
 
 /**
@@ -60,15 +67,18 @@ export function createGame(parentEl, { prefersReduced } = {}) {
     parent: parentEl, // DOM node directo — NO string id (Pitfall race-condition mount).
     width: BASE_W,
     height: BASE_H,
-    zoom: computeZoom(), // integer multiplier (PHA-03).
+    zoom: computeZoom(), // COVER fraccional — canvas llena el viewport completamente.
     pixelArt: true, // disable texture interpolation (nearest-neighbor filtering).
     roundPixels: true, // snap tween positions a integer pixels (anti-blur).
     backgroundColor: '#1a0e3d', // deep purple synthwave D5-04 — visible durante preload.
     transparent: false, // canvas opaco; bg vive dentro del game, no detrás.
     physics: { default: 'none' }, // tree-shake ~30 KB Phaser physics — no se usa.
     scale: {
-      mode: Phaser.Scale.NONE, // NO auto-FIT — integer zoom manual (PHA-03 mandate).
-      autoCenter: Phaser.Scale.CENTER_BOTH, // canvas centrado en parentEl.
+      mode: Phaser.Scale.NONE, // NO auto-FIT — zoom manual cover (PHA-03 mandate).
+      autoCenter: Phaser.Scale.NO_CENTER, // posicionamiento gestionado por applyCanvasAnchor()
+      // en Chapter6Content.vue — CSS position:absolute + bottom:0 + left calculado.
+      // NO usar CENTER_BOTH: con cover el canvas es mayor que el host, CENTER_BOTH
+      // aplicaría margin-top negativo que interferiría con nuestro bottom-anchor CSS.
     },
     scene: [SpaceScene],
     callbacks: {
