@@ -687,4 +687,4 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   bio como PARTES DE GUERRA); cruce ch2→ch3 = drenado grayscale + ráfaga de ceniza; llegada
   ch3 = escena vista a través del browser muerto, que se desmorona al primer click o a los
   6.5s (cristales caen al agua → ondas).
-- **Commit hash del cambio:** (commits de este drop)
+- **Commit hash del cambio:** `0b2f311` (arte) + `34d3ec4` (ch2 guerra+muerte) + `c30b6d4` (ch3 ventana)
