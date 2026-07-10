@@ -31,4 +31,17 @@ const app = createApp(App)
 const head = createHead()
 app.use(i18n)
 app.use(head)
+
+// Handler global de errores — nombra el componente y el hook que fallaron.
+// Sin esto, en producción un error de render es un stack minificado anónimo
+// (diagnóstico crash pantalla-negra 2026-07-10).
+app.config.errorHandler = (err, instance, info) => {
+  const name =
+    instance?.$?.type?.__name ||
+    instance?.$?.type?.name ||
+    instance?.$options?.__file ||
+    'componente-desconocido'
+  console.error(`[app-error] componente=${name} hook=${info}`, err)
+}
+
 app.mount('#app')

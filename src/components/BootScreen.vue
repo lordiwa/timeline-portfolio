@@ -352,7 +352,7 @@ onBeforeUnmount(() => {
         <p class="boot-screen__menu-title">RAFAEL.EXE</p>
         <!-- Opción S -->
         <button
-          :ref="choiceHighlight === 0 ? skipBtnRef : undefined"
+          :ref="(el) => { if (choiceHighlight === 0) skipBtnRef = el }"
           class="boot-screen__option"
           :class="{ 'boot-screen__option--active': choiceHighlight === 0 }"
           type="button"
@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
         </p>
         <!-- Botón SKIP secundario en el menú -->
         <button
-          :ref="choiceHighlight !== 0 ? skipBtnRef : undefined"
+          :ref="(el) => { if (choiceHighlight !== 0) skipBtnRef = el }"
           class="boot-screen__skip boot-screen__skip--inline"
           type="button"
           @click="skip"
