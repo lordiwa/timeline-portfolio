@@ -173,9 +173,11 @@ function startShortVersion() {
 // ── Elección S / M ────────────────────────────────────────────────────────────
 
 async function chooseSound(withSound) {
-  // Unlock del AudioContext (primer gesto de usuario)
-  await engine.unlock()
-  engine.setMuted(!withSound)
+  // Unlock del AudioContext (primer gesto de usuario). Vía composable para que
+  // los refs reactivos (unlocked/muted) que consume SoundToggle queden en sync.
+  await (audio?.unlock?.() ?? engine.unlock())
+  if (audio?.setMuted) audio.setMuted(!withSound)
+  else engine.setMuted(!withSound)
   localStorage.setItem('rm-boot-seen', '1')
 
   if (withSound) {
@@ -347,9 +349,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-else class="boot-screen__menu">
-        <p class="boot-screen__line boot-screen__line--frame">
-          ╔═══ RAFAEL.EXE ═══╗
-        </p>
+        <p class="boot-screen__menu-title">RAFAEL.EXE</p>
         <!-- Opción S -->
         <button
           :ref="choiceHighlight === 0 ? skipBtnRef : undefined"
@@ -454,11 +454,6 @@ onBeforeUnmount(() => {
   white-space: pre;
 }
 
-.boot-screen__line--frame {
-  color: #ffffff;
-  margin-top: 2rem;
-}
-
 .boot-screen__line--dim {
   color: #557755;
   font-size: 16px;
@@ -479,7 +474,7 @@ onBeforeUnmount(() => {
 /* ── Logo Energy Star (CSS) ─────────────────────────────────────────────────── */
 .boot-screen__energy {
   position: absolute;
-  top: 0;
+  top: 2.2rem; /* despejado del botón SALTAR que vive en la esquina del overlay */
   right: 0;
   width: 64px;
   height: 64px;
@@ -491,18 +486,42 @@ onBeforeUnmount(() => {
 }
 
 /* ── Menú choice ─────────────────────────────────────────────────────────────── */
+/* Centrado en pantalla completa, como un menú de setup DOS real */
 .boot-screen__choice {
   width: 100%;
+  align-self: stretch;
+  min-height: calc(100vh - 4rem); /* compensa el padding 2rem del overlay */
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  margin-top: 3rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
 }
 
 .boot-screen__menu {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.6rem;
+  font-size: 24px;
+  border: 3px double #aaffaa;
+  padding: 1.6rem 2.8rem 1.4rem;
+  position: relative;
+  background: #000;
+}
+
+/* Título en vídeo inverso incrustado en el borde (estilo cuadro DOS) */
+.boot-screen__menu-title {
+  position: absolute;
+  top: -0.7em;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0 1ch;
+  background: #aaffaa;
+  color: #000;
+  font-size: 22px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .boot-screen__option {

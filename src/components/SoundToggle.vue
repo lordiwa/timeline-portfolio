@@ -30,7 +30,9 @@ const { t } = useI18n()
 const audio = inject('audio', null)
 
 const muted = computed(() => audio?.muted?.value ?? engine.isMuted())
-const unlocked = computed(() => engine.isUnlocked())
+// Vía el ref reactivo del composable — engine.isUnlocked() no es reactivo y un
+// computed sobre él se cachea para siempre en su primer valor (bug del unlock fantasma).
+const unlocked = computed(() => audio?.unlocked?.value ?? engine.isUnlocked())
 
 const state = computed(() => {
   if (!unlocked.value) return 'locked'
@@ -45,7 +47,7 @@ const ariaLabel = computed(() => {
 async function handleClick() {
   if (!engine.isUnlocked()) {
     // No debería ocurrir (BootScreen hace el unlock), pero como safety:
-    await engine.unlock()
+    await (audio?.unlock?.() ?? engine.unlock())
     audio?.playCurrentEra?.(0)
     return
   }

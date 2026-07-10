@@ -41,6 +41,15 @@ function _fadeInCurve() {
 
 export function useAudio() {
   const muted = ref(engine.isMuted())
+  // engine.isUnlocked() no es reactivo — este ref es la fuente de verdad para la UI;
+  // todo unlock debe pasar por unlock() de este composable para que se refleje.
+  const unlocked = ref(engine.isUnlocked())
+
+  /** Unlock del AudioContext (llamar SOLO desde un handler de gesto de usuario). */
+  async function unlock() {
+    await engine.unlock()
+    unlocked.value = true
+  }
 
   // Sequencers activos: _current es el que suena ahora, _previous el que se desvanece
   let _currentSeq = null
@@ -116,15 +125,22 @@ export function useAudio() {
     })
   }
 
+  /** Fija mute/unmute manteniendo el ref reactivo en sincronía con el engine. */
+  function setMuted(value) {
+    muted.value = value
+    engine.setMuted(value)
+  }
+
   /** Alterna mute/unmute. Actualiza el ref reactivo y persiste. */
   function toggle() {
-    const newMuted = !muted.value
-    muted.value = newMuted
-    engine.setMuted(newMuted)
+    setMuted(!muted.value)
   }
 
   return {
     muted,
+    unlocked,
+    unlock,
+    setMuted,
     toggle,
     initAudioWatcher,
     playCurrentEra,
