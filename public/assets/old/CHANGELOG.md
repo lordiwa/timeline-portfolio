@@ -20,8 +20,8 @@ Formato per entry:
 
 - **Versión guardada:** `old/ch6-bg-tall-2026-07-10-iter2.webp`
 - **Razón del cambio:** Retirado por fondo espacial 100% shader GLSL (ERA-AGNT-03). El WebP lossy lavaba el pixel art con compresión visible. El shader procedural reemplaza la necesidad de un raster tall: fondo oscuro synthwave + starfield + nebulosas generadas en GPU con quantización pixel-art UV.
-- **Qué se hizo diferente:** No hay regeneración — fondo procedural via `Phaser.Display.Shaders.BaseShader`. Dark fill Rectangle `#1a0e3d` como base + shader ADD encima.
-- **Commit hash post-retiro:** `pendiente`
+- **Qué se hizo diferente:** No hay regeneración — fondo procedural via `Phaser.Display.Shaders.BaseShader`. Dark fill Rectangle `#08021a` como base + shader ADD encima.
+- **Commit hash post-retiro:** `79711ef / 9c62b37`
 
 ---
 
@@ -30,7 +30,7 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bg-stars-far-t-2026-07-10-iter2.png`
 - **Razón del cambio:** Retirado por fondo espacial 100% shader GLSL. El PNG era estático y sin twinkle; el shader procedural genera estrellas con hash-per-cell y twinkle senoidal independiente por estrella.
 - **Qué se hizo diferente:** Las estrellas ahora viven en el fragment shader SPACE_BG_FRAG (SpaceScene.js), con parallax simulado via uniform scrollY.
-- **Commit hash post-retiro:** `pendiente`
+- **Commit hash post-retiro:** `79711ef / 9c62b37`
 
 ---
 
@@ -39,7 +39,7 @@ Formato per entry:
 - **Versión guardada:** `old/ch6-bg-nebulae-mid-t-2026-07-10-iter2.webp`
 - **Razón del cambio:** Retirado por fondo espacial 100% shader GLSL. El WebP lossy smeared las nebulosas (artefactos de compresión visibles). El shader genera nebulosas via fBm 3 octavas con drift temporal lento.
 - **Qué se hizo diferente:** Nebulosas procedurales en SPACE_BG_FRAG, paleta synthwave D5-04 (púrpura + cian), drift de `time * 0.004` unidades/s.
-- **Commit hash post-retiro:** `pendiente`
+- **Commit hash post-retiro:** `79711ef / 9c62b37`
 
 ---
 
@@ -47,7 +47,7 @@ Formato per entry:
 
 - **Versión guardada:** `old/ch6-bg-stars-far-2026-07-10-iter1.png`
 - **Razón del cambio:** Versión sin sufijo -t (no tall), legacy desde antes del HI-BIT-01 pipeline. Nunca se cargó en SpaceScene.js en su forma actual. Retirado junto al resto del stack raster de ch6 por limpieza.
-- **Commit hash post-retiro:** `pendiente`
+- **Commit hash post-retiro:** `79711ef / 9c62b37`
 
 ---
 
@@ -55,7 +55,7 @@ Formato per entry:
 
 - **Versión guardada:** `old/ch6-bg-nebulae-mid-2026-07-10-iter1.png`
 - **Razón del cambio:** Versión sin sufijo -t (no tall), legacy desde antes del HI-BIT-01 pipeline. Nunca se cargó en SpaceScene.js en su forma actual. Retirado junto al resto del stack raster de ch6 por limpieza.
-- **Commit hash post-retiro:** `pendiente`
+- **Commit hash post-retiro:** `79711ef / 9c62b37`
 
 ---
 
