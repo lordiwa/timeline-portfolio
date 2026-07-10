@@ -28,6 +28,7 @@ import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
 import FloatingPanel from './FloatingPanel.vue'
+import Ch4PortalShader from './Ch4PortalShader.vue'
 
 const { t } = useI18n()
 
@@ -100,6 +101,12 @@ onBeforeUnmount(() => {
     <!-- ── Parallax stack (decorativo, detrás del contenido) ─────────────────── -->
     <div ref="parallaxRef" class="ch4-parallax" aria-hidden="true">
       <div class="ch4-layer ch4-layer--portal"></div>
+      <!--
+        Ch4PortalShader: canvas WebGL de baja resolución (320×180) upscaleado a pixelated.
+        Z-index 1 — encima del portal PNG (z0), debajo del personaje (z3).
+        Si WebGL no está disponible el componente no renderiza nada (fallback silencioso).
+      -->
+      <Ch4PortalShader />
       <!-- Pulso de energía sobre el anillo del portal — overlay circular decorativo -->
       <div class="ch4-portal-pulse" aria-hidden="true"></div>
       <div class="ch4-layer ch4-layer--matrix"></div>
