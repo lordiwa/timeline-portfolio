@@ -33,12 +33,12 @@ const SIZE_BUDGET_BYTES = 80 * 1024 // 80 KB Phase 6 budget per asset (capas leg
 const HIBIT_BG_BUDGET_BYTES = 300 * 1024
 
 describe('ch6 assets existence + size budget (Phase 5 W1 gate)', () => {
-  // T1 — ch6-bg.png existe
+  // T1 — ch6-bg.webp existe (convertido a WebP en Phase 6 dieta — era ch6-bg.png)
   it('T1: ch6-bg.png exists', () => {
-    const path = resolve(ASSETS_DIR, 'ch6-bg.png')
+    const path = resolve(ASSETS_DIR, 'ch6-bg.webp')
     expect(
       existsSync(path),
-      `Falta ch6-bg.png. W1 (artist-creator) lo genera vía forge_background con paleta D5-04 synthwave.`
+      `Falta ch6-bg.webp. W1 (artist-creator) lo genera vía forge_background; Phase 6 convirtió a WebP.`
     ).toBe(true)
   })
 
@@ -69,22 +69,21 @@ describe('ch6 assets existence + size budget (Phase 5 W1 gate)', () => {
     ).toEqual([])
   })
 
-  // T4 — ch6-bg.png ≤300 KB (budget hi-bit — ver HIBIT_BG_BUDGET_BYTES arriba)
+  // T4 — ch6-bg.webp ≤300 KB (budget hi-bit — Phase 6 dieta WebP ya aplicada)
   it('T4: ch6-bg.png ≤300 KB (budget hi-bit 960×540 — dieta final en Phase 6)', () => {
-    const path = resolve(ASSETS_DIR, 'ch6-bg.png')
+    const path = resolve(ASSETS_DIR, 'ch6-bg.webp')
     if (!existsSync(path)) {
-      // RED esperado en W0; W1 hace que exista y este branch ya no se ejecuta.
       expect(
         existsSync(path),
-        `ch6-bg.png debe existir antes de medir su size. W1 (artist-creator) lo genera.`
+        `ch6-bg.webp debe existir. Phase 6 convirtió a WebP lossless.`
       ).toBe(true)
       return
     }
     const size = statSync(path).size
     expect(
       size,
-      `ch6-bg.png size=${size} bytes excede budget hi-bit ${HIBIT_BG_BUDGET_BYTES} bytes (300KB). ` +
-        `Si crece más, aplicar dieta (WebP/paleta) sin bajar la densidad de detalle hi-bit.`
+      `ch6-bg.webp size=${size} bytes excede budget hi-bit ${HIBIT_BG_BUDGET_BYTES} bytes (300KB). ` +
+        `Si crece más, revisar la conversión WebP.`
     ).toBeLessThanOrEqual(HIBIT_BG_BUDGET_BYTES)
   })
 

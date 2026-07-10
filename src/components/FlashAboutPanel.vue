@@ -2,7 +2,7 @@
   FlashAboutPanel.vue — ABOUT panel for ch2 Y2K stage (Phase 04.1 · iter2 2026-07-09).
 
   iter2 (Rafael): "hacemos más protagónico el about mostrando la guerra de Flash
-  contra Apple". La guerra (ch2-flash-war.png) pasa de figura pequeña bajo el texto
+  contra Apple". La guerra (ch2-flash-war.webp) pasa de figura pequeña bajo el texto
   a ESCENARIO full-bleed del panel, con meteoros y relámpagos CSS encima. La bio se
   re-presenta como PARTES DE GUERRA (transmisiones militares Y2K) sobre paneles
   oscuros legibles, y el bust queda como retrato de comandante. El copy fino se
@@ -25,7 +25,7 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 // Dynamic binding (avoids vite-plugin-vue transformAssetUrls trying to resolve the
 // /assets/ path at compile-time → it's a public/ runtime URL).
 const bustSrc = '/assets/ch2-bust.png'
-const warSrc = '/assets/ch2-flash-war.png'
+const warSrc = '/assets/ch2-flash-war.webp'
 
 // Meteoros CSS sobre la batalla — pos/timing estáticos (PRM los apaga vía @media)
 const meteors = [

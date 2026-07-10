@@ -275,7 +275,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   background-color: var(--c-bg);
-  background-image: url('/assets/ch4-portal.png');
+  background-image: url('/assets/ch4-portal.webp');
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 5px),
     calc((var(--my, 0) + var(--dy, 0)) * 4px),
@@ -318,7 +318,7 @@ onBeforeUnmount(() => {
   50% { opacity: 0.55; transform: translateY(-18px) scale(1.05); }
 }
 
-/* c1 personaje — sprite ch4-character.png (de espaldas, gafas VR) a la derecha. Bob autónomo. */
+/* c1 personaje — sprite ch4-character.webp (de espaldas, gafas VR) a la derecha. Bob autónomo. */
 .ch4-layer--character {
   z-index: 3;
   transform: translate3d(
@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
 .ch4-character-art {
   position: absolute;
   inset: 0;
-  background-image: url('/assets/ch4-character.png');
+  background-image: url('/assets/ch4-character.webp');
   background-repeat: no-repeat;
   background-size: auto 50%;
   background-position: 73% 32%;

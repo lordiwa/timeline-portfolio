@@ -72,14 +72,14 @@ export class SpaceScene extends Phaser.Scene {
 
   preload() {
     // Main background (always loaded — single-layer fallback baseline).
-    this.load.image('ch6-bg', '/assets/ch6-bg.png')
+    this.load.image('ch6-bg', '/assets/ch6-bg.webp')
 
     // Backdrop tall 960×1890 hi-bit — cubre descenso completo a resolución nativa.
-    this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.png')
+    this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.webp')
 
     // Parallax layers TRANSPARENTES (Open Q4 RESOLVED — best case 3-layer).
     this.load.image('ch6-bg-stars-far-t', '/assets/ch6-bg-stars-far-t.png')
-    this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.png')
+    this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.webp')
 
     // 3 planets-proyecto — 192×192 nativos hi-bit, sin scale (D5-01).
     this.load.image('ch6-planet-ar-vr', '/assets/ch6-planet-ar-vr.png')

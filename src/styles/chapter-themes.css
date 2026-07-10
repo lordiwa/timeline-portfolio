@@ -124,7 +124,7 @@
     --c-border: #e2e8f0;
     --c-focus: #6366f1;
     --c-surface: #f5f7fb;
-    --bg-image: url('/assets/ch5-hero.jpg');
+    --bg-image: url('/assets/ch5-hero.webp');
     --font-body: 'Inter Variable', system-ui, sans-serif;
     /* contrast(#1a1a2e, #ffffff) = 14.2:1 — chapter 5 (Modern) — Phase 4 W4 ✓
        --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph */
@@ -148,7 +148,7 @@
     --c-border: #4dffff;
     --c-focus: #ffd95c;
     --c-surface: #0a061f;                  /* near-black starfield contrast */
-    --bg-image: url('/assets/ch6-bg.png'); /* BackgroundLayers crossfade ch5→ch6 (D2-04) */
+    --bg-image: url('/assets/ch6-bg.webp'); /* BackgroundLayers crossfade ch5→ch6 (D2-04) */
     --font-body: 'Audiowide', sans-serif;
     /* contrast(#c0e0ff, #1a0e3d) ≈ 10.6:1 — chapter 6 (Phaser synthwave) — Phase 5 W0 ✓
        --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph

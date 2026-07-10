@@ -462,7 +462,7 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   background:
     linear-gradient(rgba(4, 4, 10, 0.28), rgba(4, 4, 10, 0.5)),
-    url('/assets/ch5-cinema/bg-hall-v3.png') center / cover no-repeat,
+    url('/assets/ch5-cinema/bg-hall-v3.webp') center / cover no-repeat,
     #04040a;
 }
 

@@ -132,7 +132,7 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
 
   it('T6 CSS: .ch3-parallax sticky + las 4 capas referencian sus assets', () => {
     expect(CH3_SOURCE).toMatch(/\.ch3-parallax\s*\{[\s\S]*?position:\s*sticky/)
-    expect(CH3_SOURCE).toMatch(/ch3-sky\.png/)
+    expect(CH3_SOURCE).toMatch(/ch3-sky\.webp/)
     expect(CH3_SOURCE).toMatch(/ch3-far\.png/)
     expect(CH3_SOURCE).toMatch(/ch3-mountains\.png/)
     expect(CH3_SOURCE).toMatch(/ch3-path\.png/)
@@ -146,7 +146,7 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
   })
 
   it('T6 CSS: recuadro usa textura pergamino + PRM guard', () => {
-    expect(CH3_SOURCE).toMatch(/ch3-parchment\.png/)
+    expect(CH3_SOURCE).toMatch(/ch3-parchment\.webp/)
     expect(CH3_SOURCE).toMatch(/prefers-reduced-motion:\s*reduce/)
     expect(CH3_SOURCE).toMatch(/transform:\s*none\s*!important/)
   })

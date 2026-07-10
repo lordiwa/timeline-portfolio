@@ -13,12 +13,12 @@
   iter9: parallax de 3 capas + drift + puntero + scroll.
 
   Assets activos (iter5 Kingdom — old/CHANGELOG.md §6.5):
-    - Capas: ch3-sky.png (sol cx≈28% cy≈55%) / ch3-far.png (cordillera malva) /
+    - Capas: ch3-sky.webp (sol cx≈28% cy≈55%) / ch3-far.png (cordillera malva) /
       ch3-mountains.png (ciudadela en ruinas, bottom-right) / ch3-path.png (cresta
       de batalla casi negra con rim ámbar)
     - Emblemas clicables: ch3-flash-fallen / ch3-mark-rebuild / ch3-mark-standard /
       ch3-mark-orb / ch3-html5-future
-    - Recuadro: ch3-parchment.png
+    - Recuadro: ch3-parchment.webp
 
   Agua espejo: .ch3-water (14dvh, overflow hidden) contiene copias de las 4 capas
   con transform-origin top + translateY(calc(100dvh - altura-agua)) scaleY(-1) →
@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
 
 /* Profundidad Kingdom: cielo casi quieto → cresta cercana con el drift más ancho */
 .ch3-layer--sky {
-  background-image: url('/assets/ch3-sky.png');
+  background-image: url('/assets/ch3-sky.webp');
   background-position: 50% top;
   transform: translate3d(calc(var(--mx, 0) * 6px), calc(var(--sx, 0) * -0.015px + var(--my, 0) * 4px), 0);
   animation: ch3-sky-drift 90s ease-in-out infinite alternate;
@@ -594,7 +594,7 @@ onBeforeUnmount(() => {
 }
 
 .ch3-water-layer--sky {
-  background-image: url('/assets/ch3-sky.png');
+  background-image: url('/assets/ch3-sky.webp');
   background-position: 50% top;
   transform: translateX(calc(var(--mx, 0) * 6px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
 }
@@ -851,7 +851,7 @@ onBeforeUnmount(() => {
   padding: clamp(28px, 5vw, 48px) clamp(26px, 5vw, 46px) clamp(20px, 4vw, 34px);
   color: #3a2a18;
   background-color: #f1e3c4;
-  background-image: url('/assets/ch3-parchment.png');
+  background-image: url('/assets/ch3-parchment.webp');
   background-size: cover;
   background-position: center;
   image-rendering: pixelated;

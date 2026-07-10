@@ -84,7 +84,7 @@ const chapter = chapters[2]
 const ch2Projects = computed(() => projects.filter((p) => p.chapterEra === 2))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 // Binding dinámico (evita que transformAssetUrls resuelva el path /assets/ en compile-time).
-const warSrc = '/assets/ch2-flash-war.png'
+const warSrc = '/assets/ch2-flash-war.webp'
 
 // Sidebar nav state — panel activo. Default 'home' para que FlashBanner monte en mount inicial (test T6).
 const activePanel = ref('home')
