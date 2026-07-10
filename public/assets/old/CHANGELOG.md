@@ -670,4 +670,4 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   Mock de composición sobre la escena ANTES de instalar: objetos plantados en el suelo
   (I 12%,74% · II 33%,77% · III 52%,72% · IV 72%,76%), solo el V flota en el cielo del
   este (88%,34%). PASS.
-- **Commit hash del cambio:** (commit de este drop)
+- **Commit hash del cambio:** `563e54f` (arte) + `bb7cf59` (escena de entrada + recomposición)
