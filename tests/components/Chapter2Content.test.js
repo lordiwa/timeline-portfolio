@@ -81,13 +81,8 @@ function mountCh2({ locale = 'es' } = {}) {
 }
 
 describe('Chapter2Content.vue', () => {
-  // ── Limpieza del flag de sesión entre tests ──────────────
-  // La cinemática lee sessionStorage para saber si ya se reprodujo.
-  // Limpiamos antes de cada test para garantizar estado limpio.
-  beforeEach(() => {
-    try { sessionStorage.removeItem('ch2-cinematic-played') } catch {}
-  })
-
+  // (El flag sessionStorage 'ch2-cinematic-played' fue eliminado 2026-07-10:
+  //  la cinemática corre en cada cruce 2→3 por decisión de Rafael.)
   afterEach(() => {
     // Teleport pudo haber inyectado .ch2-cin-root al body; limpiarlo.
     document.body.querySelector('.ch2-cin-root')?.remove()

@@ -64,18 +64,10 @@ const audio = inject('audio', null)
 
 const reducedMotion = () => prm?.prefersReduced?.value ?? false
 
-// ── Session flag — cinemática completa solo una vez por sesión (desktop) ────
-// Mobile nunca la consume: si el usuario visita primero en mobile y luego en
-// desktop en la misma sesión, la cinemática de escritorio sí se dispara.
-const CINEMATIC_KEY = 'ch2-cinematic-played'
-function hasCinematicPlayed() {
-  try { return sessionStorage.getItem(CINEMATIC_KEY) === '1' } catch { return false }
-}
-function markCinematicPlayed() {
-  try { sessionStorage.setItem(CINEMATIC_KEY, '1') } catch {}
-}
-
 // ── Estado de la cinemática ─────────────────────────────────────────────────
+// La cinemática corre en CADA cruce 2→3 (scroll o click en timeline) — decisión
+// Rafael 2026-07-10 ("debe ser siempre"); el gating 1x/sesión fue descartado.
+// El skip (click/Esc/Space/rueda) queda como válvula para quien ya la vio.
 const cinematicActive = ref(false)
 // 'war' | 'rupture' | 'silence' | 'releasing' | null
 const cinematicPhase = ref(null)
@@ -152,8 +144,6 @@ function skipCinematic() {
 }
 
 function startFullCinematic() {
-  markCinematicPlayed()
-
   // Bloquea el crossfade automático de initAudioWatcher (que tiene flush:'post')
   // 6000ms = duración cinemática (5900ms) + buffer pequeño
   if (audio?.holdEraSwitch) audio.holdEraSwitch(6000)
@@ -204,10 +194,9 @@ function _onCinWheel(e) {
 
 // ── La muerte de la era (cruce ch2→ch3) ─────────────────────────────────────
 // PRM: sin ningún efecto.
-// Desktop ≥600px, primera vez: cinemática completa.
-// Mobile / segunda vez: solo drenado rápido (comportamiento previo) — en la
-//   práctica es invisible (ch2 está off-screen cuando se activa ch3), pero se
-//   conserva para no romper la lógica de dying que podría usarse en otros contextos.
+// Desktop ≥600px: cinemática completa en CADA cruce (scroll o click — Rafael 2026-07-10).
+// Mobile: solo drenado rápido — en la práctica es invisible (ch2 está off-screen
+//   cuando se activa ch3), pero se conserva para no romper la lógica de dying.
 const dying = ref(false)
 let dyingTimer = null
 
@@ -215,10 +204,10 @@ if (scrollState?.activeChapter) {
   watch(scrollState.activeChapter, (n, o) => {
     if (o === 2 && n === 3 && !reducedMotion()) {
       const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 600
-      if (isDesktop && !hasCinematicPlayed()) {
+      if (isDesktop && !cinematicActive.value) {
         startFullCinematic()
-      } else {
-        // Segunda vez o mobile: drenado rápido
+      } else if (!isDesktop) {
+        // Mobile: drenado rápido
         dying.value = true
         clearTimeout(dyingTimer)
         dyingTimer = setTimeout(() => { dying.value = false }, 2600)
