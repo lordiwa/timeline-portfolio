@@ -688,3 +688,11 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   ch3 = escena vista a través del browser muerto, que se desmorona al primer click o a los
   6.5s (cristales caen al agua → ondas).
 - **Commit hash del cambio:** `0b2f311` (arte) + `34d3ec4` (ch2 guerra+muerte) + `c30b6d4` (ch3 ventana)
+
+
+## ch6-structures-t.png — iter2 → procedural (2026-07-10)
+
+- **Versión guardada:** `old/ch6-structures-t-2026-07-10-iter2.png`
+- **Razón del cambio:** El PNG iter2 tenía halos magenta en todos los bordes (recolor roto — clasificación por tono en build_ch6_scene_assets.py produjo franja coloreada en el canal alpha). Visualmente: silueta plana violeta con borde «quemado» magenta.
+- **Qué se intentó diferente:** Reemplazado 100% por rendering procedural en Phaser 3 Graphics. Anillo wireframe holográfico en perspectiva: dos elipses concéntricas (outer 195×52, inner 150×40 semi-ejes), 16 montantes radiales (12 cian «construidos» + 4 magenta «en progreso»), cruz de referencia dorada con ticks de escala. Alpha pulsante 0.75↔1.0 via tween (3.4s). Drones del postal apuntan láseres de construcción magenta hacia segmentos del anillo.
+- **Commit hash del cambio:** (commit de esta sesión)
