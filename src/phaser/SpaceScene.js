@@ -268,6 +268,7 @@ export class SpaceScene extends Phaser.Scene {
     this._lastSynapseTime = 0
     this._prefersReduced = false
     this._spaceShader = null
+    this._glitchRect = null
   }
 
   preload() {
@@ -316,6 +317,7 @@ export class SpaceScene extends Phaser.Scene {
     this._lastSynapseTime = 0
     this._prefersReduced = false
     this._spaceShader = null
+    this._glitchRect = null
 
     const prefersReduced = this.registry.get('prefersReduced')
     this._prefersReduced = prefersReduced
@@ -563,10 +565,19 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Glitch de horizonte (ERA-AGNT-02) — camera tint magenta/cian.
+    // Glitch de horizonte (ERA-AGNT-02) — screen-flash rect magenta/cian.
+    // Rectangle scrollFactor 0 depth 95 sustituye camera.setTint (API
+    // ausente en Phaser 3.90 — TypeErrors mataban el game loop, bug fix).
     // ─────────────────────────────────────────────────────────────────────
 
     if (!prefersReduced) {
+      this._glitchRect = this.add
+        .rectangle(480, 270, 960, 540, 0xff3ca6)
+        .setScrollFactor(0)
+        .setDepth(95)
+        .setVisible(false)
+        .setAlpha(0.12)
+        .setBlendMode(Phaser.BlendModes.ADD)
       this._scheduleHorizonGlitch()
     }
 
@@ -849,23 +860,27 @@ export class SpaceScene extends Phaser.Scene {
         this.time.addEvent({ delay: 3000, callback: doGlitch })
         return
       }
-      if (!this.cameras || !this.cameras.main) return
-      this.cameras.main.setTint(0xff3ca6)
+      if (!this._glitchRect) return
+      // Fase 1: flash magenta 55ms
+      this._glitchRect.setFillStyle(0xff3ca6).setVisible(true)
       this.time.addEvent({
         delay: 55,
         callback: () => {
-          if (!this.cameras || !this.cameras.main) return
-          this.cameras.main.clearTint()
+          if (!this._glitchRect) return
+          this._glitchRect.setVisible(false)
+          // Pausa 35ms entre colores
           this.time.addEvent({
             delay: 35,
             callback: () => {
-              if (!this.cameras || !this.cameras.main) return
-              this.cameras.main.setTint(0x4dffff)
+              if (!this._glitchRect) return
+              // Fase 2: flash cian 70ms
+              this._glitchRect.setFillStyle(0x4dffff).setVisible(true)
               this.time.addEvent({
                 delay: 70,
                 callback: () => {
-                  if (!this.cameras || !this.cameras.main) return
-                  this.cameras.main.clearTint()
+                  if (!this._glitchRect) return
+                  this._glitchRect.setVisible(false)
+                  // Programar próximo glitch en 8-15s (cadencia 8000-15000ms)
                   this.time.addEvent({
                     delay: 8000 + Math.floor(Math.random() * 7000),
                     callback: doGlitch,
