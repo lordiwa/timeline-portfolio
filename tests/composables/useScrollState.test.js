@@ -3,7 +3,7 @@
 //
 // Cobertura:
 // - exports + interfaz pública (refs readonly + scrollToChapter)
-// - default activeChapter=3, default scrollProgress=0
+// - default activeChapter=0, default scrollProgress=0
 // - deep-link ?ch=N → scrollToChapter(N, 'instant') vía spy sobre HTMLElement.prototype.scrollIntoView
 // - validación de rangos (?ch=99, ?ch=abc, ?ch=, missing → fallback ch3)
 // - scrollToChapter(N, 'smooth') invoca scrollIntoView correcto
@@ -95,7 +95,7 @@ describe('useScrollState', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // Test 2: default refs + null ref no cablea nada
   // ─────────────────────────────────────────────────────────────────────────
-  it('with a null ref, returns readonly refs (activeChapter=3, scrollProgress=0) and does NOT wire IO yet', () => {
+  it('with a null ref, returns readonly refs (activeChapter=0, scrollProgress=0) and does NOT wire IO yet', () => {
     // Llamamos useScrollState fuera de un componente Vue para verificar el
     // estado inicial puro. Necesitamos un setup mínimo porque onBeforeUnmount
     // requiere instancia. Usamos un componente que NO renderiza shellRef.
@@ -109,7 +109,7 @@ describe('useScrollState', () => {
       template: '<div></div>',
     })
     const w = mount(Comp)
-    expect(captured.activeChapter.value).toBe(3)
+    expect(captured.activeChapter.value).toBe(0)
     expect(captured.scrollProgress.value).toBe(0)
     expect(isReadonly(captured.activeChapter)).toBe(true)
     expect(isReadonly(captured.scrollProgress)).toBe(true)
@@ -131,46 +131,46 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 4: deep-link ?ch=99 (out of range) → fallback ch3
+  // Test 4: deep-link ?ch=99 (out of range) → fallback ch0
   // ─────────────────────────────────────────────────────────────────────────
-  it('deep-link ?ch=99 falls back to scrollToChapter(3, "auto")', async () => {
+  it('deep-link ?ch=99 falls back to scrollToChapter(0, "auto")', async () => {
     window.history.replaceState({}, '', '/?ch=99')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'instant')
+    assertNavigatedTo(0, 'instant')
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 5: deep-link ?ch=abc (invalid) → fallback ch3
+  // Test 5: deep-link ?ch=abc (invalid) → fallback ch0
   // ─────────────────────────────────────────────────────────────────────────
-  it('deep-link ?ch=abc falls back to scrollToChapter(3, "auto")', async () => {
+  it('deep-link ?ch=abc falls back to scrollToChapter(0, "auto")', async () => {
     window.history.replaceState({}, '', '/?ch=abc')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'instant')
+    assertNavigatedTo(0, 'instant')
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 6: deep-link ?ch= (empty) → fallback ch3
+  // Test 6: deep-link ?ch= (empty) → fallback ch0
   // ─────────────────────────────────────────────────────────────────────────
-  it('deep-link ?ch= (empty) falls back to scrollToChapter(3, "auto")', async () => {
+  it('deep-link ?ch= (empty) falls back to scrollToChapter(0, "auto")', async () => {
     window.history.replaceState({}, '', '/?ch=')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'instant')
+    assertNavigatedTo(0, 'instant')
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 7: no query string → default ch3
+  // Test 7: no query string → default ch0 (la historia empieza por el principio)
   // ─────────────────────────────────────────────────────────────────────────
-  it('no query string defaults to scrollToChapter(3, "auto")', async () => {
+  it('no query string defaults to scrollToChapter(0, "auto")', async () => {
     window.history.replaceState({}, '', '/')
     const { wrapper } = makeWrapper()
     await waitForDeepLink()
-    assertNavigatedTo(3, 'instant')
+    assertNavigatedTo(0, 'instant')
     wrapper.unmount()
   })
 
@@ -195,7 +195,7 @@ describe('useScrollState', () => {
   it('IO callback with intersectionRatio >= 0.6 updates activeChapter', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
-    expect(get().state.activeChapter.value).toBe(3)
+    expect(get().state.activeChapter.value).toBe(0)
     // Disparar IO con un entry simulando section 4 visible.
     const io = globalThis.MockIntersectionObserver.instances[0]
     expect(io).toBeDefined()
@@ -217,7 +217,7 @@ describe('useScrollState', () => {
   it('IO callback with intersectionRatio < 0.6 does NOT update activeChapter', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
-    expect(get().state.activeChapter.value).toBe(3)
+    expect(get().state.activeChapter.value).toBe(0)
     const io = globalThis.MockIntersectionObserver.instances[0]
     io.triggerEntries([
       {
@@ -227,7 +227,7 @@ describe('useScrollState', () => {
       },
     ])
     await flushPromises()
-    expect(get().state.activeChapter.value).toBe(3) // sin cambio
+    expect(get().state.activeChapter.value).toBe(0) // sin cambio
     wrapper.unmount()
   })
 

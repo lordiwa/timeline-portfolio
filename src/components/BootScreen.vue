@@ -550,12 +550,18 @@ onBeforeUnmount(() => {
 }
 
 /* Botón ghost para visitantes recurrentes — invisible, solo para a11y */
+/* Hit-area de pantalla completa: "presiona cualquier tecla" también significa
+   "toca/clickea donde sea" — sin esto, un usuario solo-mouse o táctil queda
+   ATRAPADO en la versión corta (bug 2026-07-10). Invisible pero focusable. */
 .boot-screen__ghost-btn {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 /* ── Fase boot / MS-DOS ─────────────────────────────────────────────────────── */

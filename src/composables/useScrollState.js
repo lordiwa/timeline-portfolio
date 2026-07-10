@@ -21,7 +21,7 @@ import { ref, readonly, watch, onBeforeUnmount } from 'vue'
 import { useRafFn } from '@vueuse/core'
 
 export function useScrollState(shellRef) {
-  const activeChapter = ref(3)
+  const activeChapter = ref(0)
   const scrollProgress = ref(0)
 
   let observer = null
@@ -53,11 +53,14 @@ export function useScrollState(shellRef) {
   }
 
   function parseInitialChapter() {
+    // Sin deep-link la historia empieza por el principio: ch0 (1995), que además
+    // empalma con el boot BIOS. (El default 3 era un atajo de desarrollo de ch3
+    // que se quedó pegado — bug reportado por Rafael 2026-07-10.)
     const params = new URLSearchParams(window.location.search)
     const raw = params.get('ch')
-    if (raw === null || raw === '') return 3
+    if (raw === null || raw === '') return 0
     const N = Number(raw)
-    if (!Number.isInteger(N) || N < 0 || N > 6) return 3
+    if (!Number.isInteger(N) || N < 0 || N > 6) return 0
     return N
   }
 

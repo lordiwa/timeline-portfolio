@@ -36,6 +36,7 @@ import GlobalMantra from './components/GlobalMantra.vue'
 import SoundToggle from './components/SoundToggle.vue'
 import BootScreen from './components/BootScreen.vue'
 import DialUpScreen from './components/DialUpScreen.vue'
+import EraTransition from './components/EraTransition.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
@@ -201,6 +202,11 @@ useHead({
     aria-hidden="true"
     @animationend="veilActive = false"
   />
+  <!-- Pixel dissolve wipe entre eras (Rafael 2026-07-10): la capa FUERTE de la
+       transición — bloques del color de la era destino inundan y se disuelven.
+       z-index 49 (cubre HUDs y velo, bajo skip-link). Se auto-gestiona vía
+       inject scrollState/prm; salta el cruce 2→3 (signature drenado). -->
+  <EraTransition />
 </template>
 
 <!--
