@@ -739,3 +739,11 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Razón del cambio:** El PNG iter2 tenía halos magenta en todos los bordes (recolor roto — clasificación por tono en build_ch6_scene_assets.py produjo franja coloreada en el canal alpha). Visualmente: silueta plana violeta con borde «quemado» magenta.
 - **Qué se intentó diferente:** Reemplazado 100% por rendering procedural en Phaser 3 Graphics. Anillo wireframe holográfico en perspectiva: dos elipses concéntricas (outer 195×52, inner 150×40 semi-ejes), 16 montantes radiales (12 cian «construidos» + 4 magenta «en progreso»), cruz de referencia dorada con ticks de escala. Alpha pulsante 0.75↔1.0 via tween (3.4s). Drones del postal apuntan láseres de construcción magenta hacia segmentos del anillo.
 - **Commit hash del cambio:** (commit de esta sesión)
+
+
+## ch4-near.webp — iter1 → iter2 (2026-07-10)
+
+- **Versión guardada:** `old/ch4-near-2026-07-10-iter1.webp`
+- **Razón del cambio:** Rafael: "ch4 ahora tapa a la persona volando". La ventana holográfica cian rota superior-derecha del asset caía exactamente sobre el personaje (sprite en 73%/32%, capa near z4 > character z3, opacity 0.8).
+- **Qué se intentó diferente:** edición quirúrgica con sharp — rect negro x470-790/y30-300 (con mix-blend-mode:screen el negro es transparente). Se conservan ventana central DATA LOSS, shards izquierdos, columna derecha x>790 y crumple magenta bajo los pies.
+- **Commit hash del cambio:** este commit (art(ch4): despejar zona del personaje en capa near iter2)
