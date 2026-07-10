@@ -522,6 +522,13 @@ export class SpaceScene extends Phaser.Scene {
     })
 
     // ─────────────────────────────────────────────────────────────────────
+    // Bots de reparto (feat ch6) — Amazon × 2 + Uber × 2, depth 25.
+    // 100% procedural: generateTexture + tweens. Sin PNGs nuevos.
+    // ─────────────────────────────────────────────────────────────────────
+
+    this._buildDeliveryBots(prefersReduced)
+
+    // ─────────────────────────────────────────────────────────────────────
     // Haz holográfico de mando (ERA-AGNT-01) — depth 34.
     // ─────────────────────────────────────────────────────────────────────
 
@@ -893,6 +900,105 @@ export class SpaceScene extends Phaser.Scene {
       })
     }
     this.time.addEvent({ delay: 12000 + Math.floor(Math.random() * 5000), callback: doGlitch })
+  }
+
+  _buildDeliveryBots(prefersReduced) {
+    // Genera la textura del bot Amazon una sola vez (guarda en texture cache).
+    // Dibujado a 20×16 px lógicos — setScale(2) da aspecto chunky coherente
+    // con los drones de la escena (HI-BIT-01).
+    if (!this.textures.exists('bot-amazon')) {
+      const g = this.add.graphics()
+      // Rotores: dos barras grises horizontales arriba
+      g.fillStyle(0x888888, 1)
+      g.fillRect(2, 0, 5, 1)
+      g.fillRect(13, 0, 5, 1)
+      // Brazos de rotor (1px vertical)
+      g.fillRect(4, 1, 1, 2)
+      g.fillRect(14, 1, 1, 2)
+      // Luz de navegación cian
+      g.fillStyle(0x4dffff, 1)
+      g.fillRect(9, 0, 2, 1)
+      // Tapa de la caja (tono ligeramente más claro)
+      g.fillStyle(0xc8a070, 1)
+      g.fillRect(3, 3, 14, 1)
+      // Cara principal de la caja — tan #b58a54
+      g.fillStyle(0xb58a54, 1)
+      g.fillRect(3, 4, 11, 8)
+      // Cara lateral sombra — #8a6438
+      g.fillStyle(0x8a6438, 1)
+      g.fillRect(14, 4, 3, 8)
+      // Franja inferior de la caja
+      g.fillStyle(0xb58a54, 1)
+      g.fillRect(3, 12, 14, 1)
+      // Sonrisa-flecha Prime: arco de 5px en naranja #ff9900
+      g.fillStyle(0xff9900, 1)
+      g.fillRect(5, 8, 1, 1)
+      g.fillRect(6, 9, 2, 1)
+      g.fillRect(8, 9, 2, 1)
+      g.fillRect(10, 8, 1, 1)
+      // Patas de aterrizaje (2px tall)
+      g.fillStyle(0x888888, 1)
+      g.fillRect(5, 13, 1, 2)
+      g.fillRect(12, 13, 1, 2)
+      g.generateTexture('bot-amazon', 20, 16)
+      g.destroy()
+    }
+
+    // Textura del bot Uber — courier compacto negro con franja verde Eats.
+    if (!this.textures.exists('bot-uber')) {
+      const g = this.add.graphics()
+      // Cuerpo compacto negro #141414
+      g.fillStyle(0x141414, 1)
+      g.fillRect(3, 2, 14, 10)
+      // Placa frontal: panel gris claro
+      g.fillStyle(0x2a2a2a, 1)
+      g.fillRect(4, 3, 12, 3)
+      // Franja verde Uber Eats #06c167
+      g.fillStyle(0x06c167, 1)
+      g.fillRect(3, 7, 14, 2)
+      // Luces laterales verdes (1px × 2px)
+      g.fillRect(3, 4, 1, 2)
+      g.fillRect(16, 4, 1, 2)
+      // Bolsa térmica verde colgando debajo
+      g.fillStyle(0x058050, 1)
+      g.fillRect(6, 12, 8, 3)
+      g.fillStyle(0x06c167, 1)
+      g.fillRect(7, 13, 6, 1)
+      // Correas de la bolsa
+      g.fillStyle(0x333333, 1)
+      g.fillRect(8, 11, 1, 1)
+      g.fillRect(11, 11, 1, 1)
+      g.generateTexture('bot-uber', 20, 16)
+      g.destroy()
+    }
+
+    // Posiciones en world-space (scrollFactor 1.0), banda y 1350-1890 (vista postal).
+    // Uber 1 evita la zona x 150-350 en y 1600-1800 donde están los héroes.
+    const DELIVERY_BOT_DEFS = [
+      // Amazon 1: travesía horizontal lenta tipo ruta de reparto
+      { key: 'bot-amazon', x: 750, y: 1430, yA: 10, yD: 2800, xA: 80,  xD: 7000, aA: 0, aD: 0    },
+      // Amazon 2: hover con bob vertical
+      { key: 'bot-amazon', x: 560, y: 1490, yA: 14, yD: 3200, xA: 40,  xD: 5500, aA: 2, aD: 4200 },
+      // Uber 1: patrulla plataforma (x 600-700, y 1720 — fuera de zona héroes)
+      { key: 'bot-uber',   x: 700, y: 1720, yA: 8,  yD: 2400, xA: 100, xD: 6000, aA: 0, aD: 0    },
+      // Uber 2: banda media entre drones existentes (~y 1450)
+      { key: 'bot-uber',   x: 450, y: 1450, yA: 12, yD: 2600, xA: 60,  xD: 4800, aA: 2, aD: 5000 },
+    ]
+
+    DELIVERY_BOT_DEFS.forEach((def) => {
+      const bot = this.add
+        .image(def.x, def.y, def.key)
+        .setScale(2)
+        .setDepth(25)
+        .setScrollFactor(1.0)
+      if (!prefersReduced) {
+        this.tweens.add({ targets: bot, y: def.y - def.yA, duration: def.yD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
+        this.tweens.add({ targets: bot, x: def.x + def.xA, duration: def.xD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
+        if (def.aA > 0) {
+          this.tweens.add({ targets: bot, angle: def.aA, duration: def.aD, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
+        }
+      }
+    })
   }
 
   _renderProceduralPlanet(projId, cx, cy) {
