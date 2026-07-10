@@ -629,3 +629,29 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
 - **Capas actualizadas:** sky, mountains, path — TODAS a iter4. Ninguna quedó en iter2.
 - **Nota técnica:** `forge_sprite` con aspect 16:9 size:0 genera consistentemente imágenes cuadradas (1376×1376) con el contenido centrado verticalmente, lo que impide una composición válida de parallax. Para capas parallax usar `forge_background` con cielo flat descriptivo + PIL flood-fill posterior.
 - **Commit hash post-regen:** `648a573`
+
+## ch3 parallax — iter4 → iter5 "Kingdom New Lands" + ch3-far.png NUEVO (2026-07-09)
+
+- **Versiones guardadas:** `old/ch3-{sky,mountains,path}-2026-07-09-iter4.png`
+- **Razón del cambio:** Rafael 2026-07-09: "los assets del fondo se ven mal cortados y feos
+  mientras que los logos se ven bonitos... composición de posguerra donde murió Flash...
+  usa como ejemplo juegos de Raw Fury... la estética como el juego Kingdom New Lands".
+  Diagnóstico técnico del "mal cortado": alpha binario 0/255 sin anti-aliasing con fringes
+  teal del chroma-key + choque estilístico (cielo 32-bit exuberante vs terreno chunky plano).
+- **Qué se hizo diferente (pipeline silueta Kingdom):**
+  1. `forge_background` banana-2/snes por capa con cielo plano #7EB8C4 → flood-fill BFS
+     desde el borde (no chroma global: preserva humo interior).
+  2. **Recoloreo TOTAL de píxeles opacos** a rampas atmosféricas por bandas de luminancia
+     (far: malva #6a5480 · citadel: ciruela #3a2b3e + humo #8a7290 · path: casi negro
+     #1a1420) → cualquier fringe residual queda absorbido por la rampa. Cero recortes feos.
+  3. Rim light procedural ámbar #de8a4a (2 filas, borde superior = backlit por el sol)
+     en citadel y path.
+  4. Composición: sol regenerado ALTO (cx≈28%, cy≈55% — la c5 original lo dejaba pegado
+     al borde inferior y cualquier terreno lo enterraba); citadel escalada 0.72 NEAREST
+     anclada bottom-right (la nativa ocupaba todo el ancho y tapaba el sol); estandartes
+     del path cruzan el disco solar (firma Kingdom).
+  5. Mock PIL de 4 capas + banda de agua simulada ANTES de instalar (disciplina iter3). PASS.
+- **Nuevo asset:** `ch3-far.png` (cordillera lejana malva, primera generación — sin iter previa).
+  Enum de asset-naming actualizado.
+- **Side-effect perf:** capas de terreno 300-800KB → 6-12KB (siluetas planas comprimen).
+- **Commit hash del cambio:** (commit de este drop)
