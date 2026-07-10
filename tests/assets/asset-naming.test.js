@@ -59,10 +59,11 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 // JPG vs PNG decision (D4-W2-01): backgrounds opacos full-frame en JPEG, sprites con
 // alpha en PNG. ch6-bg.png y ch0-game-*.png/ch0-os-*.png son PNG por VGA 16-color
 // palette indexed (mejor compresión PNG indexada que JPEG para colores planos).
-//   - 5 ch3 parallax fantasía épica (Rafael 2026-05-28, iter9):
-//     · ch3-sky.png (cielo opaco pastel, capa lejana)
-//     · ch3-mountains.png (silueta montañas, transparente arriba)
-//     · ch3-path.png (camino de piedras primer plano, transparente arriba)
+//   - 6 ch3 parallax Kingdom New Lands (Rafael 2026-07-09, iter5 "posguerra de Flash"):
+//     · ch3-sky.png (crepúsculo con sol enorme cx≈28%, capa opaca)
+//     · ch3-far.png (cordillera lejana malva, silueta transparente)
+//     · ch3-mountains.png (ciudadela en ruinas bottom-right, silueta transparente)
+//     · ch3-path.png (cresta de batalla casi negra con rim ámbar, transparente arriba)
 //     · ch3-prop-shield.png + ch3-prop-banner.png (decor heráldico, reemplaza robot+starbursts)
 //     · ch3-robot.png queda como asset legacy no referenciado (bio mascota iter7-8).
 //   - 3 ch3 emblemas-cuento iter10 (markers clicables) + recuadro:
@@ -76,7 +77,7 @@ const GITIGNORE_PATH = resolve(process.cwd(), '.gitignore')
 //     · ch4-near.png (partículas/fragmentos próximos, transparente — primer plano c0)
 //     Reemplazan al ch4-bg.png iter2 (movido a old/ vía §6.5).
 const ASSET_NAMING_REGEX =
-  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading)|drone-[ab]|platform|rafael|structures-t)\.(png|jpg)$/
+  /^ch[0-6]-(bust|bg|bg-tall|bg-stars-far|bg-stars-far-t|bg-planet-mid|bg-nebulae-mid|bg-nebulae-mid-t|fg-panels|fg-ships|hero|paper-bg|halftone-bg|logo-rm|robot|sky|far|mountains|path|parchment|flash-fallen|flash-war|html5-future|portal|character|matrix|near|prop-(shield|banner)|mark-(scroll|tome|orb|rebuild|standard)|starburst-(green|orange)|planet-(ar-vr|remoose|software-mind)|ship-[12]|game-(california|warcraft|starcraft|magic)|os-(win95|win95-loading)|drone-[ab]|platform|rafael|structures-t)\.(png|jpg)$/
 
 // Defensive: si public/assets/ no existe o no tiene assets, devolver lista vacía
 // (test setup-friendly antes del primer asset commited).

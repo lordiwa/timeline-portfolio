@@ -35,14 +35,24 @@ const CH3_SOURCE = readFileSync(
 
 describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => {
   // ── T1: DOM + parallax ─────────────────────────────────────────────────────
-  it('T1 DOM: .ch3-stage + .ch3-content + .ch3-parallax con 3 capas', () => {
+  it('T1 DOM: .ch3-stage + .ch3-content + .ch3-parallax con 4 capas (iter11 Kingdom)', () => {
     const { wrapper } = mountCh3()
     expect(wrapper.find('.ch3-stage').exists()).toBe(true)
     expect(wrapper.find('.ch3-content').exists()).toBe(true)
     expect(wrapper.find('.ch3-parallax').attributes('aria-hidden')).toBe('true')
     expect(wrapper.find('.ch3-layer--sky').exists()).toBe(true)
+    expect(wrapper.find('.ch3-layer--far').exists()).toBe(true)
     expect(wrapper.find('.ch3-layer--mountains').exists()).toBe(true)
     expect(wrapper.find('.ch3-layer--path').exists()).toBe(true)
+  })
+
+  it('T1b agua espejo: .ch3-water con las 4 capas reflejadas + tinte/shimmer/glint', () => {
+    const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-water').exists()).toBe(true)
+    expect(wrapper.findAll('.ch3-water-layer').length).toBe(4)
+    expect(wrapper.find('.ch3-water-tint').exists()).toBe(true)
+    expect(wrapper.find('.ch3-water-shimmer').exists()).toBe(true)
+    expect(wrapper.find('.ch3-water-glint').exists()).toBe(true)
   })
 
   // ── T2: hint mínimo ─────────────────────────────────────────────────────────
@@ -120,11 +130,19 @@ describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => 
     expect(CH3_SOURCE).toMatch(/max-height:\s*100dvh/)
   })
 
-  it('T6 CSS: .ch3-parallax sticky + las 3 capas referencian sus assets', () => {
+  it('T6 CSS: .ch3-parallax sticky + las 4 capas referencian sus assets', () => {
     expect(CH3_SOURCE).toMatch(/\.ch3-parallax\s*\{[\s\S]*?position:\s*sticky/)
     expect(CH3_SOURCE).toMatch(/ch3-sky\.png/)
+    expect(CH3_SOURCE).toMatch(/ch3-far\.png/)
     expect(CH3_SOURCE).toMatch(/ch3-mountains\.png/)
     expect(CH3_SOURCE).toMatch(/ch3-path\.png/)
+  })
+
+  it('T6 CSS agua/vida: reflejo scaleY(-1) + ondas al click + bandada de pájaros', () => {
+    expect(CH3_SOURCE).toMatch(/scaleY\(-1\)/)
+    expect(CH3_SOURCE).toMatch(/function spawnRipple/)
+    expect(CH3_SOURCE).toMatch(/\.ch3-ripple/)
+    expect(CH3_SOURCE).toMatch(/\.ch3-bird/)
   })
 
   it('T6 CSS: recuadro usa textura pergamino + PRM guard', () => {

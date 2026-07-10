@@ -1,22 +1,32 @@
 <!--
-  Chapter3Content.vue — "De vuelta al movimiento" · parallax fantasía + cuento interactivo.
+  Chapter3Content.vue — "De vuelta al movimiento" · posguerra de Flash, estética
+  Kingdom New Lands (Raw Fury).
 
-  iter10 (Rafael 2026-05-28): el entorno (parallax) es el PROTAGONISTA. El muro de
-  texto estorbaba → se reemplaza por 5 EMBLEMAS de arte clicables plantados en el
-  escenario (estandarte, escudo, pergamino, grimorio, orbe) que despliegan la
-  biografía poco a poco en un RECUADRO de pergamino, con avance prev/next como un
-  cuento de fantasía. Sin texto visible por defecto salvo un hint sutil.
+  iter11 (Rafael 2026-07-09): "los assets del fondo se ven mal cortados y feos...
+  composición de posguerra donde murió Flash... estética como Kingdom New Lands".
+  El entorno sigue siendo el PROTAGONISTA (iter10) pero el escenario se rehace:
+  cielo crepuscular con sol enorme (la era muriendo), siluetas atmosféricas en
+  4 planos, AGUA ESPEJO al pie (firma Kingdom: reflejo + shimmer + ondas al click),
+  bandada de pájaros cruzando, brasas dolientes. Los 5 emblemas-cuento se conservan.
 
-  iter9: parallax de 3 capas (cielo / montañas / camino) + drift + puntero + scroll.
+  iter10: 5 emblemas de arte clicables → recuadro pergamino con la biografía.
+  iter9: parallax de 3 capas + drift + puntero + scroll.
 
-  Assets activos:
-    - Capas: ch3-sky.png / ch3-mountains.png / ch3-path.png
-    - Emblemas clicables: ch3-prop-banner.png / ch3-prop-shield.png /
-      ch3-mark-scroll.png / ch3-mark-tome.png / ch3-mark-orb.png
-    - Recuadro: ch3-parchment.png (textura del panel)
+  Assets activos (iter5 Kingdom — old/CHANGELOG.md §6.5):
+    - Capas: ch3-sky.png (sol cx≈28% cy≈55%) / ch3-far.png (cordillera malva) /
+      ch3-mountains.png (ciudadela en ruinas, bottom-right) / ch3-path.png (cresta
+      de batalla casi negra con rim ámbar)
+    - Emblemas clicables: ch3-flash-fallen / ch3-mark-rebuild / ch3-mark-standard /
+      ch3-mark-orb / ch3-html5-future
+    - Recuadro: ch3-parchment.png
 
-  Fallback previo: Chapter3Content.web2-fallback.vue.bak + old/ (CHANGELOG §6.5).
-  PRM: bajo prefers-reduced-motion se desactivan parallax + animaciones (guard JS + @media).
+  Agua espejo: .ch3-water (14dvh, overflow hidden) contiene copias de las 4 capas
+  con transform-origin top + translateY(calc(100dvh - altura-agua)) scaleY(-1) →
+  la ventana visible muestra la franja de escena justo sobre la línea de agua,
+  invertida. Ondas: spans .ch3-ripple generados al click sobre el agua.
+
+  PRM: bajo prefers-reduced-motion se desactivan parallax + animaciones + ondas
+  (guard JS + @media). El reflejo queda estático (sigue siendo bello quieto).
 -->
 <script setup>
 import { computed, ref, inject, onMounted, onBeforeUnmount, nextTick } from 'vue'
@@ -32,37 +42,32 @@ const chapter = chapters[3]
 const ch3Projects = computed(() => projects.filter((p) => p.chapterEra === 3))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
-// Emblemas clicables — 1 por párrafo de la historia. Plantados en el escenario.
+// Emblemas clicables — 1 por párrafo de la historia. Plantados en el escenario iter5.
 // pos en % relativo a .ch3-content. Cada uno despliega bioParagraphs[idx].
 const ROMAN = ['I', 'II', 'III', 'IV', 'V']
 // Arco muerte→renacer (Rafael 2026-05-28): 1 emblema por párrafo.
-//   I  Flash caído ......... la muerte de Flash → salto a JS
-//   II reconstrucción ...... Pink Parrot, reconstruir desde cero con reglas nuevas
-//   III estandarte ......... el ágil como forma de pensar / ordenar el caos
-//   IV orbe creativo ....... publicidad digital, experimentar, cosas nuevas
-//   V  HTML5 naciente ...... época de crecer, salto de vuelta a la web (en el horizonte)
+//   I  Flash caído ......... en silueta CONTRA el disco del sol muriendo
+//   II reconstrucción ...... sobre la orilla, entre los estandartes rotos
+//   III estandarte ......... sobre la ciudadela en ruinas
+//   IV orbe creativo ....... ladera derecha de las ruinas
+//   V  HTML5 naciente ...... alto en el cielo del este (el amanecer que viene)
 const markers = [
-  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '54%', left: '16%', size: 112 },
-  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '67%', left: '34%', size: 94 },
-  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '49%', left: '51%', size: 98 },
-  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '66%', left: '69%', size: 88 },
-  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '35%', left: '85%', size: 100 },
+  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '52%', left: '24%', size: 112 },
+  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '68%', left: '40%', size: 94 },
+  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '50%', left: '60%', size: 98 },
+  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '65%', left: '74%', size: 88 },
+  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '30%', left: '87%', size: 100 },
 ]
 
-// Brasas ascendentes — ambientación campo de batalla ardiente
+// Brasas ascendentes — posguerra: pocas, lentas, dolientes
 const embers = [
-  { left: '5%',  delay: '-3s',  dur: '11s', size: '3px', color: '#ff9a3c', dx: '10px'  },
-  { left: '11%', delay: '-8s',  dur: '14s', size: '2px', color: '#ffd95c', dx: '-8px'  },
-  { left: '18%', delay: '-1s',  dur: '9s',  size: '4px', color: '#ff5a3c', dx: '14px'  },
-  { left: '25%', delay: '-5s',  dur: '16s', size: '2px', color: '#ff9a3c', dx: '-12px' },
-  { left: '33%', delay: '-11s', dur: '12s', size: '3px', color: '#ffd95c', dx: '8px'   },
-  { left: '41%', delay: '-2s',  dur: '18s', size: '2px', color: '#ff5a3c', dx: '-6px'  },
-  { left: '52%', delay: '-7s',  dur: '10s', size: '4px', color: '#ff9a3c', dx: '16px'  },
-  { left: '60%', delay: '-14s', dur: '13s', size: '2px', color: '#ffd95c', dx: '-10px' },
-  { left: '67%', delay: '-4s',  dur: '22s', size: '3px', color: '#ff5a3c', dx: '12px'  },
-  { left: '74%', delay: '-9s',  dur: '15s', size: '2px', color: '#ffd95c', dx: '-14px' },
-  { left: '82%', delay: '-6s',  dur: '11s', size: '4px', color: '#ff9a3c', dx: '8px'   },
-  { left: '89%', delay: '-12s', dur: '17s', size: '3px', color: '#ff5a3c', dx: '-8px'  },
+  { left: '9%',  delay: '-4s',  dur: '19s', size: '3px', color: '#ff9a3c', dx: '8px'   },
+  { left: '21%', delay: '-11s', dur: '24s', size: '2px', color: '#ffd95c', dx: '-6px'  },
+  { left: '37%', delay: '-2s',  dur: '21s', size: '2px', color: '#ff5a3c', dx: '10px'  },
+  { left: '55%', delay: '-15s', dur: '26s', size: '3px', color: '#ff9a3c', dx: '-8px'  },
+  { left: '68%', delay: '-7s',  dur: '22s', size: '2px', color: '#ffd95c', dx: '6px'   },
+  { left: '81%', delay: '-18s', dur: '28s', size: '2px', color: '#ff9a3c', dx: '-10px' },
+  { left: '92%', delay: '-9s',  dur: '20s', size: '3px', color: '#ff5a3c', dx: '8px'   },
 ]
 
 // Ceniza descendente — motas grises cayendo lento
@@ -76,11 +81,19 @@ const ashes = [
   { left: '93%', delay: '-11s', dur: '21s', size: '2px' },
 ]
 
+// Bandada de pájaros silueta cruzando el cielo (firma Kingdom)
+const birds = [
+  { top: '0px',  delay: '0s',    flap: '0.42s' },
+  { top: '9px',  delay: '0.12s', flap: '0.38s' },
+  { top: '4px',  delay: '0.3s',  flap: '0.46s' },
+  { top: '16px', delay: '0.5s',  flap: '0.40s' },
+  { top: '12px', delay: '0.75s', flap: '0.44s' },
+]
+
 // ── Estado del cuento ─────────────────────────────────────────────────────────
 const activeStory = ref(null)      // índice abierto (0..4) o null
 const visited = ref(new Set())     // emblemas ya leídos
 const panelRef = ref(null)
-const lastFocusedKey = ref(null)
 
 const isOpen = computed(() => activeStory.value !== null)
 const activeParagraph = computed(() =>
@@ -106,7 +119,7 @@ function goStory(delta) {
   visited.value.add(markers[next].key)
 }
 
-// ── Parallax (cielo lento + montañas + camino) ─────────────────────────────────
+// ── Parallax (cielo lento → cresta rápida) ─────────────────────────────────────
 const prm = inject('prm', null)
 const reduced = () => prm?.prefersReduced?.value ?? false
 
@@ -137,6 +150,25 @@ function onKeydown(e) {
   else if (e.key === 'ArrowLeft') { e.preventDefault(); goStory(-1) }
 }
 
+// ── Agua: ondas al click (interactividad Kingdom) ─────────────────────────────
+const ripples = ref([])   // { id, x, y } en % relativos a .ch3-water
+let rippleId = 0
+
+function spawnRipple(e) {
+  if (reduced() || isOpen.value) return
+  const vh = window.innerHeight
+  const waterTop = vh * 0.86            // .ch3-water ocupa el 14% inferior
+  if (e.clientY < waterTop) return
+  const x = (e.clientX / window.innerWidth) * 100
+  const y = ((e.clientY - waterTop) / (vh - waterTop)) * 100
+  const id = ++rippleId
+  ripples.value.push({ id, x, y })
+  if (ripples.value.length > 6) ripples.value.shift()
+  setTimeout(() => {
+    ripples.value = ripples.value.filter((r) => r.id !== id)
+  }, 1400)
+}
+
 onMounted(() => {
   window.addEventListener('pointermove', onPointer, { passive: true })
   window.addEventListener('keydown', onKeydown)
@@ -149,29 +181,26 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ch3-stage" @scroll="onScroll">
+  <div class="ch3-stage" @scroll="onScroll" @click="spawnRipple">
     <!-- ── Parallax stack (pinned) ───────────────────────────────────────── -->
     <div ref="parallaxRef" class="ch3-parallax" aria-hidden="true">
       <div class="ch3-layer ch3-layer--sky"></div>
-      <div class="ch3-layer ch3-layer--mountains"></div>
+      <div class="ch3-layer ch3-layer--far"></div>
       <div class="ch3-fx ch3-fx--magic"></div>
+      <div class="ch3-layer ch3-layer--mountains"></div>
       <div class="ch3-layer ch3-layer--path"></div>
-      <div class="ch3-fx ch3-fx--lasers"></div>
-      <span
-        v-for="(sp, i) in [
-          { left: '12%', delay: '0s', dur: '7s', size: '4px' },
-          { left: '28%', delay: '2.4s', dur: '9s', size: '3px' },
-          { left: '47%', delay: '1.1s', dur: '8s', size: '5px' },
-          { left: '63%', delay: '3.6s', dur: '10s', size: '3px' },
-          { left: '79%', delay: '0.8s', dur: '7.5s', size: '4px' },
-          { left: '91%', delay: '2.0s', dur: '9.5s', size: '3px' },
-        ]"
-        :key="i"
-        class="ch3-spark"
-        :style="{ left: sp.left, '--sp-delay': sp.delay, '--sp-dur': sp.dur, '--sp-size': sp.size }"
-      ></span>
 
-      <!-- Brasas y ceniza — campo de batalla ardiente. Desactivado bajo PRM. -->
+      <!-- Bandada de pájaros silueta (firma Kingdom). Fuera del DOM bajo PRM. -->
+      <div v-if="!reduced()" class="ch3-birds" aria-hidden="true">
+        <span
+          v-for="(b, i) in birds"
+          :key="`bird-${i}`"
+          class="ch3-bird"
+          :style="{ top: b.top, '--bd-delay': b.delay, '--bd-flap': b.flap, '--bd-i': i }"
+        ></span>
+      </div>
+
+      <!-- Brasas y ceniza — posguerra doliente. Desactivado bajo PRM. -->
       <template v-if="!reduced()">
         <div class="ch3-embers" aria-hidden="true">
           <span
@@ -203,6 +232,23 @@ onBeforeUnmount(() => {
         </div>
         <div class="ch3-haze" aria-hidden="true"></div>
       </template>
+
+      <!-- ── Agua espejo (firma Kingdom): reflejo + shimmer + glint + ondas ── -->
+      <div class="ch3-water" aria-hidden="true">
+        <div class="ch3-water-layer ch3-water-layer--sky"></div>
+        <div class="ch3-water-layer ch3-water-layer--far"></div>
+        <div class="ch3-water-layer ch3-water-layer--mountains"></div>
+        <div class="ch3-water-layer ch3-water-layer--path"></div>
+        <div class="ch3-water-tint"></div>
+        <div class="ch3-water-shimmer"></div>
+        <div class="ch3-water-glint"></div>
+        <span
+          v-for="r in ripples"
+          :key="`ripple-${r.id}`"
+          class="ch3-ripple"
+          :style="{ left: r.x + '%', top: r.y + '%' }"
+        ></span>
+      </div>
     </div>
 
     <!-- ── Contenido: hint sutil + emblemas clicables ────────────────────── -->
@@ -224,7 +270,7 @@ onBeforeUnmount(() => {
         :class="{ 'is-visited': visited.has(m.key), 'is-active': activeStory === i }"
         :style="{ top: m.top, left: m.left, '--mk-size': m.size + 'px', '--mk-i': i }"
         :aria-label="`${ROMAN[i]} — ${t('ui.storyPage', { n: i + 1, total: markers.length })}`"
-        @click="openStory(i)"
+        @click.stop="openStory(i)"
       >
         <img :src="m.src" alt="" class="ch3-mark-img" />
         <span class="ch3-mark-num" aria-hidden="true">{{ ROMAN[i] }}</span>
@@ -238,7 +284,7 @@ onBeforeUnmount(() => {
 
     <!-- ── Recuadro pergamino: fragmento de la historia ──────────────────── -->
     <transition name="ch3-panel-fade">
-      <div v-if="isOpen" class="ch3-panel-backdrop" @click.self="closeStory">
+      <div v-if="isOpen" class="ch3-panel-backdrop" @click.self.stop="closeStory">
         <div
           ref="panelRef"
           class="ch3-panel"
@@ -247,7 +293,7 @@ onBeforeUnmount(() => {
           :aria-label="t('ui.storyPage', { n: activeStory + 1, total: markers.length })"
           tabindex="-1"
         >
-          <button type="button" class="ch3-panel-close" :aria-label="t('ui.closeOverlay')" @click="closeStory">✕</button>
+          <button type="button" class="ch3-panel-close" :aria-label="t('ui.closeOverlay')" @click.stop="closeStory">✕</button>
 
           <div class="ch3-panel-head" aria-hidden="true">
             <span class="ch3-panel-numeral">{{ ROMAN[activeStory] }}</span>
@@ -261,7 +307,7 @@ onBeforeUnmount(() => {
               class="ch3-panel-arrow"
               :disabled="activeStory === 0"
               :aria-label="t('ui.storyPrev')"
-              @click="goStory(-1)"
+              @click.stop="goStory(-1)"
             >‹</button>
             <div class="ch3-panel-dots" aria-hidden="true">
               <span
@@ -276,7 +322,7 @@ onBeforeUnmount(() => {
               class="ch3-panel-arrow"
               :disabled="activeStory === markers.length - 1"
               :aria-label="t('ui.storyNext')"
-              @click="goStory(1)"
+              @click.stop="goStory(1)"
             >›</button>
           </div>
         </div>
@@ -288,8 +334,10 @@ onBeforeUnmount(() => {
 <style scoped>
 /* ─────────────────────────────────────────────────────────────────────────
  * .ch3-stage — contenedor. El bg lo pintan las capas parallax.
+ * --ch3-water-h: altura de la banda de agua espejo (fracción del viewport).
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-stage {
+  --ch3-water-h: 14dvh;
   position: relative;
   height: 100vh;
   height: 100dvh;
@@ -298,7 +346,7 @@ onBeforeUnmount(() => {
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
-  background-color: #1a1320;
+  background-color: #141022;
   image-rendering: pixelated;
 }
 
@@ -328,80 +376,216 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
+/* Profundidad Kingdom: cielo casi quieto → cresta cercana con el drift más ancho */
 .ch3-layer--sky {
   background-image: url('/assets/ch3-sky.png');
   background-position: 50% top;
-  transform: translate3d(calc(var(--mx, 0) * 8px), calc(var(--sx, 0) * -0.02px + var(--my, 0) * 6px), 0);
-  animation: ch3-sky-drift 70s ease-in-out infinite alternate;
+  transform: translate3d(calc(var(--mx, 0) * 6px), calc(var(--sx, 0) * -0.015px + var(--my, 0) * 4px), 0);
+  animation: ch3-sky-drift 90s ease-in-out infinite alternate;
 }
-@keyframes ch3-sky-drift { from { background-position: 47% top; } to { background-position: 53% top; } }
+@keyframes ch3-sky-drift { from { background-position: 49% top; } to { background-position: 51% top; } }
+
+.ch3-layer--far {
+  background-image: url('/assets/ch3-far.png');
+  background-position: center bottom;
+  transform: translate3d(calc(var(--mx, 0) * 13px), calc(var(--sx, 0) * -0.035px + var(--my, 0) * 5px), 0);
+}
 
 .ch3-layer--mountains {
   background-image: url('/assets/ch3-mountains.png');
   background-position: center bottom;
-  transform: translate3d(calc(var(--mx, 0) * 16px), calc(var(--sx, 0) * -0.05px + var(--my, 0) * 4px), 0);
+  transform: translate3d(calc(var(--mx, 0) * 22px), calc(var(--sx, 0) * -0.06px + var(--my, 0) * 4px), 0);
 }
 
 .ch3-layer--path {
   background-image: url('/assets/ch3-path.png');
   background-position: center bottom;
-  transform: translate3d(calc(var(--mx, 0) * 28px), calc(var(--sx, 0) * -0.10px + var(--my, 0) * 3px), 0);
+  transform: translate3d(calc(var(--mx, 0) * 34px), calc(var(--sx, 0) * -0.11px + var(--my, 0) * 3px), 0);
 }
 
-/* ── FX magia / láser / brasas ─────────────────────────────────────────────── */
+/* ── FX luz ambiente ───────────────────────────────────────────────────────── */
 .ch3-fx { position: absolute; inset: 0; pointer-events: none; }
 
+/* Halo cálido anclado al sol (cx≈28% cy≈42% del viewport) + insinuación fría
+   del amanecer HTML5 en el este (arriba-derecha, donde vive el emblema V) */
 .ch3-fx--magic {
   background:
-    radial-gradient(60% 38% at 50% 64%, rgba(255, 226, 170, 0.45) 0%, rgba(255, 210, 150, 0.12) 45%, transparent 72%),
-    radial-gradient(40% 30% at 70% 40%, rgba(150, 220, 255, 0.30) 0%, transparent 70%);
+    radial-gradient(34% 30% at 28% 42%, rgba(255, 196, 120, 0.32) 0%, rgba(255, 170, 90, 0.10) 55%, transparent 75%),
+    radial-gradient(30% 24% at 88% 28%, rgba(150, 220, 255, 0.14) 0%, transparent 70%);
   mix-blend-mode: screen;
-  animation: ch3-magic-pulse 6s ease-in-out infinite;
+  animation: ch3-magic-pulse 8s ease-in-out infinite;
 }
-@keyframes ch3-magic-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@keyframes ch3-magic-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
 
-.ch3-fx--lasers::before,
-.ch3-fx--lasers::after {
+/* ── Bandada de pájaros silueta ────────────────────────────────────────────── */
+.ch3-birds {
+  position: absolute;
+  top: 24%;
+  left: 0;
+  width: 64px;
+  height: 32px;
+  animation: ch3-flock 38s linear infinite;
+  animation-delay: 4s;
+  opacity: 0;
+}
+@keyframes ch3-flock {
+  0%    { transform: translate3d(-12vw, 0, 0);      opacity: 0; }
+  2%    { opacity: 0.9; }
+  20%   { transform: translate3d(40vw, -3vh, 0);    opacity: 0.9; }
+  42%   { transform: translate3d(112vw, -7vh, 0);   opacity: 0.9; }
+  42.1% { opacity: 0; }
+  100%  { transform: translate3d(112vw, -7vh, 0);   opacity: 0; }
+}
+.ch3-bird {
+  position: absolute;
+  left: calc(var(--bd-i, 0) * 12px);
+  width: 9px;
+  height: 3px;
+}
+.ch3-bird::before,
+.ch3-bird::after {
   content: '';
   position: absolute;
-  top: -20%;
-  height: 140%;
-  width: 3px;
-  background: linear-gradient(to bottom, transparent 0%, rgba(120,245,255,0) 8%, rgba(120,245,255,0.9) 50%, rgba(180,130,255,0) 92%, transparent 100%);
-  filter: drop-shadow(0 0 6px rgba(120,245,255,0.9)) drop-shadow(0 0 14px rgba(150,120,255,0.6));
-  transform: rotate(18deg);
-  opacity: 0;
+  top: 0;
+  width: 5px;
+  height: 2px;
+  background: #241a2e;
+  transform-origin: 100% 50%;
+  animation: ch3-flap-l var(--bd-flap, 0.42s) ease-in-out var(--bd-delay, 0s) infinite alternate;
 }
-.ch3-fx--lasers::before { left: 24%; animation: ch3-laser-a 9s ease-in-out infinite; }
-.ch3-fx--lasers::after { left: 68%; width: 2px; transform: rotate(-14deg); animation: ch3-laser-b 11s ease-in-out infinite 2.5s; }
-@keyframes ch3-laser-a {
-  0%, 100% { opacity: 0; transform: translateX(-30px) rotate(18deg); }
-  8% { opacity: 0.95; } 20% { opacity: 0.2; }
-  28% { opacity: 0; transform: translateX(60px) rotate(18deg); }
+.ch3-bird::after {
+  left: 4px;
+  transform-origin: 0% 50%;
+  animation-name: ch3-flap-r;
 }
-@keyframes ch3-laser-b {
-  0%, 100% { opacity: 0; transform: translateX(40px) rotate(-14deg); }
-  10% { opacity: 0.9; } 22% { opacity: 0.25; }
-  32% { opacity: 0; transform: translateX(-50px) rotate(-14deg); }
+@keyframes ch3-flap-l { from { transform: rotate(18deg); } to { transform: rotate(-22deg); } }
+@keyframes ch3-flap-r { from { transform: rotate(-18deg); } to { transform: rotate(22deg); } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Agua espejo — la firma de Kingdom New Lands.
+ * Copias de las 4 capas con origin top + translateY(100dvh - agua) + scaleY(-1):
+ * la ventana visible del contenedor muestra la franja de escena justo encima
+ * de la línea de agua, invertida. Encima: tinte, shimmer y glint del sol.
+ * ───────────────────────────────────────────────────────────────────────── */
+.ch3-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--ch3-water-h);
+  overflow: hidden;
+  z-index: 1;
 }
 
-.ch3-spark {
+.ch3-water-layer {
   position: absolute;
-  bottom: 8%;
-  width: var(--sp-size, 4px);
-  height: var(--sp-size, 4px);
-  border-radius: 50%;
-  background: rgba(255, 236, 190, 0.95);
-  box-shadow: 0 0 8px 2px rgba(255,214,150,0.8), 0 0 14px 4px rgba(160,220,255,0.4);
-  opacity: 0;
-  animation: ch3-spark-rise var(--sp-dur, 8s) ease-in-out var(--sp-delay, 0s) infinite;
+  top: 0;
+  left: -8%;
+  width: 116%;
+  height: 100vh;
+  height: 100dvh;
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  transform-origin: top;
+  filter: brightness(0.72) saturate(0.82);
 }
-@keyframes ch3-spark-rise {
-  0% { opacity: 0; transform: translateY(0) translateX(0) scale(0.6); }
-  12% { opacity: 0.9; }
-  50% { transform: translateY(-44vh) translateX(12px) scale(1); }
-  85% { opacity: 0.5; }
-  100% { opacity: 0; transform: translateY(-78vh) translateX(-8px) scale(0.5); }
+
+.ch3-water-layer--sky {
+  background-image: url('/assets/ch3-sky.png');
+  background-position: 50% top;
+  transform: translateX(calc(var(--mx, 0) * 6px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
+}
+.ch3-water-layer--far {
+  background-image: url('/assets/ch3-far.png');
+  background-position: center bottom;
+  transform: translateX(calc(var(--mx, 0) * 13px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
+}
+.ch3-water-layer--mountains {
+  background-image: url('/assets/ch3-mountains.png');
+  background-position: center bottom;
+  transform: translateX(calc(var(--mx, 0) * 22px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
+}
+.ch3-water-layer--path {
+  background-image: url('/assets/ch3-path.png');
+  background-position: center bottom;
+  transform: translateX(calc(var(--mx, 0) * 34px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
+}
+
+/* Tinte índigo del agua + oscurecimiento hacia el fondo */
+.ch3-water-tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(24, 16, 44, 0.30) 0%,
+    rgba(18, 12, 36, 0.55) 55%,
+    rgba(12, 8, 26, 0.78) 100%
+  );
+}
+/* Línea de orilla: 1px de luz fría donde la escena toca el agua */
+.ch3-water-tint::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(190, 170, 220, 0.5);
+}
+
+/* Shimmer: finas líneas horizontales derivando en sentidos opuestos */
+.ch3-water-shimmer {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 3px,
+      rgba(220, 200, 255, 0.055) 3px, rgba(220, 200, 255, 0.055) 4px,
+      transparent 4px, transparent 9px
+    );
+  animation: ch3-shimmer 7s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+@keyframes ch3-shimmer {
+  from { transform: translateX(-14px); opacity: 0.65; }
+  to   { transform: translateX(14px);  opacity: 1; }
+}
+
+/* Glint: columna de brillo del sol sobre el agua (sol a x≈28%) */
+.ch3-water-glint {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(18% 130% at 28% 0%, rgba(255, 200, 120, 0.34) 0%, rgba(255, 180, 100, 0.10) 60%, transparent 80%);
+  mix-blend-mode: screen;
+  animation: ch3-glint 5.5s ease-in-out infinite;
+}
+@keyframes ch3-glint { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+/* Onda al click: elipse expandiéndose (perspectiva del agua) */
+.ch3-ripple {
+  position: absolute;
+  width: 10px;
+  height: 4px;
+  margin: -2px 0 0 -5px;
+  border: 1px solid rgba(220, 205, 255, 0.75);
+  border-radius: 50%;
+  opacity: 0.9;
+  animation: ch3-ripple-grow 1.35s ease-out forwards;
+}
+.ch3-ripple::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid rgba(255, 210, 150, 0.35);
+  border-radius: 50%;
+  animation: ch3-ripple-grow 1.35s ease-out 0.18s forwards;
+}
+@keyframes ch3-ripple-grow {
+  from { transform: scale(1);   opacity: 0.9; }
+  to   { transform: scale(11);  opacity: 0; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -409,7 +593,7 @@ onBeforeUnmount(() => {
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   min-height: 100%;
   box-sizing: border-box;
   padding: calc(88px + var(--sp-md)) var(--sp-lg) calc(88px + env(safe-area-inset-bottom, 0px));
@@ -684,7 +868,7 @@ onBeforeUnmount(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Brasas ascendentes y ceniza descendente — atmósfera campo de batalla.
+ * Brasas ascendentes y ceniza descendente — posguerra doliente.
  * Solo transform/opacity (composited). Eliminadas del DOM bajo PRM via v-if.
  * ───────────────────────────────────────────────────────────────────────── */
 .ch3-embers,
@@ -696,25 +880,25 @@ onBeforeUnmount(() => {
 
 .ch3-ember {
   position: absolute;
-  bottom: 15%;
+  bottom: 16%;
   width: var(--em-size, 3px);
   height: var(--em-size, 3px);
   border-radius: 50%;
   background: var(--em-color, #ff9a3c);
   box-shadow:
     0 0 4px 2px var(--em-color, #ff9a3c),
-    0 0 10px 3px rgba(255, 120, 30, 0.45);
+    0 0 10px 3px rgba(255, 120, 30, 0.4);
   opacity: 0;
   will-change: transform, opacity;
-  animation: ch3-ember-rise var(--em-dur, 12s) ease-in-out var(--em-delay, 0s) infinite;
+  animation: ch3-ember-rise var(--em-dur, 20s) ease-in-out var(--em-delay, 0s) infinite;
 }
 
 @keyframes ch3-ember-rise {
   0%   { opacity: 0;    transform: translateY(0)       translateX(0)                               scale(1);    }
-  8%   { opacity: 0.85; }
+  8%   { opacity: 0.7;  }
   25%  {               transform: translateY(-25vh)   translateX(var(--em-dx, 8px))              scale(0.92); }
-  50%  { opacity: 0.65; transform: translateY(-55vh)   translateX(0)                               scale(0.84); }
-  75%  { opacity: 0.35; transform: translateY(-82vh)   translateX(calc(var(--em-dx, 8px) * -0.6)) scale(0.72); }
+  50%  { opacity: 0.5;  transform: translateY(-55vh)   translateX(0)                               scale(0.84); }
+  75%  { opacity: 0.28; transform: translateY(-82vh)   translateX(calc(var(--em-dx, 8px) * -0.6)) scale(0.72); }
   100% { opacity: 0;    transform: translateY(-112vh)  translateX(0)                               scale(0.5);  }
 }
 
@@ -745,35 +929,38 @@ onBeforeUnmount(() => {
   pointer-events: none;
   background: linear-gradient(
     to top,
-    rgba(255, 110, 30, 0.08) 0%,
-    rgba(255, 90, 20, 0.04) 35%,
+    rgba(255, 130, 50, 0.06) 0%,
+    rgba(255, 100, 30, 0.03) 35%,
     transparent 60%
   );
-  animation: ch3-haze-pulse 6s ease-in-out infinite;
+  animation: ch3-haze-pulse 8s ease-in-out infinite;
 }
 
 @keyframes ch3-haze-pulse {
-  0%, 100% { opacity: 0.55; }
-  50%       { opacity: 1; }
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0.9; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * PRM — desactiva todo el movimiento.
+ * PRM — desactiva todo el movimiento. El reflejo del agua queda estático.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .ch3-layer,
   .ch3-fx--magic,
-  .ch3-fx--lasers::before,
-  .ch3-fx--lasers::after,
-  .ch3-spark,
   .ch3-hint-cta,
   .ch3-mark,
   .ch3-mark::before,
   .ch3-mark::after,
+  .ch3-water-shimmer,
+  .ch3-water-glint,
+  .ch3-birds,
+  .ch3-bird::before,
+  .ch3-bird::after,
+  .ch3-ripple,
   .ch3-panel-fade-enter-active .ch3-panel,
   .ch3-panel-fade-leave-active .ch3-panel { animation: none !important; transition: none !important; }
   .ch3-layer { transform: none !important; }
-  .ch3-fx--lasers::before, .ch3-fx--lasers::after, .ch3-spark { opacity: 0 !important; }
+  .ch3-birds, .ch3-ripple { opacity: 0 !important; }
   .ch3-ember, .ch3-ash { animation: none !important; opacity: 0 !important; }
   .ch3-haze { animation: none !important; opacity: 0 !important; }
 }
@@ -794,5 +981,6 @@ onBeforeUnmount(() => {
      expandía el layout viewport y recortaba el contenido a los lados. Lo quitamos
      conservando el overscan vertical (top/bottom -8% del inset) para el drift. */
   .ch3-layer { left: 0; width: 100%; }
+  .ch3-water-layer { left: 0; width: 100%; }
 }
 </style>
