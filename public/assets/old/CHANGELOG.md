@@ -655,3 +655,19 @@ Aplica colectivamente a los 4 assets parallax originales de ch4 (Plan 04-04 W2).
   Enum de asset-naming actualizado.
 - **Side-effect perf:** capas de terreno 300-800KB → 6-12KB (siluetas planas comprimen).
 - **Commit hash del cambio:** `fbe1961` (arte) + `cbf6ff8` (agua espejo/interactividad iter11)
+
+## ch3 emblemas-cuento — iter1 → iter2 "objetos del mundo Kingdom" (2026-07-09)
+
+- **Versiones guardadas:** `old/ch3-{flash-fallen,mark-rebuild,mark-standard,mark-orb,html5-future}-2026-07-09-iter1.png`
+- **Razón del cambio:** Rafael 2026-07-09: "me encanta pero ahora los iconos no tienen nada
+  que ver" — los emblemas acuarela-vintage con halos celestiales chocaban con la escena
+  Kingdom iter5. Se rehacen como OBJETOS DEL MUNDO: cuerpo silueta ciruela + acento ámbar
+  incandescente (el V conserva halo cyan del alba).
+- **Qué se hizo:** `forge_sprite` 128px banana-2/snes bg night por emblema (estela rota con
+  "F" agrietada / yunque / estandarte plantado / orbe en pedestal / crest-estrella del alba)
+  + armonización HSV selectiva (harmonize_marks.py): brillos cálidos 8-62° y cyan 150-230°
+  (solo V) se conservan; el resto se hunde a rampa ciruela #302442 por luminancia.
+  Mock de composición sobre la escena ANTES de instalar: objetos plantados en el suelo
+  (I 12%,74% · II 33%,77% · III 52%,72% · IV 72%,76%), solo el V flota en el cielo del
+  este (88%,34%). PASS.
+- **Commit hash del cambio:** (commit de este drop)
