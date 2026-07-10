@@ -35,6 +35,7 @@ import ContactHUD from './components/ContactHUD.vue'
 import GlobalMantra from './components/GlobalMantra.vue'
 import SoundToggle from './components/SoundToggle.vue'
 import BootScreen from './components/BootScreen.vue'
+import DialUpScreen from './components/DialUpScreen.vue'
 import { useScrollState } from './composables/useScrollState'
 import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
@@ -187,6 +188,8 @@ useHead({
   <ContactHUD />
   <!-- SoundToggle: botón HUD bottom-left. z-index 40. -->
   <SoundToggle />
+  <!-- DialUpScreen: overlay ch1 dial-up Win98 al entrar por primera vez en la sesión -->
+  <DialUpScreen />
   <!-- GlobalMantra: signature cross-chapter (Rafael 2026-05-14 "en todas las fechas"). -->
   <GlobalMantra />
   <!-- Velo de viaje temporal: pulso radial en --c-accent de la era entrante.
