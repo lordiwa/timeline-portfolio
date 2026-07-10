@@ -78,13 +78,17 @@ if (typeof window !== 'undefined') {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HTMLElement.prototype.scrollIntoView
+// HTMLElement.prototype.scrollIntoView + scrollTo
 // ─────────────────────────────────────────────────────────────────────────────
-// JSDOM no implementa scrollIntoView. Lo declaramos como vi.fn() para que los
-// tests puedan inspeccionar las llamadas via mock.calls / toHaveBeenCalledWith.
+// JSDOM no implementa scrollIntoView ni scrollTo. Los declaramos como vi.fn()
+// para que los tests puedan inspeccionar las llamadas via mock.calls / toHaveBeenCalledWith.
 // Los tests son responsables de hacer mockClear() en su beforeEach.
+//
+// scrollTo: useScrollState usa shell.scrollTo({top, behavior}) para navigación
+// programática — más fiable que scrollIntoView en contenedores scroll-snap.
 if (typeof HTMLElement !== 'undefined') {
   HTMLElement.prototype.scrollIntoView = vi.fn()
+  HTMLElement.prototype.scrollTo = vi.fn()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

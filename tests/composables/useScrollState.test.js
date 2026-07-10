@@ -59,11 +59,15 @@ async function waitForDeepLink() {
   await flushPromises()
 }
 
-// Helper: verifica que scrollIntoView fue llamado sobre el #chapter-N con el behavior esperado.
+// Helper: verifica que shell.scrollTo fue llamado con el behavior esperado.
+// scrollToChapter usa container.scrollTo({top: section.offsetTop, behavior}) —
+// en JSDOM offsetTop siempre es 0, verificamos solo el behavior (es el contrato).
 function assertNavigatedTo(N, behavior) {
-  const el = document.getElementById(`chapter-${N}`)
-  expect(el).not.toBeNull()
-  expect(el.scrollIntoView).toHaveBeenCalledWith({ behavior, block: 'start' })
+  const section = document.getElementById(`chapter-${N}`)
+  expect(section).not.toBeNull()
+  const shell = document.querySelector('.scroll-shell')
+  expect(shell).not.toBeNull()
+  expect(shell.scrollTo).toHaveBeenCalledWith({ top: section.offsetTop, behavior })
 }
 
 describe('useScrollState', () => {
@@ -75,8 +79,9 @@ describe('useScrollState', () => {
     if (globalThis.MockIntersectionObserver) {
       globalThis.MockIntersectionObserver.reset()
     }
-    // Limpiamos las llamadas previas (preservando la misma función spy).
+    // Limpiamos las llamadas previas de ambos mocks de scroll (preservando la misma función spy).
     HTMLElement.prototype.scrollIntoView.mockClear()
+    HTMLElement.prototype.scrollTo.mockClear()
     // Reset query string a vacío por default.
     window.history.replaceState({}, '', '/')
   })
@@ -175,17 +180,22 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Test 8: scrollToChapter(N, 'smooth') invoca scrollIntoView correcto
+  // Test 8: scrollToChapter(N, 'smooth') usa shell.scrollTo (container-level)
+  //
+  // Fix bug nav ch5 (2026-07-10): scrollIntoView + scroll-snap-stop:always
+  // atrapaba el scroll en snap points intermedios al saltar varios capítulos.
+  // shell.scrollTo({top: section.offsetTop, behavior}) apunta al contenedor
+  // directamente y es inmune a ese conflicto.
   // ─────────────────────────────────────────────────────────────────────────
-  it('scrollToChapter(2, "smooth") calls scrollIntoView with {behavior:"smooth", block:"start"} on #chapter-2', async () => {
+  it('scrollToChapter(2, "smooth") calls shell.scrollTo with {behavior:"smooth"} on the scroll container', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
     // Limpiamos el spy del deep-link inicial.
-    HTMLElement.prototype.scrollIntoView.mockClear()
+    HTMLElement.prototype.scrollTo.mockClear()
     get().state.scrollToChapter(2, 'smooth')
-    const ch2 = document.getElementById('chapter-2')
-    expect(ch2.scrollIntoView).toHaveBeenCalledTimes(1)
-    expect(ch2.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' })
+    const shell = document.querySelector('.scroll-shell')
+    expect(shell.scrollTo).toHaveBeenCalledTimes(1)
+    expect(shell.scrollTo).toHaveBeenCalledWith({ top: expect.any(Number), behavior: 'smooth' })
     wrapper.unmount()
   })
 

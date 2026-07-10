@@ -178,6 +178,34 @@ describe('Chapter5Content.vue', () => {
   // ───────────────────────────────────────────────
   // T7 sin background-image directo (viene de BackgroundLayers)
   // ───────────────────────────────────────────────
+  // ───────────────────────────────────────────────
+  // T8 Overlays atmosféricos: proyector + luz de pantalla (2026-07-10)
+  // Los overlays se renderizaron en una sesión previa; este test los "ancla"
+  // para que un refactor no los elimine accidentalmente.
+  // ───────────────────────────────────────────────
+  it('T8 overlays: .cine-projector-cone y .cine-screen-light existen en el DOM cine', () => {
+    const { wrapper } = mountCh5()
+    expect(wrapper.find('.cine-projector-cone').exists()).toBe(true)
+    expect(wrapper.find('.cine-screen-light').exists()).toBe(true)
+    // Las motas de polvo dentro del cono
+    expect(wrapper.findAll('.cine-dust').length).toBeGreaterThanOrEqual(3)
+  })
+
+  // ───────────────────────────────────────────────
+  // T9 screenGlowStyle: .cine-screen-light tiene :style binding con radial-gradient
+  // dinámico (escena 0 = box → color ámbar [220,155,55]).
+  // Verifica que el background se inyecta vía computed (no hardcodeado en CSS).
+  // ───────────────────────────────────────────────
+  it('T9 screen-light: inline style tiene radial-gradient con color de escena (box = índice 0)', () => {
+    const { wrapper } = mountCh5()
+    const light = wrapper.find('.cine-screen-light')
+    expect(light.exists()).toBe(true)
+    const bg = light.element.style.background
+    // Escena inicial = 'box' → glowColor [220, 155, 55] → debe contener rgb(220
+    expect(bg).toMatch(/radial-gradient/)
+    expect(bg).toMatch(/220/)
+  })
+
   it('T7 SFC source: NO contiene background-image directo (viene de BackgroundLayers --bg-image)', () => {
     const { readFileSync } = require('node:fs')
     const { resolve } = require('node:path')

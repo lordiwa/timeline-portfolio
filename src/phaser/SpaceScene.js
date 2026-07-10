@@ -169,19 +169,39 @@ void main() {
   vec2 starsUV = vec2(uv.x, uv.y + sNorm * 0.2);
   vec2 nebUV   = vec2(uv.x, uv.y + sNorm * 0.5);
 
-  vec3 col = vec3(0.0);
+  // ── [A] Gradiente base: espacio profundo (deep purple → casi negro) ──────
+  // Top (uv.y=0): #1a0e3d = vec3(0.102, 0.055, 0.239)
+  // Bottom (uv.y=1): #06010f = vec3(0.024, 0.004, 0.059)
+  // Blend NORMAL — el shader ES el fondo, no un overlay.
+  vec3 col = mix(vec3(0.102, 0.055, 0.239), vec3(0.024, 0.004, 0.059), uv.y);
 
-  // ── Capa 1: Nebulosas fBm (drift temporal) ────────────────────────────────
+  // ── [B] Nebulosas fBm media (púrpura + cian, drift temporal) ─────────────
   float td = time * 0.004;
   float n1 = fbm3(nebUV * 2.5 + vec2(0.0, td));
   float n2 = fbm3(nebUV * 4.1 + vec2(1.7, 0.5 + td));
   float n3 = fbm3(nebUV * 1.8 + vec2(3.1, 2.2));
 
-  // Nebulosa púrpura profundo (D5-04 base: #1a0e3d = vec3(0.10,0.055,0.24)).
+  // Nebulosa púrpura profundo (D5-04 base: #1a0e3d).
   col += vec3(0.10, 0.01, 0.28) * pow(max(0.0, n1 * n3), 1.8) * 1.8;
-  // Nebulosa cian-teal (D5-04 accent: #4dffff = vec3(0.30,1.0,1.0)).
+  // Nebulosa cian-teal (D5-04 accent: #4dffff).
   // Se desvanece en la mitad inferior para no tapar los planetas y el postal.
   col += vec3(0.00, 0.15, 0.34) * pow(max(0.0, n2 * (1.0 - nebUV.y * 0.55)), 1.5) * 1.3;
+
+  // ── [C] Nebulosa magenta/rosa zona baja (banda inferior del mundo) ────────
+  // nebUV.y sube al bajar el scroll → la banda aparece en la zona inferior
+  // del descenso, replicando la composición de ch6-bg-tall (retirado §6.5).
+  float pinkN    = fbm3(nebUV * 3.2 + vec2(8.5, 1.2 + td * 0.7));
+  float pinkMask = nebUV.y * nebUV.y * 1.6;
+  col += vec3(0.30, 0.02, 0.18) * pow(max(0.0, pinkN), 1.5) * pinkMask * 2.2;
+
+  // ── [D] Glow de horizonte cian + magenta (intensifica con el scroll) ──────
+  // Se intensifica a partir de scrollY ≈ 945 px (50% del mundo) hasta 1890.
+  // rawUV.y (sin parallax) para que sea efecto de cámara — se acumula en el
+  // borde inferior de la pantalla donde vive la plataforma.
+  float atmoS   = smoothstep(0.50, 0.95, scrollY / 1890.0);
+  float atmoBot = pow(rawUV.y, 4.0);
+  col += vec3(0.02, 0.22, 0.30) * atmoBot * atmoS * 0.9;
+  col += vec3(0.18, 0.01, 0.12) * pow(rawUV.y, 7.0) * atmoS * 0.7;
 
   // ── Capa 2: Starfield denso (cuadrícula 64×80) ────────────────────────────
   // 2×2 vecindad para evitar artefactos en bordes de celda.
@@ -301,19 +321,12 @@ export class SpaceScene extends Phaser.Scene {
     this._prefersReduced = prefersReduced
 
     // ─────────────────────────────────────────────────────────────────────
-    // Fondo base (depth 0) — Rectángulo oscuro synthwave, cubre el mundo completo.
-    // Reemplaza ch6-bg-tall.webp (retirado ERA-AGNT-03). El shader ADD suma
-    // luminosidad encima; el rectángulo es la capa opaca de base.
-    // ─────────────────────────────────────────────────────────────────────
-
-    this.add.rectangle(BASE_W / 2, WORLD_BOTTOM / 2, BASE_W, WORLD_BOTTOM, 0x08021a)
-      .setDepth(0)
-      .setScrollFactor(1.0)
-
-    // ─────────────────────────────────────────────────────────────────────
-    // Shader GLSL procedural (ERA-AGNT-03) — depth 2, blend ADD.
-    // Camera-space (scrollFactor 0); parallax simulado via uniform scrollY.
+    // Fondo procedural (ERA-AGNT-03) — depth 2, blend NORMAL.
+    // El shader GLSL ES el fondo completo: pinta gradiente base, nebulosas,
+    // banda magenta inferior y glow de horizonte. No se usa ningún raster
+    // ni Rectangle de base — el shader tiene pleno control del color.
     // Canvas2D fallback si no hay WebGL (ver _buildCanvasStarfield).
+    // ch6-bg cargado en preload() para contrato T2 — no se renderiza en WebGL.
     // ─────────────────────────────────────────────────────────────────────
 
     this._buildShaderBackground(prefersReduced)
@@ -678,8 +691,10 @@ export class SpaceScene extends Phaser.Scene {
         null,
         { scrollY: { type: '1f', value: 0.0 } }
       )
+      // Shader en camera-space (scrollFactor 0), depth 2, blend NORMAL.
+      // NORMAL = el shader ES el fondo completo, no un ADD overlay sobre raster.
       const sh = this.add.shader(baseShader, BASE_W / 2, BASE_H / 2, BASE_W, BASE_H)
-      sh.setScrollFactor(0).setDepth(2).setBlendMode(Phaser.BlendModes.ADD)
+      sh.setScrollFactor(0).setDepth(2).setBlendMode(Phaser.BlendModes.NORMAL)
       this._spaceShader = sh
       // Bajo PRM: congelar el tiempo del shader (no hay twinkle/drift).
       if (prefersReduced) {
@@ -691,7 +706,22 @@ export class SpaceScene extends Phaser.Scene {
   }
 
   _buildCanvasStarfield() {
+    // Canvas2D fallback (sin WebGL) — gradiente base + stars determinísticas.
+    // raster ch6-bg NO se renderiza aquí; el fallback tiene pleno control.
     const g = this.add.graphics().setScrollFactor(0).setDepth(2)
+
+    // Gradiente base aproximado con 8 bandas rectangulares (#1a0e3d → #06010f).
+    const BANDS = 8
+    for (let i = 0; i < BANDS; i++) {
+      const t = i / (BANDS - 1)
+      const r  = Math.round((0.102 - 0.078 * t) * 255)
+      const gc = Math.round((0.055 - 0.051 * t) * 255)
+      const b  = Math.round((0.239 - 0.180 * t) * 255)
+      g.fillStyle((r << 16) | (gc << 8) | b, 1)
+      g.fillRect(0, Math.round(i * BASE_H / BANDS), BASE_W, Math.ceil(BASE_H / BANDS))
+    }
+
+    // Stars determinísticas (semilla fija, sin azar de sesión).
     let s = 42
     const rng = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff }
     for (let i = 0; i < 220; i++) {

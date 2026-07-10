@@ -45,11 +45,17 @@ export function useScrollState(shellRef) {
   }
 
   // PATTERN B: canonical method para navegación.
-  // Defensive null-check para que tests con wrappers incompletos o SSR no crasheen.
+  // Usa shell.scrollTo (container-level) en lugar de section.scrollIntoView para
+  // evitar el conflicto conocido entre scrollIntoView + scroll-snap-stop:always +
+  // scroll-snap-type:y mandatory en Chrome: cuando hay que saltar múltiples snap
+  // points (ej. ch0→ch5), scrollIntoView podía quedar atrapado en un punto
+  // intermedio (ch1/ch2) y requerir un segundo clic. shell.scrollTo({top: section.offsetTop})
+  // apunta al contenedor directamente, sin pasar por la lógica de snap-stop.
   function scrollToChapter(N, behavior = 'smooth') {
-    const el = document.getElementById(`chapter-${N}`)
-    if (!el) return
-    el.scrollIntoView({ behavior, block: 'start' })
+    const shell = shellRef.value
+    const section = document.getElementById(`chapter-${N}`)
+    if (!shell || !section) return
+    shell.scrollTo({ top: section.offsetTop, behavior })
   }
 
   function parseInitialChapter() {

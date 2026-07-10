@@ -38,6 +38,30 @@ const screenScenes = ['box', 'mma', 'concierto', 'lab', 'covid']
 const screenIdx = ref(0)
 let screenTimer = null
 
+// Color dominante de cada escena: alimenta la luz de pantalla sobre la sala.
+// rgb sin alpha — el alpha lo maneja el CSS vía opacity del elemento.
+const sceneMeta = [
+  { glowColor: [220, 155, 55] },   // box      — calidez ámbar de arena
+  { glowColor: [205, 70, 40] },    // mma      — rojo anaranjado del octágono
+  { glowColor: [140, 55, 215] },   // concierto — púrpura de stage
+  { glowColor: [75, 195, 225] },   // lab       — cian frío de laboratorio
+  { glowColor: [55, 85, 205] },    // covid     — azul frío de aislamiento
+]
+
+// Fondo computed de .cine-screen-light — cambia con el slideshow.
+// Reemplaza el radial-gradient hardcodeado en CSS para que el color se adapte
+// a la escena activa. Sin transition aquí: el overlay es tan sutil (opacity ~0.07)
+// que el cambio de color es imperceptible; la continuidad visual la dan las
+// pantallas cruzadas que se solapan durante 1s.
+const screenGlowStyle = computed(() => {
+  const m = sceneMeta[screenIdx.value]
+  if (!m) return {}
+  const [r, g, b] = m.glowColor
+  return {
+    background: `radial-gradient(ellipse 45% 55% at 50% 40%, rgba(${r},${g},${b},0.9) 0%, rgba(${r},${g},${b},0.5) 38%, transparent 70%)`,
+  }
+})
+
 const chapter = chapters[5]
 const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
@@ -160,6 +184,37 @@ if (import.meta.env?.DEV) {
     ratio <= 1.8,
     `[ch5] ratio de repetición ${ratio.toFixed(2)} > 1.8 — subí el CAST (${CAST.length}) o bajá asientos (${seats.length}).`,
   )
+}
+
+// ─────────────── Oleada de festejo reactiva a la pantalla ───────────────────
+// Se llama cada vez que el slideshow avanza de escena. Selecciona ~38% de la
+// multitud al azar y les dispara el estado festejo con delays escalonados por
+// profundidad: los más cerca de la pantalla (y mínima) reaccionan primero.
+// Solo interrumpe personajes en fase 'rest'; respeta prefers-reduced-motion.
+let waveTimers = []
+
+function triggerCelebrationWave() {
+  if (!runtime.length) return
+  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (reduce) return
+  // Baraja y toma ~38% de la multitud
+  const picks = runtime.slice().sort(() => Math.random() - 0.5)
+    .slice(0, Math.round(runtime.length * 0.38))
+  const minY = 63, maxY = 104, maxDelay = 720
+  picks.forEach((c) => {
+    // yNorm 0 = cerca de pantalla (fila delantera), 1 = cerca de cámara (fila trasera)
+    const yNorm = Math.max(0, Math.min(1, (c.seat.y - minY) / (maxY - minY)))
+    const delay = yNorm * maxDelay // delantera reacciona primero (delay ≈ 0ms)
+    const t = setTimeout(() => {
+      if (c.phase === 'rest') {
+        c.phase = 'act'
+        c.state = 'festejo'
+        c.fFrame = 0
+        c.fAcc = 0
+      }
+    }, delay)
+    waveTimers.push(t)
+  })
 }
 
 // Estilo base de cada personaje (parte estática; el frame lo mueve el bucle rAF).
@@ -317,6 +372,8 @@ function tick(now) {
 onMounted(() => {
   screenTimer = setInterval(() => {
     screenIdx.value = (screenIdx.value + 1) % screenScenes.length
+    // Tras el cambio de escena, la multitud reacciona: oleada de festejo por profundidad.
+    triggerCelebrationWave()
   }, 4500)
 
   const reduce =
@@ -360,6 +417,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (screenTimer) clearInterval(screenTimer)
   if (rafId) cancelAnimationFrame(rafId)
+  waveTimers.forEach((t) => clearTimeout(t))
+  waveTimers = []
 })
 </script>
 
@@ -416,8 +475,9 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Baño de luz de la pantalla sobre la sala — radial desde la zona de pantalla.
-         Respira cada 5 s simulando cambio de brillo del contenido. -->
-    <div class="cine-screen-light" aria-hidden="true"></div>
+         Color dinámico: cada escena del slideshow aporta su tinte dominante (sceneMeta).
+         Respira cada 5 s simulando cambio de brillo del contenido on-screen. -->
+    <div class="cine-screen-light" aria-hidden="true" :style="screenGlowStyle"></div>
 
     <!-- Contenido original preservado pero oculto hasta decidir qué va (showText=false) -->
     <template v-if="showText">
@@ -563,18 +623,14 @@ onBeforeUnmount(() => {
 
 /* === Baño de luz de pantalla sobre la sala ===
    Gradiente radial centrado en la posición de la pantalla (50% 40%).
+   El background se inyecta via :style binding computado (screenGlowStyle) para que
+   el color cambie con el slideshow activo (sceneMeta). No hay background aquí.
    Respira suavemente simulando el cambio de brillo del contenido on-screen. */
 .cine-screen-light {
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 10499;
-  background: radial-gradient(
-    ellipse 45% 55% at 50% 40%,
-    rgba(170, 195, 255, 0.9) 0%,
-    rgba(150, 180, 255, 0.5) 38%,
-    transparent 70%
-  );
   opacity: 0.06;
   animation: screen-breathe 5s ease-in-out infinite;
 }
