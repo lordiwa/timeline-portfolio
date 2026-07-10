@@ -64,6 +64,10 @@ const { prefersReduced } = inject('prm')
   font-size: 1.2rem;
   font-weight: bold;
   color: var(--c-fg);
+  /* Los glifos emoji (🚧/★) tienen ascent mayor que el em-box de Comic Neue y
+     el overflow interno del <marquee> los decapita; su layout interno ancla el
+     contenido arriba e ignora el half-leading de line-height → padding, no line-height. */
+  padding-block: 8px 4px;
 }
 
 .marquee-banner__static {
