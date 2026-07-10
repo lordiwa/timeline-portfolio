@@ -1,4 +1,4 @@
-// src/phaser/SpaceScene.js — Chapter 6 Phaser scene (Phase 5 W2 / ERA-AGNT-02).
+// src/phaser/SpaceScene.js — Chapter 6 Phaser scene (Phase 5 W2 / ERA-AGNT-02 / ERA-AGNT-03).
 //
 // Source-of-truth: 05-RESEARCH.md §Patterns 5+6+7+8+9+13.
 // Decisions baked in:
@@ -12,13 +12,13 @@
 //   - ERA-AGNT-01 (2026-07-09): Rafael + super robot en plataforma-mirador orquestrando
 //     enjambre de drones que construyen mundos nuevos; megaestructura orbital en horizonte.
 //   - HI-BIT-01 (2026-07-09b): mundo 960×540 con fondos doble densidad; sprites chunky ×2 via setScale(2).
-//   - ERA-AGNT-02 (2026-07-10): arte raster roto reemplazado por sistemas procedurales.
-//     • Megaestructura → wireframe holográfico dinámico (Phaser Graphics, ring en perspectiva).
-//     • Planetas → geo-procedurales (AR/VR=rejilla holográfica, Remoose=orgánico-púrpura,
-//       software-mind=red neural). PNGs cargados pero alpha=0 (interactividad conservada).
-//     • Filamento neural Rafael↔robot (bezier cúbico + partículas sinápticas bidireccionales).
-//     • Paneles holográficos Asimov (Three Laws, tick-in de caracteres).
-//     • Glitch de horizonte (camera tint breve cada 8-15s).
+//   - ERA-AGNT-02 (2026-07-10): arte raster roto reemplazado por sistemas procedurales:
+//     anillo wireframe, planetas geo-procedurales, filamento neural, paneles Asimov, glitch horizonte.
+//   - ERA-AGNT-03 (2026-07-10): bg raster (stars PNG/nebulae WebP lossy) reemplazado por
+//     shader GLSL vivo (starfield + nebulae procedurales, twinkle/drift perpetuos via tiempo GLSL).
+//     Fix bug "corre una vez y se para": se eliminó el check document.hidden de update() —
+//     Phaser ya gestiona el throttling de tab por su cuenta; el check bloqueaba update()
+//     cuando el tab no era el foco activo del OS (caso habitual en dev).
 //
 // Anti-patterns enforced (PHA-08 — verificados por regex de ausencia en
 // tests/phaser/no-character-animation.test.js):
@@ -82,6 +82,120 @@ const FILAMENT_P1 = { x: 272, y: 1638 }
 const FILAMENT_P2 = { x: 218, y: 1585 }
 const FILAMENT_P3 = { x: 190, y: 1560 }
 
+// Altura total del mundo (WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H) — sincronizado en el shader.
+const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 1890
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPACE_BG_FRAG — fragment shader GLSL (ERA-AGNT-03).
+// Genera estrellas twinkling + nebulosas con drift temporal. Se aplica en
+// modo ADD sobre el fondo pintado ch6-bg-tall para sumarse como emisión lumínica.
+//
+// Uniforms automáticos de Phaser: time (s), resolution (px).
+// Custom: scrollY (px de scroll de cámara) — permite simular parallax 0.2/0.5.
+//
+// Compatibilidad: GLSL 1.00 / WebGL 1. Loops con cotas compile-time ✓.
+// ─────────────────────────────────────────────────────────────────────────────
+const SPACE_BG_FRAG = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform float time;
+uniform vec2  resolution;
+uniform float scrollY;
+
+// Pseudo-random hash sin texture lookup.
+float hash2(vec2 p) {
+  p = fract(p * vec2(127.1, 311.7));
+  p += dot(p, p + 43.21);
+  return fract(p.x * p.y);
+}
+
+// Value noise 2D (smoothstep interpolado).
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash2(i),               hash2(i + vec2(1.0, 0.0)), f.x),
+    mix(hash2(i + vec2(0.0,1.0)), hash2(i + vec2(1.0,1.0)), f.x),
+    f.y
+  );
+}
+
+// fBm 3 octavas — para nebulosas.
+float fbm3(vec2 p) {
+  float v = 0.50 * vnoise(p);
+  p = p * 2.1 + vec2(5.3, 2.7);
+  v += 0.25 * vnoise(p);
+  p = p * 2.1 + vec2(5.3, 2.7);
+  v += 0.125 * vnoise(p);
+  return v;
+}
+
+void main() {
+  // UV con Y invertida (0,0 = esquina superior-izquierda, convención pantalla).
+  vec2 uv = vec2(gl_FragCoord.x, resolution.y - gl_FragCoord.y) / resolution.xy;
+
+  // Parallax por capa: simula scrollFactor 0.2 (estrellas) y 0.5 (nebulosas).
+  // El scroll se normaliza contra la altura total del mundo (1890 px).
+  float sY = scrollY / 1890.0;
+  vec2 starsUV = vec2(uv.x, uv.y + sY * 0.2);
+  vec2 nebUV   = vec2(uv.x, uv.y + sY * 0.5);
+
+  vec3 col = vec3(0.0);
+
+  // ── Nebulosas (drift lento ~0.004 unidades/s) ──────────────────────────────
+  float td = time * 0.004;
+  float n1 = fbm3(nebUV * 2.5 + vec2(0.0, td));
+  float n2 = fbm3(nebUV * 4.1 + vec2(1.7, 0.5 + td));
+  float n3 = fbm3(nebUV * 1.8 + vec2(3.1, 2.2));
+
+  // Nebulosa púrpura.
+  col += vec3(0.10, 0.01, 0.28) * pow(max(0.0, n1 * n3), 1.8) * 1.8;
+  // Nebulosa cian/teal (se desvanece hacia abajo para no tapar planetas).
+  col += vec3(0.00, 0.15, 0.34) * pow(max(0.0, n2 * (1.0 - nebUV.y * 0.55)), 1.5) * 1.3;
+
+  // ── Estrellas densas (vecindad 2×2 celdas) ────────────────────────────────
+  vec2 sc    = starsUV * vec2(58.0, 76.0);
+  vec2 sCeil = floor(sc);
+  vec2 sLoc  = fract(sc);
+
+  for (int ix = 0; ix <= 1; ix++) {
+    for (int iy = 0; iy <= 1; iy++) {
+      vec2  off  = vec2(float(ix), float(iy));
+      vec2  c    = sCeil + off;
+      float h    = hash2(c);
+      float hasS = step(0.60, h); // 40 % de celdas tienen estrella
+      vec2  sPos = vec2(hash2(c * 2.3), hash2(c * 3.7));
+      float dist = length(sLoc - off - sPos);
+      float twink= 0.55 + 0.45 * sin(time * (2.0 + h * 4.0) + h * 6.2832);
+      float sz   = 0.013 + h * 0.020;
+      float star = smoothstep(sz, 0.0, dist) * (0.40 + 0.60 * h) * twink * hasS;
+      col += star * mix(vec3(0.70, 0.85, 1.0), vec3(1.0, 0.90, 0.70), h);
+    }
+  }
+
+  // ── Estrellas brillantes (menos densas, más grandes, con picos de difracción) ──
+  vec2  bc    = starsUV * vec2(18.0, 24.0);
+  vec2  bCeil = floor(bc);
+  vec2  bLoc  = fract(bc);
+  float bh    = hash2(bCeil * 5.1);
+  float hasB  = step(0.80, bh); // 20 % de celdas grandes
+  vec2  bPos  = vec2(hash2(bCeil * 1.3), hash2(bCeil * 2.9));
+  float bd    = length(bLoc - bPos);
+  float bt    = 0.30 + 0.70 * abs(sin(time * (1.2 + bh * 2.0) + bh * 12.566));
+  col += vec3(0.88, 0.95, 1.0) * smoothstep(0.06, 0.0, bd) * bt * 2.0 * hasB;
+
+  // Picos de difracción (cruz de 4 brazos).
+  float spH = smoothstep(0.003, 0.0, abs(bLoc.y - bPos.y)) * smoothstep(0.14, 0.0, abs(bLoc.x - bPos.x));
+  float spV = smoothstep(0.003, 0.0, abs(bLoc.x - bPos.x)) * smoothstep(0.14, 0.0, abs(bLoc.y - bPos.y));
+  col += vec3(0.40, 0.55, 0.90) * (spH + spV) * bt * 0.35 * hasB;
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`
+
 export class SpaceScene extends Phaser.Scene {
   constructor() {
     super({ key: 'SpaceScene' })
@@ -97,6 +211,8 @@ export class SpaceScene extends Phaser.Scene {
     this._filamentParticles = []
     this._lastSynapseTime = 0
     this._prefersReduced = false
+    // Shader background (ERA-AGNT-03)
+    this._spaceShader = null
   }
 
   preload() {
@@ -106,7 +222,8 @@ export class SpaceScene extends Phaser.Scene {
     // Backdrop tall 960×1890 hi-bit — cubre descenso completo a resolución nativa.
     this.load.image('ch6-bg-tall', '/assets/ch6-bg-tall.webp')
 
-    // Parallax layers TRANSPARENTES (Open Q4 RESOLVED — best case 3-layer).
+    // Parallax layer keys — mantenidos para compatibilidad de contratos.
+    // El rendering es ahora GLSL (ERA-AGNT-03); las texturas se cargan pero no se muestran.
     this.load.image('ch6-bg-stars-far-t', '/assets/ch6-bg-stars-far-t.png')
     this.load.image('ch6-bg-nebulae-mid-t', '/assets/ch6-bg-nebulae-mid-t.webp')
 
@@ -132,7 +249,7 @@ export class SpaceScene extends Phaser.Scene {
       // No-op intencional. Las texture keys ausentes se detectan en create()
       // via this.textures.exists() — fallback single-layer ya cubierto.
       if (file && typeof file.key === 'string' && file.key.startsWith('ch6-bg-')) {
-        // Parallax layer ausente — single-layer fallback aplicará.
+        // Parallax layer ausente — shader fallback aplicará.
       }
     })
   }
@@ -142,19 +259,11 @@ export class SpaceScene extends Phaser.Scene {
     this._prefersReduced = prefersReduced
 
     // ─────────────────────────────────────────────────────────────────
-    // Parallax layers (D5-02 multi-capa parallax)
+    // Fondo principal (depth 0) — backdrop pintado 960×1890.
+    // Siempre presente como capa base opaca.
     // ─────────────────────────────────────────────────────────────────
 
     const hasTall = this.textures.exists('ch6-bg-tall')
-    const hasStarsT = this.textures.exists('ch6-bg-stars-far-t')
-    const hasNebulaeT = this.textures.exists('ch6-bg-nebulae-mid-t')
-
-    // Borde inferior del mundo visible (viewport final del arrival).
-    const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 1890
-
-    // Bajo PRM (D5-08): scrollFactor 1.0 todas las capas (sin diferencial).
-    const starsFactor = prefersReduced ? 1.0 : 0.2
-    const nebulaeFactor = prefersReduced ? 1.0 : 0.5
 
     if (hasTall) {
       // Backdrop 960×1890 nativo hi-bit — cubre el descenso completo.
@@ -168,24 +277,15 @@ export class SpaceScene extends Phaser.Scene {
         .setDisplaySize(BASE_W, BASE_H * 4)
     }
 
-    if (hasStarsT) {
-      const h = this.textures.get('ch6-bg-stars-far-t').getSourceImage().height
-      this.add
-        .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-stars-far-t')
-        .setOrigin(0.5, 0)
-        .setScrollFactor(starsFactor)
-    }
+    // ─────────────────────────────────────────────────────────────────
+    // Shader GLSL procedural — estrellas + nebulosas (ERA-AGNT-03).
+    // Reemplaza ch6-bg-stars-far-t.png y ch6-bg-nebulae-mid-t.webp.
+    // Blending ADD: suma emisión lumínica sobre el fondo pintado.
+    // scrollFactor(0): cámara-relativo; parallax simulado en el shader via scrollY.
+    // Fallback Canvas2D si no hay WebGL.
+    // ─────────────────────────────────────────────────────────────────
 
-    if (hasNebulaeT) {
-      const h = this.textures.get('ch6-bg-nebulae-mid-t').getSourceImage().height
-      this.add
-        .image(BASE_W / 2, prefersReduced ? WORLD_BOTTOM - h : 0, 'ch6-bg-nebulae-mid-t')
-        .setOrigin(0.5, 0)
-        .setScrollFactor(nebulaeFactor)
-        // 0.5 (no 0.65): en el descenso competían con los planetas — decisión
-        // 2026-07-09b (b7c5098), re-aplicada tras el refactor hi-bit.
-        .setAlpha(0.5)
-    }
+    this._buildShaderBackground(prefersReduced)
 
     // ─────────────────────────────────────────────────────────────────
     // Megaestructura: wireframe holográfico (ERA-AGNT-02).
@@ -555,14 +655,24 @@ export class SpaceScene extends Phaser.Scene {
   }
 
   // ─────────────────────────────────────────────────────────────────
-  // update — particle loop del filamento neural (ERA-AGNT-02).
-  // Llamado cada frame por Phaser mientras la escena está activa.
-  // Las partículas son matemática pura (no objetos Phaser) — sin tweens.
+  // update — loop de frame para shader parallax + filamento neural.
+  //
+  // BUG FIX (ERA-AGNT-03): el check `document.hidden` fue eliminado.
+  // Bloqueaba update() cuando el tab no tenía foco OS (caso habitual en dev
+  // con el servidor en background). Phaser gestiona el throttling de tab
+  // internamente via visibilitychange — no necesitamos duplicarlo aquí.
   // ─────────────────────────────────────────────────────────────────
 
-  update(time) {
-    if (this._prefersReduced || !this._filamentGfx || document.hidden) return
+  update() {
+    // Actualizar uniform de scroll en el shader (simula parallax 0.2/0.5 en GLSL).
+    if (this._spaceShader && this.cameras.main) {
+      this._spaceShader.setUniform('scrollY', this.cameras.main.scrollY)
+    }
 
+    // Filamento neural (solo cuando PRM está inactivo).
+    if (this._prefersReduced || !this._filamentGfx) return
+
+    const time = this.time.now // ms desde arranque de la escena
     const g = this._filamentGfx
     g.clear()
 
@@ -614,6 +724,79 @@ export class SpaceScene extends Phaser.Scene {
   // ─────────────────────────────────────────────────────────────────
   // Helpers privados — invocados desde create().
   // ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Crea el shader GLSL de fondo procedural (estrellas + nebulosas).
+   * Si WebGL no está disponible cae a Canvas2D estático (fallback).
+   * El shader se posiciona en camera-space (scrollFactor 0) y usa blend ADD
+   * para sumar emisión lumínica sobre el backdrop ch6-bg-tall pintado.
+   */
+  _buildShaderBackground(prefersReduced) {
+    // Detect WebGL — Phaser.WEBGL = 1, Phaser.CANVAS = 2.
+    const hasWebGL = this.game.renderer && this.game.renderer.gl
+    if (!hasWebGL) {
+      this._buildCanvasStarfield()
+      return
+    }
+
+    try {
+      const baseShader = new Phaser.Display.Shaders.BaseShader(
+        'spaceBg',
+        SPACE_BG_FRAG,
+        null,
+        { scrollY: { type: '1f', value: 0.0 } }
+      )
+
+      // Camera-space: siempre cubre el viewport completo.
+      const sh = this.add.shader(baseShader, BASE_W / 2, BASE_H / 2, BASE_W, BASE_H)
+      sh.setScrollFactor(0)
+      sh.setDepth(2) // encima del backdrop (0), debajo del anillo (8)
+      sh.setBlendMode(Phaser.BlendModes.ADD)
+
+      this._spaceShader = sh
+
+      // Bajo PRM: congelamos el tiempo del shader para evitar twinkling.
+      if (prefersReduced) {
+        // Phaser actualiza el uniform `time` automáticamente via preUpdate.
+        // Para congelarlo en PRM, lo sobreescribimos con un valor fijo.
+        sh.setUniform('time', 0.5)
+      }
+    } catch (_) {
+      // Si el shader falla por cualquier razón (entorno headless, etc.):
+      this._buildCanvasStarfield()
+    }
+  }
+
+  /**
+   * Fallback Canvas2D: campo de estrellas estático determinístico.
+   * Se usa cuando WebGL no está disponible o el shader falla.
+   */
+  _buildCanvasStarfield() {
+    const g = this.add.graphics()
+    g.setScrollFactor(0).setDepth(2)
+
+    // Generador congruencial simple (semilla fija = determinístico).
+    let s = 42
+    const rng = () => {
+      s = (s * 1664525 + 1013904223) & 0xffffffff
+      return (s >>> 0) / 0xffffffff
+    }
+
+    for (let i = 0; i < 200; i++) {
+      const x = rng() * BASE_W
+      const y = rng() * BASE_H
+      const alpha = 0.3 + rng() * 0.7
+      g.fillStyle(0xffffff, alpha)
+      g.fillRect(Math.round(x), Math.round(y), 1, 1)
+    }
+    // Unos pocos píxeles más grandes.
+    for (let i = 0; i < 20; i++) {
+      const x = rng() * BASE_W
+      const y = rng() * BASE_H
+      g.fillStyle(0xffffff, 0.6 + rng() * 0.4)
+      g.fillRect(Math.round(x), Math.round(y), 2, 2)
+    }
+  }
 
   /**
    * Dibuja el anillo wireframe holográfico en world-space.
@@ -685,7 +868,6 @@ export class SpaceScene extends Phaser.Scene {
    * Cada láser magenta parpadea independiente — el anillo se construye en vivo.
    */
   _buildConstructionBeams(prefersReduced) {
-    // Tres drones en el postal → segmentos en construcción del anillo (magenta).
     const targets = [
       { droneX: 400, droneY: 1700, angle: 0.85 },
       { droneX: 530, droneY: 1600, angle: 2.10 },
@@ -764,7 +946,6 @@ export class SpaceScene extends Phaser.Scene {
         .setScrollFactor(1.0)
         .setAlpha(0.72)
 
-      // Tick-in de caracteres: comienza tras retardo escalonado por panel.
       let charIdx = 0
       const tickIn = () => {
         if (charIdx < line.length) {
@@ -779,7 +960,8 @@ export class SpaceScene extends Phaser.Scene {
 
   /**
    * Programa el glitch de horizonte: destello magenta/cian breve cada 8-15s.
-   * Sugiere un futuro incierto — inquietante pero no molesto.
+   * Guards nulos en callbacks para seguridad si la escena se destruye durante
+   * los delay cortos (55ms / 35ms / 70ms).
    */
   _scheduleHorizonGlitch() {
     const doGlitch = () => {
@@ -787,22 +969,24 @@ export class SpaceScene extends Phaser.Scene {
         this.time.addEvent({ delay: 3000, callback: doGlitch })
         return
       }
-      // Destello 1: magenta
+      if (!this.cameras || !this.cameras.main) return
+
       this.cameras.main.setTint(0xff3ca6)
       this.time.addEvent({
         delay: 55,
         callback: () => {
+          if (!this.cameras || !this.cameras.main) return
           this.cameras.main.clearTint()
           this.time.addEvent({
             delay: 35,
             callback: () => {
-              // Destello 2: cian
+              if (!this.cameras || !this.cameras.main) return
               this.cameras.main.setTint(0x4dffff)
               this.time.addEvent({
                 delay: 70,
                 callback: () => {
+                  if (!this.cameras || !this.cameras.main) return
                   this.cameras.main.clearTint()
-                  // Programar siguiente glitch (8-15s).
                   this.time.addEvent({
                     delay: 8000 + Math.floor(Math.random() * 7000),
                     callback: doGlitch,
@@ -832,7 +1016,6 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x031318, 1)
       g.fillCircle(cx, cy, PLANET_R)
 
-      // Líneas de latitud perspectivadas (elipses horizontales).
       for (let k = -2; k <= 2; k++) {
         const dy = k * (PLANET_R / 2.6)
         const rx = Math.sqrt(Math.max(0, PLANET_R * PLANET_R - dy * dy))
@@ -842,7 +1025,6 @@ export class SpaceScene extends Phaser.Scene {
           g.strokeEllipse(cx, cy + dy, rx * 2, rx * 0.35)
         }
       }
-      // Arcos de meridiano (elipses verticales estrechas).
       for (let k = -2; k <= 2; k++) {
         const dx = k * (PLANET_R / 2.6)
         const ry = Math.sqrt(Math.max(0, PLANET_R * PLANET_R - dx * dx))
@@ -851,13 +1033,10 @@ export class SpaceScene extends Phaser.Scene {
           g.strokeEllipse(cx + dx * 0.28, cy, Math.abs(dx) * 0.22 + 3, ry * 2)
         }
       }
-      // Polo norte luminoso.
       g.fillStyle(0xffd95c, 0.92)
       g.fillRect(cx - 2, cy - PLANET_R + 7, 4, 4)
-      // Mini-anillo orbital (detalle escala).
       g.lineStyle(1, 0xffd95c, 0.52)
       g.strokeEllipse(cx, cy - PLANET_R + 14, 24, 6)
-      // Halo atmosférico.
       g.lineStyle(3, 0x4dffff, 0.07)
       g.strokeCircle(cx, cy, PLANET_R + 8)
 
@@ -866,7 +1045,6 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x0d0318, 1)
       g.fillCircle(cx, cy, PLANET_R)
 
-      // Continentes (manchas dentro del círculo).
       g.fillStyle(0x5c0e45, 0.68)
       g.fillCircle(cx - 15, cy - 9, 25)
       g.fillStyle(0x3c0828, 0.54)
@@ -874,17 +1052,14 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x6c185a, 0.40)
       g.fillCircle(cx + 4, cy - 31, 14)
 
-      // Línea del terminador (divide día/noche — borde suave al orbe).
       g.lineStyle(1, 0x8a2068, 0.48)
       g.strokeEllipse(cx - 7, cy, 16, PLANET_R * 2)
 
-      // Luces de ciudad (3 puntos dorados brillantes).
       const cityLights = [[cx - 14, cy - 8], [cx + 17, cy + 6], [cx + 2, cy - 30]]
       cityLights.forEach(([lx, ly]) => {
         g.fillStyle(0xffd95c, 1)
         g.fillRect(lx - 1, ly - 1, 2, 2)
       })
-      // Halo atmosférico cálido.
       g.lineStyle(3, 0x8a2068, 0.09)
       g.strokeCircle(cx, cy, PLANET_R + 7)
 
@@ -893,14 +1068,12 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x011010, 1)
       g.fillCircle(cx, cy, PLANET_R)
 
-      // Nodos de la red.
       const nodes = [
         [cx - 26, cy - 16], [cx + 16, cy - 36],
         [cx + 30, cy + 7],  [cx - 7,  cy + 30],
         [cx - 34, cy + 14], [cx + 3,  cy + 2],
         [cx - 12, cy - 44], [cx + 0,  cy - 14],
       ]
-      // Conexiones entre nodos dentro de ~50px de distancia.
       const maxD2 = (PLANET_R * 0.56) * (PLANET_R * 0.56)
       g.lineStyle(1, 0x4dffff, 0.36)
       for (let a = 0; a < nodes.length; a++) {
@@ -912,7 +1085,6 @@ export class SpaceScene extends Phaser.Scene {
           }
         }
       }
-      // Puntos de nodo (solo los que caen dentro del círculo).
       nodes.forEach(([nx, ny]) => {
         const d2 = (nx - cx) * (nx - cx) + (ny - cy) * (ny - cy)
         if (d2 <= PLANET_R * PLANET_R * 0.9) {
@@ -920,10 +1092,8 @@ export class SpaceScene extends Phaser.Scene {
           g.fillRect(nx - 2, ny - 2, 4, 4)
         }
       })
-      // Pulso de actividad en el núcleo (blob central tenue).
       g.fillStyle(0x18e8e8, 0.10)
       g.fillCircle(cx, cy, 22)
-      // Halo atmosférico cian.
       g.lineStyle(3, 0x4dffff, 0.07)
       g.strokeCircle(cx, cy, PLANET_R + 8)
     }
