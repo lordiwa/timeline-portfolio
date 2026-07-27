@@ -1,0 +1,32 @@
+{
+  "key": "TASK-003",
+  "title": "Draft an implementation plan against the stated goals/scope",
+  "description": "Draft an implementation plan against the stated goals/scope before any implementation ticket for this project starts.\n\nProblem statement (captured verbatim at intake):\nRafael tiene un perfil poco convencional (Flash gamedev, UX y team lead, AR/VR, QA, full-stack con AI) que un CV plano aplana y vuelve generico, invisible ante recruiters internacionales. Necesita que el medio mismo demuestre el recorrido en vez de listarlo.",
+  "acceptance_criteria": [
+    "Plan explicitly addresses every stated goal: Que un visitante entienda en 30 segundos, sin leer una vinieta de CV, que mira a alguien con tres decadas de tecnologia cuyas habilidades convergen; Conseguir entrevistas con recruiters internacionales (US/EU/Canada); Deploy a Firebase Hosting con los 7 chapters completos y contenido real; Paridad ES/EN con copies pulidos, no auto-translate",
+    "Plan stays within the stated in-scope items: Scroll vertical con snap suave por 7 chapters cronologicos (1995-2026); Avatar pixel-art bust sticky top-left que swappea segun chapter activo; Timeline sticky bottom con marcador movil, ano/era visible y click-to-navigate; Background que morfea entre eras al cambiar de chapter; Toggle i18n ES/EN con estado persistente entre chapters; Escena Phaser explorable en chapter 6 y minijuego match-3 en chapter 2; Pixel art via pixelforge: fondos chapters 2-6, 7 busts del avatar, elementos ambientales; Desktop fluido mas mobile portrait y landscape funcionales; Deploy a Firebase Hosting",
+    "Plan explicitly excludes the stated out-of-scope items: Character animation pixel art (limitacion documentada de pixelforge: frames incoherentes entre generaciones); Gameplay con objetivos o score en chapter 6: es exploracion ambiente, no juego; CMS o backend dinamico: el contenido es estatico en v1; Blog o articulos largos: el formato del sitio no calza con lectura larga; Modo accesibilidad alternativo linealizado tipo CV plano",
+    "Plan is recorded as a ticket comment or linked doc before any implementation ticket for this project starts."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "seed",
+    "plan"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "backlog-seeder",
+      "at": "2026-07-27T01:31:14.332Z",
+      "body": "derived from the captured problem/goals/scope definition at intake"
+    }
+  ],
+  "created_at": "2026-07-27T01:31:14.325Z",
+  "updated_at": "2026-07-27T01:31:14.332Z",
+  "jira_key": null,
+  "verification_tier": "uat-only"
+}
