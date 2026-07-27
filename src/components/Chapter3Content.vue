@@ -2,44 +2,70 @@
   Chapter3Content.vue — TASK-009: rediseño total de ch3 "La muerte de Flash" (2013).
 
   Fuente de verdad: .planning/design/03-ch3-muerte-de-flash.md (complementa,
-  sin reemplazar, .planning/design/00-sistema-visual-global.md). Reemplaza
-  COMPLETO el concepto "Kingdom New Lands" (iter11, pixel art medieval) — Rafael
-  autorizó cambio total de estilo: "no temas cambiar el estilo, eso solo es una
-  maqueta de lo que visualizo ahi".
+  sin reemplazar, .planning/design/00-sistema-visual-global.md).
+
+  MIGRACIÓN AL MECANISMO MULTI-VIEWPORT (TASK-014, retomando este ticket tras
+  su bloqueo): el rediseño flat de 2013 (commit 672ca4a) quedó atrapado en
+  `.ch3-stage` con `overflow-y: auto` — un scroll anidado que competía con el
+  scroll-snap mandatory del shell (medido: 4181px de contenido en 735px de
+  viewport, 31 elementos fuera de pantalla). Este ticket mata ese scroll
+  anidado adoptando `.chapter-stage` (utility sticky de ScrollShell.vue,
+  documentada junto a `.chapter-section[data-viewports]` en ese archivo) como
+  elemento ROOT de este componente, con `App.vue` pasando
+  `:chapter-viewports="{ 3: CH3_VIEWPORTS }"` (ver constante abajo).
+
+  CONSECUENCIA ARQUITECTURAL (documentada para quien retome este archivo):
+  `.chapter-stage` fija `height:100dvh; overflow:clip; position:sticky` — su
+  contenido queda ANCLADO en pantalla durante TODO el recorrido de los N
+  viewports de la sección (ver el comentario largo en ScrollShell.vue). Esto
+  significa que el Acto 2 ("flujo normal" según la spec original, escrita
+  ANTES de que existiera este mecanismo) no puede ser un scroll de documento
+  normal dentro de este componente: cualquier contenido que exceda 100dvh
+  queda recortado en silencio por `overflow:clip` (que además prohíbe todo
+  scroll, programático incluido — ver ScrollShell.vue). La resolución elegida
+  aquí: TODO ch3 (Acto 1 + Acto 2) se re-arquitecturó como una escena
+  scrollytelling de un solo frame fijo (100dvh) donde el progreso de scroll
+  DENTRO de la sección (no un contenedor interno) mapea a "cuál capa está
+  activa" — el mismo patrón que ya usaban Apple/Pudding.cool para escenas
+  ancladas multi-viewport. Han quedado 8 "capas" (`.ch3-layer`) apiladas
+  absolutas dentro de `.ch3-scene`: el Acto 1 (drama del plugin, scrubbed
+  0..1 vía `--ch3-p`, EXACTA misma lógica CSS que ya existía) + 7 "slides"
+  de Acto 2 (hero, 5 beats, cierre) que hacen crossfade+translate según un
+  progreso continuo (`continuousSlide`). Bajo `prefers-reduced-motion`, la
+  capa `.ch3-stage` misma se desancla (position:static !important, SOLO para
+  ch3, SOLO bajo PRM — ver el bloque `<style>`) y el Acto 2 vuelve a fluir
+  normal, apilado y completo, honrando la instrucción de la spec ("el acto 2
+  se renderiza completo y visible sin reveals") de una forma que el
+  mecanismo pinned no permite sin ese override puntual.
 
   Guion visual en dos actos (spec §3):
-  - Acto 1 (`.ch3-act1-*`), pinned sobre ~220vh: un navegador de 2013 con el
-    stage de Flash de 550x400 muriendo en pantalla al scrollear (degradado que
-    se drena, capas que se despegan, vector que colapsa a flat) + un teléfono
-    mostrando el puzzle de plugin faltante (Flash nunca existió en mobile).
-    Escenografía 100% procedural (CSS + SVG inline) — CERO imágenes nuevas.
-  - Acto 2 (`.ch3-hero` + `.ch3-beats` + `.ch3-close`), flujo normal: el
-    renacimiento flat de 2013 (Flat UI Colors, Open Sans, ghost buttons, iconos
-    long-shadow). 5 beats en zig-zag (Ch3StoryBeat.vue) — uno por párrafo de
+  - Acto 1 (`.ch3-act1-*`): un navegador de 2013 con el stage de Flash de
+    550x400 muriendo en pantalla al scrollear (degradado que se drena, capas
+    que se despegan, vector que colapsa a flat) + un teléfono mostrando el
+    puzzle de plugin faltante. Escenografía 100% procedural (CSS + SVG
+    inline) — CERO imágenes nuevas. `--ch3-p` (0..1, progreso LOCAL del
+    Acto 1) conserva exactamente las mismas fórmulas calc() que el commit
+    672ca4a — sólo cambió de dónde viene el valor (antes: scroll interno de
+    `.ch3-stage`; ahora: progreso de la sección dentro del shell).
+  - Acto 2 (`.ch3-hero` + 5× beat slide + `.ch3-close`): el renacimiento
+    flat de 2013 (Flat UI Colors, Open Sans, ghost buttons, iconos
+    long-shadow). 5 beats (Ch3StoryBeat.vue) — uno por párrafo de
     bio.eras.3 — muestran SIEMPRE el numeral+kicker+lead sin click (defecto 4
-    de TASK-007: 270 palabras ya no quedan detrás de un click); un expansor
-    "Seguir leyendo" profundiza I-IV, el beat V (el remate) va completo.
+    de TASK-007); un expansor "Seguir leyendo" profundiza I-IV, el beat V
+    (el remate) va completo.
 
-  Motion (spec §7): el scrub del Acto 1 y el parallax del hero se escriben
-  directo al DOM vía requestAnimationFrame (mismo patrón --sx/--mx que ya usan
-  Chapter3/Chapter4 — evita reactividad Vue en cada frame de scroll). Detrás de
-  `@supports (animation-timeline: scroll())` hay una capa de mejora progresiva
-  con scroll-driven animations nativas que, donde el navegador la soporta,
-  reemplaza el valor JS por compositor puro (más fluido); el rAF es el camino
-  garantizado y es el que se verificó en esta sesión (sin tooling de navegador
-  disponible para confirmar visualmente la capa nativa — ver hand-off).
-  PRM: el Acto 1 queda en un cuadro estático (botón ya sin brillo, plugin
-  bloqueado, teléfono con el puzzle) y el pin baja a 100vh exacto; el Acto 2
-  se renderiza completo sin reveals.
-
-  CSS: TODO el CSS de ch3 vive AQUÍ (retirado de chapter-components.css por
-  este mismo ticket, ver comentario de migración en ese archivo). El bloque de
-  `<style>` es DELIBERADAMENTE sin `scoped` (mismo patrón que el segundo
-  `<style>` de ScrollShell.vue: "sin scoped para que los selectores traversen
-  el shadow de componentes hijos") — Ch3StoryBeat.vue es un componente hijo y
-  sus elementos internos (numeral, kicker, lead, expansor) no son su nodo raíz,
-  así que un `<style scoped>` de este archivo no los alcanzaría. Todos los
-  selectores usan el prefijo `ch3-`, consistente con el resto del proyecto.
+  Motion (spec §7 + AC#5 del ticket): el parallax del hero (factores 0.06,
+  0.14, 0.26 sobre `--ch3-hy`) usa `animation-timeline: scroll(nearest
+  block)` nativo detrás de `@supports (animation-timeline: scroll())`, con
+  `animation-range-start/end` calculados una sola vez por JS (mount+resize,
+  NO por frame — la animación en sí corre en el compositor cuando el
+  navegador soporta la API) y fallback rAF cuando no. El resto del scrub
+  (Acto 1 completo + el crossfade de los 7 slides del Acto 2) es rAF puro:
+  requiere progreso custom-mapeado por tramos que `scroll()`/`view()` no
+  expresan sin JS recalculando animation-range por elemento — documentado
+  como decisión de alcance, no como omisión, en el hand-off de este ticket.
+  PRM: el Acto 1 congela en `--ch3-p:0.4` (mismo criterio que 672ca4a) y NO
+  se adjunta ningún listener de scroll; el Acto 2 fluye normal (ver arriba).
 -->
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -49,6 +75,7 @@ import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
 import ProjectCard from './ProjectCard.vue'
 import Ch3StoryBeat from './Ch3StoryBeat.vue'
+import { ACT1_UNITS, ACT2_SLIDE_COUNT, TOTAL_UNITS, clamp, computeCh3Frame } from '@/utils/ch3Progress'
 
 const { t } = useI18n()
 
@@ -64,11 +91,8 @@ const reduced = () => prm?.prefersReduced?.value ?? false
 
 // ── Destape de la narrativa (spec §8, defecto 4 de TASK-007) ─────────────────
 // Lead visible sin click = las primeras N oraciones del párrafo, partidas por
-// el token literal ". " — NO regex (spec: "no parsear con regex el texto
-// i18n"). La prosa real de bio.eras.3 tiene la MISMA cantidad de oraciones por
-// párrafo en ES y EN (4/3/3/3/2), verificado a mano sobre ambos locales; por
-// eso un único array de conteos sirve para los dos idiomas. El beat V (índice
-// 4, el remate del capítulo) siempre va completo — spec §3 acto 2 punto 2.
+// el token literal ". " — NO regex. El beat V (índice 4, el remate) va
+// siempre completo — spec §3 acto 2 punto 2.
 const LEAD_SENTENCE_COUNT = [2, 2, 2, 2]
 
 function splitLead(text, leadCount) {
@@ -87,9 +111,6 @@ function lastSentence(text) {
   return last.endsWith('.') ? last : `${last}.`
 }
 
-// Metadatos por beat — icono (Ch3StoryBeat), tono de acento (spec §4: rojo
-// residual SOLO beat I, HTML5 naranja SOLO beat V, el resto usa el acento
-// estándar de la era --c-accent).
 const BEAT_META = [
   { key: 'flash', icon: 'flash', tone: 'residual' },
   { key: 'rebuild', icon: 'code', tone: 'accent' },
@@ -118,129 +139,221 @@ const beats = computed(() =>
 
 const closingLine = computed(() => lastSentence(bioParagraphs.value[4] || ''))
 
-// ── Acto 1 — scrub del pin (0..1) + parallax del hero, escritos directo al DOM ──
-// (mismo patrón --sx/--mx ya usado en el resto del sitio — evita reactividad
-// Vue en cada frame de scroll). Bajo PRM el valor queda congelado (ver
-// onMounted): el Acto 1 se muestra en su cuadro "botón ya sin brillo, plugin
-// bloqueado" (~p=0.4, el final de la tramo de desaturación) en vez del p=0.15
-// literal de la spec — a esa altura el botón TODAVÍA brilla según los propios
-// tramos de la spec §3, así que se priorizó la descripción textual del estado
-// congelado ("botón ya sin brillo") sobre el número exacto (conflicto interno
-// de la spec, documentado en el hand-off).
-const pinRef = ref(null)
-const sceneRef = ref(null)
-const heroRef = ref(null)
-const beatsRef = ref(null)
+// Presupuesto de progreso (ACT1_UNITS, ACT2_SLIDE_COUNT, TOTAL_UNITS) y la
+// matemática pura del scrub (clamp, computeCh3Frame) viven en
+// @/utils/ch3Progress.js — extraídas para poder testearlas sin DOM/scroll
+// real (ver el comentario de ese archivo, incluye el hallazgo HIGH de esta
+// sesión: continuousSlide sin piso, o el hero queda superpuesto al Acto 1).
 
+// ── Refs de DOM ────────────────────────────────────────────────────────────
+const stageRef = ref(null) // root .chapter-stage — TASK-014 contrato punto 2
+const act1LayerRef = ref(null) // .ch3-act1-pin — capa completa del Acto 1, ver applyProgress()
+const sceneRef = ref(null) // .ch3-act1-scene — target de --ch3-p (idéntico a 672ca4a)
+const heroSkyRef = ref(null)
+const heroHillBackRef = ref(null)
+const heroHillFrontRef = ref(null)
+const slideEls = ref([]) // 7 wrappers .ch3-slide, índice 0..6
+
+function setSlideEl(el, index) {
+  slideEls.value[index] = el || null
+}
+
+// ── Detección de soporte nativo (AC#5) — mutuamente excluyente con rAF ──────
+const NATIVE_SUPPORTED = (() => {
+  try {
+    return typeof CSS !== 'undefined' && typeof CSS.supports === 'function' &&
+      CSS.supports('animation-timeline', 'scroll()')
+  } catch {
+    return false
+  }
+})()
+
+let sectionEl = null
+let shellEl = null
 let raf = 0
-let pendingScrollTop = 0
-let pendingViewportH = 0
+let resizeRaf = 0
 
-function flushMotion() {
+function applyProgress(overallVh) {
+  const frame = computeCh3Frame(overallVh)
+
+  // Acto 1 — --ch3-p LOCAL 0..1, mismas fórmulas CSS que 672ca4a.
+  sceneRef.value?.style.setProperty('--ch3-p', frame.p1.toFixed(4))
+
+  // La capa entera del Acto 1 se apaga apenas termina su scrub — ver el
+  // comentario HIGH junto a computeCh3Frame() en ch3Progress.js (hallazgo de
+  // verificación CDP real: sin esto, el bloque naranja HTML5 queda pintado
+  // encima de todos los slides del Acto 2 para siempre).
+  if (act1LayerRef.value) {
+    act1LayerRef.value.style.opacity = frame.act1LayerOp.toFixed(3)
+    act1LayerRef.value.style.pointerEvents = frame.act1LayerOp > 0.05 ? 'auto' : 'none'
+  }
+
+  // Acto 2 — un slide por índice (0=hero .. 6=cierre), opacity+translateY
+  // ya resueltos por computeCh3Frame() (mismo hallazgo HIGH: el hero
+  // quedaba superpuesto al Acto 1 si continuousSlide clampeaba su piso a 0).
+  frame.slides.forEach((slide, i) => {
+    const el = slideEls.value[i]
+    if (!el) return
+    el.style.opacity = slide.opacity.toFixed(3)
+    el.style.transform = `translateY(${slide.translateYpx.toFixed(1)}px)`
+    el.style.pointerEvents = slide.opacity > 0.05 ? 'auto' : 'none'
+  })
+
+  // Parallax del hero — sólo si rAF gobierna --ch3-hy (nativo lo posee si soportado).
+  if (!NATIVE_SUPPORTED) {
+    slideEls.value[0]?.style.setProperty('--ch3-hy', frame.heroLocalP.toFixed(4))
+  }
+}
+
+function flushProgress() {
   raf = 0
-  const pinEl = pinRef.value
-  const sceneEl = sceneRef.value
-  if (pinEl && sceneEl) {
-    const pinDistance = Math.max(pinEl.offsetHeight - pendingViewportH, 1)
-    const p = Math.min(Math.max(pendingScrollTop / pinDistance, 0), 1)
-    sceneEl.style.setProperty('--ch3-p', p.toFixed(4))
-  }
-  const heroEl = heroRef.value
-  if (heroEl) {
-    const hy = pendingScrollTop - heroEl.offsetTop
-    heroEl.style.setProperty('--ch3-hy', hy.toFixed(1))
+  if (!sectionEl) return
+  const rect = sectionEl.getBoundingClientRect()
+  const vh = window.innerHeight || document.documentElement.clientHeight || 1
+  const overallVh = clamp(-rect.top / vh, 0, TOTAL_UNITS)
+  applyProgress(overallVh)
+}
+
+function onShellScroll() {
+  if (!raf) raf = requestAnimationFrame(flushProgress)
+}
+
+// applyNativeHeroRange — AC#5: calcula UNA VEZ (mount + resize) el rango en
+// píxeles absolutos del documento durante el que la escena del hero es
+// relevante, y lo asigna a `animation-range-start/end` de las 3 capas de
+// parallax. La animación en sí (--ch3-hy 0→1, spec §7) la corre el
+// compositor nativo vía `scroll(nearest block)` (declarado en el <style>
+// bajo @supports) — esta función NO corre por frame, sólo fija el rango.
+function applyNativeHeroRange() {
+  if (!NATIVE_SUPPORTED || !sectionEl) return
+  const vh = window.innerHeight || document.documentElement.clientHeight || 1
+  const startPx = Math.max(0, sectionEl.offsetTop + (ACT1_UNITS - 0.5) * vh)
+  const endPx = sectionEl.offsetTop + (ACT1_UNITS + 1.5) * vh
+  for (const el of [heroSkyRef.value, heroHillBackRef.value, heroHillFrontRef.value]) {
+    if (!el) continue
+    el.style.animationRangeStart = `${startPx}px`
+    el.style.animationRangeEnd = `${endPx}px`
   }
 }
 
-function onStageScroll(e) {
-  if (reduced()) return
-  pendingScrollTop = e.target.scrollTop
-  pendingViewportH = e.target.clientHeight
-  if (!raf) raf = requestAnimationFrame(flushMotion)
+function onResize() {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf)
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = 0
+    applyNativeHeroRange()
+    if (!reduced()) onShellScroll()
+  })
 }
 
+// scrollToBeats — CTA del hero ("La historia completa"). Bajo PRM el Acto 2
+// fluye en flujo normal (ver <style> PRM) así que un scrollIntoView real
+// funciona; en el modo pineado no hay un elemento al que "entrar" (todo vive
+// en el mismo frame fijo), así que se salta el scroll del shell directo al
+// inicio de la ventana del beat 0.
 function scrollToBeats() {
-  beatsRef.value?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
+  if (reduced()) {
+    slideEls.value[1]?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    return
+  }
+  if (!shellEl || !sectionEl) return
+  const vh = window.innerHeight || document.documentElement.clientHeight || 1
+  const target = sectionEl.offsetTop + (ACT1_UNITS + 1) * vh
+  shellEl.scrollTo({ top: target, behavior: 'smooth' })
 }
 
 onMounted(() => {
-  // Estado inicial: 0 en movimiento normal; congelado en 0.4 bajo PRM (ver
-  // comentario arriba). No se usa un binding :style reactivo para --ch3-p /
-  // --ch3-hy a propósito — Vue re-parchearía el estilo en cada re-render
-  // (p.ej. al togglear locale) y pisaría el valor que escribe el scroll.
-  sceneRef.value?.style.setProperty('--ch3-p', reduced() ? '0.4' : '0')
-  heroRef.value?.style.setProperty('--ch3-hy', '0')
+  sectionEl = stageRef.value?.closest('section') || null
+  shellEl = stageRef.value?.closest('.scroll-shell') || null
+
+  if (reduced()) {
+    // PRM: cuadro estático del Acto 1 (mismo criterio que 672ca4a — a p=0.4
+    // el botón ya perdió el brillo especular, ver fórmulas CSS abajo). El
+    // Acto 2 no necesita valores de progreso: fluye completo vía CSS PRM.
+    sceneRef.value?.style.setProperty('--ch3-p', '0.4')
+    return
+  }
+
+  applyNativeHeroRange()
+  applyProgress(0)
+  if (shellEl) {
+    shellEl.addEventListener('scroll', onShellScroll, { passive: true })
+  }
+  window.addEventListener('resize', onResize, { passive: true })
 })
+
 onBeforeUnmount(() => {
   if (raf) cancelAnimationFrame(raf)
+  if (resizeRaf) cancelAnimationFrame(resizeRaf)
+  if (shellEl) shellEl.removeEventListener('scroll', onShellScroll)
+  window.removeEventListener('resize', onResize)
 })
 </script>
 
 <template>
-  <div class="ch3-stage" @scroll="onStageScroll">
-    <!-- ══════════════════════════════════════════════════════════════════
-         ACTO 1 — el plugin muere (pinned, scrubbed por scroll)
-         ══════════════════════════════════════════════════════════════════ -->
-    <div ref="pinRef" class="ch3-act1-pin" :class="{ 'is-reduced': reduced() }">
-      <div ref="sceneRef" class="ch3-act1-scene">
-        <h1 class="ch3-act1-title">{{ t('ui.deathOfFlash') }}</h1>
+  <div ref="stageRef" class="chapter-stage ch3-stage">
+    <div class="ch3-scene">
+      <!-- ══════════════════════════════════════════════════════════════════
+           ACTO 1 — el plugin muere (scrubbed por el progreso de la sección)
+           ══════════════════════════════════════════════════════════════════ -->
+      <div ref="act1LayerRef" class="ch3-layer ch3-act1-pin" :class="{ 'is-reduced': reduced() }">
+        <div ref="sceneRef" class="ch3-act1-scene">
+          <h1 class="ch3-act1-title">{{ t('ui.deathOfFlash') }}</h1>
 
-        <div class="ch3-act1-decor" aria-hidden="true">
-          <div class="ch3-desktop"></div>
+          <div class="ch3-act1-decor" aria-hidden="true">
+            <div class="ch3-desktop"></div>
 
-          <div class="ch3-browser">
-            <div class="ch3-browser-tabs"><span class="ch3-browser-tab"></span></div>
-            <div class="ch3-browser-omnibox"></div>
-            <div class="ch3-browser-infobar">
-              <span>{{ t('ch3.ui.infobar') }}</span>
-              <span class="ch3-ghost-btn ch3-ghost-btn--tiny">{{ t('ch3.ui.runOnce') }}</span>
-            </div>
-
-            <div class="ch3-flash-stage">
-              <div class="ch3-flash-btn">
-                <span class="ch3-flash-shadow"></span>
-                <span class="ch3-flash-bevel"></span>
-                <span class="ch3-flash-fill"></span>
-                <span class="ch3-flash-desat"></span>
-                <span class="ch3-flash-specular"></span>
-                <span class="ch3-flash-play">&#9654;</span>
+            <div class="ch3-browser">
+              <div class="ch3-browser-tabs"><span class="ch3-browser-tab"></span></div>
+              <div class="ch3-browser-omnibox"></div>
+              <div class="ch3-browser-infobar">
+                <span>{{ t('ch3.ui.infobar') }}</span>
+                <span class="ch3-ghost-btn ch3-ghost-btn--tiny">{{ t('ch3.ui.runOnce') }}</span>
               </div>
-              <svg class="ch3-wireframe" viewBox="0 0 100 72">
-                <rect x="4" y="4" width="92" height="64" rx="2" />
-                <circle cx="4" cy="4" r="2" /><circle cx="96" cy="4" r="2" />
-                <circle cx="96" cy="68" r="2" /><circle cx="4" cy="68" r="2" />
-                <circle cx="50" cy="36" r="2" />
-              </svg>
-              <div class="ch3-flat-block"></div>
+
+              <div class="ch3-flash-stage">
+                <div class="ch3-flash-btn">
+                  <span class="ch3-flash-shadow"></span>
+                  <span class="ch3-flash-bevel"></span>
+                  <span class="ch3-flash-fill"></span>
+                  <span class="ch3-flash-desat"></span>
+                  <span class="ch3-flash-specular"></span>
+                  <span class="ch3-flash-play">&#9654;</span>
+                </div>
+                <svg class="ch3-wireframe" viewBox="0 0 100 72">
+                  <rect x="4" y="4" width="92" height="64" rx="2" />
+                  <circle cx="4" cy="4" r="2" /><circle cx="96" cy="4" r="2" />
+                  <circle cx="96" cy="68" r="2" /><circle cx="4" cy="68" r="2" />
+                  <circle cx="50" cy="36" r="2" />
+                </svg>
+                <div class="ch3-flat-block"></div>
+              </div>
             </div>
+
+            <div class="ch3-phone">
+              <div class="ch3-phone-screen">
+                <svg class="ch3-puzzle" viewBox="0 0 40 40">
+                  <path d="M4 10h6a3 3 0 1 1 0 6H4v6h6a3 3 0 1 1 0 6H4a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" />
+                </svg>
+                <p class="ch3-phone-note">{{ t('ch3.ui.phoneNote') }}</p>
+              </div>
+            </div>
+
+            <div class="ch3-act1-cue"><span class="ch3-act1-cue-arrow">&#8964;</span></div>
           </div>
 
-          <div class="ch3-phone">
-            <div class="ch3-phone-screen">
-              <svg class="ch3-puzzle" viewBox="0 0 40 40">
-                <path d="M4 10h6a3 3 0 1 1 0 6H4v6h6a3 3 0 1 1 0 6H4a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" />
-              </svg>
-              <p class="ch3-phone-note">{{ t('ch3.ui.phoneNote') }}</p>
-            </div>
-          </div>
-
-          <div class="ch3-act1-cue"><span class="ch3-act1-cue-arrow">&#8964;</span></div>
+          <div class="ch3-act1-white" aria-hidden="true"></div>
+          <div class="ch3-act1-accent" aria-hidden="true"></div>
         </div>
-
-        <div class="ch3-act1-white" aria-hidden="true"></div>
-        <div class="ch3-act1-accent" aria-hidden="true"></div>
       </div>
-    </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         ACTO 2 — el renacimiento flat (flujo normal)
-         ══════════════════════════════════════════════════════════════════ -->
-    <div class="ch3-act2">
-      <div ref="heroRef" class="ch3-hero">
+      <!-- ══════════════════════════════════════════════════════════════════
+           ACTO 2 — el renacimiento flat, 7 slides (hero + 5 beats + cierre)
+           ══════════════════════════════════════════════════════════════════ -->
+      <div :ref="(el) => setSlideEl(el, 0)" class="ch3-layer ch3-slide ch3-hero">
         <div class="ch3-hero-parallax" aria-hidden="true">
-          <div class="ch3-hero-sky"></div>
-          <div class="ch3-hero-hill ch3-hero-hill--back"></div>
-          <div class="ch3-hero-hill ch3-hero-hill--front"></div>
+          <div ref="heroSkyRef" class="ch3-hero-sky"></div>
+          <div ref="heroHillBackRef" class="ch3-hero-hill ch3-hero-hill--back"></div>
+          <div ref="heroHillFrontRef" class="ch3-hero-hill ch3-hero-hill--front"></div>
           <span class="ch3-hero-cloud ch3-hero-cloud--a"></span>
           <span class="ch3-hero-cloud ch3-hero-cloud--b"></span>
         </div>
@@ -251,10 +364,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div ref="beatsRef" class="ch3-beats">
+      <div
+        v-for="(beat, i) in beats"
+        :key="beat.key"
+        :ref="(el) => setSlideEl(el, i + 1)"
+        class="ch3-layer ch3-slide"
+      >
         <Ch3StoryBeat
-          v-for="beat in beats"
-          :key="beat.key"
           :numeral="beat.numeral"
           :kicker="beat.kicker"
           :icon="beat.icon"
@@ -267,16 +383,18 @@ onBeforeUnmount(() => {
         />
       </div>
 
-      <footer class="ch3-close">
-        <svg class="ch3-close-badge" viewBox="0 0 48 48" aria-hidden="true">
-          <path d="M24 8l14 5-2 15q0 8-12 12Q12 36 12 28L10 13z" />
-          <path d="M18 23l6 6 8-10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <p class="ch3-close-line">{{ closingLine }}</p>
-      </footer>
+      <div :ref="(el) => setSlideEl(el, 6)" class="ch3-layer ch3-slide ch3-close-slide">
+        <footer class="ch3-close">
+          <svg class="ch3-close-badge" viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M24 8l14 5-2 15q0 8-12 12Q12 36 12 28L10 13z" />
+            <path d="M18 23l6 6 8-10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <p class="ch3-close-line">{{ closingLine }}</p>
+        </footer>
 
-      <div v-if="ch3Projects.length > 0" class="ch3-projects">
-        <ProjectCard v-for="project in ch3Projects" :key="project.id" :project="project" />
+        <div v-if="ch3Projects.length > 0" class="ch3-projects">
+          <ProjectCard v-for="project in ch3Projects" :key="project.id" :project="project" />
+        </div>
       </div>
     </div>
   </div>
@@ -284,12 +402,17 @@ onBeforeUnmount(() => {
 
 <style>
 /* ─────────────────────────────────────────────────────────────────────────
- * @property — --ch3-p (progreso 0..1 del scrub del Acto 1) registrada como
- * <number> para que la capa de mejora progresiva (scroll-driven nativo, más
- * abajo) pueda ANIMARLA con @keyframes (spec §7 + tokens.css §4.5, mismo
- * patrón que --era-progress).
+ * @property — --ch3-p (progreso 0..1 del scrub del Acto 1, idéntico a
+ * 672ca4a) + --ch3-hy (progreso 0..1 del parallax del hero, NUEVO — permite
+ * que la capa nativa de scroll-driven animations (AC#5) la anime vía
+ * @keyframes cuando el navegador soporta animation-timeline).
  * ───────────────────────────────────────────────────────────────────────── */
 @property --ch3-p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --ch3-hy {
   syntax: '<number>';
   inherits: true;
   initial-value: 0;
@@ -298,10 +421,6 @@ onBeforeUnmount(() => {
 @layer components {
   /* ───────────────────────────────────────────────────────────────────────
    * Tokens locales de ch3 — Flat UI Colors (Designmodo, 2013), spec §4.
-   * eras.css ya define los 6 semánticos (--c-bg/fg/accent/border/focus/
-   * surface) + --font-body para [data-chapter="3"]; estos son los matices
-   * EXTRA que la paleta de 2013 necesita y que ese contrato de 6 tokens no
-   * cubre (residuo Flash, HTML5, texto secundario, long-shadow).
    * ─────────────────────────────────────────────────────────────────────── */
   .ch3-stage {
     --ch3-text-2: #34495e; /* Wet Asphalt — subtítulo hero, texto secundario */
@@ -311,24 +430,53 @@ onBeforeUnmount(() => {
     --ch3-close-bg: #2c3e50; /* Midnight Blue — franja de cierre, puente a ch4 */
     --ch3-white: #ecf0f1; /* Clouds — mismo tono que --c-bg de la era */
 
-    position: relative;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 100dvh;
-    width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    /* TASK-009 (retomando TASK-014): .ch3-stage COEXISTE con `.chapter-stage`
+     * (utility global de ScrollShell.vue) en el MISMO elemento — no redeclara
+     * position/height/overflow (ese contrato es de `.chapter-stage`), sólo
+     * aporta tokens + tipografía. */
     box-sizing: border-box;
-    background: var(--c-bg);
     color: var(--c-fg);
     font-family: var(--font-body);
   }
 
+  /* .ch3-scene — llena el frame de 100dvh que `.chapter-stage` fija; contiene
+   * las 8 capas apiladas (Acto 1 + 7 slides del Acto 2). background propio
+   * para que nunca se vea transparencia entre capas durante un crossfade. */
+  .ch3-scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--c-bg);
+  }
+
+  /* .ch3-layer — capa apilada absoluta, base compartida por el Acto 1 y los
+   * 7 slides del Acto 2. Sin transition CSS a propósito: el opacity/transform
+   * se escribe por frame en scrub 1:1 con el scroll (mismo criterio que
+   * --ch3-p) — una transition pelearía contra esa escritura y produciría
+   * lag en vez de scrub ajustado. */
+  .ch3-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    will-change: opacity, transform;
+  }
+
+  /* .ch3-slide — slides genéricos del Acto 2 (hero y cierre declaran su
+   * propio display/flex más abajo con sus propias clases; éste es el caso
+   * base que consumen los 5 beats). */
+  .ch3-slide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--sp-lg);
+    box-sizing: border-box;
+  }
+
   /* ═══════════════════════════════════════════════════════════════════════
    * ACTO 1 — escenografía procedural del plugin muerto. Tokens locales:
-   * "asset-scene" documentado (spec sistema visual §3 — excepción de hex
-   * literales para escenas de arte concretas; los Flat UI Colors del Acto 2
-   * viven arriba como tokens semánticos del componente).
+   * "asset-scene" documentado (spec sistema visual §3).
    * ═══════════════════════════════════════════════════════════════════════ */
   .ch3-act1-pin {
     --ch3-desk: #2b2d31;
@@ -343,17 +491,11 @@ onBeforeUnmount(() => {
     --ch3-puzzle-gray: #8e8e93;
     --ch3-wire: #3498db;
     --ch3-flat-red: #e74c3c;
-
-    position: relative;
-    height: 220vh;
-    height: 220dvh;
   }
 
   .ch3-act1-scene {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    height: 100dvh;
+    position: relative;
+    height: 100%;
     width: 100%;
     overflow: hidden;
     background: var(--ch3-desk);
@@ -372,6 +514,10 @@ onBeforeUnmount(() => {
     color: #f3f4f6;
     text-align: center;
     letter-spacing: -0.01em;
+    /* La capa ENTERA (.ch3-act1-pin) se apaga vía JS (applyProgress(),
+     * act1LayerOp) apenas termina el Acto 1 — no hace falta un opacity local
+     * aquí también (evita una segunda fuente de verdad para el mismo apagado,
+     * ver el comentario HIGH junto a act1LayerOp en <script>). */
   }
 
   .ch3-act1-decor {
@@ -579,13 +725,8 @@ onBeforeUnmount(() => {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-   * ACTO 2 — el renacimiento flat
+   * ACTO 2 — el renacimiento flat (7 slides pineados con crossfade)
    * ═══════════════════════════════════════════════════════════════════════ */
-  .ch3-act2 {
-    position: relative;
-    z-index: 1;
-    background: var(--c-bg);
-  }
 
   /* Ghost button — compartido por hero CTA + beat "Seguir leyendo" (spec §6) */
   .ch3-ghost-btn {
@@ -618,18 +759,15 @@ onBeforeUnmount(() => {
     pointer-events: none;
   }
 
-  /* ── Hero (spec §3 acto 2.1) ─────────────────────────────────────────────── */
+  /* ── Hero (spec §3 acto 2.1) — slide índice 0 ────────────────────────────── */
   .ch3-hero {
-    position: relative;
-    min-height: 78vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
     padding: var(--inset-chapter-top) var(--sp-lg) var(--sp-2xl);
     box-sizing: border-box;
   }
-  .ch3-hero-parallax { position: absolute; inset: 0; pointer-events: none; }
+  .ch3-hero-parallax { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .ch3-hero-sky { position: absolute; inset: 0; background: #d6eaf8; }
   .ch3-hero-hill {
     position: absolute;
@@ -642,16 +780,16 @@ onBeforeUnmount(() => {
     bottom: 8%;
     background: #a9cce3;
     clip-path: polygon(0% 60%, 20% 30%, 45% 55%, 68% 20%, 100% 50%, 100% 100%, 0% 100%);
-    transform: translateY(calc(var(--ch3-hy, 0) * -0.14px));
+    transform: translateY(calc(var(--ch3-hy, 0) * -84px));
   }
   .ch3-hero-hill--front {
     bottom: 0%;
     height: 32%;
     background: #7fb3d5;
     clip-path: polygon(0% 70%, 22% 35%, 50% 65%, 74% 25%, 100% 55%, 100% 100%, 0% 100%);
-    transform: translateY(calc(var(--ch3-hy, 0) * -0.26px));
+    transform: translateY(calc(var(--ch3-hy, 0) * -156px));
   }
-  .ch3-hero-sky { transform: translateY(calc(var(--ch3-hy, 0) * -0.06px)); will-change: transform; }
+  .ch3-hero-sky { transform: translateY(calc(var(--ch3-hy, 0) * -36px)); will-change: transform; }
   .ch3-hero-cloud {
     position: absolute;
     top: 18%;
@@ -697,27 +835,36 @@ onBeforeUnmount(() => {
     text-wrap: pretty;
   }
 
-  /* ── Beats — grid de la fila zig-zag (Ch3StoryBeat.vue, alcanza su nodo raíz
-       + descendientes porque este <style> NO es scoped, ver header) ────────── */
-  .ch3-beats {
-    display: flex;
-    flex-direction: column;
-    max-width: var(--content-max);
-    margin: 0 auto;
+  /* AC#5 — mejora progresiva nativa del parallax del hero: el compositor
+   * anima --ch3-hy 0→1 sin JS por frame cuando el navegador soporta
+   * animation-timeline; el rango absoluto (animation-range-start/end) lo
+   * calcula applyNativeHeroRange() una sola vez (mount+resize). rAF NO
+   * escribe --ch3-hy cuando este bloque está activo (mutuamente excluyente,
+   * ver NATIVE_SUPPORTED en <script>). */
+  @supports (animation-timeline: scroll()) {
+    .ch3-hero-sky,
+    .ch3-hero-hill--back,
+    .ch3-hero-hill--front {
+      animation: ch3-hero-hy-drift linear both;
+      animation-timeline: scroll(nearest block);
+    }
   }
+  @keyframes ch3-hero-hy-drift {
+    from { --ch3-hy: 0; }
+    to { --ch3-hy: 1; }
+  }
+
+  /* ── Beats — Ch3StoryBeat.vue (alcanza su nodo raíz + descendientes porque
+       este <style> NO es scoped) ────────────────────────────────────────── */
   .ch3-beat {
     display: flex;
     align-items: center;
     gap: var(--sp-2xl);
     padding: var(--sp-2xl) var(--sp-lg);
-    background: var(--c-bg);
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity var(--dur-enter) var(--ease-standard), transform var(--dur-enter) var(--ease-standard);
+    max-width: var(--content-max);
+    margin: 0 auto;
   }
-  .ch3-beat:nth-child(odd) { background: var(--c-surface); }
   .ch3-beat--alt { flex-direction: row-reverse; }
-  .ch3-beat.is-revealed { opacity: 1; transform: none; }
 
   .ch3-beat-icon { position: relative; flex-shrink: 0; width: 88px; height: 88px; }
   .ch3-beat-icon-shadow {
@@ -788,14 +935,18 @@ onBeforeUnmount(() => {
     color: var(--c-fg);
   }
 
-  /* ── Cierre del capítulo — puente cromático hacia ch4 (spec §3 acto 2.3) ── */
+  /* ── Cierre del capítulo — slide índice 6, puente cromático a ch4 ───────── */
+  .ch3-close-slide {
+    flex-direction: column;
+    gap: var(--sp-lg);
+    background: var(--ch3-close-bg);
+  }
   .ch3-close {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--sp-md);
-    padding: var(--sp-2xl) var(--sp-lg) calc(var(--sp-2xl) + var(--inset-chapter-bottom));
-    background: var(--ch3-close-bg);
+    padding: var(--sp-lg);
     text-align: center;
   }
   .ch3-close-badge { width: 40px; height: 40px; color: var(--ch3-html5); }
@@ -816,7 +967,7 @@ onBeforeUnmount(() => {
     gap: var(--sp-md);
     max-width: var(--content-max);
     margin: 0 auto;
-    padding: var(--sp-xl) var(--sp-lg);
+    padding: 0 var(--sp-lg) var(--sp-xl);
   }
   .ch3-projects .project-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-card); padding: var(--sp-md); }
   .ch3-projects .project-card-title { font-family: var(--font-body); font-weight: 600; color: var(--c-fg); border-bottom: 2px solid var(--c-accent); padding-bottom: var(--sp-xs); display: inline-block; }
@@ -826,48 +977,64 @@ onBeforeUnmount(() => {
   .ch3-projects .project-card-link:hover { text-decoration: underline; }
 
   /* ─────────────────────────────────────────────────────────────────────────
-   * Mejora progresiva — scroll-driven animations nativas (spec §7 + sistema
-   * visual §3). Donde el navegador soporta animation-timeline, el compositor
-   * corre el scrub del Acto 1 y el reveal de los beats SIN JS; donde no,
-   * gobierna el valor escrito por rAF/IntersectionObserver de arriba (los
-   * navegadores aplican el valor animado por encima de cualquier otro origen
-   * mientras la animación corre, así que ambos caminos conviven sin pelear).
-   * No verificado visualmente en esta sesión (sin navegador disponible).
-   * ───────────────────────────────────────────────────────────────────────── */
-  @supports (animation-timeline: scroll()) {
-    .ch3-act1-pin:not(.is-reduced) { view-timeline: --ch3-pin-timeline block; }
-    .ch3-act1-pin:not(.is-reduced) .ch3-act1-scene {
-      animation: ch3-scrub-p linear both;
-      animation-timeline: --ch3-pin-timeline;
-      animation-range: cover 0% cover 100%;
-    }
-    .ch3-beat {
-      animation: ch3-beat-reveal linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 40%;
-    }
-  }
-  @keyframes ch3-scrub-p { from { --ch3-p: 0; } to { --ch3-p: 1; } }
-  @keyframes ch3-beat-reveal {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ─────────────────────────────────────────────────────────────────────────
-   * PRM — el Acto 1 congela en su cuadro estático y el pin baja a 100vh; el
-   * Acto 2 se renderiza completo sin reveals (spec §7).
+   * PRM — Acto 1 congela en su cuadro estático (--ch3-p:0.4, fijado por JS al
+   * montar, sin listener de scroll); el Acto 2 abandona el mecanismo pineado
+   * y fluye COMPLETO en flujo normal (spec §7 "sin reveals"), único override
+   * puntual y aislado de `.chapter-stage` que autoriza este archivo — sólo
+   * afecta a `.ch3-stage` (ningún otro capítulo lleva esta clase) y sólo
+   * bajo PRM. Ver el comentario largo al inicio de este archivo.
    * ───────────────────────────────────────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
+    .ch3-stage {
+      position: static !important;
+      height: auto !important;
+      min-height: 100%;
+      overflow: visible !important;
+      display: block !important;
+    }
+    .ch3-scene {
+      position: static;
+      height: auto;
+      overflow: visible;
+    }
+    .ch3-layer {
+      /* HIGH (hallazgo de verificación CDP en esta sesión): `position:
+       * static` acá rompía la cadena de containing block para los
+       * descendientes `position: absolute` de cada capa (`.ch3-hero-
+       * parallax`, que no tiene ningún wrapper posicionado propio entre
+       * ella y `.ch3-hero` === `.ch3-layer`) — sin un ancestro posicionado,
+       * ese `inset:0` resolvía contra el initial containing block (el
+       * viewport de `.scroll-shell`, que NUNCA scrollea porque el scroll
+       * real es interno) en vez de contra su propio slide, y el paisaje
+       * del hero quedaba pegado arriba de TODO el capítulo (confirmado con
+       * screenshot real: montañas del hero superpuestas al título del
+       * Acto 1). `position: relative` participa en el flujo normal
+       * EXACTAMENTE igual que `static` (sin top/left no se desplaza) pero
+       * SÍ establece containing block para los hijos absolutos — fix de
+       * una palabra que preserva el resto del comportamiento intacto. */
+      position: relative !important;
+      width: auto;
+      opacity: 1 !important;
+      transform: none !important;
+      pointer-events: auto !important;
+      will-change: auto;
+    }
     .ch3-act1-pin { height: 100vh; height: 100dvh; }
+    .ch3-act1-scene { height: 100%; }
+    .ch3-act1-title { opacity: 1 !important; }
     .ch3-act1-cue,
     .ch3-act1-cue-arrow,
-    .ch3-hero-cloud,
-    .ch3-beat,
-    .ch3-beat-rest {
+    .ch3-hero-cloud {
       animation: none !important;
-      transition: none !important;
     }
-    .ch3-beat { opacity: 1 !important; transform: none !important; }
+    .ch3-hero-sky,
+    .ch3-hero-hill--back,
+    .ch3-hero-hill--front {
+      animation: none !important;
+      transform: none !important;
+    }
+    .ch3-hero { min-height: 78vh; }
+    .ch3-close-slide { min-height: auto; }
   }
 
   /* ─────────────────────────────────────────────────────────────────────────
@@ -883,7 +1050,6 @@ onBeforeUnmount(() => {
     .ch3-beat-icon { margin: 0 auto; }
   }
   @media (max-height: 499px) and (orientation: landscape) {
-    .ch3-act1-pin { height: 160vh; height: 160dvh; }
     .ch3-phone { display: none; }
     .ch3-flash-stage { width: min(550px, 78vw); }
     .ch3-act1-decor { gap: var(--sp-md); }

@@ -16,6 +16,55 @@ Formato per entry:
 
 ---
 
+## ch3 Kingdom New Lands (19 assets) — RETIRADO por rediseño total (2026-07-27)
+
+Aplica colectivamente a los 19 assets Kingdom New Lands de ch3 que quedaron
+huérfanos tras el rediseño flat 2013 de TASK-009 (commit `672ca4a`, retomado
+en este ticket para migrar al mecanismo multi-viewport de TASK-014). No es
+una regeneración: el concepto Kingdom New Lands se retira COMPLETO (spec
+`.planning/design/03-ch3-muerte-de-flash.md` §2, "se retira COMPLETO el
+concepto Kingdom New Lands de ch3 — era una maqueta") y ninguno de los 19
+tiene reemplazo directo (Acto 1 y Acto 2 son 100% procedurales, CSS+SVG
+inline, spec §9 "NINGUNA imagen es bloqueante").
+
+- **Versiones guardadas** (cada `iterN` es el último número documentado en
+  este CHANGELOG antes de este retiro; donde no había entry previa, se marca
+  `iter1` como única generación conocida):
+  - `old/ch3-far-2026-07-27-iter1.png`
+  - `old/ch3-flash-fallen-2026-07-27-iter2.png`
+  - `old/ch3-html5-future-2026-07-27-iter2.png`
+  - `old/ch3-logo-rm-2026-07-27-iter1.png`
+  - `old/ch3-mark-orb-2026-07-27-iter2.png`
+  - `old/ch3-mark-rebuild-2026-07-27-iter2.png`
+  - `old/ch3-mark-scroll-2026-07-27-iter1.webp`
+  - `old/ch3-mark-standard-2026-07-27-iter2.png`
+  - `old/ch3-mark-tome-2026-07-27-iter1.webp`
+  - `old/ch3-mountains-2026-07-27-iter5.png`
+  - `old/ch3-parchment-2026-07-27-iter1.webp`
+  - `old/ch3-path-2026-07-27-iter5.png`
+  - `old/ch3-prop-banner-2026-07-27-iter1.webp`
+  - `old/ch3-prop-shield-2026-07-27-iter1.webp`
+  - `old/ch3-robot-2026-07-27-iter1.webp`
+  - `old/ch3-sky-2026-07-27-iter5.webp`
+  - `old/ch3-starburst-green-2026-07-27-iter1.png`
+  - `old/ch3-starburst-orange-2026-07-27-iter1.png`
+  - `old/ch3-window-2026-07-27-iter1.png`
+- **Razón del cambio:** huérfanos, no un feedback puntual de Rafael. `grep -rl`
+  sobre `src/` confirmó CERO referencias a los 19 nombres antes de archivarlos
+  (verificado en esta sesión) — el commit `672ca4a` ya había retirado el
+  concepto Kingdom del código de `Chapter3Content.vue` pero dejó los binarios
+  en `public/assets/` sin archivar (fuera de la lista blanca de ese ticket en
+  su momento). `ch3-bust.png` NO se toca — sigue siendo el avatar activo de
+  StickyAvatar (`chapters.js` `avatarSrc`).
+- **Qué se intentará diferente:** nada — no hay regeneración planeada. Acto 1
+  (navegador 2013 + stage Flash + botón glossy 4 capas + teléfono) y Acto 2
+  (paisaje flat + iconos long-shadow + badge HTML5) son procedurales
+  (CSS/SVG inline), sin dependencia de ningún raster.
+- **Commit hash del cambio:** ver el commit de este ticket (TASK-009,
+  migración al mecanismo multi-viewport).
+
+---
+
 ## ch5-hero.webp — iter1 → RETIRADO (2026-07-27)
 
 - **Versión guardada:** `old/ch5-hero-2026-07-27-iter1.webp`

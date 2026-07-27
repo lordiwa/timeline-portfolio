@@ -104,11 +104,22 @@
    * Kingdom New Lands (TASK-008 lo había heredado tal cual, ver hand-off de
    * ese ticket): el rediseño total de ch3 abandona el pixel art y usa el
    * medio real de 2013 (fuente: .planning/design/03-ch3-muerte-de-flash.md §4).
-   * --font-body: Open Sans es la fuente que la spec fija (§5), pero la lista
-   * blanca de TASK-009 no incluye package.json ni main.js (no hay forma de
-   * self-hostear un paquete @fontsource nuevo sin tocarlos), así que se usa
-   * un stack de sistema equivalente sin anacronismos (nada de Inter/2017,
-   * Cinzel/Lobster) — documentado en el hand-off del ticket. */
+   * --font-body: Open Sans es la fuente que la spec fija (§5). Al retomar
+   * este ticket (TASK-014 desbloqueó ch3) el orquestador autorizó tocar
+   * package.json y main.js específicamente para este swap — pero el
+   * presupuesto de fuentes (350 KB, tests/styles/fonts-bundle.test.js T4)
+   * no lo permite: @fontsource/open-sans en los 4 pesos que pide la spec
+   * (300/400/600/700, latin+latin-ext, estáticos — la spec PROHÍBE variable
+   * fonts para 2013) mide ~132 KB adicionales medidos en esta sesión, y el
+   * bundle actual (6 familias ya shipped para ch0/1/2/4/5/6) ya está en
+   * ~293 KB — sumar Open Sans lo llevaría a ~425 KB, sobre el límite. La
+   * única fuente removible por peso (Lobster, ~100 KB) sigue en uso real:
+   * `chapter-components.css` `.project-card-title` (sin scope) es el
+   * fallback que consume ch5 hoy (ch5 no redeclara font-family ahí, sólo
+   * font-size/margin — verificado con grep en esta sesión) y ch5 está fuera
+   * de la lista blanca de TASK-009. Se mantiene el stack de sistema
+   * equivalente sin anacronismos (nada de Inter/2017, Cinzel/Lobster) —
+   * decisión documentada en el hand-off del ticket, no una omisión. */
   [data-chapter="3"],
   :root[data-active-chapter="3"] {
     --era-progress: 3;

@@ -183,7 +183,12 @@ useHead({
   <BackgroundLayers />
   <SkipLink />
   <StickyAvatar />
-  <ScrollShell :ref="setShellRef" />
+  <!-- TASK-009 (retomando TASK-014): ch3 "la muerte de Flash" migra al
+       mecanismo multi-viewport de ScrollShell.vue — 11 = TOTAL_UNITS(10) + 1
+       viewport de "release" (ver la constante CH3_VIEWPORTS-equivalente en
+       Chapter3Content.vue: ACT1_UNITS(3) + ACT2_SLIDE_COUNT(7)). Si esas
+       constantes cambian, actualizar este valor en el mismo commit. -->
+  <ScrollShell :ref="setShellRef" :chapter-viewports="{ 3: 11 }" />
   <StickyTimeline />
   <LangToggle />
   <ContactHUD />
