@@ -19,6 +19,11 @@
 // - T7: reactividad de locale (es→en) sin re-mount.
 // - T8: PRM no crashea el mount.
 // - T9: sin em-dash en el texto nuevo (copy ch3.* + fallback de eras.css).
+// - T10 REGRESSION LOCK (MEDIUM, ronda de corrección): con el Acto 1 en
+//   pantalla (estado de montaje inicial, overallVh=0 — mismo escenario
+//   reportado por el reviewer), los controles de los slides del Acto 2 a
+//   opacity:0 (CTA del hero, "Seguir leyendo" de los 4 beats con expansor)
+//   quedan fuera del tab order vía `inert`, no sólo de pointer-events.
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -193,5 +198,31 @@ describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2
     const flatten = (obj) => JSON.stringify(obj)
     expect(flatten(es.ch3)).not.toContain(EM_DASH)
     expect(flatten(en.ch3)).not.toContain(EM_DASH)
+  })
+
+  // ── T10: REGRESSION LOCK — controles invisibles fuera del tab order ─────
+  it('T10 con el Acto 1 en pantalla, el CTA del hero y los 4 "Seguir leyendo" son inert (no tabulables)', () => {
+    const { wrapper } = mountCh3()
+    // Estado de montaje por defecto: overallVh=0 (Acto 1 en pantalla, ningún
+    // slide del Acto 2 activo) — el escenario exacto reportado por el
+    // reviewer: "con el Acto 1 en pantalla, Tab alcanza el CTA del hero...".
+    const heroCta = wrapper.find('.ch3-hero .ch3-ghost-btn')
+    expect(heroCta.exists()).toBe(true)
+    // `inert` es un atributo heredado por comportamiento (bloquea foco en todo
+    // el subtree) pero la IDL property sólo refleja el elemento que la tiene
+    // seteada — se verifica en el ancestro real `.ch3-slide` (`.ch3-hero`
+    // mismo), no en el botón.
+    const heroSlide = heroCta.element.closest('.ch3-slide')
+    expect(heroSlide?.inert, 'slide del hero debería ser inert con el Acto 1 en pantalla').toBe(true)
+
+    const beats = wrapper.findAllComponents(Ch3StoryBeat)
+    for (let i = 0; i < 4; i++) {
+      const btn = beats[i].find('.ch3-beat-more')
+      expect(btn.exists(), `beat ${i} debería tener expansor`).toBe(true)
+      // El expansor vive dentro del slide (.ch3-layer.ch3-slide) al que
+      // applyProgress() le asigna `.inert` — buscamos el ancestro real.
+      const slideEl = btn.element.closest('.ch3-slide')
+      expect(slideEl?.inert, `slide del beat ${i} debería ser inert con el Acto 1 en pantalla`).toBe(true)
+    }
   })
 })

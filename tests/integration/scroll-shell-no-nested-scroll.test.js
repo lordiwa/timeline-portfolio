@@ -3,18 +3,21 @@
 // falle si vuelve a aparecer un contenedor de scroll anidado dentro de una
 // seccion de capitulo".
 //
-// ALCANCE de este lock (deliberado): cubre EXCLUSIVAMENTE el mecanismo del
-// shell — src/components/ScrollShell.vue y src/App.vue, los dos únicos
-// archivos de layout que este ticket tiene autorizados a tocar (lista blanca
-// TASK-014). NO escanea Chapter{N}Content.vue ni chapter-components.css:
-// Chapter3Content.vue todavía declara `.ch3-stage { overflow-y: auto }` (el
-// bug original medido en TASK-009) y este ticket tiene prohibido tocar
-// contenido de capítulo — ese scroll anidado queda documentado como deuda
-// conocida, a resolver por TASK-009 cuando adopte el mecanismo nuevo
-// (`.chapter-section[data-viewports]` + `.chapter-stage`, ver ScrollShell.vue).
-// Un lock que escaneara TODO el árbol fallaría HOY por ese motivo conocido y
-// fuera de alcance — este lock protege específicamente contra que el propio
-// SHELL reintroduzca un contenedor con scroll interno.
+// ALCANCE de este lock: el núcleo cubre el mecanismo del shell —
+// src/components/ScrollShell.vue y src/App.vue, los dos archivos de layout
+// que TASK-014 tuvo autorizados a tocar. TASK-009 (ronda de corrección)
+// EXTIENDE el scan a src/components/Chapter3Content.vue específicamente: esa
+// deuda ya está pagada (Chapter3Content.vue migró de `.ch3-stage { overflow-y:
+// auto }` — el bug original medido en TASK-009 — al mecanismo
+// `.chapter-section[data-viewports]` + `.chapter-stage` de ScrollShell.vue),
+// así que ya no hay motivo para excluirlo. NO se extiende a los otros 6
+// Chapter{N}Content.vue: ch0/ch1/ch4 declaran `overflow-y: auto` LEGÍTIMO en
+// paneles internos acotados con `max-height` (scroll de contenido que agota
+// su propia caja y propaga al snap del shell, D3-12 — no el patrón "capítulo
+// entero atrapado en scroll interno" que este lock existe para prevenir) y
+// tocar esos componentes excede la lista blanca de TASK-009. Un lock que
+// escaneara esos 3 archivos sin distinguir ambos patrones produciría falsos
+// positivos — queda fuera de alcance de esta ronda, no es una omisión.
 //
 // El único overflow-y:scroll/auto legítimo en el shell es `.scroll-shell`
 // (el contenedor raíz — es EL scroll principal del sitio, no uno anidado).
@@ -66,6 +69,13 @@ const SCROLL_SHELL_SRC = readFileSync(
   'utf8'
 )
 const APP_SRC = readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
+// TASK-009 (ronda de corrección): extiende el scan a Chapter3Content.vue —
+// ver el comentario de ALCANCE arriba para por qué los otros 6
+// Chapter{N}Content.vue quedan fuera.
+const CH3_CONTENT_SRC = readFileSync(
+  resolve(process.cwd(), 'src/components/Chapter3Content.vue'),
+  'utf8'
+)
 
 // Propiedad overflow, overflow-x u overflow-y con valor auto|scroll — el
 // patrón que crea un contenedor con SU PROPIO scroll interno, compitiendo
@@ -136,6 +146,23 @@ describe('TASK-014 regression lock: el mecanismo del shell no reintroduce scroll
       'App.vue declaró overflow-y/overflow auto|scroll — App.vue no debe introducir ningún ' +
         'contenedor de scroll propio; el único scroll del sitio vive en `.scroll-shell` ' +
         '(ScrollShell.vue).'
+    ).toBeNull()
+  })
+
+  // TASK-009 (ronda de corrección, MEDIUM): la deuda que justificaba excluir
+  // Chapter3Content.vue de este lock ya está pagada — migró al mecanismo
+  // `.chapter-section[data-viewports]` + `.chapter-stage`. Ver el comentario
+  // de ALCANCE al inicio del archivo para por qué los otros 6
+  // Chapter{N}Content.vue siguen fuera.
+  it('Chapter3Content.vue no declara overflow(-y):auto|scroll (deuda de TASK-009 pagada)', () => {
+    const matches = scanForNestedScroll(CH3_CONTENT_SRC)
+    expect(
+      matches,
+      'Chapter3Content.vue volvió a declarar overflow-y/overflow auto|scroll — eso reintroduce ' +
+        'el scroll anidado original (.ch3-stage con overflow-y:auto, medido en TASK-009 antes de ' +
+        'TASK-014) que compite con el scroll-snap mandatory del shell. El contenido alto de ch3 ' +
+        'vive en `.chapter-section[data-viewports]` + `.chapter-stage` (ScrollShell.vue), nunca en ' +
+        'un scroll interno propio.'
     ).toBeNull()
   })
 

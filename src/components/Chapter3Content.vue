@@ -191,12 +191,27 @@ function applyProgress(overallVh) {
   // Acto 2 — un slide por índice (0=hero .. 6=cierre), opacity+translateY
   // ya resueltos por computeCh3Frame() (mismo hallazgo HIGH: el hero
   // quedaba superpuesto al Acto 1 si continuousSlide clampeaba su piso a 0).
+  //
+  // MEDIUM (ronda de corrección de review): `pointer-events: none` bloquea
+  // click/hover pero NO saca del tab order — con el Acto 1 en pantalla, Tab
+  // seguía alcanzando el CTA del hero, los 4 "Seguir leyendo" y los links de
+  // ProjectCard en slides a opacity:0 (foco sin ninguna indicación visible,
+  // WCAG 2.4.3/2.4.7; Enter podía togglear un acordeón invisible). `inert`
+  // saca el subtree del tab order Y de la accessibility tree a la vez, con
+  // el MISMO umbral que ya gobierna pointer-events — un solo booleano, dos
+  // efectos. Elección deliberada sobre `visibility: hidden`: `inert` no
+  // toca layout/pintado (el crossfade sigue siendo opacity+transform puro,
+  // sin repintar) y, a diferencia de `visibility: hidden`, NO saca el texto
+  // del innerText — el AC#1 (leads de los 5 beats sin click) sigue
+  // cumpliéndose para slides fuera de foco.
   frame.slides.forEach((slide, i) => {
     const el = slideEls.value[i]
     if (!el) return
+    const isInert = slide.opacity <= 0.05
     el.style.opacity = slide.opacity.toFixed(3)
     el.style.transform = `translateY(${slide.translateYpx.toFixed(1)}px)`
-    el.style.pointerEvents = slide.opacity > 0.05 ? 'auto' : 'none'
+    el.style.pointerEvents = isInert ? 'none' : 'auto'
+    el.inert = isInert
   })
 
   // Parallax del hero — sólo si rAF gobierna --ch3-hy (nativo lo posee si soportado).
@@ -441,12 +456,33 @@ onBeforeUnmount(() => {
 
   /* .ch3-scene — llena el frame de 100dvh que `.chapter-stage` fija; contiene
    * las 8 capas apiladas (Acto 1 + 7 slides del Acto 2). background propio
-   * para que nunca se vea transparencia entre capas durante un crossfade. */
+   * para que nunca se vea transparencia entre capas durante un crossfade.
+   *
+   * HIGH (ronda de corrección de review, AC#5): `overflow: hidden` aquí
+   * establece un "scroll container" — mismo mecanismo exacto que
+   * ScrollShell.vue documenta como lección pagada (ver su comentario largo
+   * junto a `.chapter-section[data-viewports]`) y por el que ese archivo usa
+   * `overflow: clip` en vez de `hidden`. `animation-timeline: scroll(nearest
+   * block)` (más abajo, bloque `@supports`) resuelve al scroll container
+   * ANCESTRO más cercano — con `hidden` acá, ese ancestro es `.ch3-scene`
+   * mismo, cuyo contenido (8 capas absolutas con `inset:0`, exactamente del
+   * tamaño del contenedor) tiene rango de scroll vertical CERO. Timeline con
+   * rango cero = timeline inerte: `--ch3-hy` nunca se mueve de su
+   * `initial-value: 0` y el parallax del hero queda congelado en navegadores
+   * con soporte nativo (Chrome/Edge/Safari 18+) — el fallback rAF no
+   * escribe `--ch3-hy` cuando `NATIVE_SUPPORTED` es true (ver <script>), así
+   * que no hay red de seguridad. `overflow: clip` recorta visualmente igual
+   * que `hidden` (mismo fix anti-bleed) pero NO establece scroll container,
+   * así que la resolución de `nearest block` sigue subiendo por la cadena de
+   * ancestros (`.chapter-stage` y `.chapter-section[data-viewports]` ya son
+   * `clip` en ScrollShell.vue) hasta `.scroll-shell`, el único scroller real
+   * del sitio — ahí el rango de `animation-range-start/end` que calcula
+   * `applyNativeHeroRange()` (ver <script>) sí tiene recorrido. */
   .ch3-scene {
     position: relative;
     width: 100%;
     height: 100%;
-    overflow: hidden;
+    overflow: clip;
     background: var(--c-bg);
   }
 
@@ -454,13 +490,25 @@ onBeforeUnmount(() => {
    * 7 slides del Acto 2. Sin transition CSS a propósito: el opacity/transform
    * se escribe por frame en scrub 1:1 con el scroll (mismo criterio que
    * --ch3-p) — una transition pelearía contra esa escritura y produciría
-   * lag en vez de scrub ajustado. */
+   * lag en vez de scrub ajustado.
+   *
+   * MEDIUM (ronda de corrección de review): SIN `will-change` acá a
+   * propósito. La spec §7 fija un presupuesto de motion de máximo 12
+   * elementos animados concurrentes — `will-change: opacity, transform` en
+   * las 8 capas de esta clase (Acto 1 + 7 slides), sumado a las capas del
+   * botón glossy y del parallax del hero, se iba a ~16. Las escrituras por
+   * frame de `applyProgress()` (opacity/transform inline) no requieren
+   * promoción a layer permanente: el compositor promueve igual en cuanto
+   * detecta la escritura activa, `will-change` sólo evita el frame de
+   * promoción inicial — costo despreciable para 8 capas full-viewport que
+   * ya escriben desde el primer frame post-mount. El presupuesto real queda
+   * en las capas que sí lo necesitan: las 4 del botón glossy (línea ~640) y
+   * las 3 del parallax del hero (líneas ~825-840). */
   .ch3-layer {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    will-change: opacity, transform;
   }
 
   /* .ch3-slide — slides genéricos del Acto 2 (hero y cierre declaran su
@@ -597,7 +645,16 @@ onBeforeUnmount(() => {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    will-change: transform, opacity;
+  }
+  /* MEDIUM (ronda de corrección de review, spec §7): `will-change` sólo en
+   * las 4 capas que efectivamente animan (shadow/bevel/desat opacity,
+   * specular opacity+transform) — la spec fija "4 capas del botón glossy"
+   * explícitamente. `.ch3-flash-fill` (abajo) es el degradado estático de
+   * fondo, nunca cambia tras el mount: no necesita promoción a layer. */
+  .ch3-flash-shadow,
+  .ch3-flash-bevel,
+  .ch3-flash-desat {
+    will-change: opacity;
   }
   .ch3-flash-shadow {
     box-shadow: 0 18px 34px rgba(0, 0, 0, 0.55);
@@ -618,6 +675,7 @@ onBeforeUnmount(() => {
     opacity: calc((var(--ch3-p) - 0.15) * 4);
   }
   .ch3-flash-specular {
+    will-change: opacity, transform;
     background: radial-gradient(circle at 34% 26%, var(--ch3-flash-specular-c), transparent 55%);
     opacity: calc(1 - (var(--ch3-p) - 0.3) * 3);
     transform:
@@ -767,7 +825,12 @@ onBeforeUnmount(() => {
     padding: var(--inset-chapter-top) var(--sp-lg) var(--sp-2xl);
     box-sizing: border-box;
   }
-  .ch3-hero-parallax { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  /* HIGH (ronda de corrección de review, AC#5): mismo motivo que `.ch3-scene`
+   * arriba — `overflow: hidden` acá era el ancestro MÁS CERCANO de las 3
+   * capas de parallax (más cerca que `.ch3-scene`), así que era el que
+   * ganaba la resolución de `nearest block` con rango cero. `clip` conserva
+   * el recorte visual sin establecer scroll container. */
+  .ch3-hero-parallax { position: absolute; inset: 0; pointer-events: none; overflow: clip; }
   .ch3-hero-sky { position: absolute; inset: 0; background: #d6eaf8; }
   .ch3-hero-hill {
     position: absolute;
@@ -1049,9 +1112,18 @@ onBeforeUnmount(() => {
     .ch3-beat--alt { flex-direction: column; text-align: center; gap: var(--sp-md); }
     .ch3-beat-icon { margin: 0 auto; }
   }
+  /* LOW (ronda de corrección de review): `width: min(550px, 78vw)` sólo
+   * limitaba por ancho — en un viewport MUY bajo (ej. 844x390) el resultado
+   * seguía siendo ~550px de ancho, y por `aspect-ratio: 550/400` eso da
+   * ~400px de alto: más que el viewport entero. Medido con CDP real (Chrome
+   * headed, no headless): `.ch3-browser` quedaba de 555px de alto en un
+   * viewport de 390px, recortado ~67px arriba y ~98px abajo por el
+   * `overflow: hidden` de `.ch3-act1-scene`. `62vh` como tercer argumento de
+   * `min()` agrega el límite que faltaba (a 390px de alto, 62vh≈242px →
+   * stage de ~176px de alto, que sí entra junto al chrome del navegador). */
   @media (max-height: 499px) and (orientation: landscape) {
     .ch3-phone { display: none; }
-    .ch3-flash-stage { width: min(550px, 78vw); }
+    .ch3-flash-stage { width: min(550px, 78vw, 62vh); }
     .ch3-act1-decor { gap: var(--sp-md); }
   }
 }

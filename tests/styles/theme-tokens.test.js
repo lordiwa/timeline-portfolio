@@ -40,7 +40,7 @@ const FONT_BODY_BY_CHAPTER = {
   0: "'VT323', ui-monospace, monospace",
   1: "'Comic Neue', 'Comic Sans MS', cursive",
   2: "'Verdana', 'Trebuchet MS', sans-serif",
-  3: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+  3: "'Open Sans', 'Segoe UI', 'Helvetica Neue', sans-serif",
   4: "'Audiowide', 'Eurostile', sans-serif",
   5: "'Inter Variable', system-ui, sans-serif",
   6: "'Audiowide', sans-serif",

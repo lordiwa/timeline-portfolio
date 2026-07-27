@@ -11,21 +11,31 @@ import { i18n } from './i18n'
 import '@fontsource/vt323/latin.css'              // ch0 — CRT terminal (latin)
 import '@fontsource/vt323/latin-ext.css'          // ch0 — latin-ext (ñ, á, etc.)
 import '@fontsource/comic-neue'                   // ch1 — Comic Sans equivalent (solo latin disponible)
-import '@fontsource/lobster/latin.css'            // ch3 stub theme --font-body + .project-card-title
-import '@fontsource/lobster/latin-ext.css'        // ch3 — latin-ext (ñ, á, etc.)
 // Roboto ELIMINADO 2026-06-01 (bundle fix): importaba 4 pesos × 8 idiomas (~453KB en .woff2)
 // y solo se usaba en .ch3-hint-cta (un hint italic). Reemplazado por Inter Variable (ya cargado
 // para ch5). Bajó el bundle de 782KB → ~329KB. Ver STATE.md "Real State Audit".
+// Open Sans (TASK-009, ronda de corrección): fuente auténtica de 2013 que fija
+// la spec §5 (.planning/design/03-ch3-muerte-de-flash.md). Reemplaza a Lobster
+// (retirado — la medición en Chrome real de la ronda anterior sobreestimó su
+// peso en ~40 KB y subestimó falsamente el nivel de uso real: ningún capítulo
+// renderiza Lobster hoy, ch2/ch3/ch5 la pisan con su propio font-family y ch4
+// no usa ProjectCard). Solo subset `latin` (Latin-1 Supplement, U+0000-00FF):
+// cubre ñ/á/é/í/ó/ú/ü/¿/¡ (Open-Q2-E) — `latin-ext` en Google Fonts es
+// Extended-A/B (checo/polaco/turco/vietnamita), fuera de alcance ES/EN. 4
+// pesos únicamente (300/400/600/700, spec §5) — nada de variable font (2013
+// no tenía variable fonts, prohibido explícitamente por la spec).
+import '@fontsource/open-sans/latin-300.css'
+import '@fontsource/open-sans/latin-400.css'
+import '@fontsource/open-sans/latin-600.css'
+import '@fontsource/open-sans/latin-700.css'
 import '@fontsource/audiowide/latin.css'          // ch4 — AR/VR futuristic (latin)
 import '@fontsource/audiowide/latin-ext.css'      // ch4 — latin-ext (ñ, á, etc.)
 import './styles/inter-variable-latin.css'        // ch5 — Inter Variable latin+latin-ext (wght 100-900)
 import '@fontsource/press-start-2p/latin.css'     // ch6 — Phaser pixel UI (latin)
 import '@fontsource/press-start-2p/latin-ext.css' // ch6 — latin-ext (ñ, á, etc.)
 // Cinzel + Cinzel Decorative ELIMINADOS (TASK-008, AC#4): el título "La muerte
-// de Flash" de Chapter3Content.vue cae a su fallback CSS ('Trajan Pro', serif)
-// hasta que TASK-009 (redisenio ch3) elija su reemplazo (Open Sans, ver
-// .planning/design/03-ch3-muerte-de-flash.md §5) — decisión fuera de alcance
-// de este ticket, que solo saca Cinzel del bundle de fuentes.
+// de Flash" cayó a su fallback CSS hasta que TASK-009 (rediseño ch3) reemplazó
+// --font-body por Open Sans (arriba) — ver eras.css bloque [data-chapter="3"].
 
 import './styles/tokens.css'             // TASK-008: tokens invariantes + @property + @layer order
 import './styles/eras.css'               // TASK-008: 7 bloques de era, doble scope (reemplaza chapter-themes.css)

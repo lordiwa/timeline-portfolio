@@ -1,7 +1,9 @@
 /**
  * fonts-loaded.test.js — Source-level smoke + regression tests (Task 5.1,
  * actualizado por TASK-008 §AC#4: Cinzel + Cinzel Decorative salen del bundle,
- * Roboto ya no se importaba desde 2026-06-01 y ahora se retira de package.json).
+ * Roboto ya no se importaba desde 2026-06-01 y ahora se retira de package.json.
+ * TASK-009, ronda de corrección: Lobster sale, Open Sans entra para ch3 — spec
+ * §5 de .planning/design/03-ch3-muerte-de-flash.md, ver eras.css/main.js).
  *
  * Verifica:
  * - package.json contiene los 6 paquetes @fontsource* (sin Verdana/Trebuchet self-hosted)
@@ -39,10 +41,11 @@ const themesSource = readFileSync(
 // Paquetes self-hosted esperados (ch2 omitido — system-safe).
 // TASK-008: Cinzel + Cinzel Decorative retirados (AC#4, bundle de fuentes);
 // Roboto retirado de package.json (dead dependency, no se importaba desde 2026-06-01).
+// TASK-009 (ronda de corrección): Lobster → Open Sans (ch3, spec §5).
 const EXPECTED_PACKAGES = [
   '@fontsource/vt323',
   '@fontsource/comic-neue',
-  '@fontsource/lobster',
+  '@fontsource/open-sans',
   '@fontsource/audiowide',
   '@fontsource/press-start-2p',
   '@fontsource-variable/inter',
@@ -80,7 +83,7 @@ describe('Fonts — source-level (Task 5.1)', () => {
     const expectedPackages = [
       `@fontsource/vt323`,          // ch0
       `@fontsource/comic-neue`,     // ch1
-      `@fontsource/lobster`,        // ch3
+      `@fontsource/open-sans`,      // ch3 (TASK-009 ronda de corrección, spec §5)
       `@fontsource/audiowide`,      // ch4 + ch6 (Phase 5 D5-04 synthwave)
       `inter-variable-latin`,       // ch5 — selector local apuntando a @fontsource-variable/inter files
       `@fontsource/press-start-2p`, // reserva (Phase 2 stub, no consumido por ningún chapter post-Phase 5)
@@ -108,12 +111,11 @@ describe('Fonts — source-level (Task 5.1)', () => {
       { chapter: 'ch0', pattern: /\[data-chapter="0"\][\s\S]*?--font-body\s*:\s*['"]VT323['"]/ },
       { chapter: 'ch1', pattern: /\[data-chapter="1"\][\s\S]*?--font-body\s*:\s*['"]Comic Neue['"]/ },
       { chapter: 'ch2', pattern: /\[data-chapter="2"\][\s\S]*?--font-body\s*:\s*['"]Verdana['"]/ },
-      // TASK-009: ch3 ya no usa Lobster (fuente skeumorphic Web 2.0 de la maqueta
-      // retirada). La spec (.planning/design/03-ch3-muerte-de-flash.md §5) fija
-      // Open Sans, pero la lista blanca de TASK-009 no incluye package.json ni
-      // main.js (no hay forma de self-hostear un @fontsource nuevo) — se usa un
-      // stack de sistema equivalente sin anacronismos, documentado en el hand-off.
-      { chapter: 'ch3', pattern: /\[data-chapter="3"\][\s\S]*?--font-body\s*:\s*['"]Segoe UI['"]/ },
+      // TASK-009 (ronda de corrección): ch3 usa Open Sans, la fuente auténtica
+      // de 2013 que fija la spec (.planning/design/03-ch3-muerte-de-flash.md
+      // §5) — self-hosted vía @fontsource/open-sans (ver main.js), reemplaza
+      // a Lobster (retirada, ningún capítulo la renderizaba).
+      { chapter: 'ch3', pattern: /\[data-chapter="3"\][\s\S]*?--font-body\s*:\s*['"]Open Sans['"]/ },
       { chapter: 'ch4', pattern: /\[data-chapter="4"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },
       { chapter: 'ch5', pattern: /\[data-chapter="5"\][\s\S]*?--font-body\s*:\s*['"]Inter Variable['"]/ },
       { chapter: 'ch6', pattern: /\[data-chapter="6"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },

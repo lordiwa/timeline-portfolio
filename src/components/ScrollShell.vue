@@ -244,12 +244,19 @@ defineExpose({ shellEl })
  *      gesto no puede saltar la ENTRADA de un capítulo alto (align:start +
  *      stop:always en su único punto de snap); esta capa 4 es opcional y la
  *      decide cada ticket de capítulo según cuánto pacing interno necesite.
- *   5. `prefers-reduced-motion`: este shell sólo garantiza el mecanismo de
- *      anclaje (posicionamiento scroll-driven, neutral por construcción).
- *      Cualquier coreografía de scrub/parallax que el ticket de capítulo
- *      construya SOBRE el recorrido de `.chapter-stage` (ej. los 4 beats de
- *      ch4, el scrub de ch3) es responsabilidad de ESE ticket de verificar
- *      compliance con PRM — no la cubre este mecanismo.
+ *   5. `prefers-reduced-motion`: este shell SÍ garantiza un contrato mínimo
+ *      (ronda de corrección de TASK-009, ver el bloque `@media
+ *      (prefers-reduced-motion: reduce)` junto a `.chapter-section[data-viewports]`
+ *      más abajo): bajo PRM la sección colapsa de `N * 100dvh` a
+ *      `height: auto; min-height: 100dvh` — si el ticket de capítulo devuelve
+ *      su `.chapter-stage` a flujo normal bajo PRM (como ch3), la sección
+ *      encoge a la altura real de ese contenido en vez de dejar N-1
+ *      viewports en blanco después del cierre. Cualquier OTRA cosa —
+ *      coreografía de scrub/parallax, qué gobierna `--*-p`/`--*-hy`, si el
+ *      `.chapter-stage` mismo se desancla o no — sigue siendo responsabilidad
+ *      de CADA ticket de capítulo (ej. los 4 beats de ch4, el scrub de ch3):
+ *      este mecanismo sólo resuelve el vacío de ALTURA de la sección, neutral
+ *      por lo demás.
  *   6. Navegación por teclado (documentado, NO arreglado por este ticket):
  *      en un capítulo alto, ↓/j desde dentro del capítulo salta al SIGUIENTE
  *      capítulo (pierde los beats intermedios, no hay "siguiente beat"), y
@@ -297,6 +304,45 @@ defineExpose({ shellEl })
   height: calc(var(--chapter-viewports, 1) * 100dvh);
   display: block;
   overflow: clip;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CONTRATO PRM DEL MECANISMO (HIGH, ronda de corrección de review de
+ * TASK-009 — heredado de TASK-014 vía este ticket, autorizado excepcionalmente
+ * a tocar este archivo SOLO para esto): bajo `prefers-reduced-motion: reduce`,
+ * una sección `[data-viewports]` colapsa a `height: auto` con un piso de
+ * `min-height: 100dvh`.
+ *
+ * PROBLEMA que resuelve: un ticket de capítulo alto (ej. ch3) puede,
+ * legítimamente y bajo PRM, devolver SU PROPIO `.chapter-stage` a flujo
+ * normal (`position: static`) para que el contenido se lea completo sin
+ * animación (ver el override PRM de `.ch3-stage` en Chapter3Content.vue) —
+ * eso es responsabilidad de CADA ticket de capítulo (punto 5 del contrato de
+ * arriba). Pero la ALTURA de la sección (`calc(N * 100dvh)`) no es
+ * responsabilidad del ticket de capítulo: es este mismo bloque, y sin este
+ * override permanece fija en N viewports pase lo que pase adentro. Medido en
+ * ch3 (N=11): el contenido bajo PRM mide ~5-7 viewports en flujo normal, así
+ * que un visitante con PRM activo termina de leer el cierre del capítulo y
+ * scrollea 4 a 6 pantallas EN BLANCO antes de llegar al capítulo siguiente.
+ * PRM es regla dura del proyecto (spec §7 de cada capítulo) — este vacío la
+ * viola en el mecanismo compartido, no en un capítulo aislado, así que
+ * cualquier capítulo alto futuro (ch4/ch5/ch6) lo heredaría igual si no se
+ * arregla aquí una sola vez.
+ *
+ * `min-height: 100dvh` (no `0` ni sin piso) preserva el caso borde de un
+ * capítulo alto cuyo contenido PRM midiera MENOS de 1 viewport: la sección
+ * nunca colapsa por debajo de 1 viewport, coherente con el resto del shell
+ * (cada `.chapter-section` sin `[data-viewports]` también mide 1 viewport
+ * mínimo). No se toca `overflow: clip` (sigue recortando cualquier
+ * desbordamiento real, sin volver a habilitar scroll anidado) ni la altura
+ * de `.chapter-section` base — sólo la variante `[data-viewports]`.
+ * ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .chapter-section[data-viewports] {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
 }
 
 /* Defensa del contrato del punto 2 de arriba, para el caso de WRAPPER
