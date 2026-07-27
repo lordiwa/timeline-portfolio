@@ -7,9 +7,38 @@
     - watch(active) monta/destruye game para no consumir CPU en otros paneles.
     - onBeforeUnmount destroy idempotent.
     - prefersReduced bridge via inject('prm').
+
+  TASK-020 (2026-07-27) — gate de ciclo de vida a nivel de capítulo del sitio:
+  antes de este fix, `active` (= panel local === 'home') era la ÚNICA señal, y
+  ScrollShell.vue mantiene los 7 capítulos SIEMPRE montados — el juego arrancaba
+  en el primer render de la página y solo pausaba su escena al cambiar de panel,
+  jamás su Phaser.Game completo. `scene.pause()` no detiene el loop interno de
+  Phaser (Phaser.DOM.RequestAnimationFrame.step seguía a ~60/s en ch0).
+
+  Fix: se inyecta `scrollState` (provisto por App.vue) para leer el
+  `activeChapter` del sitio, además de la noción local de panel que ya existía.
+  Decisión de producto de Rafael 2026-07-27 ("que se destruya y recree como
+  ch6, dale"): al salir de ch2 el Phaser.Game se DESTRUYE por completo; al
+  volver, se RECREA — replicando el patrón watch(activeChapter) de
+  Chapter6Content.vue. Consecuencia aceptada explícitamente: una partida en
+  curso se pierde al scrollear fuera de ch2 y volver.
+
+  La noción LOCAL de panel se preserva intacta: dentro de ch2, cambiar de panel
+  (home → about/work/contact) sigue pausando/resumiendo la MISMA instancia
+  (comportamiento pre-existente, evita recrear el juego en cada click de
+  sidebar). Solo el ciclo de vida a nivel de capítulo se ata al patrón ch6.
 -->
 <script setup>
-import { shallowRef, ref, watch, onBeforeUnmount, inject, useTemplateRef, nextTick } from 'vue'
+import {
+  shallowRef,
+  ref,
+  computed,
+  watch,
+  onBeforeUnmount,
+  inject,
+  useTemplateRef,
+  nextTick,
+} from 'vue'
 
 const props = defineProps({
   active: { type: Boolean, default: false },
@@ -17,6 +46,14 @@ const props = defineProps({
 
 // Inject PRM (provided por App.vue Phase 1)
 const { prefersReduced } = inject('prm', { prefersReduced: ref(false) })
+
+// TASK-020 — inject scrollState (provisto por App.vue) para el gate site-level.
+// Fallback ref(2) si no hay provider (tests unitarios aislados de este
+// componente que no proveen scrollState): preserva el comportamiento previo
+// donde el gate era puramente local (panel === 'home').
+const scrollState = inject('scrollState', null)
+const activeChapter = scrollState?.activeChapter ?? ref(2)
+const isChapterActive = computed(() => activeChapter.value === 2)
 
 const game = shallowRef(null)
 const hostRef = useTemplateRef('canvasHost')
@@ -65,9 +102,18 @@ function resumeGame() {
   try { game.value.scene.resume('MatchScene') } catch {}
 }
 
+// TASK-020 — watch combinado: [panel local, capítulo del sitio].
+// El gate de capítulo GANA sobre el de panel: fuera de ch2 se destruye
+// siempre, sin importar el panel local (réplica exacta del patrón
+// watch(activeChapter) de Chapter6Content.vue). Dentro de ch2, la lógica
+// pause/resume/mount pre-existente por panel queda intacta.
 watch(
-  () => props.active,
-  (isActive) => {
+  [() => props.active, isChapterActive],
+  ([isActive, chapterActive]) => {
+    if (!chapterActive) {
+      destroyGame()
+      return
+    }
     if (isActive) {
       if (game.value) resumeGame()
       else mountGame()

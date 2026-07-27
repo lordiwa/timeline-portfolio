@@ -5,7 +5,7 @@
 // Mock del factory Phaser (igual que Chapter6Content.test.js) para evitar cargar
 // Phaser real en JSDOM (canvas API faltante).
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { ref, defineComponent, h } from 'vue'
 import { readFileSync } from 'node:fs'
@@ -102,6 +102,97 @@ describe('Ch2MiniGame.vue — Phase 04.2 mini-game shell', () => {
     await flushPromises()
     wrapper.unmount()
     expect(destroySpy).toHaveBeenCalled()
+  })
+})
+
+// TASK-020 — gate de ciclo de vida a nivel de capítulo del sitio (AC1/AC2/AC5/AC8).
+//
+// Alcance honesto: jsdom no corre rAF real ni instancia Phaser con WebGL, así que
+// estos specs NO pueden ver "Phaser.DOM.RequestAnimationFrame.step ejecutando a
+// ~60/s" (AC1) ni fps bajo CPU throttling (AC3) — eso se midió en Chrome headed
+// real por CDP (ver reporte de hand-off del developer para los números). Lo que
+// SÍ puede probar jsdom, y es la prueba conductual equivalente: que
+// createMiniGame() (y por lo tanto el Phaser.Game) NO se invoca mientras
+// activeChapter !== 2, que SÍ se invoca al entrar a 2, y que un ciclo completo
+// de salir-y-volver (dos veces, per instrucción del ticket) destruye y recrea
+// sin quedar en un estado muerto silencioso.
+describe('Ch2MiniGame.vue — TASK-020 gate site-level (activeChapter)', () => {
+  beforeEach(() => {
+    createMiniGameSpy.mockClear()
+    destroySpy.mockClear()
+    pauseSpy.mockClear()
+    resumeSpy.mockClear()
+  })
+
+  function mountWithChapter(initialChapter, { active = true } = {}) {
+    const activeChapter = ref(initialChapter)
+    const wrapper = mount(Ch2MiniGame, {
+      props: { active },
+      global: {
+        provide: {
+          prm: { prefersReduced: ref(false) },
+          scrollState: { activeChapter },
+        },
+      },
+    })
+    return { wrapper, activeChapter }
+  }
+
+  it('AC1/AC2: activeChapter !== 2 al mount (aunque panel local sea "home") → NO crea el Phaser.Game', async () => {
+    mountWithChapter(0, { active: true })
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).not.toHaveBeenCalled()
+  })
+
+  it('preserva la noción local de panel: activeChapter===2 pero panel !== "home" → NO crea el juego', async () => {
+    mountWithChapter(2, { active: false })
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).not.toHaveBeenCalled()
+  })
+
+  it('gate: activeChapter pasa de 0 a 2 con panel "home" activo → crea el Phaser.Game', async () => {
+    const { activeChapter } = mountWithChapter(0, { active: true })
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).not.toHaveBeenCalled()
+
+    activeChapter.value = 2
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('AC5 re-entrada (BLOQUEANTE, 2 ciclos): salir de ch2 destruye; volver lo recrea limpio', async () => {
+    const { activeChapter } = mountWithChapter(2, { active: true })
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
+    expect(destroySpy).not.toHaveBeenCalled()
+
+    // Ciclo 1 — salir a ch0
+    activeChapter.value = 0
+    await flushPromises()
+    expect(destroySpy).toHaveBeenCalledTimes(1)
+
+    // Ciclo 1 — volver a ch2
+    activeChapter.value = 2
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(2)
+
+    // Ciclo 2 — salir a ch3 (un gate mal escrito a veces sobrevive el primer
+    // ciclo y falla recién en el segundo — por eso se repite).
+    activeChapter.value = 3
+    await flushPromises()
+    expect(destroySpy).toHaveBeenCalledTimes(2)
+
+    // Ciclo 2 — volver a ch2
+    activeChapter.value = 2
+    await flushPromises()
+    await flushPromises()
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(3)
   })
 })
 
