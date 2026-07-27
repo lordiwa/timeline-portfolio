@@ -89,3 +89,26 @@ describe('TASK-010 regression lock: fix del recorte de .ch4-panel-column (spec �
   // vacío/negro. T9 es roja/verde plantable: revertir la llamada a
   // renderStaticFrame() hace que drawArrays deje de invocarse y el test cae.
 })
+
+describe('TASK-010 (última ronda) regression lock: .ch4-layout no desborda su contenedor por padding + content-box', () => {
+  // jsdom no hace layout real: no puede medir que `.ch4-hud-bl`/`.ch4-hud-br`
+  // queden dentro de `.chapter-section`. Ese es el comportamiento que importa
+  // y SOLO se probó con Chrome real vía CDP (Emulation.setDeviceMetricsOverride
+  // + getBoundingClientRect en los 3 viewports del ticket) — ver el reporte
+  // del Developer para los números medidos antes/después. Lo que este test
+  // SÍ puede lockear con honestidad es la causa raíz en la cascada CSS real
+  // (compilada con @vue/compiler-sfc, no un regex sobre el texto fuente):
+  // que `.ch4-layout` resuelva a `box-sizing: border-box`. Sin esto, `height:
+  // 100%` (content-box, el default) más el padding vertical se suma ENCIMA
+  // del 100% del contenedor y el excedente (96px desktop / 80px mobile) se
+  // recorta de forma invisible e inalcanzable.
+  it('T4 .ch4-layout resuelve a box-sizing: border-box en la cascada compilada', () => {
+    const css = compileCh4Css()
+    const { el, cleanup } = mountStyled(css, 'ch4-layout')
+    try {
+      expect(getComputedStyle(el).boxSizing).toBe('border-box')
+    } finally {
+      cleanup()
+    }
+  })
+})

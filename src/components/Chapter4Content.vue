@@ -359,6 +359,25 @@ onBeforeUnmount(() => {
   padding-top: calc(64px + var(--sp-sm));
   padding-bottom: var(--sp-lg);
   height: 100%;
+  /* FIX TASK-010 (última ronda, defecto medido en Chrome real): sin esto el
+     default content-box hace que height:100% + este padding vertical (72px
+     desktop / 8px mobile de padding-top, + padding-bottom) sumen ENCIMA del
+     100% del contenedor `.chapter-section` (que recorta con overflow hidden)
+     — el elemento termina 96px (desktop) / 80px (mobile) más alto que su
+     contenedor. Como el
+     contenido queda anclado arriba, ese excedente se recorta por abajo de
+     forma invisible (no hay scroll que lo alcance): los dos HUD diegéticos
+     (`.ch4-hud-bl` FPS/LATENCY, `.ch4-hud-br` "OCULUS RIFT CV1 / AR/VR 2015")
+     quedaban siempre fuera de `getBoundingClientRect()` de `.chapter-section`
+     en los 3 viewports medidos. `border-box` es el patrón ya usado en el
+     elemento raíz de layout de TODOS los demás capítulos con padding+height
+     fija (Chapter1/3/5Content.vue) — acá faltaba, era la excepción, no la
+     regla. Verificado con CDP que esto NO desplaza el recorte de
+     `.ch4-panel-column`: su `max-height` (calc contra el 100% de ESTE
+     elemento) ahora resuelve contra un content-box 96px/80px más chico —
+     exactamente el ajuste correcto, no una regresión (ver reporte del
+     Developer para las mediciones antes/después). */
+  box-sizing: border-box;
   /* .chapter-section es flex-centrado → reclamar el ancho completo del viewport,
      si no el parallax queda angosto y el portal (esquina derecha) cae fuera.
      Mismo fix que ch2 (.flash-y2k-root). */
