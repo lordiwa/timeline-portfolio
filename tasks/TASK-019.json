@@ -1,0 +1,38 @@
+{
+  "key": "TASK-019",
+  "title": "Mobile: StickyTimeline y ContactHUD se superponen al contenido de los capitulos",
+  "description": "Defecto GLOBAL de responsive, no de un capitulo. Encontrado midiendo ch4 en Chrome headed via CDP durante la verificacion de cierre de TASK-010, pero el chasis compartido lo hace estructural: afecta potencialmente a los 7 capitulos.\n\nSINTOMA MEDIDO, viewports 390x844 dpr3 (mobile portrait) y 844x390 dpr3 (mobile landscape):\n\n- Los iconos de ContactHUD tapan texto de la columna de contenido. Casos concretos observados en ch4: las palabras \"Vue\" y \"Frontend Engineer\" quedan debajo de los iconos y son ilegibles.\n- En landscape, la columna de anios de StickyTimeline tapa el titulo del capitulo. Caso observado: \"Del \" del titulo \"Del movimiento a nuevas realidades\" queda debajo de la timeline.\n\nEvidencia visual en screenshots CDP: ch4-390x844-dpr3-es-mobile-portrait-full.png, -scrolled.png y ch4-844x390-dpr3-es-mobile-landscape-full.png.\n\nPOR QUE IMPORTA Y POR QUE NO ES DISCUTIBLE COMO GUSTO: Rafael establecio el 2026-07-27 que la estetica la define la spec de Fable 5 y que el se acota a ella, con UN limite explicito: \"mientras no dañe la navegacion\". Texto tapado por un elemento flotante cruza ese limite. No es una preferencia visual, es contenido inalcanzable.\n\nALCANCE: es el chasis compartido, asi que hay que revisar los 7 capitulos, no solo ch4. Verificar tambien si el mismo solapamiento ocurre en tablet portrait, que es el breakpoint intermedio y no se midio.\n\nNO CONFUNDIR con TASK-018, que es desborde de texto por el largo del contenido final de Rafael. Este ticket es solapamiento de elementos flotantes del chasis sobre la columna de contenido: causa distinta, fix distinto.\n\nVERIFICACION OBLIGATORIA EN CHROME REAL. jsdom no hace layout, asi que la suite es estructuralmente incapaz de ver este defecto. Levantar Chrome HEADED via CDP crudo con WebSocket nativo de Node 22, viewports por Emulation.setDeviceMetricsOverride y capturas por Page.captureScreenshot. Headless NO sirve. Dos bloqueadores ya resueltos y documentados: BootScreen exige gesto real via Input.dispatchMouseEvent porque un .click() sintetico no resuelve ctx.resume(), y la cinematica ch2 a ch3 de ~5.9s se saltea con Escape.\n\nLa prueba es geometrica y medible: que el getBoundingClientRect() de los elementos flotantes del chasis no intersecte las cajas de texto de la columna de contenido, en cada capitulo y en cada breakpoint mobile.",
+  "acceptance_criteria": [
+    "En mobile portrait 390x844 y mobile landscape 844x390, ningun elemento de StickyTimeline ni de ContactHUD intersecta geometricamente las cajas de texto de la columna de contenido. Verificado con getBoundingClientRect() en Chrome headed, no a ojo.",
+    "La verificacion cubre los 7 capitulos, no solo ch4, porque el defecto es del chasis compartido.",
+    "Se mide tambien el breakpoint de tablet portrait, que hoy no tiene ninguna medicion, y se reporta el resultado aunque sea que ya estaba bien.",
+    "El titulo de cada capitulo es legible completo en landscape: ningun caracter queda debajo de la columna de anios de la timeline.",
+    "NO REGRESION, criterio bloqueante: en desktop 1536x791 dpr1.25 y 1440x900 la composicion no cambia. Se aporta screenshot del antes y del despues para probarlo.",
+    "NO REGRESION: los 7 capitulos siguen montando, el minijuego de ch2 conserva su canvas, el audio dial-up de ch1 sigue disparandose y la escena Phaser de ch6 sigue instanciando.",
+    "La suite de tests sigue en verde y se agrega un lock de la geometria en los breakpoints corregidos. Si el lock solo puede vivir en jsdom, se declara explicitamente su alcance limitado y se deja el numero medido por CDP en un comentario del test."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "responsive",
+    "mobile",
+    "chasis",
+    "a11y"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T20:43:00.354Z",
+      "body": "## AMPLIACION DE ALCANCE: el solapamiento tambien ocurre en DESKTOP, no solo en mobile\n\nEste ticket se creo describiendo solapamiento en mobile portrait y landscape. La verificacion de cierre de TASK-010 lo encontro **tambien en desktop**, en el viewport real de Rafael. Amplio el alcance aca en vez de abrir un ticket gemelo, porque es el mismo defecto y la misma causa: elementos flotantes del chasis posicionados sin reservar espacio ni coordinarse con el contenido del capitulo.\n\n### Evidencia nueva, viewport 1536x791 dpr 1.25 (el de Rafael)\n\nScreenshot `ch4-after-1536x791_1.25.png`, verificado visualmente por el orquestador:\n\n- **`SoundToggle` tapa `.ch4-hud-bl`.** El boton de sonido esta encima del lector \"FPS 72.4 | LATENCY 11MS\": el icono oculta el bloque \"FPS\" y deja el resto medio legible.\n- **`ContactHUD` tapa `.ch4-hud-br`.** El icono de GitHub cae sobre el rotulo \"OCULUS RIFT CV1 / AR/VR 2015\", que queda cortado a \"OCULUS RIFT...\" y \"AR/VR 2...\".\n\nEse rotulo es el elemento que ancla narrativamente ch4 en su epoca. Estuvo invisible por completo hasta el commit `597aae2` de TASK-010 (recortado por un `box-sizing` mal puesto); ahora existe, pero sigue sin poder leerse. Arreglar la mitad y dejar la otra mitad seria dar por bueno algo que el usuario igual no puede leer.\n\n### Por que no se arreglo en TASK-010\n\n`SoundToggle.vue` y `ContactHUD.vue` son del chasis compartido y estaban explicitamente fuera de la lista blanca de TASK-010. El developer lo reporto y **no lo arreglo**, que es exactamente el comportamiento pedido por la regla del proyecto tras el incidente del 2026-07-27. La deteccion es correcta; el trabajo pertenece aca.\n\n### Consecuencia para el alcance de este ticket\n\n1. El titulo y la descripcion hablan de mobile: leerlos como **ilustrativos, no exhaustivos**. El defecto es de todos los breakpoints.\n2. Hay que medir tambien **desktop 1536x791 dpr1.25 y 1440x900**, que hoy los criterios de aceptacion trataban como el caso de no-regresion \"que no cambie\". No alcanza: ahi tambien hay solapamiento que corregir.\n3. Los elementos flotantes del chasis a auditar son al menos: `StickyTimeline`, `ContactHUD` y `SoundToggle`. Puede haber mas; enumerarlos antes de medir en vez de asumir que son tres.\n4. Los HUD diegeticos de cada capitulo son contenido que compite por las mismas esquinas. La solucion tiene que ser sistemica (zonas reservadas del chasis que los capitulos respeten), no un z-index o un offset ad-hoc por capitulo: eso ultimo se rompe en el capitulo siguiente y ya se pago esa factura.\n\n### Criterio de Rafael que aplica\n\nRafael establecio el 2026-07-27 que la estetica la define la spec de Fable 5 y que el se acota a ella, con un limite explicito: **\"mientras no dañe la navegacion\"**. Un rotulo ilegible por un icono encima cruza ese limite. No es gusto.\n\n### Metodo\n\nLa suite es estructuralmente incapaz de ver esto: jsdom no hace layout. La prueba es geometrica en Chrome headed — que el `getBoundingClientRect()` de cada elemento flotante del chasis no intersecte las cajas de los HUD diegeticos ni las de texto del capitulo. Receta y bloqueadores ya resueltos en `.planning/LECCIONES-TECNICAS.md` seccion 6."
+    }
+  ],
+  "created_at": "2026-07-27T20:36:18.139Z",
+  "updated_at": "2026-07-27T20:43:00.354Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

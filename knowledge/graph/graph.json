@@ -20,6 +20,12 @@
       "label": "ch3 2013: la muerte de Flash, del stage que muere al renacimiento flat"
     },
     {
+      "id": "task-010",
+      "type": "task",
+      "ref": "tasks/TASK-010.json",
+      "label": "ch4 2015: el salto entre realidades, shader multi-pass con optica de headset"
+    },
+    {
       "id": "task-014",
       "type": "task",
       "ref": "tasks/TASK-014.json",

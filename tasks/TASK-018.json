@@ -22,9 +22,15 @@
   "depends_on": [],
   "linked_commits": [],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T20:36:32.819Z",
+      "body": "## Hallazgo adicional medido en Chrome, 2026-07-27: el mantra se monta sobre el texto de la bio\n\nDurante la verificacion de cierre de TASK-010 (Chrome headed via CDP, capturas por `Page.captureScreenshot`), el orquestador observo en los screenshots de los 4 universos de ch4 un segundo sintoma que pertenece a este ticket y que la medicion automatica no reporto.\n\n**La pildora del mantra \"Y siempre con una sonrisa 😊\" queda superpuesta ENCIMA del texto de la bio.** En la captura se lee literalmente `...se sentia el cambio. Y lo que se` con la pildora tapando el resto de la linea. Visible en `ch4-universe0-LOCK.png` y `ch4-universe2-LOCK.png`, franja inferior de la columna de contenido.\n\nEs un choque de capas, NO un problema de scroll: el mantra esta posicionado de forma flotante y no reserva espacio en el flujo, asi que la ultima linea del texto siempre queda debajo de el.\n\n### Por que va aca y no en un ticket propio\n\nComparte causa raiz con lo que este ticket ya describe: el texto de la era 4 paso de 581 a 1801 caracteres, triplicando, y ch4 esta construido para el texto viejo. El desborde por abajo y el choque con el mantra son el mismo problema visto en dos puntos. Arreglarlos por separado seria tocar el mismo archivo en dos trabajos distintos, que es exactamente el modo de falla que rompio el minijuego, el modem, la multitud y la escena de ch6 en el incidente del 2026-07-27.\n\n### Criterio de Rafael que aplica\n\nRafael establecio el 2026-07-27 que la estetica la define la spec de Fable 5 y que el se acota a ella, con un limite explicito: **\"mientras no dañe la navegacion\"**. Texto tapado por un elemento flotante cruza ese limite. Esto no se cierra dejando el mantra encima del texto, aunque esteticamente se prefiera esa posicion.\n\n### Evidencia\n\n- `ch4-universe0-LOCK.png`, `ch4-universe2-LOCK.png`: mantra sobre la bio, y el texto de la era cortado a mitad de frase en el borde inferior.\n- Contraste, medido con picker sobre screenshot real en los 4 universos: 12.15:1 a 12.42:1. El scrim NO es el problema; el problema es geometrico.\n\n### Nota de metodo para quien tome este ticket\n\nLa suite es estructuralmente incapaz de ver esto: jsdom no hace layout. La verificacion tiene que ser geometrica en Chrome headed, comprobando que el `getBoundingClientRect()` del mantra no intersecte las cajas de texto de la bio. Bloqueadores ya resueltos: BootScreen exige gesto real via `Input.dispatchMouseEvent`, y la cinematica ch2 a ch3 de ~5.9s se saltea con `Escape`."
+    }
+  ],
   "created_at": "2026-07-27T18:47:52.718Z",
-  "updated_at": "2026-07-27T18:47:52.718Z",
+  "updated_at": "2026-07-27T20:36:32.819Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

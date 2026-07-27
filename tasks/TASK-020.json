@@ -1,0 +1,34 @@
+{
+  "key": "TASK-020",
+  "title": "El minijuego de ch2 corre un Phaser.Game permanente desde la carga de la pagina",
+  "description": "CAUSA RAIZ REAL del techo de fps global. Encontrado el 2026-07-27 midiendo en Chrome headed durante TASK-017, que arreglo el loop de la multitud de ch5 y descubrio que ese no era el contribuyente dominante.\n\n## El defecto\n\n`Ch2MiniGame.vue` instancia un `Phaser.Game` en el PRIMER mount de la pagina y no lo destruye nunca mientras el sitio viva. Solo pausa la escena con `scene.pause('MatchScene')`, lo cual **no detiene el loop interno de Phaser**: `Phaser.DOM.RequestAnimationFrame.step` sigue disparando a ~60 por segundo aun estando en ch0, con el minijuego jamas visitado.\n\n## Cadena causal, ya trazada\n\n`FlashHomePanel.vue` pasa `<Ch2MiniGame :active=\"active\" />`, y `FlashStage.vue` pasa `:active=\"panel === 'home'\"`. Como el `activePanel` de `Chapter2Content.vue` arranca en `'home'` por defecto, y `ScrollShell.vue` mantiene los 7 capitulos SIEMPRE montados, el minijuego arranca en cualquier carga de pagina.\n\nEl bug conceptual: la nocion de \"activo\" de `Ch2MiniGame` es LOCAL al panel de ch2 y nunca se ata al `activeChapter` del sitio. Un visitante que nunca llega a ch2 igual paga el costo completo del juego, desde el primer frame.\n\n## Medicion que lo prueba\n\nEn el A/B con `Emulation.setCPUThrottlingRate` a 4x, retirando temporalmente solo este loop (prueba diagnostica, revertida de inmediato y nunca commiteada), **ch0 recupera 60 fps limpios**, con o sin el fix de ch5 aplicado. Con el loop presente, ch0 se queda en ~15 fps bajo el mismo throttle.\n\nSin throttle, en la maquina donde se midio, el fps esta topado por vsync a ~60 tanto antes como despues, asi que el defecto NO se ve. Hay que medir con CPU throttling para exponerlo. Anotarlo: quien tome este ticket y mida sin throttle va a concluir erroneamente que no hay nada que arreglar.\n\n## Por que importa\n\nEs lo que bloquea el AC2 de TASK-017 y el AC3 de TASK-010, ambos sobre 60 fps. Mientras exista, ningun capitulo puede demostrar honestamente que cumple su presupuesto de frame. Rafael pide un sitio que parezca de 50.000 dolares y un sitio que se siente pesado no se siente caro.\n\n## RIESGO CRITICO, leerlo dos veces\n\nEl minijuego match-3 de ch2 es **una de las cuatro cosas que se rompieron** en el incidente del 2026-07-27, donde 17 agentes sin restriccion rompieron el minijuego, el modem dial-up, la multitud de ch5 y la escena de ch6. Rafael califico ese proceso 0/10.\n\nDestruir o no crear el `Phaser.Game` mal deja el minijuego **sin arrancar nunca o congelado**, y el sintoma es silencioso: la pagina no tira error, simplemente el canvas queda muerto.\n\nEl patron correcto YA EXISTE en el repo y hay que copiarlo, no inventar uno nuevo: `Chapter6Content.vue` crea y destruye su `Phaser.Game` con un `watch(activeChapter)`. Leerlo antes de escribir nada.\n\n## Alcance\n\nAtar el ciclo de vida del `Phaser.Game` de ch2 al `activeChapter` del sitio, ademas de la nocion local de panel que ya existe. Preservar intacta la logica del juego: este ticket es de ciclo de vida, NO de gameplay.\n\nDecidir y justificar si el juego se destruye al salir de ch2 y se recrea al volver (como ch6), o si basta con detener el loop de rAF de Phaser conservando la instancia. Si se recrea, verificar que el estado de la partida se comporte de forma aceptable: perder una partida en curso por scrollear a otro capitulo y volver es un defecto de producto, no una optimizacion.\n\n## LISTA BLANCA\n\n`src/components/Ch2MiniGame.vue`, `src/components/FlashHomePanel.vue`, `src/components/FlashStage.vue`, `src/components/Chapter2Content.vue` y `tests/**`.\n\nPROHIBIDO TOCAR: `src/phaser/ch2/MatchScene.js`, que es la logica del juego y no tiene por que cambiar; `ScrollShell.vue` y `useScrollState.js`, cerrados por TASK-014; `DialUpScreen.vue` y su audio procedural.\n\n## Verificacion exigida\n\nEn Chrome headed por CDP crudo. La receta completa y los bloqueadores ya resueltos estan en `.planning/LECCIONES-TECNICAS.md` seccion 6. Headless NO sirve.\n\nLa suite no puede ver nada de esto: jsdom no corre rAF de verdad. Es la leccion 2 del mismo documento.",
+  "acceptance_criteria": [
+    "Estando en un capitulo que no es ch2, el loop de rAF de Phaser no ejecuta: instrumentar y contar ejecuciones de Phaser.DOM.RequestAnimationFrame.step desde ch0 y obtener cero. La baseline actual es ~60 por segundo.",
+    "En una carga de pagina en la que el visitante nunca llega a ch2, el Phaser.Game no consume frame budget en ningun momento.",
+    "ch0 en reposo recupera fps de forma medible con Emulation.setCPUThrottlingRate a 4x, partiendo de la baseline de ~15 fps hacia los ~60 que se midieron retirando este loop en la prueba diagnostica. Numeros antes y despues, en el mismo Chrome y la misma corrida. Medir SIN throttle no sirve: vsync enmascara el defecto.",
+    "PRUEBA DE VIDA, criterio bloqueante: el minijuego sigue funcionando cuando SI estas en ch2. Canvas presente en 360x420, la escena corre y el juego es jugable. Verificado midiendo, no a ojo.",
+    "RE-ENTRADA, criterio bloqueante: entrar a ch2, salir a otro capitulo y volver a ch2 deja el minijuego funcionando otra vez. Es el caso donde un gate mal escrito falla en silencio.",
+    "Se documenta y justifica la decision sobre el estado de la partida al salir y volver a ch2, y el comportamiento elegido no pierde una partida en curso de forma sorpresiva.",
+    "NO REGRESION: los 7 capitulos siguen montando, el audio del dial-up sigue disparandose al entrar a ch1, la multitud de ch5 sigue animando cuando ch5 es el activo y el shader de ch4 sigue pintando.",
+    "La suite sigue en verde y se agrega un lock que falle si el Phaser.Game de ch2 vuelve a instanciarse sin gate de capitulo activo. Si el lock solo puede vivir en jsdom, se declara su alcance limitado y se dejan los numeros medidos por CDP en un comentario del test."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "performance",
+    "fps",
+    "ch2",
+    "phaser",
+    "desbloqueante"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T21:20:20.421Z",
+  "updated_at": "2026-07-27T21:20:20.421Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
