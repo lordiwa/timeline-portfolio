@@ -23,8 +23,8 @@
 // con anclaje real (position: sticky). Único ticket autorizado a tocar este
 // archivo, App.vue y useScrollState.js para resolver el problema medido en
 // TASK-009: un capítulo que necesita más de 1 viewport de alto no tenía
-// dónde crecer y terminaba con scroll anidado (.ch3-stage con overflow-y en
-// modo auto) que compite con el scroll-snap mandatory del shell. Ver el comentario largo
+// dónde crecer y terminaba con scroll anidado (.ch3-stage con overflow-y:
+// auto) que compite con el scroll-snap mandatory del shell. Ver el comentario largo
 // junto a `.chapter-section[data-viewports]` en el <style scoped> de abajo
 // para el mecanismo completo y cómo lo consume un ticket de capítulo.
 // Default `{}` → los 7 capítulos actuales quedan en 1 viewport, CERO cambio
@@ -65,11 +65,21 @@ const props = defineProps({
 const { t } = useI18n()
 const shellEl = ref(null)
 
-// viewportsFor(id) — normaliza props.chapterViewports[id] a un entero >= 1.
-// Cualquier valor no-entero o <= 1 colapsa a 1 (mismo comportamiento shipped).
+// LOW (ronda de corrección de review): ningún capítulo real necesita medir
+// decenas de viewports — un valor absurdo (ej. `{ 3: 1000 }`, typo o data
+// corrupta) generaría una sección de miles de vh y un scroll interminable.
+// Clamp defensivo: 12 viewports (~4x el capítulo más alto previsto en la
+// spec de dirección de arte) es generoso sin ser ilimitado.
+const MAX_CHAPTER_VIEWPORTS = 12
+
+// viewportsFor(id) — normaliza props.chapterViewports[id] a un entero en
+// [1, MAX_CHAPTER_VIEWPORTS]. Cualquier valor no-entero o <= 1 colapsa a 1
+// (mismo comportamiento shipped); cualquier valor > MAX_CHAPTER_VIEWPORTS
+// se recorta al máximo.
 function viewportsFor(id) {
   const n = props.chapterViewports[id]
-  return Number.isInteger(n) && n > 1 ? n : 1
+  if (!Number.isInteger(n) || n <= 1) return 1
+  return Math.min(n, MAX_CHAPTER_VIEWPORTS)
 }
 
 // Inject del scrollState (provisto por App.vue desde Plan 02) y del prm (Plan 03).
@@ -188,7 +198,7 @@ defineExpose({ shellEl })
  * PROBLEMA que resuelve: antes de este ticket cada .chapter-section medía
  * EXACTAMENTE 1 viewport. Un capítulo que necesita más alto (ej. TASK-009,
  * ch3) no tiene dónde crecer dentro del shell y termina metiendo su propio
- * scroll interno (overflow-y en modo auto) — ese scroll anidado compite con el
+ * scroll interno (overflow-y: auto) — ese scroll anidado compite con el
  * scroll-snap mandatory del shell y permite saltarse el capítulo entero sin
  * haberlo recorrido (bug medido en vivo, ver tasks/TASK-014.json).
  *
@@ -202,14 +212,23 @@ defineExpose({ shellEl })
  *
  * CÓMO LO CONSUME UN TICKET DE CAPÍTULO (ej. TASK-009 retomando ch3):
  *   1. En App.vue, pasar `:chapter-viewports="{ 3: 5 }"` a <ScrollShell>.
- *   2. Dentro de Chapter3Content.vue, envolver el contenido que debe quedar
- *      "anclado" mientras se recorre el resto en un elemento con la clase
- *      `.chapter-stage` (utility global sin scope, declarada más abajo en
- *      este mismo archivo, para que cualquier ChapterNContent la consuma sin
- *      duplicar CSS). Ese contenido queda fijo en pantalla (sticky top:0)
- *      durante TODO el recorrido de los N viewports de la sección — el
- *      "anclaje real" que pide la spec (00-sistema-visual-global.md §7.3).
- *   3. Borrar el contenedor con overflow-y en modo auto que hoy envuelve
+ *   2. Dentro de Chapter3Content.vue, la clase `.chapter-stage` (utility
+ *      global sin scope, declarada más abajo en este mismo archivo) TIENE
+ *      que ir en el elemento ROOT de Chapter3Content.vue — es decir, hijo
+ *      DIRECTO de `.chapter-section`. Si en cambio envuelve `.chapter-stage`
+ *      en un wrapper intermedio, ese wrapper debe declarar `height: 100%`
+ *      (y cada nivel adicional de wrapper entre `.chapter-section` y
+ *      `.chapter-stage`, también `height: 100%`) — si no, el wrapper
+ *      colapsa a la altura intrínseca de `.chapter-stage` (1 viewport) en
+ *      vez de heredar los N viewports de la sección, y el containing block
+ *      del sticky queda de 1 viewport → rango de anclaje CERO, sin
+ *      recorrido, aun con el mecanismo funcionando (ver regla defensiva
+ *      `.chapter-section[data-viewports] > *` más abajo, que sólo cubre el
+ *      hijo directo — un segundo nivel de wrapper es responsabilidad del
+ *      ticket de capítulo). Ese contenido queda fijo en pantalla (sticky
+ *      top:0) durante TODO el recorrido de los N viewports de la sección —
+ *      el "anclaje real" que pide la spec (00-sistema-visual-global.md §7.3).
+ *   3. Borrar el contenedor con overflow-y: auto que hoy envuelve
  *      `.ch3-stage` — deja de hacer falta: el scroll interno pasa a ser el
  *      scroll PRINCIPAL del shell (`.scroll-shell`), sin contenedor anidado.
  *   4. Para pacing interno más fino (que ni un fling fuerte se salte varios
@@ -221,6 +240,20 @@ defineExpose({ shellEl })
  *      gesto no puede saltar la ENTRADA de un capítulo alto (align:start +
  *      stop:always en su único punto de snap); esta capa 4 es opcional y la
  *      decide cada ticket de capítulo según cuánto pacing interno necesite.
+ *   5. `prefers-reduced-motion`: este shell sólo garantiza el mecanismo de
+ *      anclaje (posicionamiento scroll-driven, neutral por construcción).
+ *      Cualquier coreografía de scrub/parallax que el ticket de capítulo
+ *      construya SOBRE el recorrido de `.chapter-stage` (ej. los 4 beats de
+ *      ch4, el scrub de ch3) es responsabilidad de ESE ticket de verificar
+ *      compliance con PRM — no la cubre este mecanismo.
+ *   6. Navegación por teclado (documentado, NO arreglado por este ticket):
+ *      en un capítulo alto, ↓/j desde dentro del capítulo salta al SIGUIENTE
+ *      capítulo (pierde los beats intermedios, no hay "siguiente beat"), y
+ *      ↑/k salta al capítulo ANTERIOR en vez de al inicio del capítulo
+ *      actual. `navigate()` en este archivo sólo conoce capítulos, no beats
+ *      internos. Cada ticket de capítulo alto decide conscientemente si
+ *      necesita override este comportamiento (ej. capturar flechas dentro de
+ *      su propio `.chapter-stage` para pacing interno) o lo acepta tal cual.
  *
  * `display: block` en vez de flex: con flex + align-items:center, un hijo
  * más corto que la sección (el `.chapter-stage` de 1 viewport dentro de una
@@ -229,11 +262,39 @@ defineExpose({ shellEl })
  * dejaría de cubrir el recorrido completo. En block, el hijo arranca en
  * top:0 del flujo y el sticky se mantiene "pegado" durante los N viewports
  * enteros.
+ *
+ * `overflow: clip` (HIGH, ronda de corrección de review): `.chapter-section`
+ * base declara `overflow: hidden` (fix anti-bleed de Rafael 2026-05-17, ver
+ * comentario arriba). `overflow: hidden` establece un "scroll container" —
+ * aunque nunca scrollea, sigue siendo programáticamente scrolleable y por
+ * eso position:sticky lo trata como el ancestro-con-scrolling-mechanism más
+ * cercano para calcular el rango de anclaje, en vez de `.scroll-shell` (el
+ * scroll real del sitio). Resultado medido: `.chapter-stage` se ancla contra
+ * su propia sección de N viewports — que nunca scrollea — y el sticky nunca
+ * se mueve del viewport 1, dejando N-1 viewports vacíos. `overflow: clip`
+ * recorta igual que `hidden` (conserva el fix anti-bleed) pero NO establece
+ * scroll container, así que el sticky sigue subiendo por la cadena de
+ * ancestros hasta encontrar `.scroll-shell`, que es el anclaje correcto.
+ * El test `chapter-overlap-ch6` T2 sólo prohíbe `overflow: hidden` dentro de
+ * `.ch{N}-layout` (stacking context que rompía el snap) — no toca esta
+ * regla ni `.chapter-section` base, así que este cambio no lo viola.
  * ───────────────────────────────────────────────────────────────────────── */
 .chapter-section[data-viewports] {
   height: calc(var(--chapter-viewports) * 100vh);
   height: calc(var(--chapter-viewports) * 100dvh);
   display: block;
+  overflow: clip;
+}
+
+/* Defensa mínima del contrato del punto 2 de arriba: el hijo DIRECTO de una
+ * sección multi-viewport siempre hereda el 100% de los N viewports de la
+ * sección, así que si ese hijo directo ES `.chapter-stage` (el caso
+ * documentado y esperado), su containing block ya mide N viewports sin que
+ * el ticket de capítulo tenga que declarar nada. Si en cambio hay un
+ * wrapper intermedio adicional, ESE wrapper debe declarar su propio
+ * `height: 100%` (punto 2 de arriba) — esta regla sólo cubre un nivel. */
+.chapter-section[data-viewports] > * {
+  height: 100%;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

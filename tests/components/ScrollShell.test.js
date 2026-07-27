@@ -432,4 +432,45 @@ describe('ScrollShell multi-viewport mechanism (TASK-014)', () => {
     expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-section\s*\{[^}]*scroll-snap-align:\s*start/)
     expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-section\s*\{[^}]*scroll-snap-stop:\s*always/)
   })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T7 — HIGH regression lock (ronda de corrección de review): el bloque
+  // `.chapter-section[data-viewports]` DEBE neutralizar el `overflow: hidden`
+  // heredado de `.chapter-section` base con su propio `overflow`, y ese valor
+  // NO puede ser `hidden` (recrea el bug: crea scroll container → el sticky
+  // se ancla contra la propia sección en vez de `.scroll-shell`, rango de
+  // anclaje CERO) ni `auto`/`scroll` (reintroduce scroll anidado, cubierto
+  // aparte por scroll-shell-no-nested-scroll.test.js). Verificado en rojo:
+  // comentando la línea `overflow: clip;` de ese bloque este test falla,
+  // porque el regex de "declara overflow" deja de matchear dentro del
+  // bloque — es exactamente el escenario "alguien borra la línea en
+  // silencio" que este lock existe para atrapar. jsdom no tiene layout así
+  // que no puede medir el sticky en sí (ver verificación CDP en el hand-off);
+  // esto es la mejor aproximación estática disponible en esta suite.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T7 HIGH lock: .chapter-section[data-viewports] declara su propio overflow, distinto de hidden/auto/scroll', () => {
+    const blockMatch = SCROLL_SHELL_SOURCE.match(/\.chapter-section\[data-viewports\]\s*\{([^}]*)\}/)
+    expect(blockMatch, 'no se encontró el bloque .chapter-section[data-viewports] en ScrollShell.vue').not.toBeNull()
+    const overflowMatch = blockMatch[1].match(/\boverflow:\s*([a-z-]+)\s*;/)
+    expect(
+      overflowMatch,
+      'El bloque .chapter-section[data-viewports] debe declarar su propia propiedad `overflow` ' +
+        '(hoy: `overflow: clip`) para neutralizar el `overflow: hidden` heredado de .chapter-section ' +
+        'base — sin esto, position:sticky de .chapter-stage se ancla contra la sección (que nunca ' +
+        'scrollea) en vez de contra .scroll-shell, y el "anclaje real" no funciona (HIGH, ver ' +
+        'tasks/TASK-014.json comentario de review).'
+    ).not.toBeNull()
+    expect(['hidden', 'auto', 'scroll']).not.toContain(overflowMatch[1])
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T8 — LOW: clamp defensivo de viewportsFor. {3: 1000} debe recortarse al
+  // máximo (12), no estampar data-viewports="1000" ni una sección de miles de vh.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T8 LOW clamp: chapterViewports={3:1000} recorta a data-viewports="12" (MAX_CHAPTER_VIEWPORTS)', () => {
+    const { wrapper } = mountShell({ chapterViewports: { 3: 1000 } })
+    const ch3 = wrapper.find('section[data-chapter="3"]')
+    expect(ch3.attributes('data-viewports')).toBe('12')
+    expect(ch3.attributes('style')).toMatch(/--chapter-viewports:\s*12/)
+  })
 })

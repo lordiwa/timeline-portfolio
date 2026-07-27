@@ -293,6 +293,30 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
+  // MEDIUM (ronda de corrección de review): el array de thresholds pasado al
+  // IntersectionObserver real (no simulado — leído de `io.options.threshold`,
+  // lo que el composable REALMENTE le pasó al constructor) debe tener paso
+  // 0.01 (101 valores) en vez de 0.05 (21 valores), para que la granularidad
+  // de re-disparo en capítulos multi-viewport no se degrade con N (ver
+  // comentario largo en useScrollState.js junto a OBSERVER_THRESHOLDS).
+  // CONDICIÓN DURA: 0.6 tiene que seguir siendo un valor EXACTO del array —
+  // si dejara de serlo, el momento del flip de activeChapter para los 7
+  // capítulos de 1 viewport de hoy (todos target-relative = root-relative)
+  // se movería respecto al shipped.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('MEDIUM fix: IntersectionObserver se construye con 101 thresholds (paso 0.01) e incluye 0.6 exacto', async () => {
+    const { wrapper } = makeWrapper()
+    await waitForDeepLink()
+    const io = globalThis.MockIntersectionObserver.instances[0]
+    const thresholds = io.options.threshold
+    expect(thresholds).toHaveLength(101)
+    expect(thresholds[0]).toBe(0)
+    expect(thresholds[thresholds.length - 1]).toBe(1)
+    expect(thresholds.some((t) => Math.abs(t - 0.6) < 1e-9)).toBe(true)
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Test 11: cleanup en onBeforeUnmount
   // ─────────────────────────────────────────────────────────────────────────
   it('cleanup on unmount: disconnects observer and removes scroll listener', async () => {

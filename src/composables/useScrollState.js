@@ -27,10 +27,28 @@ import { useRafFn } from '@vueuse/core'
 // llega a 0.6 porque intersectionRatio divide por la altura TOTAL del
 // target, no del root, así que con un solo threshold el observer casi no
 // re-dispara mientras la sección alta está en pantalla. Un array fino
-// (0, 0.05, ..., 1) garantiza que el callback se re-evalúe con frecuencia
-// suficiente en cualquier altura de sección; la decisión real de "activo"
-// la toma `coverageOf()` más abajo, no el cruce de threshold en sí.
-const OBSERVER_THRESHOLDS = Array.from({ length: 21 }, (_, i) => i / 20)
+// garantiza que el callback se re-evalúe con frecuencia suficiente en
+// cualquier altura de sección; la decisión real de "activo" la toma
+// `coverageOf()` más abajo, no el cruce de threshold en sí.
+//
+// MEDIUM (ronda de corrección de review): los thresholds son SIEMPRE
+// target-relative (spec IntersectionObserver — cada valor se compara contra
+// intersectionRatio, que divide por la altura del target). Eso significa
+// que la granularidad de re-disparo, medida en px de scroll del ROOT, es
+// `alturaTarget * pasoThreshold` — con un target de N viewports esa
+// granularidad crece linealmente con N. El array [0.6] shipped medía 21
+// pasos (0, 0.05, ..., 1) → para N=1 el paso es 0.05*1viewport = fino, pero
+// para N=5 el paso es 0.05*5viewports = 25% de un viewport (~110px tarde
+// para cruzar 0.6). Subir de 21 a 101 pasos (0, 0.01, ..., 1) reduce ese
+// paso a 1/5 sin cambiar NADA para N=1 — el navegador ya colapsa (coalesce)
+// los disparos de IntersectionObserver a como mucho uno por frame, así que
+// más pasos no cuesta más callbacks reales, sólo permite que el que SÍ se
+// dispara por frame esté más cerca del cruce real de coverageOf() >= 0.6.
+// CONDICIÓN DURA verificada: 0.6 = 60/100 sigue siendo un valor EXACTO del
+// array (igual que 12/20 lo era antes), así que el momento del flip de
+// activeChapter para los 7 capítulos de 1 viewport de hoy queda IDÉNTICO al
+// shipped — ver tests/composables/useScrollState.test.js.
+const OBSERVER_THRESHOLDS = Array.from({ length: 101 }, (_, i) => i / 100)
 
 // coverageOf(entry) — TASK-014: cuánto del VIEWPORT (root), no del target,
 // cubre esta sección. `entry.intersectionRatio` (spec IntersectionObserver)
@@ -43,6 +61,15 @@ const OBSERVER_THRESHOLDS = Array.from({ length: 21 }, (_, i) => i / 20)
 // si no están disponibles (mocks de test más simples) cae a intersectionRatio,
 // que es exacto para el caso de 1 viewport — cero cambio de comportamiento
 // para los 7 capítulos shipped hoy.
+//
+// LOW (ronda de corrección de review): esta función es height-only — usa
+// `rect.height / root.height` e ignora la intersección horizontal. Es una
+// asunción segura HOY porque cada `.chapter-section` mide `width: 100%` y
+// `.scroll-shell` declara `overflow-x: hidden` (ScrollShell.vue), así que
+// la intersección horizontal siempre es completa (0% o 100%, nunca parcial)
+// para cualquier sección de capítulo. Si algún capítulo futuro introduce
+// scroll horizontal propio dentro de una sección, esta función necesita
+// revisarse para incorporar el eje X.
 function coverageOf(entry) {
   const rect = entry.intersectionRect
   const root = entry.rootBounds
