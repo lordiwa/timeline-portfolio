@@ -1,7 +1,7 @@
 {
   "chapters": {
     "0": {
-      "title": "Pre-carrera: niñez digital",
+      "title": "Origen: niñez digital",
       "era": "Terminal",
       "flavor": "1995. Monitor CRT phosphor. Mi primer prompt de comandos.",
       "terminal": {
@@ -42,7 +42,7 @@
       }
     },
     "1": {
-      "title": "Pre-carrera tardío: HTML 90s",
+      "title": "El castigo que fue vocación",
       "era": "HTML 90s crudo",
       "flavor": "GeoCities, Angelfire, tablas anidadas y marquees por doquier.",
       "marqueeText": "★ Bienvenido a mi página web!! ★ 🚧 En construcción 🚧",
@@ -65,7 +65,8 @@
     },
     "3": {
       "title": "Web 2.0: UX + dev + líder",
-      "era": "Web 2.0"
+      "era": "Web 2.0",
+      "flavor": "2013. El plugin muere, la web aprende a moverse sola. HTML5, JS y ágil de supervivencia."
     },
     "4": {
       "title": "AR/VR: empresa propia + Metrodigi",
@@ -82,7 +83,7 @@
       "title": "Convergencia: QA + AI",
       "era": "Convergencia",
       "flavor": "2026. Convergencia: dev + QA + AI en un solo espacio. La nave aterriza.",
-      "mantra": "Y siempre muestra una sonrisa"
+      "mantra": "Y siempre con una sonrisa. 😄"
     }
   },
   "ui": {
@@ -132,25 +133,25 @@
     "mantra": "Y siempre con una sonrisa. 😄",
     "eras": {
       "0": {
-        "text": "Todo empezó con un DOS y siete años de edad. Mientras otros niños descubrían los dibujos animados, yo descubría California Games, Stunts y Out of This World. Esos píxeles fueron mi primer amor. Después vinieron Warcraft, StarCraft y Magic: The Gathering, que me enseñaron que detrás de cada mundo digital había alguien construyéndolo. Y yo quería ser ese alguien."
+        "text": "La primera computadora me la mostró mi abuelo. La primera que pude tocar fue de mi tío: me dejaba usarla y me dio los comandos para entrar a los juegos que él sabía que había. Yo escribía esos comandos y después inventaba otros, buscando los juegos que le había visto jugar a mi primo en esa misma máquina, convencido de que adentro había más mundo del que me habían mostrado. Casi siempre no pasaba nada. Pero cuando pasaba: California Games, Stunts, Out of This World. Esos píxeles fueron mi primer amor. Después llegaron Warcraft, StarCraft y Magic, y con ellos una sospecha que me cambió la vida: detrás de cada uno de esos mundos había alguien construyéndolo. Alguien con un teclado, igual que yo. Quería ser ese alguien.\n\nCuando mi mamá compró una computadora para su trabajo, la cosa se puso seria. La destruí tantas veces, tantas veces, que después de suficientes regaños no me quedó otra que aprender a arreglarla yo mismo: hardware, software, sistema operativo, todo. Sin saberlo, ahí empezó un patrón que me iba a perseguir toda la vida: romper cosas y aprender a repararlas."
       },
       "1": {
-        "text": "Empezó como un castigo por casi ser expulsado del colegio y terminó convirtiéndose en mi vocación. Mi primer libro de HTML/JS/CSS me lo dio mi primo, para que no me aburriera en unas vacaciones de verano cuando tenía 14 años — unas vacaciones en las que terminé castigado, prohibido de hacer todo, excepto leer y usar la computadora para hacer los ejercicios del libro.\n\nA los 14 agarré un libro, abrí un editor de texto y aprendí a programar solo. Empecé con HTML, JavaScript y CSS armando mis propios sitios web. Después salté a Perl, y de ahí me clavé con C++. Cada lenguaje era un mundo nuevo, otra forma de pensar. Para mí, programar siempre fue otro sabor de Legos: piezas que encajan, mundos que aparecen de la nada.\n\nEn el colegio nuevo hubo un concurso de creación de páginas web. Me junté con unos amigos e hicimos un sitio sobre las ranas y sapos del Ecuador — HTML a mano, fotos escaneadas y un marquee, por supuesto. Ganamos. Los profesores no entendían cómo; yo no entendía qué tenía de difícil. Eran los mismos ejercicios del libro del castigo.\n\nEn paralelo (2002–2006), viví otra vida: la de jugador profesional de StarCraft y Warcraft III. Cuatro años compitiendo en serio me enseñaron cosas que ningún curso enseña: leer sistemas en tiempo real, encontrar el patrón antes que el rival, manejar la presión.\n\nY ese mundo me abrió la primera puerta laboral: entré como Game Tester en BlueLizard Games (BLG). Mi primera chamba fue, literalmente, hacer QA."
+        "text": "Mi carrera empezó como un castigo, lo cual explica muchas cosas. A los 14 casi me expulsan del colegio, y el castigo fue quedarme unas vacaciones enteras sin poder hacer nada. Nada excepto leer y usar la computadora \"para estudiar\". Lo que había para leer era un libro de HTML, JavaScript y CSS que me había regalado mi primo. Lo devoré. Cuando se acabó el castigo, yo ya no quería salir: estaba armando sitios web, después Perl, después C++. Programar era otro sabor de Legos, piezas que encajan y mundos que aparecen de la nada, solo que estos Legos nunca se acababan.\n\nEn el colegio nuevo hubo un concurso de páginas web. Hicimos con unos amigos un sitio sobre ranas y sapos del Ecuador: HTML a mano, fotos escaneadas y un marquee, por supuesto. Ganamos. Los profesores no entendían cómo. Yo no entendía qué tenía de difícil: eran los ejercicios del libro del castigo.\n\nEn paralelo viví otras vidas. Desde los 15 trabajé arreglando computadoras, el oficio que me dejaron años de destruir la de mi mamá, y eso me mantuvo hasta mi primer empleo formal. Y fui cuatro años jugador competitivo de StarCraft y Warcraft III. Suena a excusa para no hacer deberes, pero fue mi primera escuela de sistemas: leer el juego en tiempo real, encontrar el patrón antes que el rival, aguantar la presión.\n\nY me abrió la primera puerta laboral, de la forma más literal posible. En la entrevista para Game Tester en BlueLizard Games me pusieron a probar un juego que tenía deadline en un mes. Le encontré 15 fallas críticas ahí mismo, delante del productor. No era magia: eran los APM de años de RTS competitivo, manos que revisaban el juego más rápido de lo que el juego podía esconderse. Mi primer trabajo fue, literalmente, romper juegos. Me pagaban por eso. BlueLizard quedaba a casi dos horas de mi casa, y yo iba feliz. Cuatro horas diarias de viaje para llegar a hacer lo que otros consideraban imposible que fuera un trabajo. No lo podía creer, y el trayecto me daba tiempo de sobra para no creerlo."
       },
       "2": {
-        "text": "De tester pasé a programador. En BlueLizard, Matte CG y Joju Games fui gameplay programmer en plena época dorada del Flash. Trabajé en títulos como Spamania 2, Club Paradise 2, Lost Realms 2, Megamind Amazing Machine y Nanoland. Después vino Bingo Blingo en Facebook, y un montón de advergames para Coca-Cola, Marlboro y Mulgatol.\n\nFue una escuela brutal. Aprendí que hacer juegos es 10% magia y 90% revisar por qué el personaje atraviesa la pared otra vez. Y los advergames me enseñaron algo extra: cómo meter una marca dentro de una mecánica sin matar la diversión."
+        "text": "De romper juegos pasé a hacerlos, que es como pasar de crítico de cine a director: de repente todos los bugs eran míos. Fui gameplay programmer en BlueLizard, Matte CG y Joju Games, en plena época dorada del Flash, cuando la web entera se movía gracias a un plugin que todos amábamos y que nadie sospechaba que tenía fecha de vencimiento. Hice juegos, hice advergames, hice un bingo en Facebook. Y aprendí la verdad fundacional del oficio: hacer juegos es 10% magia y 90% averiguar por qué el personaje atraviesa la pared otra vez. Los advergames me dieron el bonus track: cómo meter una marca dentro de una mecánica sin matar la diversión, que es más difícil de lo que suena y más útil de lo que parece."
       },
       "3": {
-        "text": "La muerte de Flash parecía solo eso: un final. Yo había crecido con él — fue lo que usé y, en buena parte, lo que fui durante años. Pero pronto entendí que no era un entierro sino un salto: HTML5 y JavaScript llegaban a devolverle el movimiento a la web, y a mí me devolvían a ella. De vuelta al JS, de vuelta a la web interactiva.\n\nLlevaba Pink Parrot entre el entusiasmo y el caos, en una época donde todo cambiaba a la vez — la tecnología y mi propia carrera. Las animaciones que antes vivían dentro del plugin ahora había que reconstruirlas desde cero, con reglas nuevas que nadie terminaba de dominar. Aprendí mucho por necesidad, y así se aprende mejor.\n\nFue en ese desorden donde el ágil dejó de ser teoría de slides y se volvió forma de pensar. Los sprints eran la diferencia entre entregar y hundirse; las retros, el momento de ser honesto sobre lo que no había funcionado. Más que un proceso, se volvió mi manera de ordenar el caos y crecer como profesional.\n\nLa publicidad digital de esa era todavía sorprendía al usuario. Había espacio para experimentar con la interactividad, para construir cosas que se sentían nuevas porque lo eran. Trabajé justo en ese límite entre comunicación y código, entre lo que una marca quería decir y lo que la web por fin era capaz de hacer.\n\nFue una época de crecer en todos los frentes. No todo salió bien, pero todo dejó algo — y lo que parecía la muerte de Flash terminó siendo mi salto de vuelta a la web interactiva."
+        "text": "Y entonces Flash se murió. No de a poco: un señor de cuello de tortuga escribió una carta y la plataforma sobre la que yo había construido mi identidad profesional tenía fecha de defunción. Al principio lo viví como un entierro. Después entendí que era un salto: HTML5 y JavaScript venían a devolverle el movimiento a la web, y de paso a devolverme a mí a ella.\n\nMe tocó reconstruir en Pink Parrot, mi intento de crear la primera agencia de publicidad digital del Ecuador, llevando todo lo que sabía de juegos e interactividad a un mundo nuevo. Todo cambiaba a la vez: la tecnología, las reglas y mi propia carrera. Las animaciones que antes vivían dentro del plugin había que rehacerlas desde cero con estándares que nadie terminaba de dominar. Y aprendí, además de tecnología, cosas que ningún libro de HTML trae: de negocios, de sociedades, y de que ser amigo y ser socio son dos oficios distintos. Aprendizaje del lado duro, que es el que no se olvida. No lo llamaría un fracaso. Lo llamaría la matrícula más cara y mejor invertida de mi carrera, porque de ahí salí directo a fundar lo de AR/VR sabiendo exactamente qué no repetir.\n\nEn ese desorden, el ágil dejó de ser teoría de slides y se volvió supervivencia. Los sprints eran la diferencia entre entregar y hundirse; las retros, el momento incómodo de admitir qué no funcionó. Con el tiempo dejó de ser un proceso y se volvió mi forma de ordenar el caos, dentro y fuera del código.\n\nLa publicidad digital de esa era todavía sorprendía a la gente, lo cual visto desde hoy parece ciencia ficción. Había espacio real para experimentar, para construir cosas que se sentían nuevas porque lo eran. Trabajé justo en esa frontera entre comunicación y código: entre lo que una marca quería decir y lo que la web por fin podía hacer.\n\nFue una época de crecer en todos los frentes a la vez, con el elegante método de no tener alternativa. No todo salió bien, pero todo dejó algo. Y lo que parecía la muerte de Flash terminó siendo mi salto de vuelta a la web interactiva."
       },
       "4": {
-        "text": "Monté un proyecto independiente de Realidad Virtual y Realidad Aumentada aplicadas a publicidad BTL. Fueron tres años haciendo cosas que casi nadie estaba haciendo todavía en Ecuador: experiencias de marca donde el usuario era parte del juego, no espectador.\n\nDespués llegó Metrodigi, y con ella mi primera fase real como líder. Priorizar, desbloquear, proteger al equipo del ruido, y todavía codear. Esta etapa me enseñó algo clave: me encanta el momento en que una idea pasa de «¿y si...?» a «mira, funciona», y me encanta todavía más cuando es el equipo entero el que llega ahí."
+        "text": "Después hice lo que hace cualquier persona razonable cuando una tecnología recién está naciendo: apostarle todo. Monté mi propia empresa de Realidad Virtual y Aumentada aplicadas a publicidad, en un Ecuador donde casi nadie sabía qué era eso, incluidos varios de mis clientes. Tres años construyendo experiencias donde el usuario era parte del juego y no espectador, y tres años explicando qué era lo que estaba vendiendo, que resultó ser el verdadero producto. El negocio no funcionó. La tecnología sí: hoy, en 2026, el mundo por fin está llegando adonde yo estaba parado hace una década, esperando. Todavía no sé para qué me va a servir todo ese conocimiento. Pero conociendo cómo viene esta historia, en algún momento va a encajar. Siempre encaja.\n\nMetrodigi llegó con una mudanza: me fui a vivir a otro país, a estudiar, y ahí me encontré por primera vez con el agilismo hecho en serio. Sprints con estructura de verdad y líderes de los buenos, de los que te cambian la vara de lo que creés normal. Y de un momento a otro, el líder fui yo: me asignaron un equipo grande de desarrolladores en la India, así que aprendí a liderar y a pulir mi acento en inglés al mismo tiempo, en ese orden de dificultad. Ese fue mi salto del entretenimiento a las web apps grandes: Node, Angular a montones, y Vue, que terminó siendo mi herramienta de cabecera hasta hoy. Aprendí a armar proyectos web con toda la estructura que hace falta, incluido el QA. Y ahí pasó algo hermoso: nadie quería hacerle QA a la aplicación. Nadie. Como yo era el único que lo había hecho antes, hace años, me dijeron \"si tienes chance, hazlo\". Dije que no era problema, a ver qué se sentía el cambio. Y lo que se sintió fue volver a casa: otra vez me pagaban por romper cosas."
       },
       "5": {
-        "text": "En number8 lideré QA como Lead Software QA Engineer durante casi tres años, trabajando con AWS y armando procesos desde cero. Después, en BairesDev, entré al equipo de R&D para hacer automatización de pruebas para data science, todo con Python. Era otro juego: no validar clicks ni formularios, sino pipelines que medían modelos, datasets y comportamiento estadístico — bugs que se parecen más a sesgos, drifts y edge cases que a errores de lógica clásica. Aquí descubrí algo que cambió cómo veo el software: la calidad no es algo que se revisa al final, es algo que se construye desde el inicio.\n\nEn paralelo (2019–2024) fui copropietario de VivoEnVivo, una plataforma de streaming de eventos y deportes de contacto en Ecuador. Cinco años aprendiendo lo que es construir algo tuyo de cero.\n\nEn RocketSnail lideré el frontend creando un framework custom con Vue y Lottie. Después, en Remoose Interactive, trabajé como Full Stack Engineer y rapid prototyper en el equipo de R&D. Vue, Node.js, WebGL, todo el stack."
+        "text": "Estos años fueron varios yo a la vez. El que lideraba QA en number8, armando procesos desde cero sobre AWS. El que en BairesDev automatizaba pruebas para data science con Python, donde los bugs ya no eran errores de lógica sino sesgos, drifts y edge cases estadísticos: fantasmas con matemática. Ahí se me acomodó una idea que ya no me soltó más: la calidad no se revisa al final, se construye desde el inicio.\n\nY entonces el mundo se dio la vuelta. Las calles quedaron en silencio y las casas se llenaron de ruido, y de pronto la gente venía a visitarte a la sala, en una pantalla. Todos aprendían de golpe a trabajar desde casa; yo lo hacía desde 2011. Resulta que hasta el encierro que a veces me reproché me sirvió: había estado entrenando años para esto sin saberlo. Y el tiempo que creí desperdiciado jugando World of Warcraft resultó ser donde aprendí a construir amistades reales a través de un cable. Hoy tengo amigos de esos años a los que nunca he visto en persona, y hablamos seguido. Fueron años duros para mucha gente, también para mí. Pero fueron años de aprender.\n\nVivoEnVivo nació exactamente de ese mundo. Un amigo con un gimnasio y una liga de MMA se metió en una discusión con otra liga, y en medio de la pelea de egos se le ocurrió que podía hacer el primer evento de MMA en línea del país. Le dije \"creo que te puedo apoyar\" sin tener idea de en qué me estaba metiendo, que es como empiezan todas las buenas historias.\n\nPara el primer evento pensamos que no iba a entrar tanta gente, así que las primeras peleas se transmitieron gratis por Facebook. Pero las últimas dos terminaron en knockouts increíbles, y la gente hizo lo que la gente hace: entrar a comprar la entrada al último momento, toda al mismo tiempo. Habíamos preparado el player, la transmisión, todo. Habían sido tantas cosas que olvidé algo que sé hacer desde siempre: activar el caché del sitio. El sitio se cayó, claro. Peleas de contacto transmitidas a un país encerrado, dirigidas desde una sala, y yo apagando el incendio por teléfono. Lo sorteamos, la transmisión salió, y con un amigo lo resumimos así: el primer evento fue un gran éxito, con fiasco incluido. Se aprendió.\n\nFueron tres años de VivoEnVivo. Cuando el mundo volvió a salir a la calle, la necesidad se fue apagando, y para entonces ya habíamos hecho el evento de la QFC: el objetivo estaba cumplido. Cerramos sin perder nada. Al contrario: ganamos algo de dinero, y ganamos algo mejor. La gente que contraté era gente que me rodeaba, que en muchos casos nunca había desarrollado, y hoy varios trabajan como QAs o desarrolladores profesionales. Resultó que lo más duradero que construimos no fue la plataforma.\n\nY el que necesitó un descanso. Después de años de estructura corporativa, buena pero agotadora, me tocó parar y buscar algo más creativo. Un amigo me habló de una startup en Canadá: una persona tratando de armar un proyecto de animaciones, sin que supiéramos siquiera hasta cuándo iba a alcanzar el presupuesto. Dije \"me la sé\" y entré. Eso era RocketSnail, donde lideré el frontend con un framework custom de Vue y Lottie, y lo que construimos ahí terminó constituyéndose como Remoose, ya como empresa, ya conmigo como socio. Era una máquina de animaciones editables: podías mezclar tus animaciones con las de otros, editar las ajenas, meter fotos y pedazos del mundo real adentro. Muy creativo, y muy difícil de vender, porque nunca supimos explicar bien qué necesidad cumplía, que resulta ser un detalle importante en un pitch. Duró unos tres años, cumplimos varios hitos, y el financiamiento no llegó a completarse. Otro éxito con fiasco incluido.\n\nPero Remoose me dejó lo más valioso de todos estos años. Mi jefe se convirtió en un gran amigo, uno más de esos que quiero mucho y nunca he visto en persona. Y con él nos disparamos juntos al mundo de la inteligencia artificial: experimentamos, probamos patrones, sistemas agénticos, hasta que terminé armando mi propio framework de agentes. Sin esa apertura que él me dio, nada de lo que hago hoy existiría.\n\nTodos esos yo eran el mismo. En su momento no se notaba."
       },
       "6": {
-        "text": "Y desde finales de 2023 sigo en Software Mind aplicando automatización y herramientas a data science. Y ahora la IA y los agentes me dan algo que llevo esperando desde que tenía siete años jugando en DOS: la capacidad de construir todo lo que siempre quise, automatizarlo, y prototipar a la velocidad de la imaginación.\n\nMirando para atrás, todo encaja raro de bien. Los años de competitivo me dieron la cabeza de sistemas. Los juegos Flash me dieron la velocidad de iterar. Los advergames me enseñaron a contar historias dentro del código. La web me dio el lienzo y el ágil. AR/VR me enseñó a prototipar lo imposible. Liderar equipos me enseñó que el código solo no construye nada grande. QA me dio el rigor. Data science me dio los datos.\n\nCada etapa parecía un salto. Vista de lejos, era una sola línea."
+        "text": "Cuando Remoose se apagó, volví a number8, que ahora se llamaba Software Mind. Me recibieron felices, que es de esas cosas que valen más que cualquier título. Y volví distinto: con todo lo aprendido de agentes bajo el brazo, aplicándolo a QA y data science. Es como si Metrodigi y Remoose se hubieran estado esperando el uno al otro: la estructura y el rigor de un lado, la IA y la creatividad del otro, y yo en el medio pudiendo por fin dar la mejor versión de mí. Todo por seguir las tripas, como decimos en Ecuador. La realidad virtual y la aumentada siguen ahí, esperando su momento; yo les guardo el asiento, y sospecho que la IA va a ser justamente la puerta por la que entren. Porque la IA me dio lo que llevo esperando desde los siete años frente a ese monitor verde: la capacidad de construir todo lo que siempre quise, automatizarlo, y prototipar a la velocidad de la imaginación. El niño del prompt de DOS ahora escribe prompts para máquinas que le contestan. Si me lo hubieran contado en 1995, habría preguntado en qué juego sale.\n\nMirando para atrás, todo encaja raro de bien. Y no creo que sea porque las cosas pasan por algo; creo que nadie sabe por qué pasan las cosas, y que de eso se trata: no gastar la vida buscando el porqué, sino vivirla con honestidad y aprender todo lo que se pueda. Los fracasos de antes son las victorias de ahora. Los hobbies de antes son la profesión de hoy. El competitivo me dio la cabeza de sistemas. Flash me dio la velocidad de iterar. Los advergames me enseñaron a contar historias dentro del código. La web me dio el lienzo y el ágil. AR/VR me enseñó a prototipar lo imposible. Liderar me enseñó que el código solo no construye nada grande. QA me dio el rigor. Data science me dio los datos.\n\nCada etapa parecía un salto. Vista de lejos, era una sola línea."
       }
     }
   },
@@ -161,10 +162,10 @@
       "cta": "La historia completa"
     },
     "beats": {
-      "0": { "kicker": "EL FINAL" },
+      "0": { "kicker": "EL ENTIERRO" },
       "1": { "kicker": "RECONSTRUIR" },
       "2": { "kicker": "EL MÉTODO" },
-      "3": { "kicker": "EL LÍMITE" },
+      "3": { "kicker": "LA FRONTERA" },
       "4": { "kicker": "EL SALTO" }
     },
     "ui": {
@@ -184,48 +185,48 @@
   },
   "projects": {
     "pp1": {
-      "title": "PENDING — CONTENT-CHECKLIST §2.2 (nombre proyecto #1 Pink Parrot ES)",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "title": "Pink Parrot",
+      "desc": "Agencia de publicidad digital en plena transición de Flash a la web. Interactividad de juegos aplicada a marcas."
     },
     "ch2-bluelizard": {
       "title": "BlueLizard Games",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Mi primer trabajo: Game Tester. 15 fallas críticas encontradas en la entrevista, delante del productor."
     },
     "ch2-matte": {
       "title": "Matte CG",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Gameplay programmer en plena era dorada del Flash. Títulos como Lost Realms 2 y Megamind Amazing Machine."
     },
     "ch2-joju": {
       "title": "Joju Games",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Bingo Blingo en Facebook y advergames para Coca-Cola y más: meter una marca en una mecánica sin matar la diversión."
     },
     "ch4-arvr-own": {
-      "title": "ARVR Studio (empresa propia)",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "title": "ARVR Studio",
+      "desc": "Empresa propia de VR y AR aplicadas a publicidad, adelantada una década a su mercado. El negocio no; la apuesta sí."
     },
     "ch4-metrodigi": {
       "title": "Metrodigi",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Primer liderazgo real: equipo remoto en la India, web apps grandes con Node, Angular y Vue. Y el regreso al QA."
     },
     "ch5-bairesdev": {
       "title": "BairesDev",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Automatización de pruebas para data science en R&D. Bugs que se parecen más a sesgos y drifts que a errores de lógica."
     },
     "ch5-number8": {
       "title": "number8",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Lead Software QA Engineer por casi tres años. Procesos de calidad armados desde cero, sobre AWS."
     },
     "ch5-vivoenvivo": {
-      "title": "VivoEnVivo",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "title": "VivoEnVivo (2020-2023)",
+      "desc": "Copropietario del primer streaming de MMA en línea del país. Tres años, un sitio caído, y varios QAs formados."
     },
     "ch5-rocketsnail": {
       "title": "RocketSnail",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Frontend lead en una startup canadiense de animaciones. Framework custom con Vue y Lottie."
     },
     "ch5-remoose": {
       "title": "Remoose",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "La startup constituida: socio, full stack, rapid prototyping. Animaciones editables y mezclables. Vue, Node, WebGL."
     },
     "ch6-ar-vr": {
       "title": "Empresa propia AR/VR",
@@ -233,17 +234,19 @@
     },
     "ch6-remoose": {
       "title": "Remoose Interactive",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "Donde nació mi camino en IA: experimentos con agentes y patrones que terminaron en un framework propio."
     },
     "ch6-software-mind": {
       "title": "Software Mind NA",
-      "desc": "Reseña en preparación — pronto con el detalle completo."
+      "desc": "El regreso: automatización, IA y agentes aplicados a QA y data science. Metrodigi y Remoose, por fin juntos."
     }
   },
   "contact": {
     "hudAria": "Contacto rápido",
     "emailAria": "Enviar email a Rafael",
     "emailTooltip": "Copiar email",
+    "phoneAria": "Llamar a Rafael",
+    "locationAria": "Ubicación de Rafael",
     "linkedinAria": "Perfil LinkedIn de Rafael",
     "githubAria": "GitHub de Rafael"
   },

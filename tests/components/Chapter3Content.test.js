@@ -90,9 +90,9 @@ describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2
     // Cada beat expone su lead como texto plano — probamos con un fragmento
     // largo (>25 chars) del inicio de cada párrafo real de bio.eras.3 (ES).
     const leadFragments = [
-      'La muerte de Flash parecía solo eso',
-      'Llevaba Pink Parrot entre el entusiasmo',
-      'Fue en ese desorden donde el ágil',
+      'Y entonces Flash se murió',
+      'Me tocó reconstruir en Pink Parrot',
+      'En ese desorden, el ágil dejó de ser teoría de slides',
       'La publicidad digital de esa era todavía',
       'Fue una época de crecer en todos los frentes',
     ]

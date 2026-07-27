@@ -3,12 +3,16 @@
 // Threat T-CON-03 (open redirect): URLs hardcoded en source code — NO user input runtime,
 // NO localStorage, NO query-string. Compromiso: si Rafael cambia un URL, requiere
 // commit + redeploy. Aceptable para portafolio estático.
-// Source: CONTENT-CHECKLIST §3 — Rafael no ha llenado aún; valores son placeholders.
-// Rafael reemplaza estos valores en CONTENT-CHECKLIST §3 y el executor actualiza aquí.
+// TASK-013: valores finales de Rafael (.planning/GUION-TEXTOS-FINAL.md PARTE 3).
+// phone/location son campos NUEVOS (no existían en el shape D3-10 original) —
+// decisión explícita de Rafael de mostrar el teléfono en un HUD siempre visible
+// pese al riesgo de scraping; ver hand-off de TASK-013 para la discusión completa.
 
 export const contact = {
-  email: '',            // CONTENT-CHECKLIST §3 — Rafael fills (e.g., 'rafael@example.com')
-  linkedinUrl: '',      // CONTENT-CHECKLIST §3 — e.g., 'https://www.linkedin.com/in/rafael-matovelle'
-  githubUrl: '',        // CONTENT-CHECKLIST §3 — e.g., 'https://github.com/rafael-matovelle'
-  otherUrl: null,       // CONTENT-CHECKLIST §3 — opcional (Twitter/X, Mastodon, Bluesky, sitio personal)
+  email: 'srparca@gmail.com',
+  phone: '[REDACTADO]',
+  location: 'Quito, Ecuador',
+  linkedinUrl: 'https://www.linkedin.com/in/rmatovelle/',
+  githubUrl: 'https://github.com/lordiwa',
+  otherUrl: null,        // opcional (Twitter/X, Mastodon, Bluesky, sitio personal) — Rafael no lo pidió
 }

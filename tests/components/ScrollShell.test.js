@@ -111,8 +111,8 @@ describe('ScrollShell.vue', () => {
   it('each section has id chapter-N and aria-label from t("chapters.N.title") in locale es', () => {
     const wrapper = mountBasic({ locale: 'es' })
     const expectedEs = [
-      { id: 'chapter-0', label: 'Pre-carrera: niñez digital' },
-      { id: 'chapter-1', label: 'Pre-carrera tardío: HTML 90s' },
+      { id: 'chapter-0', label: 'Origen: niñez digital' },
+      { id: 'chapter-1', label: 'El castigo que fue vocación' },
       { id: 'chapter-2', label: 'Flash era: gameplay programmer' },
       { id: 'chapter-3', label: 'Web 2.0: UX + dev + líder' },
       { id: 'chapter-4', label: 'AR/VR: empresa propia + Metrodigi' },

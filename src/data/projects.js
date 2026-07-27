@@ -3,13 +3,13 @@
 // Phase 5 fields (planetSprite, planetOrbit, planetColor): `null` en Phases 3-4; Phase 5 los pobla para ch6.
 // Convención de IDs: chN-<slug> o ppN (pink parrot N) — string corto único.
 //
-// Estado actual:
-// - ch3 Pink Parrot (Phase 3 Plan 03-04): PENDING — CONTENT-CHECKLIST §2.2.
-// - ch2 Flash era (Phase 4 Plan 04-03): 3 stubs aprobados por Rafael en gate W2
-//   ("usa stubs"). Refresh con datos reales en CONTENT-CHECKLIST §2.1 + W5 sign-off.
-// - ch4 AR/VR (Phase 4 Plan 04-04): pending §2.3.
-// - ch5 Modern (Phase 4 Plan 04-05): pending §2.4.
-// - ch6 Phaser scene (Phase 5): pending §2.5 + planet metadata.
+// TASK-013: contenido final de Rafael (.planning/GUION-TEXTOS-FINAL.md PARTE 2).
+// 13 proyectos totales. La tarjeta "Empresa propia AR/VR" de ch6 (id ch6-ar-vr)
+// SE ELIMINA de este data source — Rafael decidió que ese proyecto queda solo
+// en ch4 (ch4-arvr-own). Remoose sí queda en ch5 Y ch6 con ángulos distintos
+// a propósito (ch5-remoose = el producto y la sociedad; ch6-remoose = la
+// puerta a la IA). La i18n key `projects.ch6-ar-vr.*` queda intacta (no se
+// borra) porque varios tests la mockean como fixture — ver hand-off TASK-013.
 
 export const projects = [
   // ─────────────────────────────────────────────────────────────────
@@ -55,6 +55,26 @@ export const projects = [
     imageSrc: null,
     role: 'Gameplay Programmer',
     techStack: ['ActionScript 3', 'Flash CS5'],
+    planetSprite: null,
+    planetOrbit: null,
+    planetColor: null,
+  },
+
+  // ─────────────────────────────────────────────────────────────────
+  // ch3 — Pink Parrot 2013 (agencia de publicidad digital, transición Flash→web)
+  // TASK-013: reusa la i18n key `projects.pp1.*` — reservada para este proyecto
+  // desde Phase 3 (comentario original: "nombre proyecto #1 Pink Parrot").
+  // ─────────────────────────────────────────────────────────────────
+  {
+    id: 'pp1',
+    chapterEra: 3,
+    year: 2013,
+    titleKey: 'projects.pp1.title',
+    descKey: 'projects.pp1.desc',
+    link: null,
+    imageSrc: null,
+    role: 'UX Lead',
+    techStack: ['CSS3', 'jQuery', 'PHP'],
     planetSprite: null,
     planetOrbit: null,
     planetColor: null,
@@ -171,29 +191,14 @@ export const projects = [
   },
 
   // ─────────────────────────────────────────────────────────────────
-  // ch6 — Convergencia 2026: 3 planetas-proyecto Phaser scene (D5-01 locked)
-  // Mapping vertical descendente (cronológico ascendente):
-  //   ch6-ar-vr (2015-18, founder)       → planetOrbit:0.2 hot pink #ff3ca6
+  // ch6 — Convergencia 2026: 2 planetas-proyecto Phaser scene
+  // TASK-013: ch6-ar-vr (Empresa propia AR/VR) SE ELIMINÓ de este data source
+  // — Rafael decidió que ese proyecto queda solo en ch4 (ch4-arvr-own); la
+  // escena Phaser ahora orbita 2 planetas, no 3 (ver hand-off TASK-013).
   //   ch6-remoose (2023+, full stack)     → planetOrbit:0.5 cyan #4dffff
   //   ch6-software-mind (2023+, QA+AI)    → planetOrbit:0.8 amber #ffd95c
   // Phase 5 W0 — extiende artefacto Phase 3 (CON-06). Ownership permanece en Phase 3.
-  // titleKey/descKey son stubs (patrón D4-09 ch2/ch4/ch5); Rafael refresca via
-  // CONTENT-CHECKLIST §2.5 post-W5 sign-off si quiere copy real.
   // ─────────────────────────────────────────────────────────────────
-  {
-    id: 'ch6-ar-vr',
-    chapterEra: 6,
-    year: 2015,
-    titleKey: 'projects.ch6-ar-vr.title',
-    descKey: 'projects.ch6-ar-vr.desc',
-    link: null,
-    imageSrc: null,
-    role: 'Founder / Tech Lead',
-    techStack: ['Unity', 'ARKit', 'Vuforia'],
-    planetSprite: '/assets/ch6-planet-ar-vr.png',
-    planetOrbit: 0.2,
-    planetColor: '#ff3ca6',
-  },
   {
     id: 'ch6-remoose',
     chapterEra: 6,
@@ -222,7 +227,4 @@ export const projects = [
     planetOrbit: 0.8,
     planetColor: '#ffd95c',
   },
-
-  // PENDING — ch3 Pink Parrot (CONTENT-CHECKLIST §2.2)
-  // Cuando Rafael entregue contenido, el executor añade 1-3 items shape D3-03.
 ]
