@@ -3,7 +3,8 @@
 
   Glass holographic con backdrop-filter blur + @supports fallback (Pitfall 3).
   Estructura mínima — slot wrapper + título opcional. Styling vive en
-  chapter-themes.css @layer components bajo [data-chapter="4"] .floating-panel
+  Chapter4Content.vue (<style scoped>, selector .ch4-layout :deep(.floating-panel))
+  desde TASK-010 — migrado del difunto chapter-themes.css/chapter-components.css
   para que aplique tokens ch4 via cascade (convención Phase 3 ProjectCard idem).
 
   Responsibilities:
@@ -12,7 +13,7 @@
   - DOM structural: <article class="floating-panel"> + <h3 class="floating-panel__title">.
 
   NO Responsibilities:
-  - styling — vive en chapter-themes.css externalizado para era-cascade.
+  - styling — vive en Chapter4Content.vue, externalizado para era-cascade.
   - i18n — el llamador pasa título ya traducido.
 -->
 <script setup>

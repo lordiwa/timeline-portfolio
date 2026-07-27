@@ -175,6 +175,13 @@
       "runOnce": "Run this time"
     }
   },
+  "ch4": {
+    "hud": {
+      "boot1": "OPTICAL SYSTEM BOOT",
+      "boot2": "CALIBRATING TRACKING",
+      "boot3": "REALITY READY"
+    }
+  },
   "projects": {
     "pp1": {
       "title": "PENDING — CONTENT-CHECKLIST §2.2 (project #1 Pink Parrot name EN)",

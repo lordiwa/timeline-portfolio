@@ -43,6 +43,49 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 const activeUniverse = ref(0)
 function onUniverseChange(idx) { activeUniverse.value = idx }
 
+// ── Coreografía de entrada "ponerse el visor" (TASK-010, spec §6) ───────────
+// El shader posee su propio timer de boot (óptica: viñeta/barrel/CA/godrays);
+// acá solo orquestamos la coreografía DOM (HUD boot text, título/paneles,
+// contador FPS/LATENCY) a partir del jump-progress que emite.
+// Default 'lock': antes de la primera entrada (o si el shader nunca emite,
+// ej. WebGL no disponible) el capítulo se ve completo, no en estado "boot".
+const jumpBeat = ref('lock')
+const FPS_TARGET = 72.4
+const LATENCY_TARGET = 11
+const fpsVal = ref(FPS_TARGET)
+const latencyVal = ref(LATENCY_TARGET)
+let countRafId = 0
+let awaitingLockCount = false
+
+function onJumpProgress({ beat }) {
+  if (beat === jumpBeat.value) return
+  // Al abandonar 'lock' hacia boot/burst (arranca una secuencia nueva),
+  // resetear los contadores para que el count-up de LOCK se note.
+  if (jumpBeat.value === 'lock' && (beat === 'boot' || beat === 'burst')) {
+    awaitingLockCount = true
+    fpsVal.value = 0
+    latencyVal.value = 0
+  }
+  if (beat === 'lock' && awaitingLockCount) {
+    awaitingLockCount = false
+    animateCounters()
+  }
+  jumpBeat.value = beat
+}
+
+function animateCounters() {
+  const DUR_MS = 300
+  const start = performance.now()
+  cancelAnimationFrame(countRafId)
+  const step = (ts) => {
+    const p = Math.min((ts - start) / DUR_MS, 1)
+    fpsVal.value = Math.round(FPS_TARGET * p * 10) / 10
+    latencyVal.value = Math.round(LATENCY_TARGET * p)
+    if (p < 1) countRafId = requestAnimationFrame(step)
+  }
+  countRafId = requestAnimationFrame(step)
+}
+
 // ── Glifos matrix — reactivos al universo (SINGLE SOURCE con shader) ────────
 // Posiciones fijas (evita layout shifts). Sólo el carácter cambia por universo.
 const GLYPH_POSITIONS = [
@@ -109,20 +152,22 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onPointer)
   if (rafLoop) cancelAnimationFrame(rafLoop)
+  if (countRafId) cancelAnimationFrame(countRafId)
 })
 </script>
 
 <template>
-  <div class="ch4-layout" :data-universe="activeUniverse">
+  <div class="ch4-layout" :data-universe="activeUniverse" :data-jump="jumpBeat">
     <!-- ── Parallax stack (decorativo, detrás del contenido) ─────────────────── -->
     <div ref="parallaxRef" class="ch4-parallax" aria-hidden="true">
       <div class="ch4-layer ch4-layer--portal"></div>
       <!--
-        Ch4PortalShader: canvas WebGL de baja resolución (320×180) upscaleado a pixelated.
+        Ch4PortalShader: pipeline WebGL multi-pass a resolución real (TASK-010).
         Z-index 1 — encima del portal PNG (z0), debajo del personaje (z3).
-        Si WebGL no está disponible el componente no renderiza nada (fallback silencioso).
+        Si WebGL no está disponible el componente no renderiza nada (fallback silencioso,
+        las capas DOM debajo siguen componiendo el fondo).
       -->
-      <Ch4PortalShader @universe-change="onUniverseChange" />
+      <Ch4PortalShader @universe-change="onUniverseChange" @jump-progress="onJumpProgress" />
       <!-- Pulso de energía sobre el anillo del portal — overlay circular decorativo -->
       <div class="ch4-portal-pulse" aria-hidden="true"></div>
       <div class="ch4-layer ch4-layer--matrix"></div>
@@ -186,14 +231,24 @@ onBeforeUnmount(() => {
       </div>
       <div class="ch4-hud-bl">
         <div class="ch4-hud-line">
-          <span class="ch4-hud-key">FPS</span><span class="ch4-hud-accent"> 72.4</span>
+          <span class="ch4-hud-key">FPS</span><span class="ch4-hud-accent"> {{ fpsVal.toFixed(1) }}</span>
           <span class="ch4-hud-sep"> │ </span>
-          <span class="ch4-hud-key">LATENCY</span><span class="ch4-hud-accent"> 11ms</span>
+          <span class="ch4-hud-key">LATENCY</span><span class="ch4-hud-accent"> {{ latencyVal }}ms</span>
         </div>
       </div>
       <div class="ch4-hud-br">
         <div class="ch4-hud-model">OCULUS RIFT CV1</div>
         <div class="ch4-hud-line"><span class="ch4-hud-key">AR/VR</span><span class="ch4-hud-val"> 2015</span></div>
+      </div>
+      <!--
+        Boot lines (spec §6, beat BOOT/OPEN) — visible solo mientras data-jump
+        es "boot" u "open" (CSS abajo); "ponerse el visor" se lee también en
+        texto, no solo en la óptica del shader.
+      -->
+      <div class="ch4-hud-boot" aria-hidden="true">
+        <div class="ch4-hud-boot-line">{{ t('ch4.hud.boot1') }}</div>
+        <div class="ch4-hud-boot-line">{{ t('ch4.hud.boot2') }}</div>
+        <div class="ch4-hud-boot-line">{{ t('ch4.hud.boot3') }}</div>
       </div>
     </div>
 
@@ -256,7 +311,10 @@ onBeforeUnmount(() => {
   flex: 1 1 100%;
   align-self: stretch;
   min-width: 0;
-  overflow: hidden;
+  /* clip, no hidden: este contenedor solo quiere recorte visual (no hay
+     ningún descendiente sticky) — overflow:hidden crearía un scroll
+     container programático innecesario (regla del proyecto, TASK-010). */
+  overflow: clip;
   background-color: var(--c-bg);
   image-rendering: pixelated;
 }
@@ -278,13 +336,28 @@ onBeforeUnmount(() => {
 }
 
 /* Columna de contenido — flota a la izquierda sobre el espacio vacío, bajo el título.
-   Ancha y baja: proyectos en grid 2-col para reducir altura y no cortarse abajo. */
+   Ancha y baja: proyectos en grid 2-col para reducir altura y no cortarse abajo.
+ *
+ * FIX TASK-010 (spec §8, defecto verificado en vivo): antes `margin-top: 20vh`
+ * fijo + `overflow-y: auto` SIN cota de altura → el flex item crecía a su
+ * contenido intrínseco (887px medidos contra un viewport de 791px) y
+ * desbordaba `.ch4-layout` (`overflow: clip` recortaba el final del
+ * contenido, inalcanzable — ni el propio overflow-y:auto podía activarse
+ * porque el contenedor nunca tenía una altura FINITA contra la cual medirse).
+ * `max-height` con `calc()` le da esa cota: ahora overflow-y:auto sí puede
+ * activar scroll INTERNO real dentro del viewport, patrón ya sancionado para
+ * ch0/ch1/ch4 por tests/integration/scroll-shell-no-nested-scroll.test.js
+ * (paneles internos acotados con max-height, no el capítulo entero atrapado
+ * en scroll). `--ch4-title-h` sin JS de medición (minimalismo): 72px es una
+ * aproximación conservadora del alto real de `.ch4-title` en los tres
+ * breakpoints de aceptación (1440x900, 1366x768, mobile). */
 .ch4-panel-column {
   position: relative;
   z-index: 5;
   align-self: flex-start;    /* base izquierda */
   margin-left: 7vw;          /* solo un poco hacia el centro (no centrado del todo) */
-  margin-top: 20vh;          /* más abajo ~20% (altura perfecta) */
+  margin-top: clamp(24px, 10vh, 96px);
+  max-height: calc(100% - clamp(24px, 10vh, 96px) - var(--ch4-title-h, 72px) - var(--sp-md));
   flex: 0 1 auto;
   min-height: 0;
   min-width: 0;
@@ -292,6 +365,12 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 640px;
   overflow-y: auto;
+  overscroll-behavior: contain; /* no filtrar el scroll interno al scroll-snap del shell */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 255, 255, 0.35) transparent;
+  /* Fade-out de 24px al fondo: señala que hay más contenido por scrollear. */
+  mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 24px), transparent 100%);
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
@@ -315,7 +394,9 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
+  /* clip, no hidden — regla del proyecto (TASK-010): recorte visual puro,
+     sin necesidad de un scroll container programático. */
+  overflow: clip;
   pointer-events: none;
 }
 
@@ -717,12 +798,63 @@ onBeforeUnmount(() => {
   margin-bottom: 2px;
 }
 
-/* ── Hover glow en las project cards (FloatingPanel) ──────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+ * FloatingPanel — glass holographic (TASK-010: migrado desde el archivo
+ * intermedio src/styles/chapter-components.css, que TASK-008 dejó como
+ * parada declarada porque su lista blanca no autorizaba componentes de
+ * capítulo — ver comentario del orchestrator en tasks/TASK-010.json).
+ *
+ * Scrim reforzado (spec §9, contraste): el shader ya NO es aditivo-sobre-negro
+ * — el rango tonal del fondo llega a luminancia 0.45 fuera del portal — así
+ * que el scrim mínimo sube de rgba(10,15,46,0.4)/0.15-con-blur (valor previo,
+ * insuficiente contra el nuevo fondo) a rgba(6,10,30,0.78) + blur(6px), con
+ * fallback sin blur a 0.86. Verificado: --c-fg #b0d0ff sobre rgba(6,10,30,0.78)
+ * compuesto sobre luminancia 0.45 → fondo efectivo ~#131a35, contraste ~9.8:1
+ * (WCAG AA cuerpo pide 4.5:1). QA debe repetir la medición con screenshot +
+ * picker en los 4 universos (U1 tron es el más claro).
+ * ───────────────────────────────────────────────────────────── */
 .ch4-layout :deep(.floating-panel) {
+  position: relative;
+  z-index: 4;
+  padding: var(--sp-md);
+  background-color: rgba(6, 10, 30, 0.78);
+  border: 1px solid var(--c-accent);
+  border-radius: 8px;
+  box-shadow:
+    0 0 20px rgba(0, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  color: var(--c-fg);
+  margin-bottom: 0; /* el gap de .ch4-panel-column maneja el espaciado */
   transition: box-shadow 0.4s ease;
+  animation: ch4-panel-glow 5s ease-in-out infinite;
+}
+@keyframes ch4-panel-glow {
+  0%, 100% { box-shadow: 0 0 14px rgba(0, 255, 255, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.1); }
+  50% { box-shadow: 0 0 22px rgba(0, 255, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.12); }
 }
 .ch4-layout :deep(.floating-panel):hover {
   box-shadow: 0 0 16px rgba(0, 255, 255, 0.35), 0 0 5px rgba(0, 255, 255, 0.15);
+}
+@supports ((backdrop-filter: blur(6px)) or (-webkit-backdrop-filter: blur(6px))) {
+  .ch4-layout :deep(.floating-panel) {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+}
+@supports not ((backdrop-filter: blur(6px)) or (-webkit-backdrop-filter: blur(6px))) {
+  .ch4-layout :deep(.floating-panel) {
+    background-color: rgba(6, 10, 30, 0.86);
+  }
+}
+.ch4-layout :deep(.floating-panel__title) {
+  font-family: 'Audiowide', 'Eurostile', sans-serif;
+  color: var(--c-accent);
+  margin: 0 0 var(--sp-sm) 0;
+  font-size: 1.25rem;
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ch4-layout :deep(.floating-panel) { animation: none; }
 }
 
 /* ── Contenido — dentro de la columna flotante ─────────────────────────────── */
@@ -907,6 +1039,69 @@ onBeforeUnmount(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────
+ * TASK-010 — coreografía de entrada "ponerse el visor" (spec §6).
+ * El shader (Ch4PortalShader) es dueño de su propio timer de óptica
+ * (viñeta/barrel/CA/godrays); acá solo reaccionamos al [data-jump] que
+ * emite vía jump-progress para orquestar la coreografía DOM: título y
+ * paneles se ocultan durante BOOT/OPEN y reaparecen en BURST/LOCK, la
+ * pila de parallax completa hace un "settle" de escala (el espacio se
+ * abre en profundidad), y las líneas de boot del HUD aparecen con stagger.
+ *
+ * Reentradas cortas (BEATS_SHORT, spec §6) van directo de 'lock' a 'burst'
+ * a 'lock' sin pasar por boot/open — título/paneles NUNCA se ocultan en
+ * una reentrada, así que scrollear arriba/abajo repetidas veces no
+ * castiga con un blackout cada vez (deliberado, ver Ch4PortalShader.vue).
+ * ───────────────────────────────────────────────────────────── */
+.ch4-title,
+.ch4-panel-column {
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+.ch4-layout[data-jump="boot"] .ch4-title,
+.ch4-layout[data-jump="boot"] .ch4-panel-column,
+.ch4-layout[data-jump="open"] .ch4-title,
+.ch4-layout[data-jump="open"] .ch4-panel-column {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.ch4-parallax {
+  transition: transform 400ms ease-out;
+}
+.ch4-layout[data-jump="boot"] .ch4-parallax,
+.ch4-layout[data-jump="open"] .ch4-parallax {
+  transform: scale(1.05);
+}
+
+/* Boot lines — visibles solo durante BOOT/OPEN, con stagger de 60ms
+   (spec §6 beat 0: "HUD aparece línea a línea"). Viven junto al resto del
+   HUD, esquina inferior-izquierda, encima de FPS/LATENCY (que aparecen
+   recién en LOCK — no compiten por espacio en el tiempo). */
+.ch4-hud-boot {
+  position: absolute;
+  bottom: 44px;
+  left: 14px;
+  font-family: 'Audiowide', 'Eurostile', monospace;
+  font-size: 0.44rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 255, 255, 0.6);
+  pointer-events: none;
+}
+.ch4-hud-boot-line {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+.ch4-hud-boot-line:nth-child(1) { transition-delay: 0ms; }
+.ch4-hud-boot-line:nth-child(2) { transition-delay: 60ms; }
+.ch4-hud-boot-line:nth-child(3) { transition-delay: 120ms; }
+.ch4-layout[data-jump="boot"] .ch4-hud-boot-line,
+.ch4-layout[data-jump="open"] .ch4-hud-boot-line {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─────────────────────────────────────────────────────────────
  * PRM — congela todo el movimiento del parallax.
  * ───────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -933,6 +1128,15 @@ onBeforeUnmount(() => {
   /* Visor y stream: sin animación, sin flash */
   .ch4-visor-glow { animation: none !important; opacity: 0.35 !important; }
   .ch4-ds { display: none !important; }
+  /* Defensivo (TASK-010): jumpBeat nunca sale de 'lock' bajo PRM en la
+     práctica (el loop del shader no arranca) — título y paneles quedan en
+     su estado visible por default (§ arriba). Solo se neutraliza la
+     TRANSICIÓN/transform, nunca se fuerza opacity (las boot-lines deben
+     seguir ocultas por default, no aparecer permanentes bajo PRM). */
+  .ch4-title, .ch4-panel-column, .ch4-parallax, .ch4-hud-boot-line {
+    transition: none !important;
+  }
+  .ch4-parallax { transform: none !important; }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -970,6 +1174,9 @@ onBeforeUnmount(() => {
     width: auto;
     max-width: 100%;
     margin: var(--sp-sm) 0 0 0;
+    /* Recalculada con el margin-top real de mobile (var(--sp-sm), no el
+       clamp() de desktop) — mismo fix §8, cota de altura consistente. */
+    max-height: calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm));
     animation: none;
   }
 

@@ -175,6 +175,13 @@
       "runOnce": "Ejecutar esta vez"
     }
   },
+  "ch4": {
+    "hud": {
+      "boot1": "INICIANDO SISTEMA ÓPTICO",
+      "boot2": "CALIBRANDO SEGUIMIENTO",
+      "boot3": "REALIDAD LISTA"
+    }
+  },
   "projects": {
     "pp1": {
       "title": "PENDING — CONTENT-CHECKLIST §2.2 (nombre proyecto #1 Pink Parrot ES)",

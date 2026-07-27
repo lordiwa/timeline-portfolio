@@ -25,13 +25,21 @@ describe('Theme bleed prevention — Phase 4 architectural integration', () => {
   })
 
   // T2 (iter3 2026-06-01): containment — el parallax NO debe bleed a otros chapters.
-  // .ch4-layout es position:relative + overflow:hidden (boundary), y .ch4-parallax
-  // está absolute + overflow:hidden contenido dentro (no fixed full-viewport en desktop).
-  it('T2 iter3: parallax contenido en .ch4-layout (relative+overflow) sin bleed', () => {
+  // .ch4-layout es position:relative + overflow (boundary), y .ch4-parallax está
+  // absolute + overflow contenido dentro (no fixed full-viewport en desktop).
+  //
+  // TASK-010: overflow:hidden → overflow:clip en ambos selectores (regla del
+  // proyecto: un contenedor que solo quiere recorte visual, sin ningún
+  // descendiente sticky, usa clip — hidden crea un scroll container
+  // programático innecesario). `clip` recorta exactamente igual que `hidden`
+  // para este propósito de anti-bleed (el containment que este test protege
+  // no depende de cuál de los dos se use, solo de que exista recorte), así
+  // que el lock se actualiza al valor vigente en vez de perseguir el literal.
+  it('T2 iter3: parallax contenido en .ch4-layout (relative+overflow:clip) sin bleed', () => {
     expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*position:\s*relative/s)
-    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*overflow:\s*hidden/s)
+    expect(CH4_SRC).toMatch(/\.ch4-layout\s*\{[^}]*overflow:\s*clip/s)
     expect(CH4_SRC).toMatch(/\.ch4-parallax\s*\{[^}]*position:\s*absolute/s)
-    expect(CH4_SRC).toMatch(/\.ch4-parallax\s*\{[^}]*overflow:\s*hidden/s)
+    expect(CH4_SRC).toMatch(/\.ch4-parallax\s*\{[^}]*overflow:\s*clip/s)
   })
 
   // T3: Chapter5Content.vue NO importa FloatingPanel (ch5 NO debe heredar AR/VR
