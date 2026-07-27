@@ -27,6 +27,25 @@
   (home → about/work/contact) sigue pausando/resumiendo la MISMA instancia
   (comportamiento pre-existente, evita recrear el juego en cada click de
   sidebar). Solo el ciclo de vida a nivel de capítulo se ata al patrón ch6.
+
+  TASK-020 ronda de corrección (2026-07-27) — carrera async en mountGame():
+  el gate de arriba es correcto en régimen estacionario, pero `mountGame()`
+  hace `await import('@/phaser/ch2/index.js')` y hasta esta ronda solo
+  re-chequeaba `hostRef.value` tras el await — que SIEMPRE está bound (host
+  sin v-if, ScrollShell mantiene los 7 capítulos montados), así que no
+  protegía nada. Dos incidentes reales:
+    1. Zombie permanente: scroll-through de carga fría dispara mountGame() en
+       ch2, el visitante sigue a ch3 antes de que el chunk (150KB+) resuelva,
+       destroyGame() es no-op (game.value sigue null), el import resuelve y
+       Phaser.Game arranca su rAF en background para siempre.
+    2. Doble instancia: salir y volver a ch2 mientras el import original
+       sigue en vuelo dispara un segundo mountGame() concurrente; el guard
+       previo (`if (game.value) return`) no lo detenía porque game.value
+       seguía null.
+  Fix: guard de entrada `if (game.value || loading.value) return` (loading ya
+  existía) más un re-chequeo post-await de `isChapterActive` Y `props.active`
+  (cierra también el LOW: panel cambiado a otro que 'home' mientras el import
+  está en vuelo ya no deja el juego corriendo detrás del panel oculto).
 -->
 <script setup>
 import {
@@ -60,7 +79,11 @@ const hostRef = useTemplateRef('canvasHost')
 const loading = ref(false)
 
 async function mountGame() {
-  if (game.value) return
+  // TASK-020 ronda de corrección — guard de entrada: sin `loading.value` acá,
+  // un segundo disparo del watch mientras el import original sigue en vuelo
+  // (game.value todavía null) arrancaba una SEGUNDA descarga/instancia
+  // concurrente (incidente "doble instancia").
+  if (game.value || loading.value) return
   // Defensive — flush:'post' should guarantee hostRef bound, pero retry tick por si acaso.
   if (!hostRef.value) {
     await nextTick()
@@ -69,8 +92,13 @@ async function mountGame() {
   loading.value = true
   try {
     const { createMiniGame } = await import('@/phaser/ch2/index.js')
-    if (!hostRef.value) {
-      loading.value = false
+    // TASK-020 ronda de corrección — re-chequeo post-await: `hostRef.value`
+    // solo nunca cambia (host sin v-if), así que por sí solo no protegía de
+    // nada. El capítulo activo del sitio (o el panel local) pudo cambiar
+    // mientras el chunk de Phaser descargaba; si ya no somos ch2 (o el panel
+    // local ya no es 'home'), no se crea el juego — evita el zombie
+    // permanente en background y el "juego oculto corriendo" (LOW).
+    if (!isChapterActive.value || !props.active || !hostRef.value) {
       return
     }
     game.value = createMiniGame(hostRef.value, {
