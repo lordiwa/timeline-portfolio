@@ -22,7 +22,7 @@
   para no recalcular 140+ nodos por frame. Texto original oculto (showText=false).
 -->
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, inject, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -241,6 +241,18 @@ const audienceRef = ref(null)
 let rafId = null
 let runtime = [] // por asiento: estado + facing continuo; se muta y escribe al DOM
 
+// TASK-017: gate por capítulo activo — mismo patrón que Ch4PortalShader.vue /
+// Chapter4Content.vue (watch sobre activeChapter con immediate arranca/para el
+// loop). Antes el rAF de tick() + el setInterval del slideshow corrían SIEMPRE
+// desde el mount, sin importar en qué capítulo estuviera el visitante — 125
+// personajes * tick() por frame es el costo dominante medido en el techo
+// global de fps (ch0 en reposo ~47.7fps vs ~60 de pestaña en blanco). Fallback
+// ref(-1) (no scrollState inyectado, p.ej. tests aislados) → el loop NO
+// arranca, igual que Chapter4Content.vue/Ch4PortalShader.vue.
+const injectedScrollState = inject('scrollState', null)
+const activeChapter = injectedScrollState?.activeChapter ?? ref(-1)
+let stopChapterWatcher = null
+
 const STATES = ['idleBack', 'idleFront', 'rotR', 'rotL', 'osc', 'festejo']
 
 function rand(seed) {
@@ -369,7 +381,13 @@ function tick(now) {
   rafId = requestAnimationFrame(tick)
 }
 
-onMounted(() => {
+// startCrowdLoop/stopCrowdLoop — arrancados/parados por el watch de
+// activeChapter (abajo), NUNCA desde onMounted directo (TASK-017).
+// screenTimer (slideshow) corre incluso bajo PRM (igual que antes: solo el
+// tick() de la máquina de estados se salta, la pantalla del cine sigue
+// cicleando) — se conserva el comportamiento previo, solo se gatea POR CAPÍTULO.
+function startCrowdLoop() {
+  if (rafId || screenTimer) return // ya corriendo (guard doble-start del watch immediate)
   screenTimer = setInterval(() => {
     screenIdx.value = (screenIdx.value + 1) % screenScenes.length
     // Tras el cambio de escena, la multitud reacciona: oleada de festejo por profundidad.
@@ -378,47 +396,73 @@ onMounted(() => {
 
   const reduce =
     typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  const root = audienceRef.value
-  if (!root) return
-  const els = root.querySelectorAll('.cine-char-live')
-  const now = typeof performance !== 'undefined' ? performance.now() : 0
-  runtime = []
-  els.forEach((el) => {
-    const idx = Number(el.dataset.idx)
-    const seat = seats[idx]
-    const m = crowdManifest[seat.slug]
-    if (!m) return
-    const c = {
-      el,
-      seat,
-      slug: seat.slug,
-      m,
-      dir: 0, // 0 = norte (de espaldas)
-      state: 'idleBack',
-      phase: 'rest', // arranca quieto…
-      restUntil: now + rand(seat.seed ^ 0x9e3779b9) * 2500, // …con espera inicial escalonada
-      target: 0,
-      sign: 1,
-      turnRem: 0,
-      oscPhase: 0,
-      turn: 3 + rand(seat.seed) * 1.6, // 3–4.6 dir/s (giro calmado, cada quien distinto)
-      fFrame: 0,
-      fAcc: 0,
-      fFps: 9 + rand(seat.seed ^ 0x1234) * 3, // 9–12 fps de festejo
-      lastFrame: -1,
-      t: now,
-    }
-    runtime.push(c)
-  })
-
   if (!reduce) rafId = requestAnimationFrame(tick)
+}
+
+function stopCrowdLoop() {
+  if (screenTimer) {
+    clearInterval(screenTimer)
+    screenTimer = null
+  }
+  if (rafId) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+  waveTimers.forEach((t) => clearTimeout(t))
+  waveTimers = []
+}
+
+onMounted(() => {
+  // Init del runtime (estado inicial por asiento) — one-shot, no es un loop.
+  // Se hace siempre en mount (no gateado): los 7 capítulos están SIEMPRE en
+  // el DOM (ver ScrollShell.vue), así que .cine-char-live ya existe aunque
+  // ch5 no sea el capítulo activo. Al re-entrar a ch5 el estado de cada
+  // personaje se retoma donde quedó (no se reinicializa) — startCrowdLoop
+  // solo retoma el rAF/interval, no reconstruye `runtime`.
+  const root = audienceRef.value
+  if (root) {
+    const els = root.querySelectorAll('.cine-char-live')
+    const now = typeof performance !== 'undefined' ? performance.now() : 0
+    runtime = []
+    els.forEach((el) => {
+      const idx = Number(el.dataset.idx)
+      const seat = seats[idx]
+      const m = crowdManifest[seat.slug]
+      if (!m) return
+      const c = {
+        el,
+        seat,
+        slug: seat.slug,
+        m,
+        dir: 0, // 0 = norte (de espaldas)
+        state: 'idleBack',
+        phase: 'rest', // arranca quieto…
+        restUntil: now + rand(seat.seed ^ 0x9e3779b9) * 2500, // …con espera inicial escalonada
+        target: 0,
+        sign: 1,
+        turnRem: 0,
+        oscPhase: 0,
+        turn: 3 + rand(seat.seed) * 1.6, // 3–4.6 dir/s (giro calmado, cada quien distinto)
+        fFrame: 0,
+        fAcc: 0,
+        fFps: 9 + rand(seat.seed ^ 0x1234) * 3, // 9–12 fps de festejo
+        lastFrame: -1,
+        t: now,
+      }
+      runtime.push(c)
+    })
+  }
+
+  stopChapterWatcher = watch(
+    activeChapter,
+    (v) => { v === 5 ? startCrowdLoop() : stopCrowdLoop() },
+    { immediate: true },
+  )
 })
 
 onBeforeUnmount(() => {
-  if (screenTimer) clearInterval(screenTimer)
-  if (rafId) cancelAnimationFrame(rafId)
-  waveTimers.forEach((t) => clearTimeout(t))
-  waveTimers = []
+  stopChapterWatcher?.()
+  stopCrowdLoop()
 })
 </script>
 
