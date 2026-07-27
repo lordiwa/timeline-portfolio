@@ -1,0 +1,30 @@
+/*
+ * chassis.css — TASK-008: RAFAEL-OS, identidad invariante del chasis.
+ * Fuente de verdad: .planning/design/00-sistema-visual-global.md §6.
+ *
+ * El chasis (avatar, timeline, HUDs, boot) es UNA sola identidad de cabina:
+ * monoespaciada, vidrio oscuro, que se refina imperceptiblemente con las
+ * decadas pero JAMAS se disfraza de la era que muestra. La era nunca cambia la
+ * GEOMETRIA ni la FUENTE del chasis, solo lo tine (color-mix con --c-accent/
+ * --c-bg de la era activa) y lo refina (radius/scanline/glow derivados de
+ * --era-progress). Por eso el chasis NUNCA consume --font-body de eras.css —
+ * usa --hud-font propio, constante en las 7 eras.
+ *
+ * Como --era-progress esta registrada como <number> (tokens.css @property), el
+ * chasis se desliza entre estos estados en --dur-era SIN JS (AC5 de TASK-008):
+ * en 1995 es una cabina de esquinas duras (2px) y scanlines marcadas (0.12
+ * alpha); en 2026 es vidrio neon pulido (11px) casi sin scanline (0.012 alpha).
+ */
+@layer chassis {
+  :root {
+    --hud-font: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+    --hud-glass: color-mix(in oklch, var(--c-bg) 78%, transparent);
+    --hud-line: color-mix(in oklch, var(--c-accent) 40%, transparent);
+    --hud-fg: var(--c-fg);
+    --hud-blur: 14px;
+    /* Evolucion continua con la decada, derivada de --era-progress (0..6): */
+    --hud-radius: calc(2px + var(--era-progress) * 1.5px);          /* 2px DOS -> 11px 2026 */
+    --hud-scanline-alpha: calc(0.12 - var(--era-progress) * 0.018); /* CRT -> vidrio puro */
+    --hud-glow: calc(2px + var(--era-progress) * 3px);              /* fosforo -> neon */
+  }
+}

@@ -129,12 +129,15 @@ watch(prefersReduced, (isPRM) => {
   content: '';
   position: absolute;
   inset: -4px;
-  border: 1px solid color-mix(in srgb, var(--c-accent) 48%, transparent);
-  border-radius: 9px;
+  /* TASK-008: marco RAFAEL-OS — hairline + radio derivados de chassis.css
+     (--hud-line/--hud-radius), glow atado a --hud-glow (fósforo en ch0 ->
+     neón en ch6, spec §6.2). */
+  border: 1px solid var(--hud-line);
+  border-radius: var(--hud-radius);
   pointer-events: none;
   box-shadow:
-    0 0 16px -2px color-mix(in srgb, var(--c-accent) 35%, transparent),
-    inset 0 0 8px color-mix(in srgb, var(--c-accent) 12%, transparent);
+    0 0 calc(var(--hud-glow) * 2.5) -2px color-mix(in srgb, var(--c-accent) 35%, transparent),
+    inset 0 0 calc(var(--hud-glow) * 1.25) color-mix(in srgb, var(--c-accent) 12%, transparent);
   transition: border-color 300ms ease, box-shadow 300ms ease;
 }
 

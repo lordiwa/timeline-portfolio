@@ -15,8 +15,9 @@ import { resolve } from 'node:path'
 import FlashBanner from '@/components/FlashBanner.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
+// TASK-008: .flash-banner vive ahora en chapter-components.css.
 const CSS_SOURCE = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-themes.css'),
+  resolve(process.cwd(), 'src/styles/chapter-components.css'),
   'utf8'
 )
 

@@ -20,7 +20,9 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const CH6_PATH = resolve(process.cwd(), 'src/components/Chapter6Content.vue')
-const THEMES_PATH = resolve(process.cwd(), 'src/styles/chapter-themes.css')
+// TASK-008: .ch6-mantra vive ahora en chapter-components.css (chapter-themes.css
+// fue reemplazado por tokens.css + eras.css + chassis.css + chapter-components.css).
+const THEMES_PATH = resolve(process.cwd(), 'src/styles/chapter-components.css')
 
 let ch6Src = ''
 let themesSrc = ''

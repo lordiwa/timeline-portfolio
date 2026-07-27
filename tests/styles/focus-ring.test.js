@@ -12,12 +12,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const APP_VUE = readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
-const THEMES_CSS = readFileSync(resolve(process.cwd(), 'src/styles/chapter-themes.css'), 'utf8')
+const THEMES_CSS = readFileSync(resolve(process.cwd(), 'src/styles/eras.css'), 'utf8')
 const LANG_TOGGLE = readFileSync(resolve(process.cwd(), 'src/components/LangToggle.vue'), 'utf8')
 
-// Helper: extrae el bloque de contenido de un chapter dado en chapter-themes.css
+// Helper: extrae el bloque de contenido de una era dada en eras.css (TASK-008:
+// selector de doble scope [data-chapter="N"], :root[data-active-chapter="N"] { }).
 function getBlock(source, chapter) {
-  const regex = new RegExp(`\\[data-chapter="${chapter}"\\]\\s*\\{([\\s\\S]*?)\\}`)
+  const regex = new RegExp(`\\[data-chapter="${chapter}"\\][^{]*\\{([\\s\\S]*?)\\n\\s*\\}`)
   const match = source.match(regex)
   return match ? match[1] : ''
 }

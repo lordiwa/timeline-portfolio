@@ -11,12 +11,13 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const CSS_PATH = resolve(process.cwd(), 'src/styles/chapter-themes.css')
+const CSS_PATH = resolve(process.cwd(), 'src/styles/eras.css')
 const source = readFileSync(CSS_PATH, 'utf8')
 
-// Helper: extrae el bloque de contenido entre [data-chapter="N"] { y el } de cierre.
+// Helper: extrae el bloque de contenido del selector de doble scope
+// [data-chapter="N"], :root[data-active-chapter="N"] { ... } (TASK-008).
 function extractBlock(src, chapter) {
-  const regex = new RegExp(`\\[data-chapter="${chapter}"\\]\\s*\\{([\\s\\S]*?)\\}`)
+  const regex = new RegExp(`\\[data-chapter="${chapter}"\\][^{]*\\{([\\s\\S]*?)\\n\\s*\\}`)
   const match = src.match(regex)
   return match ? match[1] : ''
 }

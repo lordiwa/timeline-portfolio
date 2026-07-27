@@ -112,18 +112,17 @@ watch(activeChapter, (newCh, oldCh) => {
   left: var(--sp-md);
   transform: translateY(-50%);
   z-index: 40;
-  /* --hud-fg: fg RESUELTO a nivel panel (theme activo via html[data-chapter]).
-     Los .tick-button llevan su propio data-chapter y re-scopean --c-fg al de
-     SU era (ej. ch5 claro → fg oscuro → invisible sobre panel oscuro). Capturar
-     el valor aquí y usar var(--hud-fg) en las filas inmuniza el texto a ese
-     re-scope; los rombos SÍ usan el --c-accent propio de cada era (deliberado:
-     cada nodo viste el color de su era). */
-  --hud-fg: var(--c-fg);
-  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
-  border-radius: 14px;
+  /* TASK-008: el hack local --hud-fg se borra — ya vive en :root vía
+     chassis.css (--hud-fg: var(--c-fg), spec §6.3), inmune al mismo problema
+     de re-scope que documentaba el comentario viejo. Material RAFAEL-OS
+     (chassis.css §6.2): mismo vidrio/hairline/radio que el resto del chasis,
+     teñido por --c-accent de la era activa vía color-mix. Los rombos SÍ usan
+     el --c-accent propio de cada era (deliberado: cada nodo viste su era). */
+  background: var(--hud-glass);
+  -webkit-backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  border: 1px solid var(--hud-line);
+  border-radius: var(--hud-radius);
   padding: var(--sp-sm);
   box-shadow:
     0 16px 40px -16px rgba(0, 0, 0, 0.55),
@@ -183,7 +182,7 @@ watch(activeChapter, (newCh, oldCh) => {
   min-height: 44px;
   text-align: left;
   border-radius: 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--hud-font);
   transition: background 150ms ease, color 150ms ease, transform 150ms ease;
 }
 

@@ -61,15 +61,18 @@ function toggle() {
   align-items: center;
   gap: var(--sp-xs);
   padding: var(--sp-sm) var(--sp-md);
-  /* Material HUD era-tinted (redesign 2026-07-09) — vidrio de cabina:
-     bg del theme translúcido + blur + hairline accent. Se re-tematiza solo. */
-  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
+  /* Material RAFAEL-OS unificado (chassis.css §6.2, TASK-008) — vidrio de
+     cabina: bg del theme translúcido + blur + hairline accent, igual que el
+     resto de HUDs fijos. border-radius se mantiene en 999px (pill) — la
+     geometría de píldora es intencional y distinta del panel-radius del
+     chasis (--hud-radius es para paneles cuadrados/timeline, no para pills). */
+  background: var(--hud-glass);
+  -webkit-backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  border: 1px solid var(--hud-line);
   border-radius: 999px;
-  color: var(--c-fg);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--hud-fg);
+  font-family: var(--hud-font);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;

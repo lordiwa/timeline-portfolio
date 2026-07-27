@@ -53,9 +53,11 @@ function mountCard(project = baseProject, { locale = 'es' } = {}) {
   return { wrapper, i18n }
 }
 
-// Lee chapter-themes.css como raw string para asserts de CSS estático (T5)
+// Lee chapter-components.css como raw string para asserts de CSS estático (T5).
+// TASK-008: el .project-card skeumorphic base vive ahora aquí (chapter-themes.css
+// fue reemplazado por tokens.css + eras.css + chassis.css + chapter-components.css).
 const THEMES_CSS = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-themes.css'),
+  resolve(process.cwd(), 'src/styles/chapter-components.css'),
   'utf8'
 )
 

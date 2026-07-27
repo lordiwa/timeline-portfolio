@@ -16,6 +16,24 @@ Formato per entry:
 
 ---
 
+## ch5-hero.webp — iter1 → RETIRADO (2026-07-27)
+
+- **Versión guardada:** `old/ch5-hero-2026-07-27-iter1.webp`
+- **Razón del cambio:** TASK-008 (sistema de tokens y chasis). El asset pertenecía
+  a una premisa muerta — un hero blanco tipo SaaS/Modern (paleta `#ffffff` bg,
+  `#6366f1` accent) — mientras la escena en producción de ch5 es una sala de cine
+  oscura (paleta `#171009`/`#efe7db`/`#818cf8`, ver `.planning/design/00-sistema-
+  visual-global.md` §5.3 y §1 hallazgo 7). No se sampleó este asset para el nuevo
+  sistema de tokens (spec §5.3 lo excluye explícitamente por ser de la premisa
+  vieja). `eras.css` ya no declara `--bg-image` para `[data-chapter="5"]`.
+- **Qué se intentará diferente:** Ninguna regeneración en este ticket — ch5 no
+  necesita foto de fondo bajo la dirección "broadcast/cine oscuro". TASK-011
+  (rediseño ch5, spec `05-ch5-pandemia-broadcast.md`) es quien decide si la
+  escena necesita arte nuevo.
+- **Commit hash del cambio:** ver hand-off de TASK-008 (se completa post-commit).
+
+---
+
 ## ch6-bg-tall.webp — iter2 → RETIRADO (2026-07-10)
 
 - **Versión guardada:** `old/ch6-bg-tall-2026-07-10-iter2.webp`

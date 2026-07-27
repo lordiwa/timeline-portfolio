@@ -103,7 +103,10 @@ const githubDisabled = computed(() => !contact.githubUrl || contact.githubUrl ==
  * - width/height 44px por .contact-icon — tap target a11y mínimo (UI-SPEC §3 + A11Y).
  * - transition 150ms — interaction-derived (D-05), análogo a LangToggle.
  * - NO se declara outline: propio — el :focus-visible universal de App.vue lo cubre (Pitfall 7).
- * - Tokens NEUTROS: --c-surface, --c-border, --c-fg, --c-accent, --c-bg — invariante a chapter (D3-10).
+ * - TASK-008: material RAFAEL-OS (chassis.css §6.2) — pierde su estatus "invariante
+ *   con tokens neutros" (D3-10 superada por la spec 00-sistema-visual-global.md §6.3)
+ *   y adopta el mismo vidrio/hairline/radio que el resto del chasis, teñido por
+ *   --c-accent de la era activa. Tap targets 44px y focus-visible intactos.
  * ───────────────────────────────────────────────────────────────────────── */
 .contact-hud {
   position: fixed;
@@ -121,14 +124,15 @@ const githubDisabled = computed(() => !contact.githubUrl || contact.githubUrl ==
   justify-content: center;
   width: 44px;
   height: 44px;
-  /* Material HUD era-tinted (redesign 2026-07-09) — mismo vidrio que
-     LangToggle/StickyTimeline. Iconos siempre legibles: color --c-fg. */
-  background: color-mix(in srgb, var(--c-bg) 74%, transparent);
-  -webkit-backdrop-filter: blur(12px) saturate(1.2);
-  backdrop-filter: blur(12px) saturate(1.2);
-  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
-  border-radius: 10px;
-  color: color-mix(in srgb, var(--c-fg) 75%, transparent);
+  /* Material HUD era-tinted, unificado vía chassis.css (TASK-008) — mismo
+     vidrio/hairline/radio que LangToggle/StickyTimeline/SkipLink/SoundToggle.
+     Iconos siempre legibles: color --hud-fg. */
+  background: var(--hud-glass);
+  -webkit-backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  backdrop-filter: blur(var(--hud-blur)) saturate(1.2);
+  border: 1px solid var(--hud-line);
+  border-radius: var(--hud-radius);
+  color: color-mix(in srgb, var(--hud-fg) 75%, transparent);
   text-decoration: none;
   box-shadow:
     0 10px 28px -14px rgba(0, 0, 0, 0.55),

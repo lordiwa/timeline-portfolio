@@ -69,8 +69,11 @@ vi.mock('@/data/projects', () => ({
   ],
 }))
 
+// TASK-008: .project-card override de ch2 vive ahora en chapter-components.css
+// (chapter-themes.css fue reemplazado por tokens.css + eras.css + chassis.css +
+// chapter-components.css).
 const CSS_SOURCE = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-themes.css'),
+  resolve(process.cwd(), 'src/styles/chapter-components.css'),
   'utf8'
 )
 

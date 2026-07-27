@@ -89,18 +89,19 @@ defineExpose({ handleScrollOnce })
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  /* Material HUD era-tinted (redesign 2026-07-09) — visible-at-load se
-     mantiene (A11Y-01 locked); solo cambia el vestido: vidrio + accent. */
-  background: color-mix(in srgb, var(--c-bg) 78%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  color: var(--c-fg);
+  /* Material RAFAEL-OS unificado (chassis.css §6.2, TASK-008) — visible-at-load
+     se mantiene (A11Y-01 locked); solo cambia el vestido: mismo vidrio/hairline
+     que el resto de HUDs fijos. border-radius se mantiene en 999px (pill). */
+  background: var(--hud-glass);
+  -webkit-backdrop-filter: blur(var(--hud-blur));
+  backdrop-filter: blur(var(--hud-blur));
+  color: var(--hud-fg);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--hud-font);
   padding: var(--sp-xs) var(--sp-md);
-  border: 1px solid color-mix(in srgb, var(--c-accent) 32%, transparent);
+  border: 1px solid var(--hud-line);
   border-radius: 999px;
   box-shadow:
     0 10px 28px -14px rgba(0, 0, 0, 0.55),

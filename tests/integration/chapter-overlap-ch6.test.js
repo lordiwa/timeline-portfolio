@@ -30,7 +30,9 @@ import { resolve } from 'node:path'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 const SCROLL_SHELL_PATH = resolve(process.cwd(), 'src/components/ScrollShell.vue')
-const THEMES_PATH = resolve(process.cwd(), 'src/styles/chapter-themes.css')
+// TASK-008: .ch6-layout vive ahora en chapter-components.css (chapter-themes.css
+// fue reemplazado por tokens.css + eras.css + chassis.css + chapter-components.css).
+const THEMES_PATH = resolve(process.cwd(), 'src/styles/chapter-components.css')
 
 let scrollShellSrc = ''
 let themesSrc = ''

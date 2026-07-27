@@ -16,8 +16,9 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import FloatingPanel from '@/components/FloatingPanel.vue'
 
+// TASK-008: .floating-panel vive ahora en chapter-components.css.
 const CSS_SOURCE = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-themes.css'),
+  resolve(process.cwd(), 'src/styles/chapter-components.css'),
   'utf8'
 )
 

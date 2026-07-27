@@ -153,18 +153,21 @@ async function handleClick() {
   min-height: 44px;
 
   padding: 0;
-  border: 1.5px solid color-mix(in srgb, var(--c-accent) 40%, transparent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--c-surface) 85%, transparent);
+  /* TASK-008: material RAFAEL-OS (chassis.css §6.2), unificado con el resto
+     del chasis (antes usaba --c-surface como base de vidrio; todo HUD fijo
+     ahora comparte el mismo --hud-glass derivado de --c-bg). */
+  border: 1.5px solid var(--hud-line);
+  border-radius: var(--hud-radius);
+  background: var(--hud-glass);
   cursor: pointer;
 
-  color: var(--c-fg);
+  color: var(--hud-fg);
   transition: border-color 150ms, background 150ms, opacity 150ms;
 }
 
 .sound-toggle:hover {
   border-color: var(--c-accent);
-  background: color-mix(in srgb, var(--c-surface) 95%, var(--c-accent));
+  background: color-mix(in srgb, var(--hud-glass) 60%, var(--c-accent));
 }
 
 /* SVG fill hereda del color del botón */
@@ -183,7 +186,7 @@ async function handleClick() {
 
 /* Estado off: acento rojizo para indicar silencio */
 .sound-toggle--off {
-  color: color-mix(in srgb, var(--c-fg) 60%, #f87171);
+  color: color-mix(in srgb, var(--hud-fg) 60%, #f87171);
 }
 
 /* PRM: sin transitions (el color no es movimiento visual

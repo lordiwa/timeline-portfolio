@@ -1,0 +1,157 @@
+/*
+ * eras.css — TASK-008: 7 bloques de era con contrato de doble scope.
+ * Fuente de verdad: .planning/design/00-sistema-visual-global.md §5.1.
+ *
+ * Contrato (spec §5.1): cada era es UN solo bloque con selector de doble scope
+ * — `[data-chapter="N"], :root[data-active-chapter="N"]` — que reemplaza los DOS
+ * bloques verbatim-duplicados del chapter-themes.css viejo (uno para la <section>
+ * del capitulo, otro para el HUD fijo estampado en <html data-active-chapter>).
+ * Un bloque, dos ambitos, cero mantenimiento espejo (elimina la deuda admitida
+ * en la linea 169 del archivo viejo).
+ *
+ * Una era puede sobreescribir EXACTAMENTE: --era-progress, --c-bg, --c-fg,
+ * --c-accent, --c-border, --c-focus, --c-surface (donde aplica), --font-body,
+ * y nada mas salvo casos ya shipped documentados inline (--c-accent-2/--c-mantra
+ * en ch6, consumidos por Chapter6Content.vue / GlobalMantra.vue). --bg-image se
+ * declara SOLO en el scope de section (nunca en :root) para no contaminar los
+ * .bg-layer de otros chapters via herencia — igual que el archivo viejo.
+ *
+ * Desviacion documentada de la spec (11-token contract, --font-display separado
+ * de --font-body, --ease-era por era): TASK-008 mantiene el --font-body UNICO ya
+ * shipped en vez de partirlo en --font-display/--font-body, y no introduce
+ * --ease-era. Ninguno de los dos tiene un consumidor real hoy (ningun componente
+ * lee --font-display ni --ease-era) — introducirlos ahora seria una abstraccion
+ * sin segundo caller (Ponytail/MINIMALISM.md). Quedan para el ticket de capitulo
+ * que primero los necesite (el mismo que trae transitions.css, spec §9 paso 5).
+ *
+ * Resolucion de las 3 EXCEPCIONES de paleta (ch2/ch3/ch5, spec §3 regla final):
+ * el archivo viejo tenia una paleta "stub" en la <section> y una paleta "real"
+ * distinta en el HUD (:root[data-active-chapter]) para estos 3 capitulos. Aqui
+ * la paleta REAL (la que ya renderiza hoy sobre el HUD y, por herencia de
+ * :root[data-active-chapter] hacia el arbol, tambien sobre .project-card/
+ * .floating-panel/.scroll-reveal-card sin override propio) pasa a ser LA UNICA
+ * paleta de la era. La excepcion desaparece porque ya no hay dos valores que
+ * puedan derivar entre si — hay uno.
+ */
+@layer themes {
+
+  /* ── ch0 — Terminal (1995) — sin excepcion, valores shipped intactos ──────── */
+  [data-chapter="0"],
+  :root[data-active-chapter="0"] {
+    --era-progress: 0;
+    --c-bg: #000000;           /* DOS black */
+    --c-fg: #ffffff;           /* DOS bright white (VGA color 15) */
+    --c-accent: #aaaaaa;       /* VGA light gray (color 7) */
+    --c-border: #555555;
+    --c-focus: #ffffff;
+    --font-body: 'VT323', ui-monospace, monospace;
+    /* contrast(#ffffff, #000000) = 21:1 — WCAG AAA sin tradeoff (era-authentic). */
+  }
+
+  /* ── ch1 — HTML 90s crudo (2001) — sin excepcion, valores shipped intactos ── */
+  [data-chapter="1"],
+  :root[data-active-chapter="1"] {
+    --era-progress: 1;
+    --c-bg: #000080;
+    --c-fg: #ff00ff;
+    --c-accent: #ffff00;
+    --c-border: #ffffff;
+    --c-focus: #ffffff;
+    --font-body: 'Comic Neue', 'Comic Sans MS', cursive;
+    /* contrast(#ff00ff, #000080) = 3.2:1 — chapter 1 (HTML 90s crudo) accepts 3.2:1 here as era-authentic tradeoff per THM-05; era-accurate visual identity (Comic Sans + magenta on starry navy) demands this. Compensated by larger font-size 18px+ minimum which improves perceived legibility. */
+  }
+
+  /* ── ch2 — Flash/Y2K (2009) — EXCEPCION resuelta ───────────────────────────
+   * Paleta real de la escena Y2K cyber (stage .flash-y2k-*, chapter-components.css)
+   * pasa a ser LA paleta de la section — ya no hay stub purpura/naranja separado. */
+  [data-chapter="2"],
+  :root[data-active-chapter="2"] {
+    --era-progress: 2;
+    --c-bg: #050a18;
+    --c-fg: #f8fcff;
+    --c-accent: #5af2ff;
+    --c-border: #4a6890;
+    --c-focus: #b8ff3a;
+    --c-surface: #0e1c34;
+    --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
+    /* contrast(#f8fcff, #050a18) ≈ 17.9:1 — WCAG AAA sin tradeoff. */
+  }
+
+  /* ── ch3 — Web 2.0 / "la muerte de Flash" (2013) — EXCEPCION resuelta ─────
+   * Paleta real de la escena ember/oro (campo de batalla, chapter-components.css
+   * base .project-card) pasa a ser LA paleta de la section — ya no hay stub
+   * pastel Web 2.0 separado. TASK-009 (redisenio total de ch3) reemplazara este
+   * bloque por la paleta flat 2013 nueva; no es competencia de TASK-008. */
+  [data-chapter="3"],
+  :root[data-active-chapter="3"] {
+    --era-progress: 3;
+    --c-bg: #1c100c;
+    --c-fg: #f3e4d0;
+    --c-accent: #ffa94d;
+    --c-border: #4a2e22;
+    --c-focus: #ffa94d;
+    --c-surface: #241410;
+    --font-body: 'Lobster', Georgia, serif;
+    /* contrast(#f3e4d0, #1c100c) ≈ 13.1:1 — WCAG AAA sin tradeoff. */
+  }
+
+  /* ── ch4 — AR/VR (2015) — sin excepcion, valores shipped intactos ─────────── */
+  [data-chapter="4"],
+  :root[data-active-chapter="4"] {
+    --era-progress: 4;
+    --c-bg: #0a0f2e;
+    --c-fg: #b0d0ff;
+    --c-accent: #00ffff;
+    --c-border: #2050a0;
+    --c-focus: #00ffff;
+    --c-surface: #142050;
+    --font-body: 'Audiowide', 'Eurostile', sans-serif;
+    /* contrast(#b0d0ff, #0a0f2e) ≈ 11.8:1 — WCAG AAA sin tradeoff.
+       Sin --bg-image: ch4 maneja su fondo internamente (Chapter4Content.vue). */
+  }
+
+  /* ── ch5 — Broadcast/cine (2021) — EXCEPCION resuelta + limpieza de asset ──
+   * Paleta real del cine oscuro (chapter-components.css .scroll-reveal-card,
+   * .project-card variant) pasa a ser LA paleta de la section — ya no hay stub
+   * white-SaaS separado. --bg-image RETIRADO: ch5-hero.webp pertenecia a esa
+   * premisa muerta (public/assets/old/ + CHANGELOG, ver hand-off de TASK-008);
+   * la escena de cine oscuro no usa foto de fondo. */
+  [data-chapter="5"],
+  :root[data-active-chapter="5"] {
+    --era-progress: 5;
+    --c-bg: #171009;
+    --c-fg: #efe7db;
+    --c-accent: #818cf8;
+    --c-border: #3a2e22;
+    --c-focus: #818cf8;
+    --c-surface: #221a12;
+    --font-body: 'Inter Variable', system-ui, sans-serif;
+    /* contrast(#efe7db, #171009) ≈ 13.6:1 — WCAG AAA sin tradeoff. */
+  }
+
+  /* ── ch6 — Phaser/Synthwave, climax (2026) — sin excepcion (ya era el mismo
+   * valor a ambos lados en el archivo viejo). --c-accent-2/--c-mantra se
+   * conservan: consumidos hoy por Chapter6Content.vue y GlobalMantra.vue
+   * (var(--c-mantra, var(--c-fg))) — quitarlos cambiaria el color real
+   * renderizado, no es una limpieza neutra. */
+  [data-chapter="6"],
+  :root[data-active-chapter="6"] {
+    --era-progress: 6;
+    --c-bg: #1a0e3d;
+    --c-fg: #c0e0ff;
+    --c-accent: #4dffff;
+    --c-accent-2: #ff3ca6;
+    --c-mantra: #ffd95c;
+    --c-border: #4dffff;
+    --c-focus: #ffd95c;
+    --c-surface: #0a061f;
+    --font-body: 'Audiowide', sans-serif;
+    /* contrast(#c0e0ff, #1a0e3d) ≈ 10.6:1 — WCAG AAA sin tradeoff. */
+  }
+  /* --bg-image SOLO en scope de section, nunca en :root (evita contaminar
+     bg-layers de otros chapters via herencia) — igual que el archivo viejo. */
+  [data-chapter="6"] {
+    --bg-image: url('/assets/ch6-bg.webp');
+  }
+
+}

@@ -1,224 +1,36 @@
 /*
- * chapter-themes.css — Motor visual Phase 2
- * ─────────────────────────────────────────
- * Propósito: 7 themes era-auténticos (ch0-ch6) via CSS Custom Properties override
- * por selector [data-chapter="N"]. Ch0 (Terminal 1995) y Ch1 (HTML 90s) COMPLETOS.
- * Ch2-6 stubs era-tinted que Phase 3/4 finalizarán con pixel art + paleta definitiva.
+ * chapter-components.css — TASK-008: CSS de componentes de capitulo, migrado
+ * verbatim fuera de chapter-themes.css (71.8 KB) al separarlo de tokens.css +
+ * eras.css + chassis.css. Fuente: .planning/design/00-sistema-visual-global.md §3.
  *
- * Source of truth: UI-SPEC §4.2 (valores hex verbatim) + D2-01/D2-02/D2-03 (decisiones).
- * Requirements cubiertos: THM-01 (7 chapters), THM-02 (@layer), THM-03 (6 tokens cada uno),
- * THM-04 (theme isolation via [data-chapter] per-section), THM-05 (contrast tradeoff ch1).
+ * ESTADO DE MIGRACION (deliberado, ver hand-off de TASK-008):
+ * la lista blanca de archivos de TASK-008 (fijada por Rafael tras el incidente
+ * del 2026-07-27) NO incluye ningun Chapter{N}Content.vue, asi que este archivo
+ * es una parada intermedia, no el destino final que pide la spec §3 ("todo CSS
+ * de componente de capitulo migra al <style> del Chapter{N}Content.vue
+ * correspondiente"). Plan de retiro de ESTE archivo:
+ *   - ch2 (.flash-y2k-*, .flash-nav-*, .flash-stage, .flash-panel-*,
+ *     .ch2-minigame-*, .flash-banner-*, .flash-war-*, .flash-about-*,
+ *     .flash-dispatch-*, .flash-work-grid, .flash-contact-*, .flash-y2k-status,
+ *     .flash-preloader-*, .flash-mobile-notice-*, y el override
+ *     `[data-chapter="2"] .project-card`) permanece AQUI de forma permanente:
+ *     ch2 esta fuera del alcance del rediseño (decision de Rafael, ch0-ch2 solo
+ *     se elevan en craft) y Chapter2Content.vue esta en la lista de PROHIBIDOS
+ *     de TASK-008 y no aparece en ningun ticket de migracion planeado.
+ *   - ch3 (.project-card base sin scope + override futuro) sale de aqui cuando
+ *     TASK-009 (ch3 "la muerte de Flash") migre su CSS a Chapter3Content.vue.
+ *   - ch4 (.floating-panel*) sale de aqui con TASK-010.
+ *   - ch5 (.scroll-reveal-card*, override `[data-chapter="5"] .project-card`)
+ *     sale de aqui con TASK-011.
+ *   - ch6 (.ch6-layout, .ch6-canvas-host, .ch6-mantra, .project-overlay*) sale
+ *     de aqui con TASK-012.
+ * Cada ticket de capitulo debe borrar SU porcion de este archivo al migrarla,
+ * no solo copiarla — evitar que quede código muerto duplicado.
  *
- * Nota: Este archivo NO declara :root — el fallback neutral vive en App.vue líneas 87-108.
- * Solo overrides per-chapter via [data-chapter="N"] selectors que matchean el v-for de
- * ScrollShell.vue (`:data-chapter="ch.id"` → renderiza como `data-chapter="0"`, etc.).
+ * Contrato de capa (spec §3): NADA aqui puede introducir hex/ms/cubic-bezier
+ * literales fuera de lo que ya estaba shipped (sin cambios de esa naturaleza
+ * en este ticket — TASK-008 no reescribe la logica visual de cada capitulo).
  */
-
-/* Declaración de orden de capas — ASCENDENTE de prioridad (la última gana). THM-02. */
-@layer reset, themes, components, utilities;
-
-/* ─────────────────────────────────────────────────────────────────────────────────────
- * @layer themes — 7 chapter blocks con CSS Custom Properties por era
- *
- * Fallback neutral declarado en App.vue líneas 87-108; chapter-themes.css NO duplica
- * el :root — solo override per chapter via [data-chapter="N"].
- * ───────────────────────────────────────────────────────────────────────────────────── */
-@layer themes {
-
-  /* ──────────────────────────────────────────────────────
-   * ch0 — Terminal (1995, ~11 años) — Phase 6 refresh 2026-05-14
-   * Era: MS-DOS prompt, COMMAND.COM, VGA 16 colors, BBS.
-   * Rafael 2026-05-14: "el terminal debería ser DOS blanco negro no linux"
-   * → migración de phosphor green CRT Unix-style a DOS bright-white-on-black.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="0"] {
-    --c-bg: #000000;           /* DOS black */
-    --c-fg: #ffffff;           /* DOS bright white (VGA color 15) */
-    --c-accent: #aaaaaa;       /* VGA light gray (color 7) — DOS default text reading */
-    --c-border: #555555;       /* mid gray border */
-    --c-focus: #ffffff;
-    --font-body: 'VT323', ui-monospace, monospace;
-    /* contrast(#ffffff, #000000) = 21:1 — WCAG AAA passes naturally for ch0 (DOS white-on-black era-authentic). No tradeoff documentation required. */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch1 — HTML 90s crudo (2001-2005, ~15-18 años) — COMPLETO Phase 2
-   * Era: GeoCities, Angelfire, marquee tags, Comic Sans,
-   * fondo estrellado navy, colores chillones, frames anidados.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="1"] {
-    --c-bg: #000080;
-    --c-fg: #ff00ff;
-    --c-accent: #ffff00;
-    --c-border: #ffffff;
-    --c-focus: #ffffff;
-    --font-body: 'Comic Neue', 'Comic Sans MS', cursive;
-    /* contrast(#ff00ff, #000080) = 3.2:1 — chapter 1 (HTML 90s crudo) accepts 3.2:1 here as era-authentic tradeoff per THM-05; era-accurate visual identity (Comic Sans + magenta on starry navy) demands this. Compensated by larger font-size 18px+ minimum which improves perceived legibility. */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch2 — Flash era (2009, ~22 años) — STUB Phase 2
-   * Era: ActionScript, skeuomorfismo temprano, banners
-   * animados, púrpura profundo, naranja de acento.
-   * Phase 4 finaliza paleta + fondos pixel art.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="2"] {
-    --c-bg: #000000;
-    --c-fg: #e0c0ff;
-    --c-accent: #ff8800;
-    --c-border: #8060c0;
-    --c-focus: #ffaa00;
-    --c-surface: #1a0a3a;
-    --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
-    /* contrast(#e0c0ff, #000000) ≈ 14.8:1 — chapter 2 (Flash era) — Rafael 2026-05-17
-       quitó --bg-image url(ch2-bg.jpg) y cambió --c-bg a negro puro: el bg pixel-art
-       competía con la UI Flash CSS encima. Fondo negro deja respirar el stage Y2K. */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch3 — Web 2.0 (2013, ~26 años) — STUB Phase 2 (default landing)
-   * Era: glassmorfismo, Lobster font, gradientes, redes
-   * sociales, pastel blue — Phase 3 finaliza.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="3"] {
-    --c-bg: #f0f4ff;
-    --c-fg: #1a1a2e;
-    --c-accent: #ff6699;
-    --c-border: #a0b0d8;
-    --c-focus: #0066cc;
-    --font-body: 'Lobster', Georgia, serif;
-    /* contrast(#1a1a2e, #f0f4ff) = 13.4:1 — chapter 3 stub Web 2.0 — Phase 3 owns
-       paleta final + pixel art decorations */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch4 — AR/VR (2015-2018, ~30 años) — STUB Phase 2
-   * Era: Unity/Unreal AR, deep space UI, holográfico,
-   * floating panels, paneles translúcidos.
-   * Phase 4 añade parallax + ship sprites.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="4"] {
-    --c-bg: #0a0f2e;
-    --c-fg: #b0d0ff;
-    --c-accent: #00ffff;
-    --c-border: #2050a0;
-    --c-focus: #00ffff;
-    --c-surface: #142050;
-    /* NO --bg-image — ch4 maneja su bg internamente vía Chapter4Content.vue.
-       BackgroundLayers.vue global no aplica para ch4. iter3 2026-06-01: parallax de
-       4 capas "flotando en el vacío" (portal/matrix/character/near) puntero+drift. */
-    --font-body: 'Audiowide', 'Eurostile', sans-serif;
-    /* contrast(#b0d0ff, #0a0f2e) = 11.8:1 — chapter 4 (AR/VR) — Phase 4 W3 ✓ */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch5 — Modern animated (2022-2024, ~36 años) — STUB Phase 2
-   * Era: SaaS minimal, Tailwind, Inter Variable,
-   * micro-interacciones scroll-driven, indigo palette.
-   * Phase 4 añade scroll-driven micro-interactions.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="5"] {
-    --c-bg: #ffffff;
-    --c-fg: #1a1a2e;
-    --c-accent: #6366f1;
-    --c-border: #e2e8f0;
-    --c-focus: #6366f1;
-    --c-surface: #f5f7fb;
-    --bg-image: url('/assets/ch5-hero.webp');
-    --font-body: 'Inter Variable', system-ui, sans-serif;
-    /* contrast(#1a1a2e, #ffffff) = 14.2:1 — chapter 5 (Modern) — Phase 4 W4 ✓
-       --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph */
-  }
-
-  /* ──────────────────────────────────────────────────────
-   * ch6 — Phaser/AI Convergencia (2026, ~42 años) — Phase 5 W0 finalizado
-   * Era: gamedev interactivo, IA generativa, pixel art lo-fi vaporwave/synthwave,
-   * deep purple gradient, neon hot-pink + cyan + soft amber mantra accents.
-   * Phase 5 W1-W5 finaliza la escena Phaser completa + ships + planets + overlay.
-   * NOTA: este bloque extiende artefacto Phase 2 (THM-01/03/05) — Phase 5 sólo añade el slot
-   * [data-chapter="6"] finalizado con paleta D5-04 synthwave + --bg-image. Ownership del req
-   * permanece en Phase 2.
-   * ────────────────────────────────────────────────────── */
-  [data-chapter="6"] {
-    --c-bg: #1a0e3d;                       /* deep purple D5-04 (bg gradient base) */
-    --c-fg: #c0e0ff;                       /* readable cool-blue sobre deep purple */
-    --c-accent: #4dffff;                   /* electric cyan (planet halos + UI) */
-    --c-accent-2: #ff3ca6;                 /* hot pink (ships + planet highlights) */
-    --c-mantra: #ffd95c;                   /* soft amber (easter egg mantra fade-in) */
-    --c-border: #4dffff;
-    --c-focus: #ffd95c;
-    --c-surface: #0a061f;                  /* near-black starfield contrast */
-    --bg-image: url('/assets/ch6-bg.webp'); /* BackgroundLayers crossfade ch5→ch6 (D2-04) */
-    --font-body: 'Audiowide', sans-serif;
-    /* contrast(#c0e0ff, #1a0e3d) ≈ 10.6:1 — chapter 6 (Phaser synthwave) — Phase 5 W0 ✓
-       --bg-image consumido por BackgroundLayers.vue (D2-04) via useBackgroundMorph
-       PNG porque pixelforge.forge_background en Phase 5 outputs PNG indexado con
-       paleta D5-04 4-color (mejor compresión que JPEG para gradients lisos). */
-  }
-
-  /* ──────────────────────────────────────────────────────────────────────
-   * Tokens era-reactivos a nivel :root — HUDs fijos (redesign 2026-07-09)
-   *
-   * App.vue estampa html[data-active-chapter="N"] con el chapter activo para
-   * que los HUDs fijos (StickyTimeline/StickyAvatar/LangToggle/ContactHUD/
-   * GlobalMantra), que viven FUERA de las <section data-chapter>, hereden el
-   * theme de la era activa. Atributo DISTINTO a data-chapter a propósito:
-   * usar el mismo activaría selectores de componentes ([data-chapter="5"]
-   * .project-card, etc.) fuera de su section.
-   *
-   * ⚠️ MANTENIMIENTO: estos valores DUPLICAN verbatim los tokens de los
-   * bloques [data-chapter="N"] de arriba — si cambias un token allá,
-   * cámbialo acá. Deliberadamente SIN --bg-image (contaminaría los
-   * .bg-layer de otros chapters via herencia) y SIN --font-body en claves
-   * ilegibles (los HUDs usan ui-monospace propio).
-   * ────────────────────────────────────────────────────────────────────── */
-  :root[data-active-chapter="0"] {
-    --c-bg: #000000; --c-fg: #ffffff; --c-accent: #aaaaaa;
-    --c-border: #555555; --c-focus: #ffffff;
-  }
-  :root[data-active-chapter="1"] {
-    --c-bg: #000080; --c-fg: #ff00ff; --c-accent: #ffff00;
-    --c-border: #ffffff; --c-focus: #ffffff;
-  }
-  /* ch2 — EXCEPCIÓN deliberada: el theme de la section quedó púrpura/naranja
-     (stub Flash) pero la escena real es el stage Y2K cyber (Phase 04.1:
-     azul hielo + cromo + neón). HUD en la paleta Y2K real. */
-  :root[data-active-chapter="2"] {
-    --c-bg: #050a18; --c-fg: #f8fcff; --c-accent: #5af2ff;
-    --c-border: #4a6890; --c-focus: #b8ff3a; --c-surface: #0e1c34;
-  }
-  /* ch3 — EXCEPCIÓN deliberada: el theme de la section quedó Web 2.0 pastel
-     (stub) pero la escena real es el campo de batalla "La muerte de Flash"
-     (oscuro, ember/oro épico). HUD ember oscuro + oro. */
-  :root[data-active-chapter="3"] {
-    --c-bg: #1c100c; --c-fg: #f3e4d0; --c-accent: #ffa94d;
-    --c-border: #4a2e22; --c-focus: #ffa94d; --c-surface: #241410;
-  }
-  :root[data-active-chapter="4"] {
-    --c-bg: #0a0f2e; --c-fg: #b0d0ff; --c-accent: #00ffff;
-    --c-border: #2050a0; --c-focus: #00ffff; --c-surface: #142050;
-  }
-  /* ch5 — EXCEPCIÓN deliberada al "verbatim": el theme de la section quedó
-     white-SaaS (stub Phase 2) pero la escena real es el CINE OSCURO
-     (Rafael 2026-07-07). Un HUD blanco flotando sobre el hall oscuro
-     rompería la inmersión — paleta HUD madera-oscura + indigo moderno. */
-  :root[data-active-chapter="5"] {
-    --c-bg: #171009; --c-fg: #efe7db; --c-accent: #818cf8;
-    --c-border: #3a2e22; --c-focus: #818cf8; --c-surface: #221a12;
-  }
-  :root[data-active-chapter="6"] {
-    --c-bg: #1a0e3d; --c-fg: #c0e0ff; --c-accent: #4dffff;
-    --c-accent-2: #ff3ca6; --c-mantra: #ffd95c;
-    --c-border: #4dffff; --c-focus: #ffd95c; --c-surface: #0a061f;
-  }
-
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────
- * @layer components — reservado Phase 3/4
- * Era-authentic UI components: botones Web 2.0 glossy, marquees, AR/VR panels, etc.
- * NO poblado en Phase 2.
- * ───────────────────────────────────────────────────────────────────────────────────── */
 @layer components {
   /* ─────────────────────────────────────────────────────────────
    * ProjectCard — Skeumorphic Web 2.0 era-auténtico (D3-11)
@@ -1869,14 +1681,4 @@
   .project-overlay__link:active {
     transform: translateY(1px);
   }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────
- * @layer utilities — reservado Phase 3/4
- * Utility classes responsive, spacing overrides, display helpers.
- * NO poblado en Phase 2.
- * ───────────────────────────────────────────────────────────────────────────────────── */
-@layer utilities {
-  /* Phase 3/4 reservado para utility classes responsive y helpers de layout
-     que necesiten override explícito sobre components. */
 }

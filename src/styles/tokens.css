@@ -1,0 +1,109 @@
+/*
+ * tokens.css — TASK-008: sistema de tokens invariante (RAFAEL-OS).
+ * Fuente de verdad: .planning/design/00-sistema-visual-global.md §3-4.
+ *
+ * Reemplaza, junto con eras.css + chassis.css + chapter-components.css, a
+ * src/styles/chapter-themes.css (71.8 KB, ver §1 de la spec para el diagnostico
+ * completo de la duplicacion section/HUD que este archivo elimina).
+ *
+ * Declara el orden canonico de @layer UNA sola vez para todo el bundle (spec §3):
+ * reset (App.vue) < tokens (aqui) < themes (eras.css) < chassis (chassis.css) <
+ * components (chapter-components.css) < transitions (reservada, ver nota abajo) <
+ * utilities (reservada). Cascade layers: el ULTIMO layer listado gana, por eso
+ * chassis puede reafirmarse sobre themes y components sobre ambos si comparte
+ * selector — en la practica cada capa tiene selectores propios y no compite.
+ *
+ * Nota transitions: la capa se pre-declara vacia para que un ticket futuro
+ * (EraTransition parametrizado por cruce, spec §7) pueda poblarla sin tener que
+ * volver a tocar este archivo — EraTransition.vue NO esta en la lista blanca de
+ * TASK-008, asi que ese trabajo queda fuera de este ticket.
+ */
+@layer reset, tokens, themes, chassis, components, transitions, utilities;
+
+@layer tokens {
+  :root {
+    /* ── 4.1 Tipografia — escala fluida (clamp en rem, WCAG 1.4.4) ──────────── */
+    --fs-100: clamp(0.72rem, 0.65rem + 0.3vw, 0.8rem);   /* metadatos, ticks timeline */
+    --fs-200: clamp(0.88rem, 0.8rem + 0.4vw, 1rem);      /* UI, HUD, captions */
+    --fs-300: clamp(1rem, 0.92rem + 0.5vw, 1.125rem);    /* cuerpo de prosa */
+    --fs-500: clamp(1.25rem, 1.1rem + 0.9vw, 1.6rem);    /* subtitulos, h3 */
+    --fs-700: clamp(1.7rem, 1.3rem + 2.2vw, 2.6rem);     /* h2 de era */
+    --fs-900: clamp(2.2rem, 1.6rem + 3.8vw, 3.8rem);     /* titulo de era (display) */
+    --lh-tight: 1.12;
+    --lh-body: 1.55;
+    --measure: 62ch;
+
+    /* ── 4.2 Espaciado, grid y radios — extiende --sp-* (App.vue @layer reset) ── */
+    --content-max: 72rem;
+    --inset-chapter-top: calc(96px + var(--sp-md));
+    --inset-chapter-bottom: calc(44px + var(--sp-md) + env(safe-area-inset-bottom, 0px));
+    --r-card: 10px;
+
+    /* ── 4.3 Bandas de z-index — formaliza el stacking ya existente ─────────── */
+    --z-bg: -1;      /* BackgroundLayers */
+    --z-content: 0;  /* chapter sections */
+    --z-hud: 40;     /* avatar, timeline, toggles, contact */
+    --z-veil: 48;    /* era-veil */
+    --z-wipe: 49;    /* EraTransition */
+    --z-skip: 50;    /* SkipLink */
+    --z-boot: 60;    /* BootScreen, DialUpScreen */
+
+    /* ── 4.4 Duraciones y easings ────────────────────────────────────────────── */
+    --dur-tap: 90ms;      /* press/hover */
+    --dur-swap: 200ms;    /* avatar swap, bg crossfade (contratos D2-05 intactos) */
+    --dur-theme: 300ms;   /* re-tematizado del chasis */
+    --dur-enter: 400ms;   /* stagger de entrada de contenido */
+    --dur-era: 600ms;     /* interpolacion de --era-progress y cruces (cap: 700ms) */
+    --dur-ambient: 1200ms; /* Ken Burns, drifts idle */
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  }
+
+  /* PRM: contratos existentes se mantienen (avatar instant, morph 150ms);
+     toda animacion NUEVA nace dentro de un gate PRM — sin excepciones (spec §4.4). */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --dur-era: 150ms;
+      --dur-ambient: 0ms;
+      --dur-enter: 0ms;
+    }
+  }
+}
+
+/* ── 4.5 Propiedades registradas (@property) ───────────────────────────────────
+ * Registrar --era-progress como <number> hace que INTERPOLE: todo lo derivado
+ * con calc() en el chasis (glow, radio, scanlines — chassis.css §6.2) se desliza
+ * suavemente entre eras sin una linea de JS (AC5 de TASK-008). Registrar los
+ * colores como <color> hace que los color-mix() derivados transicionen en vez
+ * de saltar. @property es un at-rule de nivel superior — no necesita @layer.
+ * ────────────────────────────────────────────────────────────────────────────── */
+@property --era-progress {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --c-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7dd3fc;
+}
+@property --c-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0b0b16;
+}
+
+@layer tokens {
+  :root {
+    transition:
+      --era-progress var(--dur-era) var(--ease-standard),
+      --c-accent var(--dur-theme) ease,
+      --c-bg var(--dur-theme) ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      transition: --era-progress 150ms var(--ease-standard);
+    }
+  }
+}

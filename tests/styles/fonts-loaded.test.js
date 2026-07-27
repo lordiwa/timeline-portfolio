@@ -1,12 +1,15 @@
 /**
- * fonts-loaded.test.js — Source-level smoke + regression tests (Task 5.1)
+ * fonts-loaded.test.js — Source-level smoke + regression tests (Task 5.1,
+ * actualizado por TASK-008 §AC#4: Cinzel + Cinzel Decorative salen del bundle,
+ * Roboto ya no se importaba desde 2026-06-01 y ahora se retira de package.json).
  *
  * Verifica:
  * - package.json contiene los 6 paquetes @fontsource* (sin Verdana/Trebuchet self-hosted)
  * - Versiones son ^5.x (major version 5)
- * - src/main.js importa los 6 paquetes ANTES de chapter-themes.css
- * - src/styles/chapter-themes.css declara --font-body matcheando cada paquete instalado
+ * - src/main.js importa los 6 paquetes ANTES de eras.css
+ * - src/styles/eras.css declara --font-body matcheando cada paquete instalado
  * - ch2 (Verdana/Trebuchet MS) NO tiene package @fontsource correspondiente (system-safe lock)
+ * - Cinzel/Cinzel Decorative/Roboto NO están en package.json ni en main.js (AC#4 regression lock)
  *
  * No es TDD "RED→GREEN" — verifica estado del filesystem post-install. Útil como
  * regression guard: si alguien remueve un import o paquete, el test falla inmediatamente.
@@ -29,13 +32,13 @@ const mainSource = readFileSync(
 )
 
 const themesSource = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-themes.css'),
+  resolve(process.cwd(), 'src/styles/eras.css'),
   'utf8'
 )
 
 // Paquetes self-hosted esperados (ch2 omitido — system-safe).
-// 2026-05-29: +roboto (ch3 body/CTA), +cinzel/+cinzel-decorative (ch3 título épico
-// "La muerte de Flash"). Removidos bungee+pacifico (ch3 legacy iter9, sin uso).
+// TASK-008: Cinzel + Cinzel Decorative retirados (AC#4, bundle de fuentes);
+// Roboto retirado de package.json (dead dependency, no se importaba desde 2026-06-01).
 const EXPECTED_PACKAGES = [
   '@fontsource/vt323',
   '@fontsource/comic-neue',
@@ -43,15 +46,12 @@ const EXPECTED_PACKAGES = [
   '@fontsource/audiowide',
   '@fontsource/press-start-2p',
   '@fontsource-variable/inter',
-  '@fontsource/roboto',
-  '@fontsource/cinzel',
-  '@fontsource/cinzel-decorative',
 ]
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 describe('Fonts — source-level (Task 5.1)', () => {
 
-  it('T1: package.json contiene exactamente los 9 paquetes @fontsource*', () => {
+  it('T1: package.json contiene exactamente los 6 paquetes @fontsource*', () => {
     const deps = packageJson.dependencies || {}
     for (const pkg of EXPECTED_PACKAGES) {
       expect(deps, `Falta paquete: ${pkg}`).toHaveProperty(pkg)
@@ -90,17 +90,18 @@ describe('Fonts — source-level (Task 5.1)', () => {
     }
   })
 
-  it('T4: imports de fonts aparecen ANTES de chapter-themes.css en main.js', () => {
-    // Verifica que el bloque de imports de fonts precede al import de chapter-themes.
-    // Los imports de fonts usan rutas @fontsource/* o referencias a CSS locales de fonts.
+  it('T4: imports de fonts aparecen ANTES de eras.css en main.js', () => {
+    // Verifica que el bloque de imports de fonts precede al import de eras.css
+    // (TASK-008: reemplaza a chapter-themes.css). Los imports de fonts usan
+    // rutas @fontsource/* o referencias a CSS locales de fonts.
     const fontsBlockStart = mainSource.indexOf('@fontsource/vt323')
-    const chapterThemesImport = mainSource.indexOf("import './styles/chapter-themes.css'")
+    const erasImport = mainSource.indexOf("import './styles/eras.css'")
     expect(fontsBlockStart, 'No se encontró el bloque de fonts en main.js').toBeGreaterThan(-1)
-    expect(chapterThemesImport, 'No se encontró el import de chapter-themes.css').toBeGreaterThan(-1)
-    expect(fontsBlockStart, 'Los fonts deben aparecer ANTES de chapter-themes.css').toBeLessThan(chapterThemesImport)
+    expect(erasImport, 'No se encontró el import de eras.css').toBeGreaterThan(-1)
+    expect(fontsBlockStart, 'Los fonts deben aparecer ANTES de eras.css').toBeLessThan(erasImport)
   })
 
-  it('T5: chapter-themes.css declara --font-body correcto para cada chapter (incluye ch2 system-safe)', () => {
+  it('T5: eras.css declara --font-body correcto para cada chapter (incluye ch2 system-safe)', () => {
     // Phase 5 W0: ch6 cambia de 'Press Start 2P' (Phase 2 stub) a 'Audiowide'
     // (D5-04 synthwave-friendly: vapor/vaporwave aesthetic).
     const fontMappings = [
@@ -126,6 +127,16 @@ describe('Fonts — source-level (Task 5.1)', () => {
     // Verificar también que main.js no importa ningún fontsource relacionado a ch2
     expect(mainSource).not.toContain('@fontsource/verdana')
     expect(mainSource).not.toContain('@fontsource/trebuchet')
+  })
+
+  // T7 (AC#4 regression lock): Cinzel/Cinzel Decorative/Roboto no vuelven al bundle.
+  it('T7: Cinzel, Cinzel Decorative and Roboto are absent from package.json and main.js', () => {
+    const deps = packageJson.dependencies || {}
+    expect(deps).not.toHaveProperty('@fontsource/cinzel')
+    expect(deps).not.toHaveProperty('@fontsource/cinzel-decorative')
+    expect(deps).not.toHaveProperty('@fontsource/roboto')
+    expect(mainSource).not.toContain('@fontsource/cinzel')
+    expect(mainSource).not.toContain('@fontsource/roboto')
   })
 
 })

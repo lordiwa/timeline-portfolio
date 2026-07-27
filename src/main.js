@@ -21,11 +21,16 @@ import '@fontsource/audiowide/latin-ext.css'      // ch4 — latin-ext (ñ, á, 
 import './styles/inter-variable-latin.css'        // ch5 — Inter Variable latin+latin-ext (wght 100-900)
 import '@fontsource/press-start-2p/latin.css'     // ch6 — Phaser pixel UI (latin)
 import '@fontsource/press-start-2p/latin-ext.css' // ch6 — latin-ext (ñ, á, etc.)
-import '@fontsource/cinzel/latin-700.css'             // ch3 — epic engraved display (numerales/labels)
-import '@fontsource/cinzel/latin-900.css'             // ch3 — epic display heavy
-import '@fontsource/cinzel-decorative/latin-900.css'  // ch3 — título ornamentado épico "La muerte de Flash"
+// Cinzel + Cinzel Decorative ELIMINADOS (TASK-008, AC#4): el título "La muerte
+// de Flash" de Chapter3Content.vue cae a su fallback CSS ('Trajan Pro', serif)
+// hasta que TASK-009 (redisenio ch3) elija su reemplazo (Open Sans, ver
+// .planning/design/03-ch3-muerte-de-flash.md §5) — decisión fuera de alcance
+// de este ticket, que solo saca Cinzel del bundle de fuentes.
 
-import './styles/chapter-themes.css'   // W2: @layer cascade + 7 themes era-auténticos
+import './styles/tokens.css'             // TASK-008: tokens invariantes + @property + @layer order
+import './styles/eras.css'               // TASK-008: 7 bloques de era, doble scope (reemplaza chapter-themes.css)
+import './styles/chassis.css'            // TASK-008: identidad RAFAEL-OS del chasis compartido
+import './styles/chapter-components.css' // TASK-008: CSS de componentes de capítulo (staging, ver header del archivo)
 
 const app = createApp(App)
 const head = createHead()

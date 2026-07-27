@@ -9,7 +9,10 @@ import { resolve } from 'node:path'
 const CH4_SRC = readFileSync(resolve(process.cwd(), 'src/components/Chapter4Content.vue'), 'utf8')
 const CH5_SRC = readFileSync(resolve(process.cwd(), 'src/components/Chapter5Content.vue'), 'utf8')
 const SCROLL_SHELL_SRC = readFileSync(resolve(process.cwd(), 'src/components/ScrollShell.vue'), 'utf8')
-const CHAPTER_THEMES_SRC = readFileSync(resolve(process.cwd(), 'src/styles/chapter-themes.css'), 'utf8')
+// TASK-008: los boundaries [data-chapter="N"] viven ahora en eras.css
+// (chapter-themes.css fue reemplazado por tokens.css + eras.css + chassis.css +
+// chapter-components.css).
+const CHAPTER_THEMES_SRC = readFileSync(resolve(process.cwd(), 'src/styles/eras.css'), 'utf8')
 
 describe('Theme bleed prevention — Phase 4 architectural integration', () => {
   // T1 (iter3 2026-06-01): parallax de 4 capas "flotando en el vacío". El contrato
