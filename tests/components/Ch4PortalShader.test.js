@@ -28,7 +28,18 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { ref, nextTick } from 'vue'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import Ch4PortalShader, { UNIVERSES, TIER_CONFIG } from '@/components/Ch4PortalShader.vue'
+
+// opticsFragSrc() vive dentro de <script setup> (no exportable — <script
+// setup> no admite `export` de bindings arbitrarios), así que el regression
+// lock de la lente Sobel lee el source directo, igual que el resto de los
+// locks CSS/GLSL de este proyecto (p.ej. tests/integration/ch4-layout-height-fix.test.js).
+const SHADER_SOURCE = readFileSync(
+  resolve(process.cwd(), 'src/components/Ch4PortalShader.vue'),
+  'utf8'
+)
 
 // ── Factory de mock WebGL — cubre programas/FBOs/texturas del pipeline multi-pass ──
 function makeGLMock({ loseContext = false, renderer = 'Mock GPU' } = {}) {
@@ -220,6 +231,44 @@ describe('Ch4PortalShader.vue', () => {
     expect(TIER_CONFIG.LOW.steps).toBe(0) // LOW degrada a vórtice 2D (spec §4.1)
   })
 
+  // ── T6b lente reveladora — matriz de tiers (spec §7.3) ───────────────────
+  it('T6b TIER_CONFIG.lens: presente en HIGH/MED, ausente en LOW (spec §7.3)', () => {
+    expect(TIER_CONFIG.HIGH.lens).toBe(true)
+    expect(TIER_CONFIG.MED.lens).toBe(true)
+    expect(TIER_CONFIG.LOW.lens).toBe(false)
+  })
+
+  it('T6b UNIVERSES: cada universo trae edgeTint (vec3 0..1) para la lente reveladora', () => {
+    UNIVERSES.forEach((u) => {
+      expect(u.edgeTint).toHaveLength(3)
+      u.edgeTint.forEach((v) => {
+        expect(typeof v).toBe('number')
+        expect(v).toBeGreaterThanOrEqual(0)
+        expect(v).toBeLessThanOrEqual(1)
+      })
+    })
+  })
+
+  // ── T6c regression lock: la lente Sobel no puede volver a recortarse en
+  // silencio (ronda de completado TASK-010 — ya se cortó una vez, el hallazgo
+  // que motivó esta ronda fue "verifiqué que no hay ni una ocurrencia de
+  // sobel en src/"). Rojo si alguien vuelve a recortar el efecto.
+  it('T6c source de Ch4PortalShader.vue contiene la lente Sobel (sobelEdge, #define LENS, LENS_R/LENS_LERP)', () => {
+    expect(SHADER_SOURCE).toMatch(/sobelEdge/)
+    expect(SHADER_SOURCE).toMatch(/#define LENS \$\{lens/)
+    expect(SHADER_SOURCE).toMatch(/LENS_LERP\s*=\s*0\.06/) // spec §4.6: inercia 0.06/frame
+    expect(SHADER_SOURCE).toMatch(/LENS_ORBIT_PERIOD_S\s*=\s*23/) // spec §4.6: mobile, lissajous 23s
+  })
+
+  it('T6c opticsFragSrc({taps,sde,lens}) — TIER_CONFIG.lens gatea #define LENS por tier vía la misma función que taps/sde', () => {
+    // La función se llama exactamente igual para las 3 variantes al compilar
+    // los programas en initGL() — el lock verifica que 'lens' viaja en el
+    // mismo objeto de config que taps/sde, no un mecanismo aparte que se
+    // pueda desincronizar del resto de la matriz de tiers.
+    expect(SHADER_SOURCE).toMatch(/function opticsFragSrc\(\{ taps, sde, lens \}\)/)
+    expect(SHADER_SOURCE).toMatch(/opticsFragSrc\(cfg\)/) // initGL: cfg = TIER_CONFIG[tier], trae .lens
+  })
+
   // ── T7 universe-change emitido al arrancar el loop ───────────────────────
   it('T7 con WebGL mockeado + ch4 activo → universe-change emitido con 0 (reset a U0)', () => {
     const restore = patchWebGL(makeGLMock())
@@ -322,6 +371,68 @@ describe('Ch4PortalShader.vue', () => {
     let wrapper
     try {
       expect(() => { wrapper = mountShader({ chapter: ref(4) }) }).not.toThrow()
+    } finally {
+      restore()
+      wrapper?.unmount()
+      window.history.pushState({}, '', originalLocation)
+    }
+  })
+
+  // ── T11b tier observable — data-ch4-tier + emit tier-change ─────────────
+  // Regression lock del hook de observabilidad usado para verificar en vivo
+  // (CDP) que la baja/subida automática de tier realmente ocurre (round de
+  // completado TASK-010): sin esto, adaptTier() cambia currentTier pero no
+  // hay forma externa de comprobarlo salvo inferirlo del framerate.
+  it('T11b ?ch4tier=MED → canvas.dataset.ch4Tier refleja el tier forzado', () => {
+    const originalLocation = window.location.href
+    window.history.pushState({}, '', '/?ch4tier=MED')
+    const restore = patchWebGL(makeGLMock())
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      const canvas = wrapper.find('canvas')
+      expect(canvas.attributes('data-ch4-tier')).toBe('MED')
+    } finally {
+      restore()
+      wrapper?.unmount()
+      window.history.pushState({}, '', originalLocation)
+    }
+  })
+
+  // ── T11c umbral de detección endurecido (ronda de completado TASK-010) ──
+  // Antes: hc>=8 OR mem>=8 alcanzaba HIGH. Con la lente sumando costo al Pass
+  // C, HIGH ya no sostenía 60fps en hardware que solo cumplía UNA señal (ver
+  // hand-off). Ahora requiere AMBAS — este test es rojo/verde plantable:
+  // revertir el && a || en detectInitialTier() hace que el tier detectado
+  // vuelva a HIGH y el test caiga.
+  it('T11c hc=8 pero mem=4 (solo UNA señal de capacidad) → detecta MED, no HIGH', () => {
+    const originalHc = navigator.hardwareConcurrency
+    const originalMem = navigator.deviceMemory
+    Object.defineProperty(navigator, 'hardwareConcurrency', { value: 8, configurable: true })
+    Object.defineProperty(navigator, 'deviceMemory', { value: 4, configurable: true })
+    const restore = patchWebGL(makeGLMock())
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      expect(wrapper.find('canvas').attributes('data-ch4-tier')).toBe('MED')
+    } finally {
+      restore()
+      wrapper?.unmount()
+      Object.defineProperty(navigator, 'hardwareConcurrency', { value: originalHc, configurable: true })
+      Object.defineProperty(navigator, 'deviceMemory', { value: originalMem, configurable: true })
+    }
+  })
+
+  it('T11b ?ch4tier=LOW → emite tier-change con "LOW" al montar', () => {
+    const originalLocation = window.location.href
+    window.history.pushState({}, '', '/?ch4tier=LOW')
+    const restore = patchWebGL(makeGLMock())
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      const events = wrapper.emitted('tier-change')
+      expect(events).toBeTruthy()
+      expect(events[events.length - 1][0]).toBe('LOW')
     } finally {
       restore()
       wrapper?.unmount()

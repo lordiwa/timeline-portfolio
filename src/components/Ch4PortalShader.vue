@@ -13,17 +13,23 @@
                        onda para dejar un rastro de la realidad anterior.
     PASS C "óptica" → canvas (resolución completa, dpr≤1.5): godrays screen-space
                        desde el portal, barrel distortion (Brown-Conrady), CA por
-                       canal, viñeta binocular (se funde a óvalo único en mobile
-                       portrait), grain, screen-door sutil (solo tier HIGH).
+                       canal, lente reveladora Sobel (círculo que sigue al puntero
+                       con inercia, wireframe de la realidad SIGUIENTE — spec §4.6,
+                       tiers HIGH/MED), viñeta binocular (se funde a óvalo único en
+                       mobile portrait), grain, screen-door sutil (solo tier HIGH).
 
   El canvas es OPAQUO (ya no aditivo): es el fondo real del capítulo, y las capas
   DOM (matrix/glifos/personaje/near/HUD) quedan encima por z-index — oclusión
   correcta en vez de blend aditivo que no ocluye nada.
 
-  Tiers HIGH/MED/LOW: detección de capacidad al init (hardwareConcurrency,
-  deviceMemory, renderer por software, mobile) + adaptación por media móvil del
-  frame time (90 frames), con histéresis (baja libre, sube solo tras 10s <12ms,
-  máximo un cambio cada 15s). Override de debug: ?ch4tier=HIGH|MED|LOW.
+  Tiers HIGH/MED/LOW: detección de capacidad al init (hardwareConcurrency Y
+  deviceMemory, ambos ≥8 para HIGH — endurecido tras la lente sumar costo al
+  Pass C; renderer por software, mobile) + adaptación por media móvil del frame
+  time (90 frames), con histéresis (baja libre, sube solo tras 10s <12ms, máximo
+  un cambio cada 15s). Override de debug: ?ch4tier=HIGH|MED|LOW. El tier activo
+  se emite por `tier-change` y se refleja en `canvas.dataset.ch4Tier` — Chapter4Content
+  lo usa para el blur DOM de profundidad de campo (spec §4.8, solo HIGH) y es el
+  hook observable para verificar en vivo la baja/subida automática.
 
   Coreografía de entrada ("ponerse el visor"): 4 beats (BOOT/OPEN/BURST/LOCK,
   0-1900ms) en la primera entrada a ch4 de la sesión; reentradas usan una
@@ -45,6 +51,10 @@
 // ── Universos — SINGLE SOURCE OF TRUTH ────────────────────────────────────
 // tunnelDensity/warpAmp (TASK-010, spec §3.3): modulan el volumen del túnel
 // raymarcheado y la amplitud de la distorsión del frente de onda por universo.
+// edgeTint (spec §3.3/§4.6): color del wireframe que la lente reveladora
+// pinta al mostrar la realidad SIGUIENTE — versión aclarada (mix 40% blanco)
+// del colVortex de cada universo, para que el wireframe se lea distinto del
+// resto de la escena en vez de fundirse con ella.
 export const UNIVERSES = [
   {
     id: 0,
@@ -53,6 +63,7 @@ export const UNIVERSES = [
     colRing:   [1.0,  0.05, 0.85],
     colStar:   [0.75, 0.88, 1.0 ],
     colBg:     [0.0,  0.005,0.02 ],
+    edgeTint:  [0.4,  1.0,  0.97],
     tunnelDensity: 1.0,
     warpAmp: 1.0,
   },
@@ -63,6 +74,7 @@ export const UNIVERSES = [
     colRing:   [0.2,  0.9,  0.15],
     colStar:   [0.55, 1.0,  0.6 ],
     colBg:     [0.0,  0.015,0.0 ],
+    edgeTint:  [0.4,  1.0,  0.58],
     tunnelDensity: 1.15,
     warpAmp: 0.85,
   },
@@ -73,6 +85,7 @@ export const UNIVERSES = [
     colRing:   [0.18, 0.88, 0.82],
     colStar:   [1.0,  0.72, 0.9 ],
     colBg:     [0.02, 0.0,  0.03],
+    edgeTint:  [0.93, 0.63, 1.0 ],
     tunnelDensity: 0.85,
     warpAmp: 1.1,
   },
@@ -83,6 +96,7 @@ export const UNIVERSES = [
     colRing:   [0.38, 0.0,  0.02],
     colStar:   [1.0,  0.28, 0.28],
     colBg:     [0.02, 0.0,  0.0 ],
+    edgeTint:  [0.87, 0.4,  0.42],
     tunnelDensity: 1.3,
     warpAmp: 1.35,
   },
@@ -91,12 +105,29 @@ export const UNIVERSES = [
 // ── Config por tier (spec §7.3) ─────────────────────────────────────────────
 // steps: pasos del raymarch del túnel (Pass A). oct: octavas de fbm (Pass A).
 // taps: taps de los godrays (Pass C). sde: screen-door effect (Pass C).
+// lens: lente reveladora Sobel (Pass C, spec §4.6/§7.3, 9 taps) — presente en
+// HIGH/MED, ausente en LOW (matriz de tiers, spec §7.3).
+//
+// HIGH.steps baja de 24 a 20 y HIGH.taps de 24 a 14 (TASK-010, ronda de
+// completado): con la lente Sobel sumando 9 taps al Pass C, HIGH no sostenía
+// 60fps medidos con GPU real (55.9fps, degradando a 35fps — ver hand-off).
+// Recalibrado con la lente ya integrada, no antes. Medido en esta ronda: los
+// taps de godrays pesan más que los pasos de raymarch porque Pass C corre a
+// resolución COMPLETA del canvas (Pass A corre a media res) — cada tap de
+// godrays cuesta ~4x lo que un paso de raymarch en este canvas (halfW/halfH
+// vs fullW/fullH). Bajar taps fue la palanca con más retorno real.
 export const TIER_CONFIG = {
-  LOW:  { steps: 0,  oct: 2, taps: 0,  sde: false },
-  MED:  { steps: 16, oct: 3, taps: 12, sde: false },
-  HIGH: { steps: 24, oct: 4, taps: 24, sde: true  },
+  LOW:  { steps: 0,  oct: 2, taps: 0,  sde: false, lens: false },
+  MED:  { steps: 16, oct: 3, taps: 12, sde: false, lens: true  },
+  HIGH: { steps: 20, oct: 4, taps: 14, sde: true,  lens: true  },
 }
 const TIER_ORDER = ['LOW', 'MED', 'HIGH']
+
+// ── Lente reveladora (spec §4.6) ────────────────────────────────────────────
+const LENS_R            = 0.14   // radio del círculo, en espacio p (aspect-corregido)
+const LENS_LERP         = 0.06   // inercia: fracción de la distancia recorrida por frame
+const LENS_ORBIT_PERIOD_S = 23   // mobile sin puntero: período de la órbita lissajous
+const LENS_ORBIT_R      = 0.20   // mobile sin puntero: radio de la órbita alrededor del portal
 
 // ── Coreografía de entrada (spec §6) ────────────────────────────────────────
 const BEATS_FULL_MS  = 1900
@@ -172,7 +203,12 @@ const reduced = () => prefersReduced.value
 // universe-change: al cruzar el midpoint de la onda (igual que antes).
 // jump-progress: durante la coreografía de entrada, para que Chapter4Content
 // orqueste HUD/paneles sin duplicar el timer (spec §3.3, §6).
-const emit = defineEmits(['universe-change', 'jump-progress'])
+// tier-change: cada vez que el tier activo cambia (detección inicial,
+// software-renderer, o adaptación por frame time) — Chapter4Content lo usa
+// para activar el blur DOM de profundidad de campo (spec §4.8, solo HIGH), y
+// es la señal observable para verificar en vivo que la baja automática de
+// tier realmente ocurre bajo carga sostenida (round de completado TASK-010).
+const emit = defineEmits(['universe-change', 'jump-progress', 'tier-change'])
 
 // ── Vue state ────────────────────────────────────────────────────────────────
 const canvasRef = ref(null)
@@ -233,6 +269,10 @@ let lastFrameTs = 0
 let portalUV = [0.81, 0.75]
 let vignetteMerge = 0
 
+// ── Lente reveladora: posición con inercia (spec §4.6) ──────────────────────
+let lensX = 0
+let lensY = 0
+
 function detectInitialTier() {
   const params = new URLSearchParams(window.location?.search ?? '')
   const forced = params.get('ch4tier')
@@ -246,7 +286,13 @@ function detectInitialTier() {
   const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
   const mobile = coarse && window.innerWidth < 900
   if (mobile) return 'LOW'
-  if (hc >= 8 || mem >= 8) return 'HIGH'
+  // TASK-010 (ronda de completado): umbral endurecido de OR a AND. Con la
+  // lente Sobel sumada al Pass C, HIGH ya no sostenía 60fps en hardware que
+  // solo cumplía UNA de las dos condiciones (ver hand-off: 55.9fps → 35fps
+  // medidos con GPU real bajo el umbral viejo). Ahora requiere ambas señales
+  // de capacidad antes de arrancar en HIGH; el resto cae a MED (adaptTier
+  // igual puede subir a HIGH después si el frame time sostiene <12ms).
+  if (hc >= 8 && mem >= 8) return 'HIGH'
   return 'MED'
 }
 
@@ -258,6 +304,22 @@ function detectSoftwareRenderer() {
   return /swiftshader|llvmpipe/i.test(renderer)
 }
 
+// Único punto de escritura de currentTier: sincroniza el atributo DOM
+// data-ch4-tier (observable desde fuera vía DOM/CDP, sin necesidad de
+// instrumentación adicional) y emite 'tier-change' para que Chapter4Content
+// reaccione (DOF blur, spec §4.8). Log de DEV solo en transiciones reales,
+// para poder verificar en vivo que la baja/subida automática de tier ocurre.
+function setTier(next, ts) {
+  const changed = next !== currentTier
+  currentTier = next
+  const canvas = canvasRef.value
+  if (canvas) canvas.dataset.ch4Tier = next
+  emit('tier-change', next)
+  if (changed && import.meta.env.DEV) {
+    console.info(`[Ch4PortalShader] tier -> ${next}${ts != null ? ` (ts=${Math.round(ts)}ms)` : ''}`)
+  }
+}
+
 function adaptTier(ts, dt) {
   if (tierForcedByDebug) return
   frameDeltas.push(dt)
@@ -267,14 +329,14 @@ function adaptTier(ts, dt) {
   const sinceChange = ts - lastTierChangeTs
   const idx = TIER_ORDER.indexOf(currentTier)
   if (avg > 20 && sinceChange > 15000 && idx > 0) {
-    currentTier = TIER_ORDER[idx - 1]
+    setTier(TIER_ORDER[idx - 1], ts)
     lastTierChangeTs = ts
     goodStreakStartTs = null
     frameDeltas = []
   } else if (avg < 12) {
     if (goodStreakStartTs == null) goodStreakStartTs = ts
     if (ts - goodStreakStartTs > 10000 && sinceChange > 15000 && idx < TIER_ORDER.length - 1) {
-      currentTier = TIER_ORDER[idx + 1]
+      setTier(TIER_ORDER[idx + 1], ts)
       lastTierChangeTs = ts
       goodStreakStartTs = null
       frameDeltas = []
@@ -289,6 +351,28 @@ function updateResponsive() {
   if (w < 600) { portalUV = [0.50, 0.72]; vignetteMerge = 1 }
   else if (w < 900) { portalUV = [0.78, 0.70]; vignetteMerge = 0 }
   else { portalUV = [0.81, 0.75]; vignetteMerge = 0 }
+}
+
+// ── Lente reveladora: target + inercia (spec §4.6) ───────────────────────────
+// En desktop/tablet sigue el puntero; en mobile (pointer:coarse, sin puntero
+// real) orbita el portal en una lissajous lenta de 23s. lerp 0.06/frame en
+// ambos casos, en el mismo espacio "p" (aspect-corregido) que el shader.
+function updateLens(t) {
+  const aspect = fullW / fullH
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
+  let targetX, targetY
+  if (coarse) {
+    const portalPX = (portalUV[0] - 0.5) * aspect
+    const portalPY = portalUV[1] - 0.5
+    const ang = (t / LENS_ORBIT_PERIOD_S) * Math.PI * 2
+    targetX = portalPX + Math.sin(ang * 2) * LENS_ORBIT_R
+    targetY = portalPY + Math.sin(ang) * LENS_ORBIT_R * 0.6
+  } else {
+    targetX = (ptrMx + driftX) * aspect
+    targetY = ptrMy + driftY
+  }
+  lensX += (targetX - lensX) * LENS_LERP
+  lensY += (targetY - lensY) * LENS_LERP
 }
 
 // ── GLSL — Pass A "mundo" ────────────────────────────────────────────────────
@@ -501,12 +585,18 @@ const FEEDBACK_FRAG_SRC = /* glsl */ `
   }
 `
 
-// ── GLSL — Pass C "óptica de headset" (spec §4.5, §4.9) ─────────────────────
-function opticsFragSrc({ taps, sde }) {
+// ── GLSL — Pass C "óptica de headset" (spec §4.5, §4.6, §4.9) ───────────────
+// No exportable: vive en <script setup> (no admite `export` de bindings
+// arbitrarios). El regression lock de la lente Sobel — TASK-010 se recortó
+// una vez ya (ver hand-off de la ronda anterior) — vive en
+// tests/components/Ch4PortalShader.test.js como lectura de source (mismo
+// patrón que el resto de los locks CSS de este proyecto).
+function opticsFragSrc({ taps, sde, lens }) {
   return /* glsl */ `
     precision mediump float;
     #define TAPS ${taps}
     #define SDE ${sde ? 1 : 0}
+    #define LENS ${lens ? 1 : 0}
 
     uniform sampler2D u_tex;
     uniform vec2  u_resolution;
@@ -518,6 +608,13 @@ function opticsFragSrc({ taps, sde }) {
     uniform float u_vignette;
     uniform float u_vignetteMerge;
     uniform float u_godraysExposure;
+    uniform float u_aspect;
+    uniform vec2  u_lensPos;
+    uniform float u_lensOn;
+    uniform vec2  u_bufRes;
+    uniform vec3  u_colVortexN;
+    uniform vec3  u_edgeTintN;
+    uniform vec3  u_colBgN;
 
     float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -553,6 +650,26 @@ function opticsFragSrc({ taps, sde }) {
       );
     }
 
+    #if LENS
+    // Lente reveladora (spec §4.6): Sobel 3x3 sobre la luminancia del Pass B
+    // (u_tex, el mismo buffer de eco que alimenta godrays/CA) — 9 taps.
+    float lumaAt(vec2 uv) { return dot(texture2D(u_tex, uv).rgb, vec3(0.299, 0.587, 0.114)); }
+
+    float sobelEdge(vec2 uv, vec2 px) {
+      float tl = lumaAt(uv + px * vec2(-1.0,  1.0));
+      float tc = lumaAt(uv + px * vec2( 0.0,  1.0));
+      float tr = lumaAt(uv + px * vec2( 1.0,  1.0));
+      float ml = lumaAt(uv + px * vec2(-1.0,  0.0));
+      float mr = lumaAt(uv + px * vec2( 1.0,  0.0));
+      float bl = lumaAt(uv + px * vec2(-1.0, -1.0));
+      float bc = lumaAt(uv + px * vec2( 0.0, -1.0));
+      float br = lumaAt(uv + px * vec2( 1.0, -1.0));
+      float gx = -tl - 2.0 * ml - bl + tr + 2.0 * mr + br;
+      float gy = -tl - 2.0 * tc - tr + bl + 2.0 * bc + br;
+      return clamp(length(vec2(gx, gy)) * 1.8, 0.0, 1.0);
+    }
+    #endif
+
     void main() {
       vec2 uv = gl_FragCoord.xy / u_resolution;
       vec2 lightUV = vec2(u_portal.x, 1.0 - u_portal.y);
@@ -566,6 +683,21 @@ function opticsFragSrc({ taps, sde }) {
       } else {
         color = caSample(buv, u_caAmt) + rays;
       }
+
+      #if LENS
+      // Círculo de radio 0.14 en espacio p (aspect-corregido) que sigue al
+      // puntero con inercia (calculada en JS): dentro, la escena se reemplaza
+      // por su wireframe Sobel teñido con la paleta del universo SIGUIENTE —
+      // "ves la realidad que viene, escondida detrás de la actual".
+      vec2 p = (uv - 0.5) * vec2(u_aspect, 1.0);
+      float lensDist = length(p - u_lensPos);
+      float lensMask = smoothstep(0.14, 0.09, lensDist) * u_lensOn;
+      vec2  bufPx = 1.0 / u_bufRes;
+      vec3  wire = u_edgeTintN * sobelEdge(uv, bufPx) + u_colBgN * 0.4;
+      color = mix(color, wire, lensMask * 0.9);
+      // Aro fino brillante — borde de cristal de la lente.
+      color += u_colVortexN * smoothstep(0.012, 0.0, abs(lensDist - 0.14)) * 0.6 * u_lensOn;
+      #endif
 
       // Viñeta binocular — dos oculares que se funden a óvalo único cuando
       // u_vignetteMerge=1 (mobile portrait, spec §11): "dos oculares en 360px
@@ -648,6 +780,8 @@ const FEEDBACK_UNIFORM_NAMES = ['u_bufA', 'u_bufPrev', 'u_resolution', 'u_portal
 const OPTICS_UNIFORM_NAMES = [
   'u_tex', 'u_resolution', 'u_portal', 'u_time', 'u_k1', 'u_k2', 'u_caAmt',
   'u_vignette', 'u_vignetteMerge', 'u_godraysExposure',
+  // Lente reveladora (spec §4.6):
+  'u_aspect', 'u_lensPos', 'u_lensOn', 'u_bufRes', 'u_colVortexN', 'u_edgeTintN', 'u_colBgN',
 ]
 
 function createFBO(w, h) {
@@ -673,7 +807,7 @@ function deleteFBO(f) {
 
 function initGL(canvas) {
   const initialTier = detectInitialTier()
-  currentTier = initialTier
+  setTier(initialTier)
   gl = canvas.getContext('webgl', {
     alpha: false,
     antialias: false,
@@ -683,7 +817,7 @@ function initGL(canvas) {
   })
   if (!gl) return false
 
-  if (detectSoftwareRenderer() && !tierForcedByDebug) currentTier = 'LOW'
+  if (detectSoftwareRenderer() && !tierForcedByDebug) setTier('LOW')
 
   quadBuf = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf)
@@ -806,9 +940,10 @@ function renderFeedback(warpEnv) {
   fbIdx = 1 - fbIdx
 }
 
-function renderOptics(t, optics) {
+function renderOptics(t, optics, lensOn = 1) {
   const program = progOptics[currentTier]
   const u = uOptics[currentTier]
+  const next = UNIVERSES[nextUniverseIdx]
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   gl.viewport(0, 0, fullW, fullH)
   gl.useProgram(program)
@@ -824,6 +959,17 @@ function renderOptics(t, optics) {
   gl.uniform1f(u.u_vignette, optics.vignette)
   gl.uniform1f(u.u_vignetteMerge, vignetteMerge)
   gl.uniform1f(u.u_godraysExposure, optics.godraysExposure)
+  // Lente reveladora (spec §4.6) — sigue lensX/lensY (inercia, actualizada en
+  // tick vía updateLens); lensOn=0 la apaga por completo bajo PRM aunque el
+  // frame estático fuerce tier HIGH para calidad (spec §10: "bajo PRM la
+  // lente no existe").
+  gl.uniform1f(u.u_aspect, fullW / fullH)
+  gl.uniform2f(u.u_lensPos, lensX, lensY)
+  gl.uniform1f(u.u_lensOn, lensOn)
+  gl.uniform2f(u.u_bufRes, halfW, halfH)
+  gl.uniform3fv(u.u_colVortexN, next.colVortex)
+  gl.uniform3fv(u.u_edgeTintN, next.edgeTint)
+  gl.uniform3fv(u.u_colBgN, next.colBg)
   gl.drawArrays(gl.TRIANGLES, 0, 6)
 }
 
@@ -855,19 +1001,24 @@ function computeOptics(ts) {
 function renderFrame(ts, t) {
   const optics = computeOptics(ts)
   const lensBoost = 1.0 + optics.warpEnv * 1.5
+  updateLens(t)
   renderWorld(t, currentWarpR, lensBoost)
   renderFeedback(optics.warpEnv)
-  renderOptics(t, optics)
+  renderOptics(t, optics, 1)
 }
 
 // Render único bajo PRM: t=7.3 (respiración del portal en máximo, spec §10).
+// currentTier se fuerza a HIGH porque el costo de UN frame no importa y se
+// prioriza calidad — pero eso NO debe encender la lente (spec §10: "bajo PRM
+// la lente no existe"), así que renderOptics recibe lensOn=0 explícito en vez
+// de depender de que el tier HIGH la traiga habilitada por defecto.
 function renderStaticFrame() {
   if (!gl) return
-  currentTier = 'HIGH' // frame único: el costo no importa, priorizar calidad
+  setTier('HIGH')
   updateResponsive()
   renderWorld(7.3, 0.0, 1.0)
   renderFeedback(0.0)
-  renderOptics(7.3, OPTICS_REST)
+  renderOptics(7.3, OPTICS_REST, 0)
 }
 
 // ── Ciclo de universo ─────────────────────────────────────────────────────────
@@ -965,6 +1116,8 @@ function startLoop() {
   nextShiftAt    = Infinity
   jumpActive     = false
   frameDeltas    = []
+  lensX = 0
+  lensY = 0
   applySize()
   emit('universe-change', 0)
   rafId = requestAnimationFrame(tick)

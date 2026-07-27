@@ -43,6 +43,15 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 const activeUniverse = ref(0)
 function onUniverseChange(idx) { activeUniverse.value = idx }
 
+// ── Tier activo del shader (TASK-010, ronda de completado) ──────────────────
+// Ch4PortalShader emite 'tier-change' cada vez que el tier cambia (detección
+// inicial, software-renderer, o adaptación por frame time). Se refleja en
+// [data-ch4-tier] para activar el blur DOM de profundidad de campo (spec
+// §4.8): matrix/near llevan blur estático SOLO en tier HIGH (barato, el
+// personaje — plano focal — queda nítido); en MED/LOW se quita el filter.
+const shaderTier = ref('MED')
+function onTierChange(tier) { shaderTier.value = tier }
+
 // ── Coreografía de entrada "ponerse el visor" (TASK-010, spec §6) ───────────
 // El shader posee su propio timer de boot (óptica: viñeta/barrel/CA/godrays);
 // acá solo orquestamos la coreografía DOM (HUD boot text, título/paneles,
@@ -157,7 +166,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ch4-layout" :data-universe="activeUniverse" :data-jump="jumpBeat">
+  <div class="ch4-layout" :data-universe="activeUniverse" :data-jump="jumpBeat" :data-ch4-tier="shaderTier">
     <!-- ── Parallax stack (decorativo, detrás del contenido) ─────────────────── -->
     <div ref="parallaxRef" class="ch4-parallax" aria-hidden="true">
       <div class="ch4-layer ch4-layer--portal"></div>
@@ -167,10 +176,25 @@ onBeforeUnmount(() => {
         Si WebGL no está disponible el componente no renderiza nada (fallback silencioso,
         las capas DOM debajo siguen componiendo el fondo).
       -->
-      <Ch4PortalShader @universe-change="onUniverseChange" @jump-progress="onJumpProgress" />
+      <Ch4PortalShader
+        @universe-change="onUniverseChange"
+        @jump-progress="onJumpProgress"
+        @tier-change="onTierChange"
+      />
       <!-- Pulso de energía sobre el anillo del portal — overlay circular decorativo -->
       <div class="ch4-portal-pulse" aria-hidden="true"></div>
-      <div class="ch4-layer ch4-layer--matrix"></div>
+      <!--
+        ch4-settle: wrapper del settle de escala por capa (spec §6 beat BURST) —
+        separado del elemento que lleva el transform de parallax puntero+drift
+        (.ch4-layer--*) porque ese transform se reescribe cada frame por RAF vía
+        CSS vars; si el settle viviera en el MISMO elemento, la transition CSS
+        pelearía contra la actualización continua y el parallax se sentiría con
+        lag. El wrapper solo cambia dos veces (boot/open → burst), así que ahí
+        sí es seguro poner una transition real.
+      -->
+      <div class="ch4-settle ch4-settle--matrix">
+        <div class="ch4-layer ch4-layer--matrix"></div>
+      </div>
       <div class="ch4-layer ch4-layer--glyphs">
         <span
           v-for="(g, i) in glyphs"
@@ -191,20 +215,24 @@ onBeforeUnmount(() => {
         <span class="ch4-p ch4-p--cross" style="--px:66%;--py:66%;--pd:2.8s;--pdur:4.8s;">+</span>
         <span class="ch4-p ch4-p--cross" style="--px:74%;--py:43%;--pd:0.6s;--pdur:5.2s;">+</span>
       </div>
-      <div class="ch4-layer ch4-layer--character">
-        <div class="ch4-character-art"></div>
-        <!-- Brillo del visor VR — resplandor cian pulsante donde están las gafas del sprite -->
-        <div class="ch4-visor-glow" aria-hidden="true"></div>
-        <!-- Streaming de datos: partículas que suben del portal hacia el personaje -->
-        <div class="ch4-data-stream" aria-hidden="true">
-          <div class="ch4-ds ch4-ds--a"></div>
-          <div class="ch4-ds ch4-ds--b"></div>
-          <div class="ch4-ds ch4-ds--c"></div>
-          <div class="ch4-ds ch4-ds--d"></div>
-          <div class="ch4-ds ch4-ds--e"></div>
+      <div class="ch4-settle ch4-settle--character">
+        <div class="ch4-layer ch4-layer--character">
+          <div class="ch4-character-art"></div>
+          <!-- Brillo del visor VR — resplandor cian pulsante donde están las gafas del sprite -->
+          <div class="ch4-visor-glow" aria-hidden="true"></div>
+          <!-- Streaming de datos: partículas que suben del portal hacia el personaje -->
+          <div class="ch4-data-stream" aria-hidden="true">
+            <div class="ch4-ds ch4-ds--a"></div>
+            <div class="ch4-ds ch4-ds--b"></div>
+            <div class="ch4-ds ch4-ds--c"></div>
+            <div class="ch4-ds ch4-ds--d"></div>
+            <div class="ch4-ds ch4-ds--e"></div>
+          </div>
         </div>
       </div>
-      <div class="ch4-layer ch4-layer--near"></div>
+      <div class="ch4-settle ch4-settle--near">
+        <div class="ch4-layer ch4-layer--near"></div>
+      </div>
       <!--
         Grid de suelo holográfico en perspectiva — ícono de AR/VR 2015.
         CSS perspective simula el plano en 3D que converge en el horizonte.
@@ -437,7 +465,6 @@ onBeforeUnmount(() => {
    Opacidad MUY baja: a 0.35 hacía sopa cian detrás del título/paneles
    (QA visual en navegador 2026-07-10) — ambiente lejano, no protagonista. */
 .ch4-layer--matrix {
-  z-index: 1;
   background-image: url('/assets/ch4-matrix.webp');
   mix-blend-mode: screen;
   opacity: 0.16;
@@ -474,7 +501,6 @@ onBeforeUnmount(() => {
 
 /* c1 personaje — sprite ch4-character.webp (de espaldas, gafas VR) a la derecha. Bob autónomo. */
 .ch4-layer--character {
-  z-index: 3;
   transform: translate3d(
     calc((var(--mx, 0) + var(--dx, 0)) * 20px),
     calc((var(--my, 0) + var(--dy, 0)) * 14px),
@@ -502,7 +528,6 @@ onBeforeUnmount(() => {
    competía con los paneles de contenido (QA visual 2026-07-10) — presencia
    fantasmal de primer plano, no cartel. */
 .ch4-layer--near {
-  z-index: 4;
   background-image: url('/assets/ch4-near.webp');
   mix-blend-mode: screen;
   opacity: 0.38;
@@ -512,6 +537,38 @@ onBeforeUnmount(() => {
     0
   );
 }
+
+/* ── ch4-settle — wrapper del settle de escala por capa (spec §6 beat BURST) ──
+ * Cada plano entra en su propio timing (matrix primero, personaje, near
+ * último) para que la profundidad se abra en el tiempo, no de golpe — ver
+ * comentario del template sobre por qué el settle vive en un wrapper propio
+ * y no en el mismo elemento que el transform de parallax puntero+drift.
+ * z-index se movió acá desde .ch4-layer--{matrix,character,near} (ahora esos
+ * elementos son hijos sin z-index propio; lo hereda del wrapper).
+ * ───────────────────────────────────────────────────────────── */
+.ch4-settle {
+  position: absolute;
+  inset: 0;
+}
+.ch4-settle--matrix    { z-index: 1; transition: transform 350ms ease-out 0ms; }
+.ch4-settle--character { z-index: 3; transition: transform 350ms ease-out 100ms; }
+.ch4-settle--near      { z-index: 4; transition: transform 350ms ease-out 150ms; }
+
+.ch4-layout[data-jump="boot"] .ch4-settle--matrix,
+.ch4-layout[data-jump="open"] .ch4-settle--matrix    { transform: scale(1.06); }
+.ch4-layout[data-jump="boot"] .ch4-settle--character,
+.ch4-layout[data-jump="open"] .ch4-settle--character { transform: scale(1.04); }
+.ch4-layout[data-jump="boot"] .ch4-settle--near,
+.ch4-layout[data-jump="open"] .ch4-settle--near      { transform: scale(1.08); }
+
+/* DOF por capas (spec §4.8) — barato, sin pase de blur extra en el shader:
+ * blur DOM estático solo en tier HIGH (activado por [data-ch4-tier], emitido
+ * por Ch4PortalShader vía 'tier-change'). El personaje (plano focal) queda
+ * nítido; matrix (lejos) y near (cerca) llevan blur de borde blando. En
+ * MED/LOW se quita el filter — el costo de un filter compuesto por GPU en
+ * dos capas es aceptable solo cuando el tier ya tiene margen. */
+.ch4-layout[data-ch4-tier="HIGH"] .ch4-layer--matrix { filter: blur(1.5px); }
+.ch4-layout[data-ch4-tier="HIGH"] .ch4-layer--near   { filter: blur(0.75px); }
 
 /* ── Portal pulse — overlay circular de energía sobre el anillo del portal ─── */
 /* Centro del anillo real medido en navegador a 1920×911 (2026-07-09b): ~83%/79%.
@@ -1051,26 +1108,43 @@ onBeforeUnmount(() => {
  * a 'lock' sin pasar por boot/open — título/paneles NUNCA se ocultan en
  * una reentrada, así que scrollear arriba/abajo repetidas veces no
  * castiga con un blackout cada vez (deliberado, ver Ch4PortalShader.vue).
+ *
+ * El settle de escala por capa (matrix/personaje/near) vive en .ch4-settle
+ * arriba, no acá — separado del resto de la coreografía porque necesita su
+ * propio wrapper (ver comentario del template).
  * ───────────────────────────────────────────────────────────── */
-.ch4-title,
-.ch4-panel-column {
+.ch4-title {
   transition: opacity 250ms ease, transform 250ms ease;
 }
 .ch4-layout[data-jump="boot"] .ch4-title,
-.ch4-layout[data-jump="boot"] .ch4-panel-column,
-.ch4-layout[data-jump="open"] .ch4-title,
-.ch4-layout[data-jump="open"] .ch4-panel-column {
+.ch4-layout[data-jump="open"] .ch4-title {
   opacity: 0;
   transform: translateY(16px);
 }
 
-.ch4-parallax {
-  transition: transform 400ms ease-out;
+/* Paneles de contenido — stagger de 80ms INDIVIDUAL por panel (spec §6 beat
+ * LOCK: "paneles de contenido suben 16px con fade, stagger 80ms"), no un
+ * fade único de toda la columna. El panel principal (bio+flavor) entra
+ * primero (0ms); cada FloatingPanel de proyecto en .ch4-projects entra
+ * 80ms después del anterior — nth-child cubre hasta 4 proyectos, holgado
+ * frente al contenido real (hoy 1).
+ */
+.ch4-content > :deep(.floating-panel),
+.ch4-projects :deep(.floating-panel) {
+  transition: opacity 250ms ease, transform 250ms ease;
 }
-.ch4-layout[data-jump="boot"] .ch4-parallax,
-.ch4-layout[data-jump="open"] .ch4-parallax {
-  transform: scale(1.05);
+.ch4-layout[data-jump="boot"] .ch4-content > :deep(.floating-panel),
+.ch4-layout[data-jump="open"] .ch4-content > :deep(.floating-panel),
+.ch4-layout[data-jump="boot"] .ch4-projects :deep(.floating-panel),
+.ch4-layout[data-jump="open"] .ch4-projects :deep(.floating-panel) {
+  opacity: 0;
+  transform: translateY(16px);
 }
+.ch4-content > :deep(.floating-panel)             { transition-delay: 0ms; }
+.ch4-projects :deep(.floating-panel):nth-child(1) { transition-delay: 80ms; }
+.ch4-projects :deep(.floating-panel):nth-child(2) { transition-delay: 160ms; }
+.ch4-projects :deep(.floating-panel):nth-child(3) { transition-delay: 240ms; }
+.ch4-projects :deep(.floating-panel):nth-child(4) { transition-delay: 320ms; }
 
 /* Boot lines — visibles solo durante BOOT/OPEN, con stagger de 60ms
    (spec §6 beat 0: "HUD aparece línea a línea"). Viven junto al resto del
@@ -1133,10 +1207,23 @@ onBeforeUnmount(() => {
      su estado visible por default (§ arriba). Solo se neutraliza la
      TRANSICIÓN/transform, nunca se fuerza opacity (las boot-lines deben
      seguir ocultas por default, no aparecer permanentes bajo PRM). */
-  .ch4-title, .ch4-panel-column, .ch4-parallax, .ch4-hud-boot-line {
+  .ch4-title,
+  .ch4-panel-column,
+  .ch4-parallax,
+  .ch4-hud-boot-line,
+  .ch4-settle--matrix,
+  .ch4-settle--character,
+  .ch4-settle--near,
+  .ch4-content > :deep(.floating-panel),
+  .ch4-projects :deep(.floating-panel) {
     transition: none !important;
   }
-  .ch4-parallax { transform: none !important; }
+  .ch4-parallax,
+  .ch4-settle--matrix,
+  .ch4-settle--character,
+  .ch4-settle--near {
+    transform: none !important;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

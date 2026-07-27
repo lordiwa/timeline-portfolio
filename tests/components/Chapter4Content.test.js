@@ -199,4 +199,54 @@ describe('Chapter4Content.vue', () => {
     const glyphText = wrapper.findAll('.ch4-glyph').map(g => g.text()).join('')
     expect(glyphText).toMatch(/[▒▓]/)
   })
+
+  // ───────────────────────────────────────────────
+  // T9 tier del shader → DOF por capas (TASK-010, ronda de completado, spec §4.8)
+  // ───────────────────────────────────────────────
+  it('T9 data-ch4-tier arranca en "MED" (default antes de que el shader emita)', () => {
+    const { wrapper } = mountCh4()
+    expect(wrapper.find('.ch4-layout').attributes('data-ch4-tier')).toBe('MED')
+  })
+
+  it('T9 data-ch4-tier se actualiza cuando Ch4PortalShader emite tier-change', async () => {
+    const { wrapper } = mountCh4()
+    const shader = wrapper.findComponent(Ch4PortalShader)
+
+    shader.vm.$emit('tier-change', 'HIGH')
+    await nextTick()
+
+    expect(wrapper.find('.ch4-layout').attributes('data-ch4-tier')).toBe('HIGH')
+  })
+
+  it('T9 CSS: blur DOF de matrix/near está gateado por [data-ch4-tier="HIGH"] (spec §4.8)', () => {
+    expect(CH4_SOURCE).toMatch(
+      /\.ch4-layout\[data-ch4-tier="HIGH"\]\s+\.ch4-layer--matrix\s*\{[^}]*filter:\s*blur\(1\.5px\)/
+    )
+    expect(CH4_SOURCE).toMatch(
+      /\.ch4-layout\[data-ch4-tier="HIGH"\]\s+\.ch4-layer--near\s*\{[^}]*filter:\s*blur\(0\.75px\)/
+    )
+  })
+
+  // ───────────────────────────────────────────────
+  // T10 stagger individual por capa (TASK-010, ronda de completado, spec §6)
+  // ───────────────────────────────────────────────
+  it('T10 DOM: matrix/personaje/near quedan envueltos en .ch4-settle propio (no un settle único de .ch4-parallax)', () => {
+    const { wrapper } = mountCh4()
+    expect(wrapper.find('.ch4-settle--matrix .ch4-layer--matrix').exists()).toBe(true)
+    expect(wrapper.find('.ch4-settle--character .ch4-layer--character').exists()).toBe(true)
+    expect(wrapper.find('.ch4-settle--near .ch4-layer--near').exists()).toBe(true)
+  })
+
+  it('T10 CSS: cada .ch4-settle--{matrix,character,near} tiene su propio transition-delay (spec §6: 900/1000/1050ms → delay 0/100/150ms)', () => {
+    expect(CH4_SOURCE).toMatch(/\.ch4-settle--matrix\s*\{[^}]*transition:\s*transform 350ms ease-out 0ms/)
+    expect(CH4_SOURCE).toMatch(/\.ch4-settle--character\s*\{[^}]*transition:\s*transform 350ms ease-out 100ms/)
+    expect(CH4_SOURCE).toMatch(/\.ch4-settle--near\s*\{[^}]*transition:\s*transform 350ms ease-out 150ms/)
+  })
+
+  it('T10 CSS: los paneles de proyecto llevan stagger de 80ms individual, no un fade único de .ch4-panel-column', () => {
+    expect(CH4_SOURCE).toMatch(/\.ch4-projects :deep\(\.floating-panel\):nth-child\(1\)\s*\{[^}]*transition-delay:\s*80ms/)
+    expect(CH4_SOURCE).toMatch(/\.ch4-projects :deep\(\.floating-panel\):nth-child\(2\)\s*\{[^}]*transition-delay:\s*160ms/)
+    // El fade combinado viejo (".ch4-title, .ch4-panel-column { transition: ... }") ya no existe.
+    expect(CH4_SOURCE).not.toMatch(/\.ch4-title,\s*\n?\s*\.ch4-panel-column\s*\{/)
+  })
 })
