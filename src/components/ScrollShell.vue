@@ -215,17 +215,21 @@ defineExpose({ shellEl })
  *   2. Dentro de Chapter3Content.vue, la clase `.chapter-stage` (utility
  *      global sin scope, declarada más abajo en este mismo archivo) TIENE
  *      que ir en el elemento ROOT de Chapter3Content.vue — es decir, hijo
- *      DIRECTO de `.chapter-section`. Si en cambio envuelve `.chapter-stage`
- *      en un wrapper intermedio, ese wrapper debe declarar `height: 100%`
- *      (y cada nivel adicional de wrapper entre `.chapter-section` y
- *      `.chapter-stage`, también `height: 100%`) — si no, el wrapper
- *      colapsa a la altura intrínseca de `.chapter-stage` (1 viewport) en
- *      vez de heredar los N viewports de la sección, y el containing block
- *      del sticky queda de 1 viewport → rango de anclaje CERO, sin
- *      recorrido, aun con el mecanismo funcionando (ver regla defensiva
- *      `.chapter-section[data-viewports] > *` más abajo, que sólo cubre el
- *      hijo directo — un segundo nivel de wrapper es responsabilidad del
- *      ticket de capítulo). Ese contenido queda fijo en pantalla (sticky
+ *      DIRECTO de `.chapter-section`. Su containing block YA mide N
+ *      viewports sin que el ticket de capítulo tenga que declarar nada: el
+ *      containing block de un elemento sticky es su PADRE, no el elemento
+ *      sticky mismo — y ese padre es la sección, que ya mide N viewports
+ *      por el `calc()` de abajo. Si en cambio `.chapter-stage` queda
+ *      envuelta en un wrapper intermedio, ESE wrapper (y cada nivel
+ *      adicional entre `.chapter-section` y `.chapter-stage`) debe declarar
+ *      `height: 100%` — si no, colapsa a la altura intrínseca de su
+ *      contenido (1 viewport) y el containing block del sticky queda de 1
+ *      viewport → rango de anclaje CERO, sin recorrido, aun con el
+ *      mecanismo funcionando. La regla defensiva
+ *      `.chapter-section[data-viewports] > :not(.chapter-stage)` de abajo
+ *      cubre automáticamente el primer nivel de wrapper (ver su propio
+ *      comentario) — un segundo nivel de wrapper es responsabilidad del
+ *      ticket de capítulo. Ese contenido queda fijo en pantalla (sticky
  *      top:0) durante TODO el recorrido de los N viewports de la sección —
  *      el "anclaje real" que pide la spec (00-sistema-visual-global.md §7.3).
  *   3. Borrar el contenedor con overflow-y: auto que hoy envuelve
@@ -286,14 +290,53 @@ defineExpose({ shellEl })
   overflow: clip;
 }
 
-/* Defensa mínima del contrato del punto 2 de arriba: el hijo DIRECTO de una
- * sección multi-viewport siempre hereda el 100% de los N viewports de la
- * sección, así que si ese hijo directo ES `.chapter-stage` (el caso
- * documentado y esperado), su containing block ya mide N viewports sin que
- * el ticket de capítulo tenga que declarar nada. Si en cambio hay un
- * wrapper intermedio adicional, ESE wrapper debe declarar su propio
- * `height: 100%` (punto 2 de arriba) — esta regla sólo cubre un nivel. */
-.chapter-section[data-viewports] > * {
+/* Defensa del contrato del punto 2 de arriba, para el caso de WRAPPER
+ * intermedio: cualquier hijo DIRECTO de una sección multi-viewport que NO
+ * sea `.chapter-stage` hereda el 100% de los N viewports de la sección, así
+ * un wrapper intermedio queda cubierto sin que el ticket de capítulo tenga
+ * que declarar nada.
+ *
+ * REGRESIÓN (ronda 2 de corrección de review, ver comentario de review en
+ * tasks/TASK-014.json): la versión anterior de esta regla era
+ * `.chapter-section[data-viewports] > *` — SIN excluir `.chapter-stage`. En
+ * `<style scoped>` Vue le agrega el atributo de scope de este componente al
+ * selector, dándole especificidad (0,3,0) contra la (0,1,0) de la utility
+ * global `.chapter-stage` (declarada SIN scope, ver el bloque `<style>` no
+ * escopado al final de este archivo — confirmado compilando este bloque con
+ * `@vue/compiler-sfc` `compileStyle`). Cuando `.chapter-stage` ES el hijo
+ * directo — la topología que el punto 2 de arriba documenta como
+ * OBLIGATORIA — esa regla le pisaba su propio `height: 100dvh` con
+ * `height: 100%` = N*100dvh, y un sticky tan alto como su containing block
+ * tiene rango de anclaje CERO: exactamente el caso principal que este
+ * mecanismo existe para resolver, roto por su propio safeguard.
+ *
+ * El error de razonamiento original: se buscaba que el CONTAINING BLOCK del
+ * sticky midiera N viewports, pero el containing block ya es la sección (el
+ * PADRE del sticky, no el sticky mismo), que ya mide N viewports por el
+ * `calc()` de arriba — esta regla nunca hacía falta para el caso del hijo
+ * directo, sólo para el wrapper intermedio.
+ *
+ * FIX: `:not(.chapter-stage)` excluye estructuralmente a `.chapter-stage` de
+ * este selector — no es una pelea de especificidad, el selector simplemente
+ * deja de matchear ese elemento, así que su propia regla `height: 100dvh`
+ * (bloque `<style>` no escopado de abajo) queda intacta sin competencia.
+ * Verificado con `@vue/compiler-sfc` `compileStyle` (CSS real compilado,
+ * incluido el atributo de scope) + `getComputedStyle` real en jsdom contra
+ * las dos topologías (hijo directo y wrapper intermedio), ver
+ * tests/integration/scroll-shell-safeguard-specificity.test.js.
+ *
+ * SUPUESTO (LOW, ronda 2): esta regla asume UN solo hijo directo relevante
+ * por sección `[data-viewports]` (el `.chapter-stage`, o un único wrapper
+ * que lo contenga). Si un ticket de capítulo futuro agrega VARIOS hijos
+ * directos bajo la misma sección, cada uno que no sea `.chapter-stage`
+ * recibiría `height: 100%` (N viewports) de forma independiente, no
+ * repartida — el contenido combinado de esos hijos (potencialmente 2N
+ * viewports si hubiera dos) quedaría recortado en silencio por el
+ * `overflow: clip` de la sección. Ningún capítulo actual necesita más de un
+ * hijo directo bajo `.chapter-section[data-viewports]`; si alguno lo
+ * necesitara en el futuro, ese ticket debe revisar esta regla
+ * explícitamente. */
+.chapter-section[data-viewports] > :not(.chapter-stage) {
   height: 100%;
 }
 

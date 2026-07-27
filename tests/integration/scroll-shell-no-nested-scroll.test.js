@@ -36,6 +36,26 @@
 // "overflow-y en modo auto" para esquivarlo). Se strippean comentarios
 // ANTES de escanear para que el código fuente pueda usar el literal
 // libremente en su documentación.
+//
+// MEDIUM (ronda 2 de corrección de review): el patrón anterior sólo conocía
+// la forma `overflow` u `overflow-y` — `overflow-x: auto` se le escapaba
+// por completo. Por CSS Overflow Module: declarar `overflow-x: auto` fuerza
+// el "used value" de `overflow-y` de `visible` a `auto` (la spec no permite
+// que un eje sea scrolling y el otro visible), así que `overflow-x: auto`
+// por sí solo YA crea un contenedor de scroll completo — el mismo bug que
+// este lock existe para prevenir. Fix de un carácter: `(-y)?` → `(-[xy])?`.
+//
+// LOW (ronda 2, limitaciones aceptadas — un lock estático de texto fuente
+// no puede cubrir todo, documentado en vez de perseguido):
+//   - `overflow : auto` con espacio antes del colon (\s* sólo cubre después
+//     del colon, no antes de `:`) — ningún caller del proyecto escribe CSS
+//     así hoy; si apareciera, se le escapa a este lock.
+//   - Propiedades lógicas `overflow-block` / `overflow-inline` (equivalentes
+//     de `overflow-y`/`overflow-x` en modo lógico) — no están en el patrón.
+//     Ningún archivo del proyecto las usa hoy.
+//   - Estilos runtime/inline (`el.style.overflowY = 'auto'`, `:style="{...}"`)
+//     — un lock que lee el .vue como texto fuente no puede ver JS que
+//     construye estilos en tiempo de ejecución.
 
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -47,16 +67,17 @@ const SCROLL_SHELL_SRC = readFileSync(
 )
 const APP_SRC = readFileSync(resolve(process.cwd(), 'src/App.vue'), 'utf8')
 
-// Propiedad overflow (o overflow-y) con valor auto|scroll — el patrón que
-// crea un contenedor con SU PROPIO scroll interno, compitiendo con el
-// scroll-snap mandatory del `.scroll-shell` raíz. Cubre tres formas:
-//   - longhand:            overflow-y: auto
+// Propiedad overflow, overflow-x u overflow-y con valor auto|scroll — el
+// patrón que crea un contenedor con SU PROPIO scroll interno, compitiendo
+// con el scroll-snap mandatory del `.scroll-shell` raíz. Cubre cuatro formas:
+//   - longhand-y:          overflow-y: auto
+//   - longhand-x:          overflow-x: auto (fuerza overflow-y a auto, ver arriba)
 //   - shorthand 1 valor:   overflow: auto        (aplica a ambos ejes)
 //   - shorthand 2 valores: overflow: hidden auto (overflow-x hidden, overflow-y auto)
 // El grupo opcional `(?:[a-z-]+\s+)?` consume el primer valor del shorthand
 // de 2 valores cuando está presente; para longhand/shorthand de 1 valor
 // simplemente no matchea nada ahí y cae directo al valor final.
-const NESTED_SCROLL_PATTERN = /\boverflow(-y)?:\s*(?:[a-z-]+\s+)?(auto|scroll)\b/gi
+const NESTED_SCROLL_PATTERN = /\boverflow(-[xy])?:\s*(?:[a-z-]+\s+)?(auto|scroll)\b/gi
 
 function stripComments(src) {
   return src
@@ -64,8 +85,16 @@ function stripComments(src) {
     .replace(/\/\*[\s\S]*?\*\//g, '')
     // Comentarios HTML <!-- ... -->
     .replace(/<!--[\s\S]*?-->/g, '')
-    // Líneas // ... (JS) — conserva el resto de la línea antes del //
-    .replace(/\/\/.*$/gm, '')
+    // Líneas // ... (JS) — conserva el resto de la línea antes del //.
+    // LOW (ronda 2): un `//` sin más no es siempre un comentario JS — puede
+    // ser el separador de esquema de una URL (`url(http://...)`,
+    // `https://...` en un comentario o string). Strippear ciegamente desde
+    // ahí se comería cualquier declaración real que siguiera en la MISMA
+    // línea después de la URL. El lookbehind negativo `(?<!:)` excluye el
+    // `//` que viene inmediatamente después de `:` (el de `http://` /
+    // `https://`) — sigue permitiendo strippear un `//` de comentario real
+    // más adelante en esa misma línea, si lo hay.
+    .replace(/(?<!:)\/\/.*$/gm, '')
 }
 
 function stripLegitimateScrollShellRule(src) {
@@ -123,5 +152,37 @@ describe('TASK-014 regression lock: el mecanismo del shell no reintroduce scroll
   it('LOW fix: un comentario CSS que contiene el literal "overflow-y: auto" NO cuenta como declaración real', () => {
     const css = '/* nota: antes usábamos overflow-y: auto acá, ya no */\n.foo { color: red; }'
     expect(scanForNestedScroll(css)).toBeNull()
+  })
+
+  // MEDIUM (ronda 2) — prueba roja/verde de que el patrón AHORA cubre
+  // `overflow-x: auto` solo, sin acompañamiento de overflow-y explícito.
+  // Antes de este fix, `NESTED_SCROLL_PATTERN` con `(-y)?` no matcheaba
+  // "-x" en absoluto (se puede confirmar revirtiendo a `(-y)?`: este test
+  // pasa a rojo). Por CSS Overflow Module, `overflow-x: auto` fuerza el
+  // used value de overflow-y de visible a auto — crea scroll container
+  // igual que la forma -y directa.
+  it('MEDIUM ronda 2 fix: el patrón detecta "overflow-x: auto" (fuerza overflow-y:auto por spec)', () => {
+    const css = '.some-wrapper { overflow-x: auto; }'
+    expect(
+      css.match(NESTED_SCROLL_PATTERN),
+      '"overflow-x: auto" fuerza el used value de overflow-y a auto (CSS Overflow Module) y debe ' +
+        'ser detectado como scroll anidado — antes del fix (-y)? no cubría "-x" en absoluto.'
+    ).not.toBeNull()
+  })
+
+  // LOW (ronda 2) — prueba de que el strip de `//` ya no se come una
+  // declaración real que siga a una URL (`url(http://...)`) en la misma
+  // línea. Antes del lookbehind `(?<!:)`, el `//` de `http://` disparaba el
+  // strip y todo lo que seguía en la línea (incluida la declaración
+  // overflow real) desaparecía ANTES de llegar al scan — falso NEGATIVO
+  // (se puede confirmar revirtiendo a `.replace(/\/\/.*$/gm, '')`: este
+  // test pasa a rojo porque la declaración deja de detectarse).
+  it('LOW ronda 2 fix: una URL con "//" en la misma línea no se come la declaración overflow que la sigue', () => {
+    const css = '.some-wrapper { background: url(http://example.com/img.png); overflow-y: auto; }'
+    expect(
+      scanForNestedScroll(css),
+      'El strip de comentarios `//` se comió la declaración "overflow-y: auto" que seguía a la ' +
+        'URL en la misma línea — falso negativo del lock.'
+    ).not.toBeNull()
   })
 })
