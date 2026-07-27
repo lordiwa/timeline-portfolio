@@ -22,7 +22,7 @@
     espacio libre es un follow-up; aquí los paneles quedan como están.
 -->
 <script setup>
-import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -127,11 +127,20 @@ const glyphs = computed(() => {
 const prm = inject('prm', null)
 const reduced = () => prm?.prefersReduced?.value ?? false
 
+// MEDIUM (ronda de corrección TASK-010): el RAF de este parallax corría en
+// TODOS los capítulos (escribía 4 CSS vars por frame aunque el visitante
+// estuviera en ch0) — mismo patrón de gateo que ya usa Ch4PortalShader.vue
+// (watch de activeChapter con immediate). Es parte del AC de 60fps del
+// propio ticket porque Chapter4Content está en la lista blanca.
+const injectedScrollState = inject('scrollState', null)
+const activeChapter = injectedScrollState?.activeChapter ?? ref(-1)
+
 const parallaxRef = ref(null)
 let rafLoop = 0
 let startT = 0
 let mx = 0
 let my = 0
+let stopChapterWatcher = null
 
 function frame(t) {
   const el = parallaxRef.value
@@ -153,14 +162,31 @@ function onPointer(ev) {
   my = ev.clientY / window.innerHeight - 0.5
 }
 
+function startParallaxLoop() {
+  if (rafLoop || reduced()) return
+  startT = 0
+  rafLoop = requestAnimationFrame(frame)
+}
+function stopParallaxLoop() {
+  if (rafLoop) {
+    cancelAnimationFrame(rafLoop)
+    rafLoop = 0
+  }
+}
+
 onMounted(() => {
   if (reduced()) return // PRM: sin loop, sin listener — vars quedan en su default (0)
   window.addEventListener('pointermove', onPointer, { passive: true })
-  rafLoop = requestAnimationFrame(frame)
+  stopChapterWatcher = watch(
+    activeChapter,
+    (v) => { v === 4 ? startParallaxLoop() : stopParallaxLoop() },
+    { immediate: true },
+  )
 })
 onBeforeUnmount(() => {
   window.removeEventListener('pointermove', onPointer)
-  if (rafLoop) cancelAnimationFrame(rafLoop)
+  stopChapterWatcher?.()
+  stopParallaxLoop()
   if (countRafId) cancelAnimationFrame(countRafId)
 })
 </script>
@@ -234,13 +260,14 @@ onBeforeUnmount(() => {
         <div class="ch4-layer ch4-layer--near"></div>
       </div>
       <!--
-        Grid de suelo holográfico en perspectiva — ícono de AR/VR 2015.
-        CSS perspective simula el plano en 3D que converge en el horizonte.
-        Se adapta al universo activo vía [data-universe].
+        MEDIUM (ronda de corrección TASK-010, spec §3.2): .ch4-holo-floor y
+        .ch4-vr-vignette CSS se eliminan — el Pass C del shader (viñeta
+        binocular con barrel/CA coherentes) y el suelo perspectivo dentro del
+        propio Pass A los reemplazan. Conviviendo duplicaban la viñeta (una
+        curvada por el barrel, otra plana encima) y el grid de suelo, exactamente
+        lo que la spec pidió evitar — capas compuestas de más en un capítulo
+        que ya pelea por fps.
       -->
-      <div class="ch4-holo-floor" aria-hidden="true"></div>
-      <!-- Viñeta de lente VR — oscurece los bordes como mirar a través de óptica de headset. -->
-      <div class="ch4-vr-vignette" aria-hidden="true"></div>
     </div>
 
     <!--
@@ -726,65 +753,11 @@ onBeforeUnmount(() => {
   85%       { opacity: 0.35; }
 }
 
-/* ── Grid de suelo holográfico en perspectiva VR ─────────────────────────── */
-/* La perspectiva CSS convierte el plano horizontal en una cuadrícula que
-   converge en el horizonte — ícono del género AR/VR (Tron, holodeck, 2015). */
-.ch4-holo-floor {
-  position: absolute;
-  bottom: 0;
-  left: -30%;
-  right: -30%;
-  height: 50%;
-  z-index: 5;
-  pointer-events: none;
-  transform: perspective(480px) rotateX(68deg);
-  transform-origin: bottom center;
-  /* Base synthwave: cyan tenue */
-  background-image:
-    linear-gradient(rgba(0, 255, 255, 0.30) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.30) 1px, transparent 1px);
-  background-size: 9% 7%;
-  /* Fade al horizonte — las líneas se difuminan antes de llegar al borde superior */
-  mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%);
-  mix-blend-mode: screen;
-  opacity: 0.22;
-  /* Scroll de la cuadrícula: sensación de avanzar sobre el suelo holográfico */
-  animation: ch4-floor-scroll 2.5s linear infinite;
-}
-@keyframes ch4-floor-scroll {
-  0%   { background-position: 0 0; }
-  100% { background-position: 0 7%; }
-}
-
-/* ── Viñeta binocular VR — dos oculares + nariz central + bordes ─────────── */
-/* Dos elipses laterales oscurecen los bordes de cada "ojo".
-   Un strip vertical central sutil simula la nariz del headset.
-   Tiras horizontales superiores e inferiores completan el marco de visor.
-   Resultado: se siente que miras a través de un Oculus Rift CV1. */
-.ch4-vr-vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 6;
-  pointer-events: none;
-  background:
-    /* Nariz / división central binocular */
-    radial-gradient(ellipse 7% 75% at 50% 52%, rgba(0,0,8,0.55) 0%, transparent 100%),
-    /* Ocular izquierdo — borde oscuro */
-    radial-gradient(ellipse 44% 65% at 30% 52%, transparent 46%, rgba(0,0,8,0.88) 90%),
-    /* Ocular derecho — borde oscuro */
-    radial-gradient(ellipse 44% 65% at 70% 52%, transparent 46%, rgba(0,0,8,0.88) 90%),
-    /* Banda superior e inferior del visor */
-    radial-gradient(ellipse 100% 55% at 50% 50%, transparent 40%, rgba(0,0,8,0.78) 100%);
-}
-/* U3 Void: vignette más opresiva para reforzar la sensación de vacío */
-.ch4-layout[data-universe="3"] .ch4-vr-vignette {
-  background:
-    radial-gradient(ellipse 7% 75% at 50% 52%, rgba(8,0,0,0.65) 0%, transparent 100%),
-    radial-gradient(ellipse 44% 65% at 30% 52%, transparent 40%, rgba(8,0,0,0.92) 90%),
-    radial-gradient(ellipse 44% 65% at 70% 52%, transparent 40%, rgba(8,0,0,0.92) 90%),
-    radial-gradient(ellipse 100% 55% at 50% 50%, transparent 36%, rgba(8,0,0,0.85) 100%);
-}
+/* MEDIUM (ronda de corrección TASK-010, spec §3.2): .ch4-holo-floor y
+   .ch4-vr-vignette se eliminaron de este archivo — el Pass C del shader
+   (Ch4PortalShader.vue) reemplaza la viñeta binocular con distorsión/CA
+   coherentes, y el suelo perspectivo ya vive dentro del Pass A. Ver el
+   comentario del template donde estos <div> vivían. */
 
 /* ── HUD era-auténtico 2015 — indicadores estilo Oculus Rift CV1 ─────────── */
 /* Fuera del parallax → z-index del layout (4), debajo del contenido (5).
@@ -1037,12 +1010,6 @@ onBeforeUnmount(() => {
   border-color: rgba(0, 255, 77, 0.22);
 }
 .ch4-layout[data-universe="1"] .ch4-hud-accent { color: #00ff4d; text-shadow: 0 0 6px rgba(0, 255, 77, 0.4); }
-.ch4-layout[data-universe="1"] .ch4-holo-floor {
-  background-image:
-    linear-gradient(rgba(0, 255, 77, 0.38) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 77, 0.38) 1px, transparent 1px);
-  opacity: 0.30;
-}
 .ch4-layout[data-universe="1"] :deep(.floating-panel) {
   box-shadow: 0 0 14px rgba(0, 255, 77, 0.14), inset 0 0 0 1px rgba(0, 255, 77, 0.18);
 }
@@ -1056,12 +1023,6 @@ onBeforeUnmount(() => {
   border-color: rgba(230, 102, 255, 0.22);
 }
 .ch4-layout[data-universe="2"] .ch4-hud-accent { color: #e666ff; text-shadow: 0 0 6px rgba(230, 102, 255, 0.4); }
-.ch4-layout[data-universe="2"] .ch4-holo-floor {
-  background-image:
-    linear-gradient(rgba(51, 230, 217, 0.30) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(230, 102, 255, 0.30) 1px, transparent 1px);
-  opacity: 0.24;
-}
 .ch4-layout[data-universe="2"] :deep(.floating-panel) {
   box-shadow: 0 0 14px rgba(230, 102, 255, 0.14), inset 0 0 0 1px rgba(230, 102, 255, 0.18);
 }
@@ -1075,22 +1036,6 @@ onBeforeUnmount(() => {
   border-color: rgba(204, 0, 20, 0.22);
 }
 .ch4-layout[data-universe="3"] .ch4-hud-accent { color: #cc0014; text-shadow: 0 0 6px rgba(204, 0, 20, 0.4); }
-.ch4-layout[data-universe="3"] .ch4-holo-floor {
-  background-image:
-    linear-gradient(rgba(204, 0, 20, 0.36) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(204, 0, 20, 0.36) 1px, transparent 1px);
-  opacity: 0.20;
-}
-.ch4-layout[data-universe="3"] .ch4-vr-vignette {
-  /* U3: vignette más marcada para reforzar la angustia del Vacío */
-  background: radial-gradient(
-    ellipse 70% 58% at 50% 50%,
-    transparent 28%,
-    rgba(10, 0, 0, 0.22) 50%,
-    rgba(10, 0, 0, 0.62) 72%,
-    rgba(12, 0, 0, 0.92) 95%
-  );
-}
 .ch4-layout[data-universe="3"] :deep(.floating-panel) {
   box-shadow: 0 0 14px rgba(204, 0, 20, 0.14), inset 0 0 0 1px rgba(204, 0, 20, 0.18);
 }
@@ -1184,7 +1129,6 @@ onBeforeUnmount(() => {
   .ch4-glyph,
   .ch4-panel-column,
   .ch4-portal-pulse,
-  .ch4-holo-floor,
   .ch4-p { animation: none !important; transition: none !important; }
   .ch4-layer { transform: none !important; }
   .ch4-character-art { transform: none !important; }
@@ -1194,8 +1138,6 @@ onBeforeUnmount(() => {
   .ch4-portal-pulse { opacity: 0.15 !important; transform: translate(-50%, -50%) !important; }
   /* Partículas ocultas bajo PRM — muy difíciles de seguir estáticas */
   .ch4-p { opacity: 0 !important; }
-  /* Suelo: perspectiva estática, sin scroll. El transform perspective se conserva para profundidad. */
-  .ch4-holo-floor { opacity: 0.12 !important; }
   /* HUD y glifos: sin transiciones bajo PRM */
   .ch4-hud-tl, .ch4-hud-tr, .ch4-hud-bl, .ch4-hud-br,
   .ch4-hud-accent { transition: none !important; }
@@ -1275,8 +1217,5 @@ onBeforeUnmount(() => {
     font-size: 0.38rem;
     padding: 3px 5px;
   }
-
-  /* Suelo: ocultar en mobile — no hay puntero, el efecto queda estático sin sentido */
-  .ch4-holo-floor { display: none; }
 }
 </style>

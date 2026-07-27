@@ -16,7 +16,7 @@
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Chapter4Content from '@/components/Chapter4Content.vue'
@@ -63,11 +63,14 @@ const CH4_SOURCE = readFileSync(
   'utf8'
 )
 
-function mountCh4({ locale = 'es' } = {}) {
+function mountCh4({ locale = 'es', activeChapter } = {}) {
   const i18n = createTestI18n({ locale })
+  const provide = {}
+  if (activeChapter) provide.scrollState = { activeChapter }
   const wrapper = mount(Chapter4Content, {
     global: {
       plugins: [i18n],
+      provide,
     },
   })
   return { wrapper, i18n }
@@ -248,5 +251,57 @@ describe('Chapter4Content.vue', () => {
     expect(CH4_SOURCE).toMatch(/\.ch4-projects :deep\(\.floating-panel\):nth-child\(2\)\s*\{[^}]*transition-delay:\s*160ms/)
     // El fade combinado viejo (".ch4-title, .ch4-panel-column { transition: ... }") ya no existe.
     expect(CH4_SOURCE).not.toMatch(/\.ch4-title,\s*\n?\s*\.ch4-panel-column\s*\{/)
+  })
+
+  // ───────────────────────────────────────────────
+  // T11 MEDIUM (ronda de corrección TASK-010) — doble viñeta/suelo eliminados
+  // ───────────────────────────────────────────────
+  it('T11 DOM: ya NO renderiza .ch4-vr-vignette ni .ch4-holo-floor (spec §3.2: los reemplaza el Pass C del shader)', () => {
+    const { wrapper } = mountCh4()
+    expect(wrapper.find('.ch4-vr-vignette').exists()).toBe(false)
+    expect(wrapper.find('.ch4-holo-floor').exists()).toBe(false)
+  })
+
+  it('T11 CSS: no quedan selectores .ch4-vr-vignette / .ch4-holo-floor en el source (ni siquiera en variantes por universo/PRM/mobile)', () => {
+    expect(CH4_SOURCE).not.toMatch(/\.ch4-vr-vignette\s*\{/)
+    expect(CH4_SOURCE).not.toMatch(/\.ch4-holo-floor\s*\{/)
+  })
+
+  // ───────────────────────────────────────────────
+  // T12 MEDIUM (ronda de corrección TASK-010) — RAF del parallax gateado por
+  // activeChapter===4. Antes corría en todos los capítulos, escribiendo 4 CSS
+  // vars por frame aunque el visitante estuviera en ch0 — parte del AC de
+  // 60fps del propio ticket porque este archivo está en la lista blanca.
+  // ───────────────────────────────────────────────
+  it('T12 activeChapter=0 (no ch4) → requestAnimationFrame del parallax NO se agenda al montar', () => {
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame')
+    const { wrapper } = mountCh4({ activeChapter: ref(0) })
+    try {
+      expect(rafSpy).not.toHaveBeenCalled()
+    } finally {
+      rafSpy.mockRestore()
+      wrapper.unmount()
+    }
+  })
+
+  it('T12 activeChapter pasa a 4 → requestAnimationFrame del parallax se agenda; vuelve a 0 → deja de agendarse', async () => {
+    const activeChapter = ref(0)
+    const { wrapper } = mountCh4({ activeChapter })
+    const rafSpy = vi.spyOn(globalThis, 'requestAnimationFrame')
+    try {
+      activeChapter.value = 4
+      await nextTick()
+      expect(rafSpy).toHaveBeenCalled()
+
+      rafSpy.mockClear()
+      const cancelSpy = vi.spyOn(globalThis, 'cancelAnimationFrame')
+      activeChapter.value = 0
+      await nextTick()
+      expect(cancelSpy).toHaveBeenCalled()
+      cancelSpy.mockRestore()
+    } finally {
+      rafSpy.mockRestore()
+      wrapper.unmount()
+    }
   })
 })

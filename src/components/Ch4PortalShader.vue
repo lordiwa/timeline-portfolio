@@ -282,7 +282,12 @@ function detectInitialTier() {
   }
   const nav = window.navigator ?? {}
   const hc = nav.hardwareConcurrency ?? 4
-  const mem = nav.deviceMemory ?? 4
+  // deviceMemory es exclusiva de Chromium: undefined en Firefox/Safari (ronda
+  // de corrección TASK-010 — el AND de abajo caía siempre a MED ahí porque
+  // ?? 4 nunca alcanzaba el umbral de 8, aunque el hardware real fuera un M3
+  // Max). undefined explícito (no default numérico) para poder distinguir
+  // "no hay señal" de "la señal dice 4".
+  const mem = nav.deviceMemory
   const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
   const mobile = coarse && window.innerWidth < 900
   if (mobile) return 'LOW'
@@ -292,6 +297,10 @@ function detectInitialTier() {
   // medidos con GPU real bajo el umbral viejo). Ahora requiere ambas señales
   // de capacidad antes de arrancar en HIGH; el resto cae a MED (adaptTier
   // igual puede subir a HIGH después si el frame time sostiene <12ms).
+  // Cuando el navegador no reporta deviceMemory (Firefox/Safari) la decisión
+  // se toma solo por hardwareConcurrency — sin esto, la ausencia de señal se
+  // interpretaba como "señal mala" y esos navegadores nunca llegaban a HIGH.
+  if (mem == null) return hc >= 8 ? 'HIGH' : 'MED'
   if (hc >= 8 && mem >= 8) return 'HIGH'
   return 'MED'
 }
@@ -579,7 +588,11 @@ const FEEDBACK_FRAG_SRC = /* glsl */ `
     vec2 fbUV = vec2(fbTopUV.x, 1.0 - fbTopUV.y);
 
     vec3 prev = texture2D(u_bufPrev, fbUV).rgb;
-    float decay = mix(0.0, 0.90, u_warpEnv);
+    // MEDIUM (ronda de corrección TASK-010): la spec §4.7 fija decay en
+    // mix(0.20, 0.90, warpEnv) — 0.0 en régimen normal volvía este pass una
+    // copia identidad (puro overhead) y perdía el motion-trail sutil de las
+    // estrellas cercanas que el eco debe dejar siempre, no solo durante el warp.
+    float decay = mix(0.20, 0.90, u_warpEnv);
     vec3 result = max(scene, prev * decay);
     gl_FragColor = vec4(result, 1.0);
   }
@@ -674,13 +687,17 @@ function opticsFragSrc({ taps, sde, lens }) {
       vec2 uv = gl_FragCoord.xy / u_resolution;
       vec2 lightUV = vec2(u_portal.x, 1.0 - u_portal.y);
 
-      vec3 rays = godrays(uv, lightUV);
       vec2 buv = barrel(uv, u_k1, u_k2);
 
       vec3 color;
       if (buv.x < 0.0 || buv.x > 1.0 || buv.y < 0.0 || buv.y > 1.0) {
         color = vec3(0.0);
       } else {
+        // LOW (ronda de corrección TASK-010): spec §4.9 fija el orden
+        // "godrays -> barrel" — los rayos deben samplearse en el espacio YA
+        // curvado por el barrel para que se curven junto con la lente, no
+        // sobre el uv recto. Movido de antes de la distorsión a acá.
+        vec3 rays = godrays(buv, lightUV);
         color = caSample(buv, u_caAmt) + rays;
       }
 
@@ -689,7 +706,18 @@ function opticsFragSrc({ taps, sde, lens }) {
       // puntero con inercia (calculada en JS): dentro, la escena se reemplaza
       // por su wireframe Sobel teñido con la paleta del universo SIGUIENTE —
       // "ves la realidad que viene, escondida detrás de la actual".
-      vec2 p = (uv - 0.5) * vec2(u_aspect, 1.0);
+      //
+      // Fix HIGH (ronda de corrección TASK-010): "uv" en este pass es NATIVA
+      // de gl_FragCoord (bottom-up, sin el flip que sí hace Pass A) — por eso
+      // los godrays arriba flipean u_portal con 1.0 - u_portal.y antes de
+      // compararlo. u_lensPos (lensX/lensY) llega desde JS en el espacio "p"
+      // top-left-origin que declara la spec (§4: mismo espacio que ptrMy —
+      // DOM, positivo hacia abajo), así que "p" acá tiene que sufrir el mismo
+      // flip que lightUV o queda espejado en Y: puntero abajo → lente arriba.
+      // Mismo flip resuelve, sin tocar JS, la órbita mobile (line ~366): esa
+      // órbita también construye su target en el espacio top-left-origin de
+      // portalUV, así que hereda la corrección de este único punto.
+      vec2 p = (vec2(uv.x, 1.0 - uv.y) - 0.5) * vec2(u_aspect, 1.0);
       float lensDist = length(p - u_lensPos);
       float lensMask = smoothstep(0.14, 0.09, lensDist) * u_lensOn;
       vec2  bufPx = 1.0 / u_bufRes;
@@ -940,7 +968,7 @@ function renderFeedback(warpEnv) {
   fbIdx = 1 - fbIdx
 }
 
-function renderOptics(t, optics, lensOn = 1) {
+function renderOptics(t, optics, lensOn = 1, useFeedback = true) {
   const program = progOptics[currentTier]
   const u = uOptics[currentTier]
   const next = UNIVERSES[nextUniverseIdx]
@@ -948,7 +976,11 @@ function renderOptics(t, optics, lensOn = 1) {
   gl.viewport(0, 0, fullW, fullH)
   gl.useProgram(program)
   gl.activeTexture(gl.TEXTURE0)
-  gl.bindTexture(gl.TEXTURE_2D, fboFeedback[fbIdx].tex)
+  // Matriz de tiers (spec §7.3): LOW no lleva feedback buffer. renderFrame no
+  // corre renderFeedback() para LOW (useFeedback=false) — samplear
+  // fboFeedback igual habría leído un buffer nunca escrito para ese tier
+  // (basura/stale), así que Pass C lee Pass A directo en ese caso.
+  gl.bindTexture(gl.TEXTURE_2D, useFeedback ? fboFeedback[fbIdx].tex : fboWorld.tex)
   gl.uniform1i(u.u_tex, 0)
   gl.uniform2f(u.u_resolution, fullW, fullH)
   gl.uniform2f(u.u_portal, portalUV[0], portalUV[1])
@@ -1003,8 +1035,12 @@ function renderFrame(ts, t) {
   const lensBoost = 1.0 + optics.warpEnv * 1.5
   updateLens(t)
   renderWorld(t, currentWarpR, lensBoost)
-  renderFeedback(optics.warpEnv)
-  renderOptics(t, optics, 1)
+  // Matriz de tiers (spec §7.3): "Feedback buffer: si HIGH/MED, no LOW" — el
+  // hardware más débil (el que ya cayó a LOW) no debe pagar un pass extra que
+  // la propia spec dice que no le corresponde.
+  const hasFeedback = currentTier !== 'LOW'
+  if (hasFeedback) renderFeedback(optics.warpEnv)
+  renderOptics(t, optics, 1, hasFeedback)
 }
 
 // Render único bajo PRM: t=7.3 (respiración del portal en máximo, spec §10).
@@ -1219,5 +1255,11 @@ if (import.meta.hot) {
   height: 100%;
   z-index: 1;
   pointer-events: none;
+  /* MEDIUM (ronda de corrección TASK-010): .ch4-layout fija
+     image-rendering: pixelated y la propiedad se hereda — el volumen
+     necesita gradientes suaves (spec §3.2), así que este canvas se saca
+     explícitamente de esa herencia en vez de depender de que nadie la
+     vuelva a fijar más arriba en el árbol. */
+  image-rendering: auto;
 }
 </style>

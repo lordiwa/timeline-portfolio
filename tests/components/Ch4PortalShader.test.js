@@ -457,4 +457,122 @@ describe('Ch4PortalShader.vue', () => {
       vi.useRealTimers()
     }
   })
+
+  // ── T13 regression lock: la lente reveladora NO puede volver a espejarse
+  // en Y (ronda de corrección TASK-010, HIGH). "uv" en Pass C es nativa de
+  // gl_FragCoord (bottom-up) — sin el flip explícito acá, "p" queda en el
+  // espacio opuesto al de u_lensPos (top-left-origin, llega de JS con la
+  // misma convención que u_portal/ptrMy). GL está 100% mockeado en esta
+  // suite (no hay forma de verificar el signo con un render real), así que
+  // esto es un lock de source, mismo patrón que T6c para la lente Sobel:
+  // rojo si alguien borra el flip y vuelve a copiar "uv" directo.
+  it('T13 HIGH: la lente flipea uv.y al construir "p" (mismo flip que lightUV de los godrays, spec §4: uv top-left-origin)', () => {
+    expect(SHADER_SOURCE).toMatch(
+      /vec2 p = \(vec2\(uv\.x, 1\.0 - uv\.y\) - 0\.5\) \* vec2\(u_aspect, 1\.0\);/
+    )
+  })
+
+  // ── T14 regression lock: Pass B (feedback) se saltea en tier LOW ────────
+  // (MEDIUM, matriz §7.3: "Feedback buffer: si HIGH/MED, no LOW"). Antes
+  // renderFrame() corría renderFeedback() incondicionalmente en los 3 tiers.
+  it('T14 MEDIUM: renderFrame gatea renderFeedback por tier — LOW no paga el pass de eco (spec §7.3)', () => {
+    expect(SHADER_SOURCE).toMatch(/const hasFeedback = currentTier !== 'LOW'/)
+    expect(SHADER_SOURCE).toMatch(/if \(hasFeedback\) renderFeedback\(optics\.warpEnv\)/)
+  })
+
+  it('T14 MEDIUM: con ?ch4tier=LOW no crashea al renderizar (Pass C cae a fboWorld directo)', () => {
+    const originalLocation = window.location.href
+    window.history.pushState({}, '', '/?ch4tier=LOW')
+    vi.useFakeTimers()
+    const restore = patchWebGL(makeGLMock())
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      expect(() => vi.advanceTimersByTimeAsync(50)).not.toThrow()
+    } finally {
+      restore()
+      wrapper?.unmount()
+      vi.useRealTimers()
+      window.history.pushState({}, '', originalLocation)
+    }
+  })
+
+  // ── T15 deviceMemory ausente (Firefox/Safari) — MEDIUM ───────────────────
+  // Antes: `nav.deviceMemory ?? 4` convertía "sin señal" en "señal mala" y el
+  // AND nunca daba HIGH en esos navegadores por más potente que fuera el
+  // hardware real. Rojo/verde plantable: volver a `?? 4` hace que este test
+  // caiga (mem pasa a valer 4, hc>=8 && 4>=8 es false → MED).
+  it('T15 MEDIUM: hc=8 y deviceMemory=undefined (Firefox/Safari) → decide solo por hardwareConcurrency, detecta HIGH', () => {
+    const originalHc = navigator.hardwareConcurrency
+    const hadMem = 'deviceMemory' in navigator
+    const originalMem = navigator.deviceMemory
+    Object.defineProperty(navigator, 'hardwareConcurrency', { value: 8, configurable: true })
+    Object.defineProperty(navigator, 'deviceMemory', { value: undefined, configurable: true })
+    const restore = patchWebGL(makeGLMock())
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      expect(wrapper.find('canvas').attributes('data-ch4-tier')).toBe('HIGH')
+    } finally {
+      restore()
+      wrapper?.unmount()
+      Object.defineProperty(navigator, 'hardwareConcurrency', { value: originalHc, configurable: true })
+      if (hadMem) {
+        Object.defineProperty(navigator, 'deviceMemory', { value: originalMem, configurable: true })
+      } else {
+        delete navigator.deviceMemory
+      }
+    }
+  })
+
+  // ── T16 paridad de uniforms — brecha estructural (MEDIUM) ────────────────
+  // Con el GL mockeado, ningún test atrapa un typo de nombre de uniform entre
+  // el GLSL y los arrays *_UNIFORM_NAMES que initGL() usa para resolver
+  // location — ese típo pasaría 100% de la suite en verde (es exactamente lo
+  // que dejó pasar el HIGH de esta ronda). Este lock compara, por cada pass,
+  // el set de `uniform <tipo> <nombre>;` declarados en el GLSL contra el
+  // array *_UNIFORM_NAMES correspondiente — deben coincidir exactamente.
+  function extractBetween(src, startMarker, endMarker) {
+    const start = src.indexOf(startMarker)
+    expect(start, `marcador de inicio no encontrado: ${startMarker}`).toBeGreaterThan(-1)
+    const end = src.indexOf(endMarker, start)
+    expect(end, `marcador de fin no encontrado: ${endMarker}`).toBeGreaterThan(start)
+    return src.slice(start, end)
+  }
+
+  function declaredUniformNames(glslSrc) {
+    const names = new Set()
+    const re = /uniform\s+\S+\s+(\w+)\s*;/g
+    let m
+    while ((m = re.exec(glslSrc))) names.add(m[1])
+    return names
+  }
+
+  function listedUniformNames(src, constName) {
+    const re = new RegExp(`${constName}\\s*=\\s*\\[([\\s\\S]*?)\\]`)
+    const m = src.match(re)
+    expect(m, `array no encontrado: ${constName}`).toBeTruthy()
+    return new Set([...m[1].matchAll(/'(\w+)'/g)].map((x) => x[1]))
+  }
+
+  it('T16 paridad Pass A: WORLD_UNIFORM_NAMES == uniforms declarados en worldFragSrc', () => {
+    const glsl = extractBetween(SHADER_SOURCE, 'function worldFragSrc({ steps, oct }) {', '// ── GLSL — Pass B')
+    const declared = declaredUniformNames(glsl)
+    const listed = listedUniformNames(SHADER_SOURCE, 'WORLD_UNIFORM_NAMES')
+    expect([...declared].sort()).toEqual([...listed].sort())
+  })
+
+  it('T16 paridad Pass B: FEEDBACK_UNIFORM_NAMES == uniforms declarados en FEEDBACK_FRAG_SRC', () => {
+    const glsl = extractBetween(SHADER_SOURCE, 'const FEEDBACK_FRAG_SRC = /* glsl */ `', '// ── GLSL — Pass C')
+    const declared = declaredUniformNames(glsl)
+    const listed = listedUniformNames(SHADER_SOURCE, 'FEEDBACK_UNIFORM_NAMES')
+    expect([...declared].sort()).toEqual([...listed].sort())
+  })
+
+  it('T16 paridad Pass C: OPTICS_UNIFORM_NAMES == uniforms declarados en opticsFragSrc', () => {
+    const glsl = extractBetween(SHADER_SOURCE, 'function opticsFragSrc({ taps, sde, lens }) {', 'const VERT_SRC')
+    const declared = declaredUniformNames(glsl)
+    const listed = listedUniformNames(SHADER_SOURCE, 'OPTICS_UNIFORM_NAMES')
+    expect([...declared].sort()).toEqual([...listed].sort())
+  })
 })
