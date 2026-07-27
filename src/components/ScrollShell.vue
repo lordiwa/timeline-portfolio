@@ -18,6 +18,17 @@
 // El `.prevent` modifier de Vue llama event.preventDefault() declarativamente
 // — esto bloquea que el browser intente hacer scroll por defecto con flechas
 // (lo que causaría doble-trigger del scroll snap + nuestro scrollToChapter).
+//
+// TASK-014 (2026-07-27): prop `chapterViewports` — mecanismo multi-viewport
+// con anclaje real (position: sticky). Único ticket autorizado a tocar este
+// archivo, App.vue y useScrollState.js para resolver el problema medido en
+// TASK-009: un capítulo que necesita más de 1 viewport de alto no tenía
+// dónde crecer y terminaba con scroll anidado (.ch3-stage con overflow-y en
+// modo auto) que compite con el scroll-snap mandatory del shell. Ver el comentario largo
+// junto a `.chapter-section[data-viewports]` en el <style scoped> de abajo
+// para el mecanismo completo y cómo lo consume un ticket de capítulo.
+// Default `{}` → los 7 capítulos actuales quedan en 1 viewport, CERO cambio
+// visual (ninguno usa este prop todavía).
 
 import { ref, inject } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -40,8 +51,26 @@ const chapters = [
   { id: 6, year: 2026, era: 'Phaser' },
 ]
 
+const props = defineProps({
+  // TASK-014: mapa opcional { [chapterId]: viewportsCount }. Un capítulo
+  // ausente del mapa (o con valor <= 1) queda en 1 viewport (comportamiento
+  // shipped, sin cambios). Ningún caller pasa este prop todavía — App.vue
+  // monta <ScrollShell /> sin él, así que su valor efectivo hoy es `{}`.
+  chapterViewports: {
+    type: Object,
+    default: () => ({}),
+  },
+})
+
 const { t } = useI18n()
 const shellEl = ref(null)
+
+// viewportsFor(id) — normaliza props.chapterViewports[id] a un entero >= 1.
+// Cualquier valor no-entero o <= 1 colapsa a 1 (mismo comportamiento shipped).
+function viewportsFor(id) {
+  const n = props.chapterViewports[id]
+  return Number.isInteger(n) && n > 1 ? n : 1
+}
 
 // Inject del scrollState (provisto por App.vue desde Plan 02) y del prm (Plan 03).
 // Esta es la primera vez que ScrollShell consume el composable directamente —
@@ -85,6 +114,8 @@ defineExpose({ shellEl })
       :key="ch.id"
       :id="`chapter-${ch.id}`"
       :data-chapter="ch.id"
+      :data-viewports="viewportsFor(ch.id) > 1 ? viewportsFor(ch.id) : null"
+      :style="viewportsFor(ch.id) > 1 ? { '--chapter-viewports': viewportsFor(ch.id) } : null"
       :aria-label="t('chapters.' + ch.id + '.title')"
       class="chapter-section"
     >
@@ -152,6 +183,60 @@ defineExpose({ shellEl })
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * TASK-014 — mecanismo multi-viewport con anclaje real (position: sticky).
+ *
+ * PROBLEMA que resuelve: antes de este ticket cada .chapter-section medía
+ * EXACTAMENTE 1 viewport. Un capítulo que necesita más alto (ej. TASK-009,
+ * ch3) no tiene dónde crecer dentro del shell y termina metiendo su propio
+ * scroll interno (overflow-y en modo auto) — ese scroll anidado compite con el
+ * scroll-snap mandatory del shell y permite saltarse el capítulo entero sin
+ * haberlo recorrido (bug medido en vivo, ver tasks/TASK-014.json).
+ *
+ * MECANISMO: la sección puede declarar `data-viewports="N"` (N entero > 1,
+ * vía el prop `chapterViewports` de este componente, ej. `{ 3: 5 }` para que
+ * ch3 mida 5 viewports) y este bloque multiplica su altura por
+ * `--chapter-viewports`. NINGÚN capítulo lo usa todavía — los 7 quedan en
+ * viewports:1 por default (el atributo `data-viewports` no se renderiza y
+ * este bloque nunca aplica) → CERO cambio visual, cero riesgo de regresión
+ * en ch0/ch1/ch2 ni en ningún otro capítulo shipped.
+ *
+ * CÓMO LO CONSUME UN TICKET DE CAPÍTULO (ej. TASK-009 retomando ch3):
+ *   1. En App.vue, pasar `:chapter-viewports="{ 3: 5 }"` a <ScrollShell>.
+ *   2. Dentro de Chapter3Content.vue, envolver el contenido que debe quedar
+ *      "anclado" mientras se recorre el resto en un elemento con la clase
+ *      `.chapter-stage` (utility global sin scope, declarada más abajo en
+ *      este mismo archivo, para que cualquier ChapterNContent la consuma sin
+ *      duplicar CSS). Ese contenido queda fijo en pantalla (sticky top:0)
+ *      durante TODO el recorrido de los N viewports de la sección — el
+ *      "anclaje real" que pide la spec (00-sistema-visual-global.md §7.3).
+ *   3. Borrar el contenedor con overflow-y en modo auto que hoy envuelve
+ *      `.ch3-stage` — deja de hacer falta: el scroll interno pasa a ser el
+ *      scroll PRINCIPAL del shell (`.scroll-shell`), sin contenedor anidado.
+ *   4. Para pacing interno más fino (que ni un fling fuerte se salte varios
+ *      "beats" de un capítulo alto de un solo gesto), sus propios elementos
+ *      internos pueden declarar `scroll-snap-align: start` +
+ *      `scroll-snap-stop: always` — ahora es seguro porque viven en el MISMO
+ *      scroll container que `.chapter-section` (ya no hay overflow anidado
+ *      compitiendo por el snap). El shell por sí solo ya garantiza que un
+ *      gesto no puede saltar la ENTRADA de un capítulo alto (align:start +
+ *      stop:always en su único punto de snap); esta capa 4 es opcional y la
+ *      decide cada ticket de capítulo según cuánto pacing interno necesite.
+ *
+ * `display: block` en vez de flex: con flex + align-items:center, un hijo
+ * más corto que la sección (el `.chapter-stage` de 1 viewport dentro de una
+ * sección de N viewports) quedaría CENTRADO verticalmente a la mitad de la
+ * sección — su posición de flujo ya no arrancaría en top:0 y el sticky
+ * dejaría de cubrir el recorrido completo. En block, el hijo arranca en
+ * top:0 del flujo y el sticky se mantiene "pegado" durante los N viewports
+ * enteros.
+ * ───────────────────────────────────────────────────────────────────────── */
+.chapter-section[data-viewports] {
+  height: calc(var(--chapter-viewports) * 100vh);
+  height: calc(var(--chapter-viewports) * 100dvh);
+  display: block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * Era title placeholder (UI-SPEC §5, §9)
  * Padding reserva espacio para avatar (top) y timeline (bottom),
  * aunque esos componentes aún no existan (vienen en Plans 04-05).
@@ -185,6 +270,26 @@ defineExpose({ shellEl })
      PRM: bloque @media al final cancela todo con !important.
      ─────────────────────────────────────────────────────────────────────── -->
 <style>
+/* ─────────────────────────────────────────────────────────────────────────
+ * TASK-014 — `.chapter-stage`: utility de anclaje real (position: sticky)
+ * para capítulos multi-viewport. Global (NO scoped) para que cualquier
+ * Chapter{N}Content.vue la consuma directamente sin duplicar CSS ni
+ * depender del scope del componente que la declara. Ver el comentario largo
+ * junto a `.chapter-section[data-viewports]` (arriba, <style scoped>) para
+ * el mecanismo completo. Ningún capítulo la usa todavía.
+ * ───────────────────────────────────────────────────────────────────────── */
+.chapter-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @keyframes chapter-content-enter {
   from { opacity: 0.92; transform: translateY(8px); }
   to   { opacity: 1;    transform: translateY(0); }

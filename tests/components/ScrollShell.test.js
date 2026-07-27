@@ -46,13 +46,17 @@ vi.mock('@/phaser', () => ({
 
 // Helper para los tests de keyboard navigation: monta ScrollShell con provides
 // mutables + plugin i18n. Retorna { wrapper, activeChapter, prefersReduced, scrollToChapter, i18n }.
-function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es' } = {}) {
+function mountShell({ initialChapter = 3, initialPRM = false, locale = 'es', chapterViewports } = {}) {
   const activeChapter = ref(initialChapter)
   const prefersReduced = ref(initialPRM)
   const scrollProgress = ref(initialChapter / 7)  // Plan 04-04: ParallaxLayers (Chapter4Content child) requires
   const scrollToChapter = vi.fn()
   const i18n = createTestI18n({ locale })
   const wrapper = mount(ScrollShell, {
+    // TASK-014: chapterViewports es opcional — sólo se pasa como prop cuando
+    // el test lo provee explícitamente, para no alterar el mount por default
+    // (equivalente a como App.vue monta <ScrollShell /> hoy, sin el prop).
+    props: chapterViewports !== undefined ? { chapterViewports } : {},
     global: {
       plugins: [i18n],
       provide: {
@@ -335,5 +339,97 @@ describe('ScrollShell ch3 integration (Plan 03-03)', () => {
     const ch6Section = wrapper.find('section[data-chapter="6"]')
     expect(ch6Section.find('.ch6-layout').exists()).toBe(true)
     expect(ch6Section.find('.era-title').exists()).toBe(false)
+  })
+})
+
+// ───────────────────────────────────────────────────────────────────────────
+// TASK-014 — mecanismo multi-viewport con anclaje real (position: sticky).
+// Cobertura:
+//   - Default (sin prop chapterViewports): CERO cambio — no-regresión ch0-ch6.
+//   - Prop chapterViewports={id: N>1}: data-viewports + --chapter-viewports
+//     se renderizan SOLO en la sección afectada.
+//   - CSS: `.chapter-section[data-viewports]` multiplica la altura y switchea
+//     a display:block; `.chapter-stage` (utility global) declara sticky.
+// ───────────────────────────────────────────────────────────────────────────
+describe('ScrollShell multi-viewport mechanism (TASK-014)', () => {
+  // ─────────────────────────────────────────────────────────────────────────
+  // T1 — NO REGRESIÓN: sin prop, ninguna de las 7 sections declara
+  // data-viewports (comportamiento shipped intacto — ch0/ch1/ch2 incluidos).
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T1 no-regresión: sin prop chapterViewports, ninguna section tiene data-viewports', () => {
+    const { wrapper } = mountShell()
+    const sections = wrapper.findAll('section.chapter-section')
+    sections.forEach((s) => {
+      expect(s.attributes('data-viewports')).toBeUndefined()
+    })
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T2 — chapterViewports={3: 4} estampa data-viewports="4" y la CSS custom
+  // property --chapter-viewports:4 SOLO en section[data-chapter="3"].
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T2 chapterViewports={3:4} estampa data-viewports="4" + --chapter-viewports:4 solo en ch3', () => {
+    const { wrapper } = mountShell({ chapterViewports: { 3: 4 } })
+    const ch3 = wrapper.find('section[data-chapter="3"]')
+    expect(ch3.attributes('data-viewports')).toBe('4')
+    expect(ch3.attributes('style')).toMatch(/--chapter-viewports:\s*4/)
+
+    const others = wrapper.findAll('section.chapter-section').filter(
+      (s) => s.attributes('data-chapter') !== '3'
+    )
+    expect(others).toHaveLength(6)
+    others.forEach((s) => {
+      expect(s.attributes('data-viewports')).toBeUndefined()
+    })
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T3 — valores <= 1 o no-enteros colapsan a "sin data-viewports" (mismo
+  // comportamiento que ausencia del chapter en el mapa).
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T3 chapterViewports={3:1} y {3: "x"} NO estampan data-viewports (normalizan a 1)', () => {
+    const wA = mountShell({ chapterViewports: { 3: 1 } }).wrapper
+    expect(wA.find('section[data-chapter="3"]').attributes('data-viewports')).toBeUndefined()
+
+    const wB = mountShell({ chapterViewports: { 3: 'x' } }).wrapper
+    expect(wB.find('section[data-chapter="3"]').attributes('data-viewports')).toBeUndefined()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T4 — CSS: .chapter-section[data-viewports] multiplica la altura por
+  // --chapter-viewports (100vh y 100dvh) y cambia a display:block (documentado
+  // — flex centraría el hijo a mitad de la sección y rompería el sticky).
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T4 CSS: .chapter-section[data-viewports] declara calc(var(--chapter-viewports) * 100dvh) y display:block', () => {
+    expect(SCROLL_SHELL_SOURCE).toMatch(
+      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports\)\s*\*\s*100vh\)/
+    )
+    expect(SCROLL_SHELL_SOURCE).toMatch(
+      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports\)\s*\*\s*100dvh\)/
+    )
+    expect(SCROLL_SHELL_SOURCE).toMatch(
+      /\.chapter-section\[data-viewports\]\s*\{[^}]*display:\s*block/
+    )
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T5 — CSS: la utility `.chapter-stage` (consumida por futuros tickets de
+  // capítulo dentro de su propio Chapter{N}Content.vue) declara el anclaje
+  // real: position sticky, top 0, altura de 1 viewport.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T5 CSS: .chapter-stage declara position:sticky, top:0 y height 100dvh', () => {
+    expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-stage\s*\{[^}]*position:\s*sticky/)
+    expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-stage\s*\{[^}]*top:\s*0/)
+    expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-stage\s*\{[^}]*height:\s*100dvh/)
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // T6 — no-regresión: .chapter-section (base, sin el modificador
+  // [data-viewports]) conserva scroll-snap-align:start + scroll-snap-stop:
+  // always — el mecanismo nuevo no reemplaza el snap existente, lo extiende.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('T6 no-regresión: .chapter-section base conserva scroll-snap-align:start + scroll-snap-stop:always', () => {
+    expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-section\s*\{[^}]*scroll-snap-align:\s*start/)
+    expect(SCROLL_SHELL_SOURCE).toMatch(/\.chapter-section\s*\{[^}]*scroll-snap-stop:\s*always/)
   })
 })

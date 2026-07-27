@@ -242,6 +242,57 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
+  // TASK-014 T12: capítulo multi-viewport (ScrollShell.vue `[data-viewports]`)
+  // con intersectionRatio bajo (0.3 — 30% del target de 3 viewports es 1
+  // viewport, matemáticamente < 0.6) PERO cobertura de root 1.0 (la sección
+  // llena el viewport entero) → activeChapter SÍ debe actualizar. Antes de
+  // TASK-014 esto no pasaba nunca: el shell dependía de intersectionRatio
+  // (relativo al target) y una sección de varios viewports jamás cruzaba 0.6.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-014: sección multi-viewport con intersectionRatio bajo pero coverage de root 1.0 SÍ actualiza activeChapter', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    expect(get().state.activeChapter.value).toBe(0)
+    const io = globalThis.MockIntersectionObserver.instances[0]
+    io.triggerEntries([
+      {
+        isIntersecting: true,
+        intersectionRatio: 0.3, // 1 de 3 viewports del target — bajo a propósito
+        intersectionRect: { height: 735 }, // el root entero está cubierto
+        rootBounds: { height: 735 },
+        target: { dataset: { chapter: '4' } },
+      },
+    ])
+    await flushPromises()
+    expect(get().state.activeChapter.value).toBe(4)
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-014 T13: coverage de root bajo (< 0.6) NO actualiza activeChapter,
+  // incluso si intersectionRatio (target-relative) fuera engañosamente alto
+  // — la decisión real la toma coverageOf(), no intersectionRatio a secas.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-014: coverage de root < 0.6 NO actualiza activeChapter aunque isIntersecting sea true', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    expect(get().state.activeChapter.value).toBe(0)
+    const io = globalThis.MockIntersectionObserver.instances[0]
+    io.triggerEntries([
+      {
+        isIntersecting: true,
+        intersectionRatio: 0.9,
+        intersectionRect: { height: 200 }, // solo ~27% del root visible
+        rootBounds: { height: 735 },
+        target: { dataset: { chapter: '5' } },
+      },
+    ])
+    await flushPromises()
+    expect(get().state.activeChapter.value).toBe(0) // sin cambio
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Test 11: cleanup en onBeforeUnmount
   // ─────────────────────────────────────────────────────────────────────────
   it('cleanup on unmount: disconnects observer and removes scroll listener', async () => {

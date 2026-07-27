@@ -20,6 +20,38 @@
 import { ref, readonly, watch, onBeforeUnmount } from 'vue'
 import { useRafFn } from '@vueuse/core'
 
+// TASK-014: thresholds finos para el IntersectionObserver de activeChapter.
+// Con un solo threshold (el [0.6] shipped) el callback SOLO se dispara
+// cuando la ratio target/root cruza 0.6 — para una sección multi-viewport
+// (mecanismo nuevo, ScrollShell.vue `[data-viewports]`) esa ratio nunca
+// llega a 0.6 porque intersectionRatio divide por la altura TOTAL del
+// target, no del root, así que con un solo threshold el observer casi no
+// re-dispara mientras la sección alta está en pantalla. Un array fino
+// (0, 0.05, ..., 1) garantiza que el callback se re-evalúe con frecuencia
+// suficiente en cualquier altura de sección; la decisión real de "activo"
+// la toma `coverageOf()` más abajo, no el cruce de threshold en sí.
+const OBSERVER_THRESHOLDS = Array.from({ length: 21 }, (_, i) => i / 20)
+
+// coverageOf(entry) — TASK-014: cuánto del VIEWPORT (root), no del target,
+// cubre esta sección. `entry.intersectionRatio` (spec IntersectionObserver)
+// siempre divide por la altura del TARGET: para una sección de 1 viewport
+// eso coincide numéricamente con la cobertura del root (misma altura), pero
+// para una sección multi-viewport (ScrollShell.vue `[data-viewports]`)
+// jamás alcanza 0.6 aunque cubra el 100% del viewport, porque el target mide
+// varias pantallas. `intersectionRect`/`rootBounds` (ambos parte estándar de
+// IntersectionObserverEntry) permiten calcular la cobertura real del root;
+// si no están disponibles (mocks de test más simples) cae a intersectionRatio,
+// que es exacto para el caso de 1 viewport — cero cambio de comportamiento
+// para los 7 capítulos shipped hoy.
+function coverageOf(entry) {
+  const rect = entry.intersectionRect
+  const root = entry.rootBounds
+  if (rect && root && typeof root.height === 'number' && root.height > 0) {
+    return rect.height / root.height
+  }
+  return entry.intersectionRatio
+}
+
 export function useScrollState(shellRef) {
   const activeChapter = ref(0)
   const scrollProgress = ref(0)
@@ -73,12 +105,12 @@ export function useScrollState(shellRef) {
   function initObserver(el) {
     observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+        if (entry.isIntersecting && coverageOf(entry) >= 0.6) {
           const N = Number(entry.target.dataset.chapter)
           if (Number.isInteger(N)) activeChapter.value = N
         }
       }
-    }, { root: el, threshold: [0.6] })
+    }, { root: el, threshold: OBSERVER_THRESHOLDS })
     el.querySelectorAll('[data-chapter]').forEach(s => observer.observe(s))
   }
 
