@@ -1,1188 +1,892 @@
 <!--
-  Chapter3Content.vue — "De vuelta al movimiento" · posguerra de Flash, estética
-  Kingdom New Lands (Raw Fury).
+  Chapter3Content.vue — TASK-009: rediseño total de ch3 "La muerte de Flash" (2013).
 
-  iter11 (Rafael 2026-07-09): "los assets del fondo se ven mal cortados y feos...
-  composición de posguerra donde murió Flash... estética como Kingdom New Lands".
-  El entorno sigue siendo el PROTAGONISTA (iter10) pero el escenario se rehace:
-  cielo crepuscular con sol enorme (la era muriendo), siluetas atmosféricas en
-  4 planos, AGUA ESPEJO al pie (firma Kingdom: reflejo + shimmer + ondas al click),
-  bandada de pájaros cruzando, brasas dolientes. Los 5 emblemas-cuento se conservan.
+  Fuente de verdad: .planning/design/03-ch3-muerte-de-flash.md (complementa,
+  sin reemplazar, .planning/design/00-sistema-visual-global.md). Reemplaza
+  COMPLETO el concepto "Kingdom New Lands" (iter11, pixel art medieval) — Rafael
+  autorizó cambio total de estilo: "no temas cambiar el estilo, eso solo es una
+  maqueta de lo que visualizo ahi".
 
-  iter10: 5 emblemas de arte clicables → recuadro pergamino con la biografía.
-  iter9: parallax de 3 capas + drift + puntero + scroll.
+  Guion visual en dos actos (spec §3):
+  - Acto 1 (`.ch3-act1-*`), pinned sobre ~220vh: un navegador de 2013 con el
+    stage de Flash de 550x400 muriendo en pantalla al scrollear (degradado que
+    se drena, capas que se despegan, vector que colapsa a flat) + un teléfono
+    mostrando el puzzle de plugin faltante (Flash nunca existió en mobile).
+    Escenografía 100% procedural (CSS + SVG inline) — CERO imágenes nuevas.
+  - Acto 2 (`.ch3-hero` + `.ch3-beats` + `.ch3-close`), flujo normal: el
+    renacimiento flat de 2013 (Flat UI Colors, Open Sans, ghost buttons, iconos
+    long-shadow). 5 beats en zig-zag (Ch3StoryBeat.vue) — uno por párrafo de
+    bio.eras.3 — muestran SIEMPRE el numeral+kicker+lead sin click (defecto 4
+    de TASK-007: 270 palabras ya no quedan detrás de un click); un expansor
+    "Seguir leyendo" profundiza I-IV, el beat V (el remate) va completo.
 
-  Assets activos (iter5 Kingdom — old/CHANGELOG.md §6.5):
-    - Capas: ch3-sky.webp (sol cx≈28% cy≈55%) / ch3-far.png (cordillera malva) /
-      ch3-mountains.png (ciudadela en ruinas, bottom-right) / ch3-path.png (cresta
-      de batalla casi negra con rim ámbar)
-    - Emblemas clicables: ch3-flash-fallen / ch3-mark-rebuild / ch3-mark-standard /
-      ch3-mark-orb / ch3-html5-future
-    - Recuadro: ch3-parchment.webp
+  Motion (spec §7): el scrub del Acto 1 y el parallax del hero se escriben
+  directo al DOM vía requestAnimationFrame (mismo patrón --sx/--mx que ya usan
+  Chapter3/Chapter4 — evita reactividad Vue en cada frame de scroll). Detrás de
+  `@supports (animation-timeline: scroll())` hay una capa de mejora progresiva
+  con scroll-driven animations nativas que, donde el navegador la soporta,
+  reemplaza el valor JS por compositor puro (más fluido); el rAF es el camino
+  garantizado y es el que se verificó en esta sesión (sin tooling de navegador
+  disponible para confirmar visualmente la capa nativa — ver hand-off).
+  PRM: el Acto 1 queda en un cuadro estático (botón ya sin brillo, plugin
+  bloqueado, teléfono con el puzzle) y el pin baja a 100vh exacto; el Acto 2
+  se renderiza completo sin reveals.
 
-  Agua espejo: .ch3-water (14dvh, overflow hidden) contiene copias de las 4 capas
-  con transform-origin top + translateY(calc(100dvh - altura-agua)) scaleY(-1) →
-  la ventana visible muestra la franja de escena justo sobre la línea de agua,
-  invertida. Ondas: spans .ch3-ripple generados al click sobre el agua.
-
-  PRM: bajo prefers-reduced-motion se desactivan parallax + animaciones + ondas
-  (guard JS + @media). El reflejo queda estático (sigue siendo bello quieto).
+  CSS: TODO el CSS de ch3 vive AQUÍ (retirado de chapter-components.css por
+  este mismo ticket, ver comentario de migración en ese archivo). El bloque de
+  `<style>` es DELIBERADAMENTE sin `scoped` (mismo patrón que el segundo
+  `<style>` de ScrollShell.vue: "sin scoped para que los selectores traversen
+  el shadow de componentes hijos") — Ch3StoryBeat.vue es un componente hijo y
+  sus elementos internos (numeral, kicker, lead, expansor) no son su nodo raíz,
+  así que un `<style scoped>` de este archivo no los alcanzaría. Todos los
+  selectores usan el prefijo `ch3-`, consistente con el resto del proyecto.
 -->
 <script setup>
-import { computed, ref, inject, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
 import ProjectCard from './ProjectCard.vue'
+import Ch3StoryBeat from './Ch3StoryBeat.vue'
 
 const { t } = useI18n()
 
 const chapter = chapters[3]
 const ch3Projects = computed(() => projects.filter((p) => p.chapterEra === 3))
+
+// bio.eras.3.text trae 5 párrafos separados por \n\n — uno por beat (spec §8).
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
-// Emblemas clicables — 1 por párrafo de la historia. OBJETOS DEL MUNDO (iter2
-// Kingdom): cuerpo silueta ciruela + acento ámbar. Los I-IV están PLANTADOS en
-// el suelo (no flotan); solo el V flota en el cielo del este (sky: true).
-// pos en % relativo a .ch3-content. Cada uno despliega bioParagraphs[idx].
-const ROMAN = ['I', 'II', 'III', 'IV', 'V']
-// Arco muerte→renacer (Rafael 2026-05-28): 1 emblema por párrafo.
-//   I  Flash caído ......... estela rota con la "F" de brasas, en la orilla oeste
-//   II reconstrucción ...... yunque con filo ámbar, en el campo entre lanzas
-//   III estandarte ......... pendón oscuro con diamante encendido, al pie de las ruinas
-//   IV orbe creativo ....... atardecer capturado en pedestal, ladera este
-//   V  HTML5 naciente ...... estrella-escudo del alba, alto en el cielo del este
-const markers = [
-  { key: 'flash',    src: '/assets/ch3-flash-fallen.png', top: '72%', left: '12%', size: 104 },
-  { key: 'rebuild',  src: '/assets/ch3-mark-rebuild.png',  top: '75%', left: '33%', size: 96 },
-  { key: 'standard', src: '/assets/ch3-mark-standard.png', top: '70%', left: '52%', size: 100 },
-  { key: 'orb',      src: '/assets/ch3-mark-orb.png',      top: '74%', left: '72%', size: 90 },
-  { key: 'html5',    src: '/assets/ch3-html5-future.png',  top: '30%', left: '88%', size: 96, sky: true },
-]
-
-// Brasas ascendentes — posguerra: pocas, lentas, dolientes
-const embers = [
-  { left: '9%',  delay: '-4s',  dur: '19s', size: '3px', color: '#ff9a3c', dx: '8px'   },
-  { left: '21%', delay: '-11s', dur: '24s', size: '2px', color: '#ffd95c', dx: '-6px'  },
-  { left: '37%', delay: '-2s',  dur: '21s', size: '2px', color: '#ff5a3c', dx: '10px'  },
-  { left: '55%', delay: '-15s', dur: '26s', size: '3px', color: '#ff9a3c', dx: '-8px'  },
-  { left: '68%', delay: '-7s',  dur: '22s', size: '2px', color: '#ffd95c', dx: '6px'   },
-  { left: '81%', delay: '-18s', dur: '28s', size: '2px', color: '#ff9a3c', dx: '-10px' },
-  { left: '92%', delay: '-9s',  dur: '20s', size: '3px', color: '#ff5a3c', dx: '8px'   },
-]
-
-// Ceniza descendente — motas grises cayendo lento
-const ashes = [
-  { left: '8%',  delay: '-4s',  dur: '18s', size: '2px' },
-  { left: '22%', delay: '-9s',  dur: '24s', size: '3px' },
-  { left: '38%', delay: '-2s',  dur: '20s', size: '2px' },
-  { left: '55%', delay: '-7s',  dur: '22s', size: '2px' },
-  { left: '69%', delay: '-13s', dur: '26s', size: '3px' },
-  { left: '78%', delay: '-5s',  dur: '19s', size: '2px' },
-  { left: '93%', delay: '-11s', dur: '21s', size: '2px' },
-]
-
-// Bandada de pájaros silueta cruzando el cielo (firma Kingdom)
-const birds = [
-  { top: '0px',  delay: '0s',    flap: '0.42s' },
-  { top: '9px',  delay: '0.12s', flap: '0.38s' },
-  { top: '4px',  delay: '0.3s',  flap: '0.46s' },
-  { top: '16px', delay: '0.5s',  flap: '0.40s' },
-  { top: '12px', delay: '0.75s', flap: '0.44s' },
-]
-
-// ── Estado del cuento ─────────────────────────────────────────────────────────
-const activeStory = ref(null)      // índice abierto (0..4) o null
-const visited = ref(new Set())     // emblemas ya leídos
-const panelRef = ref(null)
-
-const isOpen = computed(() => activeStory.value !== null)
-const activeParagraph = computed(() =>
-  activeStory.value === null ? '' : bioParagraphs.value[activeStory.value] || ''
-)
-
-function openStory(i) {
-  activeStory.value = i
-  visited.value.add(markers[i].key)
-  nextTick(() => panelRef.value?.focus())
-}
-function closeStory() {
-  const k = activeStory.value !== null ? markers[activeStory.value].key : null
-  activeStory.value = null
-  // devolver foco al emblema que se abrió
-  if (k) nextTick(() => document.getElementById(`ch3-mark-${k}`)?.focus())
-}
-function goStory(delta) {
-  if (activeStory.value === null) return
-  const next = activeStory.value + delta
-  if (next < 0 || next >= markers.length) return
-  activeStory.value = next
-  visited.value.add(markers[next].key)
-}
-
-// ── Parallax (cielo lento → cresta rápida) ─────────────────────────────────────
+// ── PRM ──────────────────────────────────────────────────────────────────────
 const prm = inject('prm', null)
 const reduced = () => prm?.prefersReduced?.value ?? false
 
-// ── Escena de entrada (ch3 es el chapter LANDING: esto abre el sitio) ─────────
-// Al activarse el chapter por primera vez el mundo se revela: cielo florece,
-// planos suben escalonados, el agua aparece, el título respira y los emblemas
-// se encienden uno a uno. PRM o sin shell (tests): escena completa sin cine.
-const scrollState = inject('scrollState', null)
-const arrived = ref(!scrollState)     // sin shell → visible de entrada
-const cinematic = ref(false)          // true solo cuando la llegada se anima
+// ── Destape de la narrativa (spec §8, defecto 4 de TASK-007) ─────────────────
+// Lead visible sin click = las primeras N oraciones del párrafo, partidas por
+// el token literal ". " — NO regex (spec: "no parsear con regex el texto
+// i18n"). La prosa real de bio.eras.3 tiene la MISMA cantidad de oraciones por
+// párrafo en ES y EN (4/3/3/3/2), verificado a mano sobre ambos locales; por
+// eso un único array de conteos sirve para los dos idiomas. El beat V (índice
+// 4, el remate del capítulo) siempre va completo — spec §3 acto 2 punto 2.
+const LEAD_SENTENCE_COUNT = [2, 2, 2, 2]
 
-// ── Ventana rota (Rafael 2026-07-09): llegas mirando la posguerra a través
-// del browser Y2K muerto (ch3-window.png — la UI es el edificio destruido).
-// Se desmorona sola a los ~6.5s o con tu primer click; los cristales caen al
-// agua y despiertan ondas. Solo en la llegada cinemática (PRM/tests: nunca).
-const windowState = ref('gone')   // 'framed' | 'crumbling' | 'gone'
-// Binding dinámico (evita que transformAssetUrls resuelva el path /assets/ en compile-time)
-const windowSrc = '/assets/ch3-window.png'
-let windowTimer = null
-let crumbleTimer = null
+function splitLead(text, leadCount) {
+  const sentences = text.split('. ')
+  if (sentences.length <= leadCount) return { lead: text, rest: '' }
+  const leadSentences = sentences.slice(0, leadCount)
+  const last = leadSentences[leadSentences.length - 1]
+  const lead = leadSentences.join('. ') + (last.endsWith('.') ? '' : '.')
+  const rest = sentences.slice(leadCount).join('. ')
+  return { lead, rest }
+}
 
-// Cristales CSS que caen al desmoronarse (clip-path irregular, pos en %)
-const shards = [
-  { left: '8%',  top: '6%',  w: 74, h: 46, delay: '0s',    rot: '-38deg', clip: 'polygon(0 18%, 46% 0, 100% 34%, 72% 100%, 12% 82%)' },
-  { left: '30%', top: '3%',  w: 58, h: 38, delay: '0.12s', rot: '52deg',  clip: 'polygon(12% 0, 100% 12%, 78% 92%, 0 68%)' },
-  { left: '62%', top: '5%',  w: 66, h: 42, delay: '0.05s', rot: '-24deg', clip: 'polygon(0 32%, 58% 0, 100% 58%, 44% 100%)' },
-  { left: '86%', top: '12%', w: 52, h: 40, delay: '0.2s',  rot: '44deg',  clip: 'polygon(22% 0, 100% 28%, 66% 100%, 0 74%)' },
-  { left: '5%',  top: '58%', w: 48, h: 36, delay: '0.16s', rot: '-58deg', clip: 'polygon(0 42%, 52% 0, 100% 44%, 58% 100%)' },
-  { left: '92%', top: '52%', w: 56, h: 44, delay: '0.28s', rot: '30deg',  clip: 'polygon(14% 0, 100% 22%, 80% 100%, 0 62%)' },
+function lastSentence(text) {
+  const sentences = text.split('. ')
+  const last = sentences[sentences.length - 1] || text
+  return last.endsWith('.') ? last : `${last}.`
+}
+
+// Metadatos por beat — icono (Ch3StoryBeat), tono de acento (spec §4: rojo
+// residual SOLO beat I, HTML5 naranja SOLO beat V, el resto usa el acento
+// estándar de la era --c-accent).
+const BEAT_META = [
+  { key: 'flash', icon: 'flash', tone: 'residual' },
+  { key: 'rebuild', icon: 'code', tone: 'accent' },
+  { key: 'method', icon: 'sprint', tone: 'accent' },
+  { key: 'edge', icon: 'megaphone', tone: 'accent' },
+  { key: 'leap', icon: 'shield', tone: 'html5' },
 ]
 
-function crumbleWindow() {
-  if (windowState.value !== 'framed') return
-  clearTimeout(windowTimer)
-  windowState.value = 'crumbling'
-  crumbleTimer = setTimeout(() => {
-    windowState.value = 'gone'
-    // los cristales tocan el agua: ondas donde caen
-    for (const x of [24, 52, 81]) {
-      const id = ++rippleId
-      ripples.value.push({ id, x, y: 30 + (id % 3) * 22 })
-      setTimeout(() => { ripples.value = ripples.value.filter((r) => r.id !== id) }, 1400)
+const beats = computed(() =>
+  BEAT_META.map((meta, i) => {
+    const paragraph = bioParagraphs.value[i] || ''
+    const full = i === BEAT_META.length - 1
+    const { lead, rest } = full ? { lead: paragraph, rest: '' } : splitLead(paragraph, LEAD_SENTENCE_COUNT[i])
+    return {
+      ...meta,
+      numeral: String(i + 1).padStart(2, '0'),
+      kicker: t(`ch3.beats.${i}.kicker`),
+      lead,
+      rest,
+      expandable: !full && rest.length > 0,
+      full,
+      reverse: i % 2 === 1,
     }
-  }, 1500)
-}
+  })
+)
 
-if (scrollState?.activeChapter) {
-  watch(
-    scrollState.activeChapter,
-    (n) => {
-      if (n === 3 && !arrived.value) {
-        if (!reduced()) {
-          cinematic.value = true
-          windowState.value = 'framed'
-          windowTimer = setTimeout(crumbleWindow, 6500)
-        }
-        arrived.value = true
-      }
-    },
-    { immediate: true }
-  )
-} else {
-  arrived.value = true
-}
+const closingLine = computed(() => lastSentence(bioParagraphs.value[4] || ''))
 
-const parallaxRef = ref(null)
+// ── Acto 1 — scrub del pin (0..1) + parallax del hero, escritos directo al DOM ──
+// (mismo patrón --sx/--mx ya usado en el resto del sitio — evita reactividad
+// Vue en cada frame de scroll). Bajo PRM el valor queda congelado (ver
+// onMounted): el Acto 1 se muestra en su cuadro "botón ya sin brillo, plugin
+// bloqueado" (~p=0.4, el final de la tramo de desaturación) en vez del p=0.15
+// literal de la spec — a esa altura el botón TODAVÍA brilla según los propios
+// tramos de la spec §3, así que se priorizó la descripción textual del estado
+// congelado ("botón ya sin brillo") sobre el número exacto (conflicto interno
+// de la spec, documentado en el hand-off).
+const pinRef = ref(null)
+const sceneRef = ref(null)
+const heroRef = ref(null)
+const beatsRef = ref(null)
+
 let raf = 0
-let sx = 0, mx = 0, my = 0
+let pendingScrollTop = 0
+let pendingViewportH = 0
 
-function flush() {
+function flushMotion() {
   raf = 0
-  const el = parallaxRef.value
-  if (!el) return
-  el.style.setProperty('--sx', String(sx))
-  el.style.setProperty('--mx', mx.toFixed(3))
-  el.style.setProperty('--my', my.toFixed(3))
+  const pinEl = pinRef.value
+  const sceneEl = sceneRef.value
+  if (pinEl && sceneEl) {
+    const pinDistance = Math.max(pinEl.offsetHeight - pendingViewportH, 1)
+    const p = Math.min(Math.max(pendingScrollTop / pinDistance, 0), 1)
+    sceneEl.style.setProperty('--ch3-p', p.toFixed(4))
+  }
+  const heroEl = heroRef.value
+  if (heroEl) {
+    const hy = pendingScrollTop - heroEl.offsetTop
+    heroEl.style.setProperty('--ch3-hy', hy.toFixed(1))
+  }
 }
-function schedule() { if (!raf) raf = requestAnimationFrame(flush) }
-function onScroll(e) { if (reduced()) return; sx = e.target.scrollTop; schedule() }
-function onPointer(e) {
+
+function onStageScroll(e) {
   if (reduced()) return
-  mx = e.clientX / window.innerWidth - 0.5
-  my = e.clientY / window.innerHeight - 0.5
-  schedule()
-}
-function onKeydown(e) {
-  if (!isOpen.value) return
-  if (e.key === 'Escape') { e.preventDefault(); closeStory() }
-  else if (e.key === 'ArrowRight') { e.preventDefault(); goStory(1) }
-  else if (e.key === 'ArrowLeft') { e.preventDefault(); goStory(-1) }
+  pendingScrollTop = e.target.scrollTop
+  pendingViewportH = e.target.clientHeight
+  if (!raf) raf = requestAnimationFrame(flushMotion)
 }
 
-// ── Agua: ondas al click (interactividad Kingdom) ─────────────────────────────
-const ripples = ref([])   // { id, x, y } en % relativos a .ch3-water
-let rippleId = 0
-
-// Primer click con la ventana rota en pie → la desmorona; después, ondas.
-function onStageClick(e) {
-  if (windowState.value === 'framed') { crumbleWindow(); return }
-  spawnRipple(e)
-}
-
-function spawnRipple(e) {
-  if (reduced() || isOpen.value) return
-  const vh = window.innerHeight
-  const waterTop = vh * 0.86            // .ch3-water ocupa el 14% inferior
-  if (e.clientY < waterTop) return
-  const x = (e.clientX / window.innerWidth) * 100
-  const y = ((e.clientY - waterTop) / (vh - waterTop)) * 100
-  const id = ++rippleId
-  ripples.value.push({ id, x, y })
-  if (ripples.value.length > 6) ripples.value.shift()
-  setTimeout(() => {
-    ripples.value = ripples.value.filter((r) => r.id !== id)
-  }, 1400)
+function scrollToBeats() {
+  beatsRef.value?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' })
 }
 
 onMounted(() => {
-  window.addEventListener('pointermove', onPointer, { passive: true })
-  window.addEventListener('keydown', onKeydown)
+  // Estado inicial: 0 en movimiento normal; congelado en 0.4 bajo PRM (ver
+  // comentario arriba). No se usa un binding :style reactivo para --ch3-p /
+  // --ch3-hy a propósito — Vue re-parchearía el estilo en cada re-render
+  // (p.ej. al togglear locale) y pisaría el valor que escribe el scroll.
+  sceneRef.value?.style.setProperty('--ch3-p', reduced() ? '0.4' : '0')
+  heroRef.value?.style.setProperty('--ch3-hy', '0')
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('pointermove', onPointer)
-  window.removeEventListener('keydown', onKeydown)
   if (raf) cancelAnimationFrame(raf)
-  clearTimeout(windowTimer)
-  clearTimeout(crumbleTimer)
 })
 </script>
 
 <template>
-  <div
-    class="ch3-stage"
-    :class="{ 'is-waiting': !arrived, 'is-arriving': cinematic }"
-    @scroll="onScroll"
-    @click="onStageClick"
-  >
-    <!-- ── Parallax stack (pinned) ───────────────────────────────────────── -->
-    <div ref="parallaxRef" class="ch3-parallax" aria-hidden="true">
-      <div class="ch3-layer ch3-layer--sky"></div>
-      <div class="ch3-layer ch3-layer--far"></div>
-      <div class="ch3-fx ch3-fx--magic"></div>
-      <div class="ch3-layer ch3-layer--mountains"></div>
-      <div class="ch3-layer ch3-layer--path"></div>
+  <div class="ch3-stage" @scroll="onStageScroll">
+    <!-- ══════════════════════════════════════════════════════════════════
+         ACTO 1 — el plugin muere (pinned, scrubbed por scroll)
+         ══════════════════════════════════════════════════════════════════ -->
+    <div ref="pinRef" class="ch3-act1-pin" :class="{ 'is-reduced': reduced() }">
+      <div ref="sceneRef" class="ch3-act1-scene">
+        <h1 class="ch3-act1-title">{{ t('ui.deathOfFlash') }}</h1>
 
-      <!-- Bandada de pájaros silueta (firma Kingdom). Fuera del DOM bajo PRM. -->
-      <div v-if="!reduced()" class="ch3-birds" aria-hidden="true">
-        <span
-          v-for="(b, i) in birds"
-          :key="`bird-${i}`"
-          class="ch3-bird"
-          :style="{ top: b.top, '--bd-delay': b.delay, '--bd-flap': b.flap, '--bd-i': i }"
-        ></span>
-      </div>
+        <div class="ch3-act1-decor" aria-hidden="true">
+          <div class="ch3-desktop"></div>
 
-      <!-- Brasas y ceniza — posguerra doliente. Desactivado bajo PRM. -->
-      <template v-if="!reduced()">
-        <div class="ch3-embers" aria-hidden="true">
-          <span
-            v-for="(em, i) in embers"
-            :key="`ember-${i}`"
-            class="ch3-ember"
-            :style="{
-              left: em.left,
-              '--em-delay': em.delay,
-              '--em-dur': em.dur,
-              '--em-size': em.size,
-              '--em-color': em.color,
-              '--em-dx': em.dx,
-            }"
-          ></span>
+          <div class="ch3-browser">
+            <div class="ch3-browser-tabs"><span class="ch3-browser-tab"></span></div>
+            <div class="ch3-browser-omnibox"></div>
+            <div class="ch3-browser-infobar">
+              <span>{{ t('ch3.ui.infobar') }}</span>
+              <span class="ch3-ghost-btn ch3-ghost-btn--tiny">{{ t('ch3.ui.runOnce') }}</span>
+            </div>
+
+            <div class="ch3-flash-stage">
+              <div class="ch3-flash-btn">
+                <span class="ch3-flash-shadow"></span>
+                <span class="ch3-flash-bevel"></span>
+                <span class="ch3-flash-fill"></span>
+                <span class="ch3-flash-desat"></span>
+                <span class="ch3-flash-specular"></span>
+                <span class="ch3-flash-play">&#9654;</span>
+              </div>
+              <svg class="ch3-wireframe" viewBox="0 0 100 72">
+                <rect x="4" y="4" width="92" height="64" rx="2" />
+                <circle cx="4" cy="4" r="2" /><circle cx="96" cy="4" r="2" />
+                <circle cx="96" cy="68" r="2" /><circle cx="4" cy="68" r="2" />
+                <circle cx="50" cy="36" r="2" />
+              </svg>
+              <div class="ch3-flat-block"></div>
+            </div>
+          </div>
+
+          <div class="ch3-phone">
+            <div class="ch3-phone-screen">
+              <svg class="ch3-puzzle" viewBox="0 0 40 40">
+                <path d="M4 10h6a3 3 0 1 1 0 6H4v6h6a3 3 0 1 1 0 6H4a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" />
+              </svg>
+              <p class="ch3-phone-note">{{ t('ch3.ui.phoneNote') }}</p>
+            </div>
+          </div>
+
+          <div class="ch3-act1-cue"><span class="ch3-act1-cue-arrow">&#8964;</span></div>
         </div>
-        <div class="ch3-ashes" aria-hidden="true">
-          <span
-            v-for="(ash, i) in ashes"
-            :key="`ash-${i}`"
-            class="ch3-ash"
-            :style="{
-              left: ash.left,
-              '--ash-delay': ash.delay,
-              '--ash-dur': ash.dur,
-              '--ash-size': ash.size,
-            }"
-          ></span>
-        </div>
-        <div class="ch3-haze" aria-hidden="true"></div>
-      </template>
 
-      <!-- ── Agua espejo (firma Kingdom): reflejo + shimmer + glint + ondas ── -->
-      <div class="ch3-water" aria-hidden="true">
-        <div class="ch3-water-layer ch3-water-layer--sky"></div>
-        <div class="ch3-water-layer ch3-water-layer--far"></div>
-        <div class="ch3-water-layer ch3-water-layer--mountains"></div>
-        <div class="ch3-water-layer ch3-water-layer--path"></div>
-        <div class="ch3-water-tint"></div>
-        <div class="ch3-water-shimmer"></div>
-        <div class="ch3-water-glint"></div>
-        <span
-          v-for="r in ripples"
-          :key="`ripple-${r.id}`"
-          class="ch3-ripple"
-          :style="{ left: r.x + '%', top: r.y + '%' }"
-        ></span>
+        <div class="ch3-act1-white" aria-hidden="true"></div>
+        <div class="ch3-act1-accent" aria-hidden="true"></div>
       </div>
     </div>
 
-    <!-- ── Contenido: hint sutil + emblemas clicables ────────────────────── -->
-    <div class="ch3-content">
-      <!-- Hint mínimo (el entorno es el protagonista) -->
-      <header class="ch3-hint">
-        <p class="ch3-hint-era">Rafael · 2013</p>
-        <h1 class="ch3-hint-title">{{ t('ui.deathOfFlash') }}</h1>
-        <p class="ch3-hint-cta">{{ t('ui.storyHint') }}</p>
-      </header>
+    <!-- ══════════════════════════════════════════════════════════════════
+         ACTO 2 — el renacimiento flat (flujo normal)
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="ch3-act2">
+      <div ref="heroRef" class="ch3-hero">
+        <div class="ch3-hero-parallax" aria-hidden="true">
+          <div class="ch3-hero-sky"></div>
+          <div class="ch3-hero-hill ch3-hero-hill--back"></div>
+          <div class="ch3-hero-hill ch3-hero-hill--front"></div>
+          <span class="ch3-hero-cloud ch3-hero-cloud--a"></span>
+          <span class="ch3-hero-cloud ch3-hero-cloud--b"></span>
+        </div>
+        <div class="ch3-hero-copy">
+          <h2 class="ch3-hero-title">{{ t('ch3.hero.title') }}</h2>
+          <p class="ch3-hero-sub">{{ t('ch3.hero.sub') }}</p>
+          <button type="button" class="ch3-ghost-btn" @click="scrollToBeats">{{ t('ch3.hero.cta') }}</button>
+        </div>
+      </div>
 
-      <!-- Emblemas de arte plantados en el escenario -->
-      <button
-        v-for="(m, i) in markers"
-        :id="`ch3-mark-${m.key}`"
-        :key="m.key"
-        type="button"
-        class="ch3-mark"
-        :class="{ 'ch3-mark--sky': m.sky, 'is-visited': visited.has(m.key), 'is-active': activeStory === i }"
-        :style="{ top: m.top, left: m.left, '--mk-size': m.size + 'px', '--mk-i': i }"
-        :aria-label="`${ROMAN[i]} — ${t('ui.storyPage', { n: i + 1, total: markers.length })}`"
-        @click.stop="openStory(i)"
-      >
-        <img :src="m.src" alt="" class="ch3-mark-img" />
-        <span class="ch3-mark-num" aria-hidden="true">{{ ROMAN[i] }}</span>
-      </button>
+      <div ref="beatsRef" class="ch3-beats">
+        <Ch3StoryBeat
+          v-for="beat in beats"
+          :key="beat.key"
+          :numeral="beat.numeral"
+          :kicker="beat.kicker"
+          :icon="beat.icon"
+          :tone="beat.tone"
+          :lead="beat.lead"
+          :rest="beat.rest"
+          :expandable="beat.expandable"
+          :full="beat.full"
+          :reverse="beat.reverse"
+        />
+      </div>
 
-      <!-- Project cards (vacío para ch3 — condicional por si se añaden) -->
+      <footer class="ch3-close">
+        <svg class="ch3-close-badge" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M24 8l14 5-2 15q0 8-12 12Q12 36 12 28L10 13z" />
+          <path d="M18 23l6 6 8-10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <p class="ch3-close-line">{{ closingLine }}</p>
+      </footer>
+
       <div v-if="ch3Projects.length > 0" class="ch3-projects">
         <ProjectCard v-for="project in ch3Projects" :key="project.id" :project="project" />
       </div>
     </div>
-
-    <!-- ── Ventana rota: el browser muerto a través del cual llegas ──────── -->
-    <div
-      v-if="windowState !== 'gone'"
-      class="ch3-window"
-      :class="{ 'is-crumbling': windowState === 'crumbling' }"
-      aria-hidden="true"
-    >
-      <div class="ch3-window-vignette"></div>
-      <img :src="windowSrc" alt="" class="ch3-window-frame" />
-      <span
-        v-for="(s, i) in shards"
-        :key="`shard-${i}`"
-        class="ch3-shard"
-        :style="{
-          left: s.left,
-          top: s.top,
-          width: s.w + 'px',
-          height: s.h + 'px',
-          clipPath: s.clip,
-          '--sh-delay': s.delay,
-          '--sh-rot': s.rot,
-        }"
-      ></span>
-    </div>
-
-    <!-- ── Recuadro pergamino: fragmento de la historia ──────────────────── -->
-    <transition name="ch3-panel-fade">
-      <div v-if="isOpen" class="ch3-panel-backdrop" @click.self.stop="closeStory">
-        <div
-          ref="panelRef"
-          class="ch3-panel"
-          role="dialog"
-          aria-modal="true"
-          :aria-label="t('ui.storyPage', { n: activeStory + 1, total: markers.length })"
-          tabindex="-1"
-        >
-          <button type="button" class="ch3-panel-close" :aria-label="t('ui.closeOverlay')" @click.stop="closeStory">✕</button>
-
-          <div class="ch3-panel-head" aria-hidden="true">
-            <span class="ch3-panel-numeral">{{ ROMAN[activeStory] }}</span>
-          </div>
-
-          <p class="ch3-panel-text">{{ activeParagraph }}</p>
-
-          <div class="ch3-panel-nav">
-            <button
-              type="button"
-              class="ch3-panel-arrow"
-              :disabled="activeStory === 0"
-              :aria-label="t('ui.storyPrev')"
-              @click.stop="goStory(-1)"
-            >‹</button>
-            <div class="ch3-panel-dots" aria-hidden="true">
-              <span
-                v-for="(m, i) in markers"
-                :key="m.key"
-                class="ch3-panel-dot"
-                :class="{ 'is-on': i === activeStory }"
-              ></span>
-            </div>
-            <button
-              type="button"
-              class="ch3-panel-arrow"
-              :disabled="activeStory === markers.length - 1"
-              :aria-label="t('ui.storyNext')"
-              @click.stop="goStory(1)"
-            >›</button>
-          </div>
-        </div>
-      </div>
-    </transition>
   </div>
 </template>
 
-<style scoped>
+<style>
 /* ─────────────────────────────────────────────────────────────────────────
- * .ch3-stage — contenedor. El bg lo pintan las capas parallax.
- * --ch3-water-h: altura de la banda de agua espejo (fracción del viewport).
+ * @property — --ch3-p (progreso 0..1 del scrub del Acto 1) registrada como
+ * <number> para que la capa de mejora progresiva (scroll-driven nativo, más
+ * abajo) pueda ANIMARLA con @keyframes (spec §7 + tokens.css §4.5, mismo
+ * patrón que --era-progress).
  * ───────────────────────────────────────────────────────────────────────── */
-.ch3-stage {
-  --ch3-water-h: 14dvh;
-  position: relative;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
-  width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  background-color: #141022;
-  image-rendering: pixelated;
+@property --ch3-p {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
 }
 
-/* ── Parallax (pinned al viewport del stage) ───────────────────────────────── */
-.ch3-parallax {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
-  width: 100%;
-  margin-bottom: -100vh;
-  margin-bottom: -100dvh;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
+@layer components {
+  /* ───────────────────────────────────────────────────────────────────────
+   * Tokens locales de ch3 — Flat UI Colors (Designmodo, 2013), spec §4.
+   * eras.css ya define los 6 semánticos (--c-bg/fg/accent/border/focus/
+   * surface) + --font-body para [data-chapter="3"]; estos son los matices
+   * EXTRA que la paleta de 2013 necesita y que ese contrato de 6 tokens no
+   * cubre (residuo Flash, HTML5, texto secundario, long-shadow).
+   * ─────────────────────────────────────────────────────────────────────── */
+  .ch3-stage {
+    --ch3-text-2: #34495e; /* Wet Asphalt — subtítulo hero, texto secundario */
+    --ch3-residual: #e74c3c; /* Alizarin — acento residual de Flash, solo beat I */
+    --ch3-html5: #e34f26; /* color oficial HTML5 — solo beat V y cierre */
+    --ch3-long-shadow: rgba(44, 62, 80, 0.15);
+    --ch3-close-bg: #2c3e50; /* Midnight Blue — franja de cierre, puente a ch4 */
+    --ch3-white: #ecf0f1; /* Clouds — mismo tono que --c-bg de la era */
 
-.ch3-layer {
-  position: absolute;
-  inset: -8%;
-  width: 116%;
-  height: 116%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  image-rendering: pixelated;
-  will-change: transform;
-}
-
-/* Profundidad Kingdom: cielo casi quieto → cresta cercana con el drift más ancho */
-.ch3-layer--sky {
-  background-image: url('/assets/ch3-sky.webp');
-  background-position: 50% top;
-  transform: translate3d(calc(var(--mx, 0) * 6px), calc(var(--sx, 0) * -0.015px + var(--my, 0) * 4px), 0);
-  animation: ch3-sky-drift 90s ease-in-out infinite alternate;
-}
-@keyframes ch3-sky-drift { from { background-position: 49% top; } to { background-position: 51% top; } }
-
-.ch3-layer--far {
-  background-image: url('/assets/ch3-far.png');
-  background-position: center bottom;
-  transform: translate3d(calc(var(--mx, 0) * 13px), calc(var(--sx, 0) * -0.035px + var(--my, 0) * 5px), 0);
-}
-
-.ch3-layer--mountains {
-  background-image: url('/assets/ch3-mountains.png');
-  background-position: center bottom;
-  transform: translate3d(calc(var(--mx, 0) * 22px), calc(var(--sx, 0) * -0.06px + var(--my, 0) * 4px), 0);
-}
-
-.ch3-layer--path {
-  background-image: url('/assets/ch3-path.png');
-  background-position: center bottom;
-  transform: translate3d(calc(var(--mx, 0) * 34px), calc(var(--sx, 0) * -0.11px + var(--my, 0) * 3px), 0);
-}
-
-/* ── FX luz ambiente ───────────────────────────────────────────────────────── */
-.ch3-fx { position: absolute; inset: 0; pointer-events: none; }
-
-/* Halo cálido anclado al sol (cx≈28% cy≈42% del viewport) + insinuación fría
-   del amanecer HTML5 en el este (arriba-derecha, donde vive el emblema V) */
-.ch3-fx--magic {
-  background:
-    radial-gradient(34% 30% at 28% 42%, rgba(255, 196, 120, 0.32) 0%, rgba(255, 170, 90, 0.10) 55%, transparent 75%),
-    radial-gradient(30% 24% at 88% 28%, rgba(150, 220, 255, 0.14) 0%, transparent 70%);
-  mix-blend-mode: screen;
-  animation: ch3-magic-pulse 8s ease-in-out infinite;
-}
-@keyframes ch3-magic-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
-
-/* ── Bandada de pájaros silueta ────────────────────────────────────────────── */
-.ch3-birds {
-  position: absolute;
-  top: 24%;
-  left: 0;
-  width: 64px;
-  height: 32px;
-  animation: ch3-flock 38s linear infinite;
-  animation-delay: 4s;
-  opacity: 0;
-}
-@keyframes ch3-flock {
-  0%    { transform: translate3d(-12vw, 0, 0);      opacity: 0; }
-  2%    { opacity: 0.9; }
-  20%   { transform: translate3d(40vw, -3vh, 0);    opacity: 0.9; }
-  42%   { transform: translate3d(112vw, -7vh, 0);   opacity: 0.9; }
-  42.1% { opacity: 0; }
-  100%  { transform: translate3d(112vw, -7vh, 0);   opacity: 0; }
-}
-.ch3-bird {
-  position: absolute;
-  left: calc(var(--bd-i, 0) * 12px);
-  width: 9px;
-  height: 3px;
-}
-.ch3-bird::before,
-.ch3-bird::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 5px;
-  height: 2px;
-  background: #241a2e;
-  transform-origin: 100% 50%;
-  animation: ch3-flap-l var(--bd-flap, 0.42s) ease-in-out var(--bd-delay, 0s) infinite alternate;
-}
-.ch3-bird::after {
-  left: 4px;
-  transform-origin: 0% 50%;
-  animation-name: ch3-flap-r;
-}
-@keyframes ch3-flap-l { from { transform: rotate(18deg); } to { transform: rotate(-22deg); } }
-@keyframes ch3-flap-r { from { transform: rotate(-18deg); } to { transform: rotate(22deg); } }
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Agua espejo — la firma de Kingdom New Lands.
- * Copias de las 4 capas con origin top + translateY(100dvh - agua) + scaleY(-1):
- * la ventana visible del contenedor muestra la franja de escena justo encima
- * de la línea de agua, invertida. Encima: tinte, shimmer y glint del sol.
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-water {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--ch3-water-h);
-  overflow: hidden;
-  z-index: 1;
-}
-
-.ch3-water-layer {
-  position: absolute;
-  top: 0;
-  left: -8%;
-  width: 116%;
-  height: 100vh;
-  height: 100dvh;
-  background-repeat: no-repeat;
-  background-size: cover;
-  image-rendering: pixelated;
-  transform-origin: top;
-  filter: brightness(0.72) saturate(0.82);
-}
-
-.ch3-water-layer--sky {
-  background-image: url('/assets/ch3-sky.webp');
-  background-position: 50% top;
-  transform: translateX(calc(var(--mx, 0) * 6px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
-}
-.ch3-water-layer--far {
-  background-image: url('/assets/ch3-far.png');
-  background-position: center bottom;
-  transform: translateX(calc(var(--mx, 0) * 13px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
-}
-.ch3-water-layer--mountains {
-  background-image: url('/assets/ch3-mountains.png');
-  background-position: center bottom;
-  transform: translateX(calc(var(--mx, 0) * 22px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
-}
-.ch3-water-layer--path {
-  background-image: url('/assets/ch3-path.png');
-  background-position: center bottom;
-  transform: translateX(calc(var(--mx, 0) * 34px)) translateY(calc(100dvh - var(--ch3-water-h))) scaleY(-1);
-}
-
-/* Tinte índigo del agua + oscurecimiento hacia el fondo */
-.ch3-water-tint {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(24, 16, 44, 0.30) 0%,
-    rgba(18, 12, 36, 0.55) 55%,
-    rgba(12, 8, 26, 0.78) 100%
-  );
-}
-/* Línea de orilla: 1px de luz fría donde la escena toca el agua */
-.ch3-water-tint::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgba(190, 170, 220, 0.5);
-}
-
-/* Shimmer: finas líneas horizontales derivando en sentidos opuestos */
-.ch3-water-shimmer {
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0px, transparent 3px,
-      rgba(220, 200, 255, 0.055) 3px, rgba(220, 200, 255, 0.055) 4px,
-      transparent 4px, transparent 9px
-    );
-  animation: ch3-shimmer 7s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-}
-@keyframes ch3-shimmer {
-  from { transform: translateX(-14px); opacity: 0.65; }
-  to   { transform: translateX(14px);  opacity: 1; }
-}
-
-/* Glint: columna de brillo del sol sobre el agua (sol a x≈28%) */
-.ch3-water-glint {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(18% 130% at 28% 0%, rgba(255, 200, 120, 0.34) 0%, rgba(255, 180, 100, 0.10) 60%, transparent 80%);
-  mix-blend-mode: screen;
-  animation: ch3-glint 5.5s ease-in-out infinite;
-}
-@keyframes ch3-glint { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-
-/* Onda al click: elipse expandiéndose (perspectiva del agua) */
-.ch3-ripple {
-  position: absolute;
-  width: 10px;
-  height: 4px;
-  margin: -2px 0 0 -5px;
-  border: 1px solid rgba(220, 205, 255, 0.75);
-  border-radius: 50%;
-  opacity: 0.9;
-  animation: ch3-ripple-grow 1.35s ease-out forwards;
-}
-.ch3-ripple::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border: 1px solid rgba(255, 210, 150, 0.35);
-  border-radius: 50%;
-  animation: ch3-ripple-grow 1.35s ease-out 0.18s forwards;
-}
-@keyframes ch3-ripple-grow {
-  from { transform: scale(1);   opacity: 0.9; }
-  to   { transform: scale(11);  opacity: 0; }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Contenido — encima del parallax. El escenario manda; texto mínimo.
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-content {
-  position: relative;
-  z-index: 2;
-  min-height: 100%;
-  box-sizing: border-box;
-  padding: calc(88px + var(--sp-md)) var(--sp-lg) calc(88px + env(safe-area-inset-bottom, 0px));
-}
-
-/* Hint sutil top-center */
-.ch3-hint {
-  position: relative;
-  z-index: 3;
-  text-align: center;
-  max-width: 720px;
-  margin: 0 auto;
-  pointer-events: none;
-}
-.ch3-hint-era {
-  font-family: 'Cinzel', 'Trajan Pro', serif;
-  font-size: 0.85rem;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  color: #e8b27a;
-  margin: 0 0 4px;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-}
-.ch3-hint-title {
-  font-family: 'Cinzel Decorative', 'Cinzel', 'Trajan Pro', serif;
-  font-weight: 900;
-  font-size: clamp(2.1rem, 5.2vw, 3.6rem);
-  letter-spacing: 0.04em;
-  margin: 0 0 10px;
-  line-height: 1.08;
-  color: #fbeede;
-  text-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.85),
-    0 0 22px rgba(255, 140, 60, 0.6),
-    0 0 44px rgba(255, 90, 40, 0.35);
-}
-.ch3-hint-cta {
-  font-family: 'Inter Variable', system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-style: italic;
-  color: #f0e2cf;
-  margin: 0;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
-  animation: ch3-hint-pulse 3s ease-in-out infinite;
-}
-@keyframes ch3-hint-pulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
-
-/* ── Emblemas clicables — objetos del mundo Kingdom ────────────────────────
- * I-IV plantados en el suelo (sin bob); solo .ch3-mark--sky flota.
- * Affordance: brasa que respira detrás + placa rúnica con numeral.           */
-.ch3-mark {
-  position: absolute;
-  z-index: 2;
-  width: var(--mk-size, 88px);
-  height: var(--mk-size, 88px);
-  transform: translate(-50%, -50%);
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-  transition: filter 0.2s ease, transform 0.18s ease;
-  filter: drop-shadow(0 3px 8px rgba(8, 5, 16, 0.7));
-}
-.ch3-mark--sky {
-  animation: ch3-mark-float 6s ease-in-out infinite;
-  animation-delay: calc(var(--mk-i, 0) * 0.6s);
-}
-.ch3-mark-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  display: block;
-}
-/* Brasa que respira detrás del objeto — cálida, pequeña, del mundo */
-.ch3-mark::before {
-  content: '';
-  position: absolute;
-  inset: -14%;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(255, 190, 110, 0.38) 0%,
-    rgba(255, 150, 70, 0.16) 48%,
-    transparent 72%);
-  opacity: 0.7;
-  z-index: -1;
-  animation: ch3-mark-glow 3.4s ease-in-out infinite;
-  animation-delay: calc(var(--mk-i, 0) * 0.7s);
-}
-/* La estrella del alba respira en frío */
-.ch3-mark--sky::before {
-  background: radial-gradient(circle,
-    rgba(190, 235, 255, 0.34) 0%,
-    rgba(150, 210, 255, 0.14) 48%,
-    transparent 72%);
-}
-/* Placa rúnica con el numeral */
-.ch3-mark-num {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Cinzel', serif;
-  font-weight: 900;
-  font-size: 0.72rem;
-  color: #e8c187;
-  background: rgba(22, 16, 30, 0.88);
-  border: 1px solid rgba(222, 138, 74, 0.55);
-  border-radius: 3px;
-  padding: 1px 7px;
-  letter-spacing: 0.08em;
-  pointer-events: none;
-}
-.ch3-mark:hover,
-.ch3-mark:focus-visible {
-  transform: translate(-50%, -52%) scale(1.1);
-  filter: drop-shadow(0 0 14px rgba(255, 190, 110, 0.85)) drop-shadow(0 5px 12px rgba(8, 5, 16, 0.6));
-  outline: none;
-}
-.ch3-mark:hover::before,
-.ch3-mark:focus-visible::before { opacity: 1; }
-.ch3-mark.is-visited { filter: drop-shadow(0 3px 8px rgba(8, 5, 16, 0.5)) saturate(0.8) brightness(0.88); }
-.ch3-mark.is-visited::before { opacity: 0.18; }
-.ch3-mark.is-active::before { opacity: 1; }
-
-@keyframes ch3-mark-float { 0%, 100% { margin-top: 0; } 50% { margin-top: -8px; } }
-@keyframes ch3-mark-glow { 0%, 100% { transform: scale(0.92); opacity: 0.5; } 50% { transform: scale(1.08); opacity: 0.85; } }
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Recuadro pergamino (panel del cuento)
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-panel-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-lg);
-  background: rgba(20, 16, 30, 0.45);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-.ch3-panel {
-  position: relative;
-  width: min(560px, 92%);
-  max-height: 78dvh;
-  overflow-y: auto;
-  box-sizing: border-box;
-  padding: clamp(28px, 5vw, 48px) clamp(26px, 5vw, 46px) clamp(20px, 4vw, 34px);
-  color: #3a2a18;
-  background-color: #f1e3c4;
-  background-image: url('/assets/ch3-parchment.webp');
-  background-size: cover;
-  background-position: center;
-  image-rendering: pixelated;
-  border: 3px solid #3a2a18;
-  box-shadow: 0 18px 50px rgba(20,16,30,0.5), inset 0 0 0 2px rgba(214, 178, 110, 0.6);
-  outline: none;
-}
-.ch3-panel-close {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 30px;
-  height: 30px;
-  border: 2px solid #3a2a18;
-  border-radius: 50%;
-  background: rgba(241, 227, 196, 0.9);
-  color: #3a2a18;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ch3-panel-close:hover { background: #e3cf9f; }
-
-.ch3-panel-head { text-align: center; margin-bottom: var(--sp-sm); }
-.ch3-panel-numeral {
-  font-family: 'Cinzel Decorative', 'Cinzel', 'Trajan Pro', serif;
-  font-weight: 900;
-  font-size: clamp(2.4rem, 7vw, 3.6rem);
-  color: #6b4a1e;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.5);
-  position: relative;
-}
-.ch3-panel-numeral::after {
-  content: '';
-  display: block;
-  width: 64px;
-  height: 2px;
-  margin: 8px auto 0;
-  background: linear-gradient(90deg, transparent, #b88a3e, transparent);
-}
-
-.ch3-panel-text {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1rem, 2.4vw, 1.12rem);
-  line-height: 1.75;
-  margin: 0 0 var(--sp-md);
-  white-space: pre-line;
-}
-
-.ch3-panel-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-md);
-}
-.ch3-panel-arrow {
-  width: 40px;
-  height: 40px;
-  border: 2px solid #3a2a18;
-  border-radius: 50%;
-  background: rgba(241, 227, 196, 0.85);
-  color: #3a2a18;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-.ch3-panel-arrow:hover:not(:disabled) { background: #e3cf9f; transform: scale(1.08); }
-.ch3-panel-arrow:disabled { opacity: 0.3; cursor: default; }
-.ch3-panel-dots { display: flex; gap: 8px; }
-.ch3-panel-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(58, 42, 24, 0.3);
-  border: 1px solid rgba(58, 42, 24, 0.5);
-}
-.ch3-panel-dot.is-on { background: #b88a3e; box-shadow: 0 0 8px rgba(184,138,62,0.8); }
-
-/* Transición de entrada/salida del recuadro */
-.ch3-panel-fade-enter-active,
-.ch3-panel-fade-leave-active { transition: opacity 0.22s ease; }
-.ch3-panel-fade-enter-active .ch3-panel,
-.ch3-panel-fade-leave-active .ch3-panel { transition: transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
-.ch3-panel-fade-enter-from,
-.ch3-panel-fade-leave-to { opacity: 0; }
-.ch3-panel-fade-enter-from .ch3-panel,
-.ch3-panel-fade-leave-to .ch3-panel { transform: scale(0.9) translateY(10px); }
-
-.ch3-projects {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-md);
-  max-width: 720px;
-  width: 100%;
-  margin: var(--sp-lg) auto 0;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Brasas ascendentes y ceniza descendente — posguerra doliente.
- * Solo transform/opacity (composited). Eliminadas del DOM bajo PRM via v-if.
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-embers,
-.ch3-ashes {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.ch3-ember {
-  position: absolute;
-  bottom: 16%;
-  width: var(--em-size, 3px);
-  height: var(--em-size, 3px);
-  border-radius: 50%;
-  background: var(--em-color, #ff9a3c);
-  box-shadow:
-    0 0 4px 2px var(--em-color, #ff9a3c),
-    0 0 10px 3px rgba(255, 120, 30, 0.4);
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: ch3-ember-rise var(--em-dur, 20s) ease-in-out var(--em-delay, 0s) infinite;
-}
-
-@keyframes ch3-ember-rise {
-  0%   { opacity: 0;    transform: translateY(0)       translateX(0)                               scale(1);    }
-  8%   { opacity: 0.7;  }
-  25%  {               transform: translateY(-25vh)   translateX(var(--em-dx, 8px))              scale(0.92); }
-  50%  { opacity: 0.5;  transform: translateY(-55vh)   translateX(0)                               scale(0.84); }
-  75%  { opacity: 0.28; transform: translateY(-82vh)   translateX(calc(var(--em-dx, 8px) * -0.6)) scale(0.72); }
-  100% { opacity: 0;    transform: translateY(-112vh)  translateX(0)                               scale(0.5);  }
-}
-
-.ch3-ash {
-  position: absolute;
-  top: -2%;
-  width: var(--ash-size, 2px);
-  height: var(--ash-size, 2px);
-  border-radius: 1px;
-  background: #8a8a92;
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: ch3-ash-fall var(--ash-dur, 20s) ease-in-out var(--ash-delay, 0s) infinite;
-}
-
-@keyframes ch3-ash-fall {
-  0%   { opacity: 0;    transform: translateY(0)      translateX(0)    rotate(0deg);   }
-  10%  { opacity: 0.5; }
-  35%  {               transform: translateY(28vh)   translateX(8px)  rotate(40deg);  }
-  60%  { opacity: 0.35; transform: translateY(58vh)   translateX(-6px) rotate(80deg);  }
-  85%  { opacity: 0.2;  transform: translateY(88vh)   translateX(10px) rotate(130deg); }
-  100% { opacity: 0;    transform: translateY(108vh)  translateX(0)    rotate(180deg); }
-}
-
-.ch3-haze {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    to top,
-    rgba(255, 130, 50, 0.06) 0%,
-    rgba(255, 100, 30, 0.03) 35%,
-    transparent 60%
-  );
-  animation: ch3-haze-pulse 8s ease-in-out infinite;
-}
-
-@keyframes ch3-haze-pulse {
-  0%, 100% { opacity: 0.5; }
-  50%       { opacity: 0.9; }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Ventana rota — el browser Y2K muerto (ch3-window.png procedural).
- * Llegas mirando la posguerra a través de él; se desmorona (frame cae,
- * cristales caen al agua) al primer click o a los ~6.5s.
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-window {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  overflow: hidden;
-}
-.ch3-window-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 105% at 50% 46%, transparent 58%, rgba(8, 5, 14, 0.44) 82%, rgba(8, 5, 14, 0.78) 100%);
-}
-.ch3-window-frame {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  image-rendering: pixelated;
-  display: block;
-}
-/* Cristales: astillas de vidrio muerto pegadas al marco */
-.ch3-shard {
-  position: absolute;
-  background: linear-gradient(148deg, rgba(220, 232, 255, 0.16) 0%, rgba(190, 205, 240, 0.07) 55%, rgba(255, 190, 120, 0.10) 100%);
-  border: 1px solid rgba(210, 220, 250, 0.22);
-  box-sizing: border-box;
-}
-
-/* Desmoronamiento */
-.ch3-window.is-crumbling .ch3-window-frame {
-  animation: ch3-window-fall 1.4s cubic-bezier(0.5, 0, 0.9, 0.4) forwards;
-}
-.ch3-window.is-crumbling .ch3-window-vignette {
-  animation: ch3-window-vanish 1s ease forwards;
-}
-.ch3-window.is-crumbling .ch3-shard {
-  animation: ch3-shard-fall 1.15s cubic-bezier(0.4, 0, 0.9, 0.5) var(--sh-delay, 0s) forwards;
-}
-@keyframes ch3-window-fall {
-  0%   { transform: translateY(0) rotate(0); opacity: 1; }
-  18%  { transform: translateY(1.5%) rotate(0.4deg); }
-  100% { transform: translateY(30%) rotate(1.6deg); opacity: 0; }
-}
-@keyframes ch3-window-vanish { to { opacity: 0; } }
-@keyframes ch3-shard-fall {
-  0%   { transform: translateY(0) rotate(0); opacity: 1; }
-  100% { transform: translateY(108vh) rotate(var(--sh-rot, 40deg)); opacity: 0.2; }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Escena de entrada — ch3 es el landing: la apertura del sitio.
- * .is-waiting: mundo a oscuras (aún no se llegó al chapter).
- * .is-arriving: coreografía de revelado (una sola vez, animation-fill both):
- *   cielo florece → planos suben escalonados → agua aparece → título respira
- *   → emblemas se encienden uno a uno.
- * ───────────────────────────────────────────────────────────────────────── */
-.ch3-stage.is-waiting .ch3-layer,
-.ch3-stage.is-waiting .ch3-fx--magic,
-.ch3-stage.is-waiting .ch3-water,
-.ch3-stage.is-waiting .ch3-hint,
-.ch3-stage.is-waiting .ch3-mark { opacity: 0; }
-
-.ch3-stage.is-arriving .ch3-layer--sky {
-  animation: ch3-arrive-fade 1.6s ease backwards, ch3-sky-drift 90s ease-in-out 1.6s infinite alternate;
-}
-.ch3-stage.is-arriving .ch3-fx--magic {
-  animation: ch3-arrive-fade 2s ease 0.4s backwards, ch3-magic-pulse 8s ease-in-out 2.4s infinite;
-}
-.ch3-stage.is-arriving .ch3-layer--far       { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.25s backwards; }
-.ch3-stage.is-arriving .ch3-layer--mountains { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.45s backwards; }
-.ch3-stage.is-arriving .ch3-layer--path      { animation: ch3-arrive-rise 1.2s cubic-bezier(0.16, 0.8, 0.3, 1) 0.65s backwards; }
-.ch3-stage.is-arriving .ch3-water            { animation: ch3-arrive-fade 1.4s ease 1s backwards; }
-.ch3-stage.is-arriving .ch3-hint-era         { animation: ch3-arrive-fade 0.9s ease 0.9s backwards; }
-.ch3-stage.is-arriving .ch3-hint-title       { animation: ch3-arrive-title 1.3s cubic-bezier(0.16, 0.8, 0.3, 1) 1.05s backwards; }
-.ch3-stage.is-arriving .ch3-hint-cta {
-  animation: ch3-arrive-fade 1s ease 2.1s backwards, ch3-hint-pulse 3s ease-in-out 3.1s infinite;
-}
-.ch3-stage.is-arriving .ch3-mark {
-  animation: ch3-arrive-mark 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards;
-  animation-delay: calc(1.5s + var(--mk-i, 0) * 0.18s);
-}
-.ch3-stage.is-arriving .ch3-mark--sky {
-  animation: ch3-arrive-mark 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards,
-             ch3-mark-float 6s ease-in-out 2.6s infinite;
-  animation-delay: calc(1.5s + var(--mk-i, 0) * 0.18s), 2.6s;
-}
-
-@keyframes ch3-arrive-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes ch3-arrive-rise {
-  from { opacity: 0; transform: translate3d(0, 5%, 0); }
-  to   { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-@keyframes ch3-arrive-title {
-  from { opacity: 0; letter-spacing: 0.22em; transform: translateY(14px); }
-  to   { opacity: 1; letter-spacing: 0.04em; transform: translateY(0); }
-}
-@keyframes ch3-arrive-mark {
-  0%   { opacity: 0; transform: translate(-50%, -44%) scale(0.55); }
-  62%  { opacity: 1; }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * PRM — desactiva todo el movimiento. El reflejo del agua queda estático.
- * ───────────────────────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  .ch3-layer,
-  .ch3-fx--magic,
-  .ch3-hint-cta,
-  .ch3-mark,
-  .ch3-mark::before,
-  .ch3-mark::after,
-  .ch3-water-shimmer,
-  .ch3-water-glint,
-  .ch3-birds,
-  .ch3-bird::before,
-  .ch3-bird::after,
-  .ch3-ripple,
-  .ch3-panel-fade-enter-active .ch3-panel,
-  .ch3-panel-fade-leave-active .ch3-panel { animation: none !important; transition: none !important; }
-  .ch3-layer { transform: none !important; }
-  .ch3-birds, .ch3-ripple { opacity: 0 !important; }
-  .ch3-ember, .ch3-ash { animation: none !important; opacity: 0 !important; }
-  .ch3-haze { animation: none !important; opacity: 0 !important; }
-  .ch3-window { display: none !important; }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Mobile <600px — emblemas más juntos / panel full-width
- * ───────────────────────────────────────────────────────────────────────── */
-@media (max-width: 599px) {
-  .ch3-content {
-    padding: calc(64px + var(--sp-sm)) var(--sp-md) calc(80px + env(safe-area-inset-bottom, 0px));
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    background: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-body);
   }
-  .ch3-mark { width: calc(var(--mk-size, 88px) * 0.72); height: calc(var(--mk-size, 88px) * 0.72); }
-  .ch3-mark-num { font-size: 0.7rem; padding: 0 6px; }
-  .ch3-panel { width: 94%; max-height: 80dvh; }
 
-  /* Sin puntero en mobile → las capas no se mueven horizontalmente (--mx = 0),
-     solo hay drift vertical por scroll (--sx). El overscan lateral (width:116%)
-     expandía el layout viewport y recortaba el contenido a los lados. Lo quitamos
-     conservando el overscan vertical (top/bottom -8% del inset) para el drift. */
-  .ch3-layer { left: 0; width: 100%; }
-  .ch3-water-layer { left: 0; width: 100%; }
+  /* ═══════════════════════════════════════════════════════════════════════
+   * ACTO 1 — escenografía procedural del plugin muerto. Tokens locales:
+   * "asset-scene" documentado (spec sistema visual §3 — excepción de hex
+   * literales para escenas de arte concretas; los Flat UI Colors del Acto 2
+   * viven arriba como tokens semánticos del componente).
+   * ═══════════════════════════════════════════════════════════════════════ */
+  .ch3-act1-pin {
+    --ch3-desk: #2b2d31;
+    --ch3-chrome: #3a3d42;
+    --ch3-chrome-border: #4a4d52;
+    --ch3-infobar-bg: #fdf3d0;
+    --ch3-infobar-fg: #6b5d1f;
+    --ch3-flash-a: #b3151d;
+    --ch3-flash-b: #7a0c12;
+    --ch3-flash-specular-c: rgba(255, 255, 255, 0.35);
+    --ch3-dead-gray: #7f8c8d;
+    --ch3-puzzle-gray: #8e8e93;
+    --ch3-wire: #3498db;
+    --ch3-flat-red: #e74c3c;
+
+    position: relative;
+    height: 220vh;
+    height: 220dvh;
+  }
+
+  .ch3-act1-scene {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    background: var(--ch3-desk);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ch3-act1-title {
+    position: relative;
+    z-index: 3;
+    margin: 0 0 clamp(220px, 30vh, 320px);
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: var(--fs-700);
+    color: #f3f4f6;
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  .ch3-act1-decor {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2xl);
+    padding-top: 8vh;
+    /* Fade de todo el chrome (navegador + teléfono) hacia el final del scrub —
+       spec §3 tramo p 0.70-0.85. */
+    opacity: calc(1 - max(0, (var(--ch3-p) - 0.7) * 6.5));
+  }
+
+  /* ── Navegador 2013 (CSS puro) ────────────────────────────────────────── */
+  .ch3-browser {
+    position: relative;
+    width: min(620px, 62vw);
+    border: 1px solid var(--ch3-chrome-border);
+    background: var(--ch3-chrome);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+  .ch3-browser-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px 0;
+  }
+  .ch3-browser-tab {
+    width: 96px;
+    height: 22px;
+    background: #4a4d52;
+    border-radius: 4px 4px 0 0;
+  }
+  .ch3-browser-omnibox {
+    height: 26px;
+    margin: 0 8px 8px;
+    background: #24262a;
+    border: 1px solid var(--ch3-chrome-border);
+    border-radius: 3px;
+  }
+  .ch3-browser-infobar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-sm);
+    padding: 8px 12px;
+    background: var(--ch3-infobar-bg);
+    color: var(--ch3-infobar-fg);
+    font-family: var(--font-body);
+    font-size: var(--fs-200);
+  }
+
+  /* ── Stage de Flash 550x400 + botón glossy de 4 capas (spec §3.3) ──────── */
+  .ch3-flash-stage {
+    position: relative;
+    width: min(550px, 56vw);
+    aspect-ratio: 550 / 400;
+    margin: var(--sp-lg) auto;
+    background: #1c1e21;
+    border: 1px solid var(--ch3-chrome-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ch3-flash-btn {
+    position: relative;
+    width: 46%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+  }
+  .ch3-flash-shadow,
+  .ch3-flash-bevel,
+  .ch3-flash-fill,
+  .ch3-flash-desat,
+  .ch3-flash-specular {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    will-change: transform, opacity;
+  }
+  .ch3-flash-shadow {
+    box-shadow: 0 18px 34px rgba(0, 0, 0, 0.55);
+    opacity: calc(1 - var(--ch3-p) * 2.5);
+  }
+  .ch3-flash-bevel {
+    box-shadow:
+      inset 0 2px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.4),
+      0 0 0 2px var(--ch3-chrome-border);
+    opacity: calc(1 - (var(--ch3-p) - 0.1) * 2.5);
+  }
+  .ch3-flash-fill {
+    background: radial-gradient(circle at 38% 32%, var(--ch3-flash-a), var(--ch3-flash-b));
+  }
+  .ch3-flash-desat {
+    background: var(--ch3-dead-gray);
+    opacity: calc((var(--ch3-p) - 0.15) * 4);
+  }
+  .ch3-flash-specular {
+    background: radial-gradient(circle at 34% 26%, var(--ch3-flash-specular-c), transparent 55%);
+    opacity: calc(1 - (var(--ch3-p) - 0.3) * 3);
+    transform:
+      translateY(calc(max(0px, (var(--ch3-p) - 0.3) * 60vh)))
+      rotate(calc(min(0deg, (var(--ch3-p) - 0.3) * -13deg)));
+  }
+  .ch3-flash-play {
+    position: relative;
+    z-index: 1;
+    color: #fdece9;
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    opacity: calc(1 - var(--ch3-p) * 2);
+  }
+
+  .ch3-wireframe {
+    position: absolute;
+    inset: 14%;
+    fill: none;
+    stroke: var(--ch3-wire);
+    stroke-width: 1;
+    stroke-dasharray: 3 2;
+    opacity: min((var(--ch3-p) - 0.4) * 10, (0.7 - var(--ch3-p)) * 10);
+  }
+  .ch3-wireframe circle {
+    stroke-dasharray: none;
+    fill: var(--ch3-wire);
+  }
+
+  .ch3-flat-block {
+    position: absolute;
+    inset: 30%;
+    background: var(--ch3-flat-red);
+    opacity: min(max(0, (var(--ch3-p) - 0.4) * 5), 1);
+  }
+
+  /* ── Teléfono 2013: el plugin nunca llegó aquí (siempre visible, estático) ── */
+  .ch3-phone {
+    flex-shrink: 0;
+    width: min(120px, 14vw);
+    aspect-ratio: 9 / 18;
+    padding: 8px 6px;
+    border-radius: 16px;
+    background: #0b0b0d;
+    border: 1px solid #2a2c30;
+  }
+  .ch3-phone-screen {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #1c1e21;
+    border-radius: 4px;
+    padding: var(--sp-xs);
+    text-align: center;
+  }
+  .ch3-puzzle {
+    width: 34%;
+    fill: var(--ch3-puzzle-gray);
+  }
+  .ch3-phone-note {
+    margin: 0;
+    color: #cfd2d6;
+    font-family: var(--font-body);
+    font-size: 0.6rem;
+    line-height: 1.3;
+  }
+
+  /* ── Cue de scroll (se apaga apenas el usuario empieza a scrollear) ─────── */
+  .ch3-act1-cue {
+    position: absolute;
+    bottom: 6vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    opacity: calc(1 - var(--ch3-p) * 8);
+  }
+  .ch3-act1-cue-arrow {
+    display: inline-block;
+    color: var(--ch3-dead-gray);
+    font-size: 1.6rem;
+    animation: ch3-cue-pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes ch3-cue-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── Renacimiento: blanqueo + acento HTML5 (spec §3 tramo p 0.85-1.00) ──── */
+  .ch3-act1-white,
+  .ch3-act1-accent {
+    position: absolute;
+    z-index: 4;
+  }
+  .ch3-act1-white {
+    inset: 0;
+    background: var(--ch3-white);
+    opacity: calc((var(--ch3-p) - 0.85) * 6.5);
+  }
+  .ch3-act1-accent {
+    inset: 30%;
+    background: var(--ch3-html5);
+    opacity: calc((var(--ch3-p) - 0.9) * 10);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+   * ACTO 2 — el renacimiento flat
+   * ═══════════════════════════════════════════════════════════════════════ */
+  .ch3-act2 {
+    position: relative;
+    z-index: 1;
+    background: var(--c-bg);
+  }
+
+  /* Ghost button — compartido por hero CTA + beat "Seguir leyendo" (spec §6) */
+  .ch3-ghost-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.7em 1.4em;
+    border: 2px solid var(--c-accent);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--c-accent);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background var(--dur-theme) ease, color var(--dur-theme) ease, transform var(--dur-tap) ease;
+  }
+  .ch3-ghost-btn:hover,
+  .ch3-ghost-btn:focus-visible {
+    background: var(--c-accent);
+    color: #ffffff;
+  }
+  .ch3-ghost-btn:active { transform: translateY(1px); }
+  .ch3-ghost-btn--tiny {
+    padding: 0.3em 0.8em;
+    font-size: 0.6rem;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* ── Hero (spec §3 acto 2.1) ─────────────────────────────────────────────── */
+  .ch3-hero {
+    position: relative;
+    min-height: 78vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: var(--inset-chapter-top) var(--sp-lg) var(--sp-2xl);
+    box-sizing: border-box;
+  }
+  .ch3-hero-parallax { position: absolute; inset: 0; pointer-events: none; }
+  .ch3-hero-sky { position: absolute; inset: 0; background: #d6eaf8; }
+  .ch3-hero-hill {
+    position: absolute;
+    left: -5%;
+    width: 110%;
+    height: 45%;
+    will-change: transform;
+  }
+  .ch3-hero-hill--back {
+    bottom: 8%;
+    background: #a9cce3;
+    clip-path: polygon(0% 60%, 20% 30%, 45% 55%, 68% 20%, 100% 50%, 100% 100%, 0% 100%);
+    transform: translateY(calc(var(--ch3-hy, 0) * -0.14px));
+  }
+  .ch3-hero-hill--front {
+    bottom: 0%;
+    height: 32%;
+    background: #7fb3d5;
+    clip-path: polygon(0% 70%, 22% 35%, 50% 65%, 74% 25%, 100% 55%, 100% 100%, 0% 100%);
+    transform: translateY(calc(var(--ch3-hy, 0) * -0.26px));
+  }
+  .ch3-hero-sky { transform: translateY(calc(var(--ch3-hy, 0) * -0.06px)); will-change: transform; }
+  .ch3-hero-cloud {
+    position: absolute;
+    top: 18%;
+    width: 64px;
+    height: 22px;
+    background: #ffffff;
+    border-radius: 999px;
+    box-shadow: 10px 8px 0 var(--ch3-long-shadow);
+    animation: ch3-cloud-drift linear infinite;
+  }
+  .ch3-hero-cloud--a { left: -10%; animation-duration: 90s; }
+  .ch3-hero-cloud--b { top: 32%; left: -20%; width: 44px; height: 16px; animation-duration: 120s; animation-delay: -40s; }
+  @keyframes ch3-cloud-drift {
+    from { transform: translateX(-10vw); }
+    to { transform: translateX(120vw); }
+  }
+  .ch3-hero-copy {
+    position: relative;
+    z-index: 1;
+    max-width: 44rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-md);
+  }
+  .ch3-hero-title {
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(2.6rem, 6vw, 4.4rem);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    color: var(--c-fg);
+    text-wrap: balance;
+  }
+  .ch3-hero-sub {
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    color: var(--ch3-text-2);
+    text-wrap: pretty;
+  }
+
+  /* ── Beats — grid de la fila zig-zag (Ch3StoryBeat.vue, alcanza su nodo raíz
+       + descendientes porque este <style> NO es scoped, ver header) ────────── */
+  .ch3-beats {
+    display: flex;
+    flex-direction: column;
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+  .ch3-beat {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2xl);
+    padding: var(--sp-2xl) var(--sp-lg);
+    background: var(--c-bg);
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity var(--dur-enter) var(--ease-standard), transform var(--dur-enter) var(--ease-standard);
+  }
+  .ch3-beat:nth-child(odd) { background: var(--c-surface); }
+  .ch3-beat--alt { flex-direction: row-reverse; }
+  .ch3-beat.is-revealed { opacity: 1; transform: none; }
+
+  .ch3-beat-icon { position: relative; flex-shrink: 0; width: 88px; height: 88px; }
+  .ch3-beat-icon-shadow {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    clip-path: polygon(50% 50%, 100% 0%, 135% 35%, 35% 135%, 0% 100%);
+    background: var(--ch3-long-shadow);
+    transform: translate(7px, 7px);
+  }
+  .ch3-beat-icon-svg {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    padding: 20%;
+    box-sizing: border-box;
+    color: var(--c-accent);
+  }
+  .ch3-beat--residual .ch3-beat-icon-svg { color: var(--ch3-residual); }
+  .ch3-beat--html5 .ch3-beat-icon-svg { color: var(--ch3-html5); }
+  .ch3-beat-icon-tone2 { opacity: 0.6; }
+
+  .ch3-beat-copy { flex: 1; min-width: 0; max-width: var(--measure); }
+  .ch3-beat-numeral {
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 300;
+    font-size: clamp(3rem, 7vw, 5rem);
+    line-height: 1;
+    color: var(--c-border);
+  }
+  .ch3-beat-kicker {
+    margin: 0 0 var(--sp-xs);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--c-accent);
+  }
+  .ch3-beat--residual .ch3-beat-kicker { color: var(--ch3-residual); }
+  .ch3-beat--html5 .ch3-beat-kicker { color: var(--ch3-html5); }
+  .ch3-beat-lead {
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--c-fg);
+    text-wrap: pretty;
+  }
+  .ch3-beat-more { margin-top: var(--sp-sm); }
+  .ch3-beat-rest {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ch3-beat-rest.is-open { grid-template-rows: 1fr; }
+  .ch3-beat-rest > p {
+    overflow: hidden;
+    margin: var(--sp-sm) 0 0;
+    font-family: var(--font-body);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: var(--c-fg);
+  }
+
+  /* ── Cierre del capítulo — puente cromático hacia ch4 (spec §3 acto 2.3) ── */
+  .ch3-close {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-md);
+    padding: var(--sp-2xl) var(--sp-lg) calc(var(--sp-2xl) + var(--inset-chapter-bottom));
+    background: var(--ch3-close-bg);
+    text-align: center;
+  }
+  .ch3-close-badge { width: 40px; height: 40px; color: var(--ch3-html5); }
+  .ch3-close-line {
+    margin: 0;
+    max-width: var(--measure);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: var(--fs-500);
+    line-height: 1.4;
+    color: #ffffff;
+    text-wrap: balance;
+  }
+
+  .ch3-projects {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-md);
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--sp-xl) var(--sp-lg);
+  }
+  .ch3-projects .project-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-card); padding: var(--sp-md); }
+  .ch3-projects .project-card-title { font-family: var(--font-body); font-weight: 600; color: var(--c-fg); border-bottom: 2px solid var(--c-accent); padding-bottom: var(--sp-xs); display: inline-block; }
+  .ch3-projects .project-card-desc,
+  .ch3-projects .project-card-role { font-family: var(--font-body); color: var(--c-fg); }
+  .ch3-projects .project-card-link { color: var(--c-accent); background: none; box-shadow: none; text-decoration: none; }
+  .ch3-projects .project-card-link:hover { text-decoration: underline; }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * Mejora progresiva — scroll-driven animations nativas (spec §7 + sistema
+   * visual §3). Donde el navegador soporta animation-timeline, el compositor
+   * corre el scrub del Acto 1 y el reveal de los beats SIN JS; donde no,
+   * gobierna el valor escrito por rAF/IntersectionObserver de arriba (los
+   * navegadores aplican el valor animado por encima de cualquier otro origen
+   * mientras la animación corre, así que ambos caminos conviven sin pelear).
+   * No verificado visualmente en esta sesión (sin navegador disponible).
+   * ───────────────────────────────────────────────────────────────────────── */
+  @supports (animation-timeline: scroll()) {
+    .ch3-act1-pin:not(.is-reduced) { view-timeline: --ch3-pin-timeline block; }
+    .ch3-act1-pin:not(.is-reduced) .ch3-act1-scene {
+      animation: ch3-scrub-p linear both;
+      animation-timeline: --ch3-pin-timeline;
+      animation-range: cover 0% cover 100%;
+    }
+    .ch3-beat {
+      animation: ch3-beat-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 40%;
+    }
+  }
+  @keyframes ch3-scrub-p { from { --ch3-p: 0; } to { --ch3-p: 1; } }
+  @keyframes ch3-beat-reveal {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * PRM — el Acto 1 congela en su cuadro estático y el pin baja a 100vh; el
+   * Acto 2 se renderiza completo sin reveals (spec §7).
+   * ───────────────────────────────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .ch3-act1-pin { height: 100vh; height: 100dvh; }
+    .ch3-act1-cue,
+    .ch3-act1-cue-arrow,
+    .ch3-hero-cloud,
+    .ch3-beat,
+    .ch3-beat-rest {
+      animation: none !important;
+      transition: none !important;
+    }
+    .ch3-beat { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────────
+   * Responsive (spec §6) — mobile <768px apila a 1 columna; landscape mobile
+   * (alto<500px) reduce el stage del Acto 1 y oculta el teléfono.
+   * ───────────────────────────────────────────────────────────────────────── */
+  @media (max-width: 767px) {
+    .ch3-act1-decor { flex-direction: column; gap: var(--sp-lg); }
+    .ch3-browser,
+    .ch3-flash-stage { width: min(420px, 82vw); }
+    .ch3-beat,
+    .ch3-beat--alt { flex-direction: column; text-align: center; gap: var(--sp-md); }
+    .ch3-beat-icon { margin: 0 auto; }
+  }
+  @media (max-height: 499px) and (orientation: landscape) {
+    .ch3-act1-pin { height: 160vh; height: 160dvh; }
+    .ch3-phone { display: none; }
+    .ch3-flash-stage { width: min(550px, 78vw); }
+    .ch3-act1-decor { gap: var(--sp-md); }
+  }
 }
 </style>

@@ -99,11 +99,7 @@
     "closeOverlay": "Close",
     "warDispatch": "WAR DISPATCH",
     "flashWar": "The great war: Flash vs Apple · 2010",
-    "deathOfFlash": "The Death of Flash",
-    "storyHint": "Tap the emblems to uncover the story",
-    "storyPrev": "Previous",
-    "storyNext": "Next",
-    "storyPage": "Page {n} of {total}"
+    "deathOfFlash": "The Death of Flash"
   },
   "avatar": {
     "ariaTemplate": "Rafael's avatar — chapter {chapter} active",
@@ -156,6 +152,27 @@
       "6": {
         "text": "And since late 2023 I've been at Software Mind, applying automation and tooling to data science. And now AI and agents give me something I've been waiting for since I was seven years old playing on DOS: the ability to build everything I always wanted, automate it, and prototype at the speed of imagination.\n\nLooking back, everything fits together in a strange-but-right way. The competitive years gave me the systems mindset. Flash games gave me the speed of iteration. Advergames taught me how to tell stories inside code. The web gave me the canvas and agile. AR/VR taught me to prototype the impossible. Leading teams taught me that code alone doesn't build anything big. QA gave me rigor. Data science gave me the data.\n\nEvery stage looked like a leap. Seen from far enough away, it was a single line."
       }
+    }
+  },
+  "ch3": {
+    "hero": {
+      "title": "2013. The web learns to move without a plugin.",
+      "sub": "Flash dies on mobile and my career jumps with the web.",
+      "cta": "The full story"
+    },
+    "beats": {
+      "0": { "kicker": "THE END" },
+      "1": { "kicker": "REBUILD" },
+      "2": { "kicker": "THE METHOD" },
+      "3": { "kicker": "THE EDGE" },
+      "4": { "kicker": "THE LEAP" }
+    },
+    "ui": {
+      "readMore": "Keep reading",
+      "readLess": "Close",
+      "phoneNote": "The plugin never made it here",
+      "infobar": "The Adobe Flash Player plugin was blocked",
+      "runOnce": "Run this time"
     }
   },
   "projects": {

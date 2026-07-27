@@ -17,8 +17,21 @@
  *     ch2 esta fuera del alcance del rediseño (decision de Rafael, ch0-ch2 solo
  *     se elevan en craft) y Chapter2Content.vue esta en la lista de PROHIBIDOS
  *     de TASK-008 y no aparece en ningun ticket de migracion planeado.
- *   - ch3 (.project-card base sin scope + override futuro) sale de aqui cuando
- *     TASK-009 (ch3 "la muerte de Flash") migre su CSS a Chapter3Content.vue.
+ *   - ch3 (.project-card base sin scope): TASK-009 (ch3 "la muerte de Flash")
+ *     investigó esta migración y la DEJÓ AQUÍ a propósito — hallazgo: la base
+ *     sin scope (líneas ~44-133) no es "de ch3", es el FALLBACK compartido que
+ *     ch2 (`.project-card-link:active`) y ch5 (`.project-card` padding,
+ *     `.project-card-title` font-size/margin, y TODO `.project-card-desc/
+ *     -role/-tech/-tech li` — sus bloques `[data-chapter="5"]` no los
+ *     redeclaran) siguen consumiendo hoy. Borrarla rompe ch2/ch5, ambos en la
+ *     lista de PROHIBIDOS de TASK-009 y cubiertos por su AC bloqueante de
+ *     no-regresión. ch3 ya no la necesita (define su propio
+ *     `.ch3-projects .project-card` en Chapter3Content.vue, con más
+ *     especificidad — la base queda inerte para ch3). Migrarla de verdad
+ *     requiere partirla en copias `[data-chapter="2"]`/`[data-chapter="5"]`
+ *     explícitas primero, lo que excede la lista blanca de TASK-009 (solo
+ *     autoriza "el bloque de ch3"). Follow-up ticket con ch2+ch5 en su lista
+ *     blanca puede completar el retiro.
  *   - ch4 (.floating-panel*) sale de aqui con TASK-010.
  *   - ch5 (.scroll-reveal-card*, override `[data-chapter="5"] .project-card`)
  *     sale de aqui con TASK-011.

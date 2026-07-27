@@ -99,24 +99,29 @@
     --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
   }
 
-  /* ── ch3 — Web 2.0 / "la muerte de Flash" (2013) — EXCEPCION resuelta ─────
-   * Paleta real de la escena ember/oro (campo de batalla, chapter-components.css
-   * base .project-card) pasa a ser LA paleta de la section — ya no hay stub
-   * pastel Web 2.0 separado. TASK-009 (redisenio total de ch3) reemplazara este
-   * bloque por la paleta flat 2013 nueva; no es competencia de TASK-008. */
+  /* ── ch3 — "la muerte de Flash" / renacimiento flat (2013) — TASK-009 ─────
+   * Paleta Flat UI Colors (Designmodo, 2013) reemplaza el stub ember/oro
+   * Kingdom New Lands (TASK-008 lo había heredado tal cual, ver hand-off de
+   * ese ticket): el rediseño total de ch3 abandona el pixel art y usa el
+   * medio real de 2013 (fuente: .planning/design/03-ch3-muerte-de-flash.md §4).
+   * --font-body: Open Sans es la fuente que la spec fija (§5), pero la lista
+   * blanca de TASK-009 no incluye package.json ni main.js (no hay forma de
+   * self-hostear un paquete @fontsource nuevo sin tocarlos), así que se usa
+   * un stack de sistema equivalente sin anacronismos (nada de Inter/2017,
+   * Cinzel/Lobster) — documentado en el hand-off del ticket. */
   [data-chapter="3"],
   :root[data-active-chapter="3"] {
     --era-progress: 3;
-    --c-bg: #1c100c;
-    --c-fg: #f3e4d0;
-    --c-accent: #ffa94d;
-    --c-border: #4a2e22;
-    --c-focus: #ffa94d;
-    --c-surface: #241410;
-    /* contrast(#f3e4d0, #1c100c) ≈ 13.1:1 — WCAG AAA sin tradeoff. */
+    --c-bg: #ecf0f1;
+    --c-fg: #2c3e50;
+    --c-accent: #3498db;
+    --c-border: #bdc3c7;
+    --c-focus: #2980b9;
+    --c-surface: #ffffff;
+    /* contrast(#2c3e50, #ecf0f1) ≈ 9.9:1 — WCAG AAA sin tradeoff. */
   }
   [data-chapter="3"] {
-    --font-body: 'Lobster', Georgia, serif;
+    --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   }
 
   /* ── ch4 — AR/VR (2015) — sin excepcion, valores shipped intactos ─────────── */

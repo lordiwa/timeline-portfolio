@@ -1,30 +1,44 @@
 // tests/components/Chapter3Content.test.js
-// Reescrito 2026-05-28 (iter10) — "parallax + cuento interactivo" (Rafael).
+// Reescrito TASK-009 (2026-07-27) — rediseño total de ch3 "La muerte de Flash".
 //
-// El entorno (parallax) es protagonista; el texto se despliega poco a poco al
-// tocar 5 emblemas de arte clicables, que abren un recuadro pergamino con un
-// fragmento de la historia (avance prev/next como un cuento).
-//
-// Cobertura:
-// - T1 DOM: .ch3-stage + .ch3-content + parallax (3 capas)
-// - T2 hint: .ch3-hint-title + CTA storyHint visibles (texto mínimo)
-// - T3 emblemas: 5 .ch3-mark (buttons) con aria-label
-// - T4 panel: oculto por defecto; click abre recuadro con párrafo; close lo cierra
-// - T5 nav: prev/next cambian el fragmento; reactividad de locale
-// - T6 CSS source: parallax sticky + assets + PRM + scroll handler + emblemas/panel
+// El concepto Kingdom New Lands (pixel art medieval, iter11) se retiró
+// completo; ver .planning/design/03-ch3-muerte-de-flash.md. Cobertura:
+// - T1 DOM: Acto 1 (pin + escenografía procedural) + Acto 2 (hero + 5 beats
+//   Ch3StoryBeat + cierre) montan.
+// - T2 REGRESSION LOCK (defecto 4 de TASK-007, AC bloqueante de TASK-009):
+//   el lead de los 5 beats está SIEMPRE visible en el texto renderizado sin
+//   un solo click, y el total supera holgadamente los 91 caracteres.
+// - T3 REGRESSION LOCK: el patrón viejo (emblemas .ch3-mark + modal
+//   .ch3-panel gateando la narrativa) no vuelve.
+// - T4: el expansor "Seguir leyendo" existe en los beats I-IV, NO en el beat
+//   V (remate completo); togglear revela el resto del párrafo en el DOM.
+// - T5 REGRESSION LOCK: bounce-easing (cubic-bezier con parámetro Y fuera de
+//   [0,1]) no aparece en el source; Inter/Cinzel/Lobster tampoco.
+// - T6 REGRESSION LOCK: los assets Kingdom (ch3-sky.webp, ch3-parchment.webp,
+//   etc.) ya no se referencian.
+// - T7: reactividad de locale (es→en) sin re-mount.
+// - T8: PRM no crashea el mount.
+// - T9: sin em-dash en el texto nuevo (copy ch3.* + fallback de eras.css).
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Chapter3Content from '@/components/Chapter3Content.vue'
+import Ch3StoryBeat from '@/components/Ch3StoryBeat.vue'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 vi.mock('@/data/projects', () => ({ projects: [] }))
 
-function mountCh3({ locale = 'es' } = {}) {
+function mountCh3({ locale = 'es', prefersReduced = false } = {}) {
   const i18n = createTestI18n({ locale })
-  const wrapper = mount(Chapter3Content, { global: { plugins: [i18n], attachTo: document.body } })
+  const wrapper = mount(Chapter3Content, {
+    global: {
+      plugins: [i18n],
+      provide: { prm: { prefersReduced: { value: prefersReduced } } },
+      attachTo: document.body,
+    },
+  })
   return { wrapper, i18n }
 }
 
@@ -33,158 +47,151 @@ const CH3_SOURCE = readFileSync(
   'utf8'
 )
 
-describe('Chapter3Content.vue (parallax + cuento — iter10 2026-05-28)', () => {
-  // ── T1: DOM + parallax ─────────────────────────────────────────────────────
-  it('T1 DOM: .ch3-stage + .ch3-content + .ch3-parallax con 4 capas (iter11 Kingdom)', () => {
+const EM_DASH = String.fromCharCode(0x2014)
+
+describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2013)', () => {
+  // ── T1: DOM de los dos actos ─────────────────────────────────────────────
+  it('T1 Acto 1: .ch3-act1-pin + .ch3-act1-scene + H1 accesible + escenografía aria-hidden', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-stage').exists()).toBe(true)
-    expect(wrapper.find('.ch3-content').exists()).toBe(true)
-    expect(wrapper.find('.ch3-parallax').attributes('aria-hidden')).toBe('true')
-    expect(wrapper.find('.ch3-layer--sky').exists()).toBe(true)
-    expect(wrapper.find('.ch3-layer--far').exists()).toBe(true)
-    expect(wrapper.find('.ch3-layer--mountains').exists()).toBe(true)
-    expect(wrapper.find('.ch3-layer--path').exists()).toBe(true)
+    expect(wrapper.find('.ch3-act1-pin').exists()).toBe(true)
+    expect(wrapper.find('.ch3-act1-scene').exists()).toBe(true)
+    const h1 = wrapper.find('.ch3-act1-title')
+    expect(h1.element.tagName).toBe('H1')
+    expect(h1.text().length).toBeGreaterThan(0)
+    expect(wrapper.find('.ch3-act1-decor').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.find('.ch3-flash-stage').exists()).toBe(true)
+    expect(wrapper.find('.ch3-phone').exists()).toBe(true)
   })
 
-  it('T1b agua espejo: .ch3-water con las 4 capas reflejadas + tinte/shimmer/glint', () => {
+  it('T1 Acto 2: hero + 5 Ch3StoryBeat + cierre', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-water').exists()).toBe(true)
-    expect(wrapper.findAll('.ch3-water-layer').length).toBe(4)
-    expect(wrapper.find('.ch3-water-tint').exists()).toBe(true)
-    expect(wrapper.find('.ch3-water-shimmer').exists()).toBe(true)
-    expect(wrapper.find('.ch3-water-glint').exists()).toBe(true)
+    expect(wrapper.find('.ch3-hero').exists()).toBe(true)
+    expect(wrapper.find('.ch3-hero-title').text().length).toBeGreaterThan(0)
+    const beats = wrapper.findAllComponents(Ch3StoryBeat)
+    expect(beats.length).toBe(5)
+    expect(wrapper.find('.ch3-close').exists()).toBe(true)
+    expect(wrapper.find('.ch3-close-line').text().length).toBeGreaterThan(0)
   })
 
-  // ── T2: hint mínimo ─────────────────────────────────────────────────────────
-  it('T2 hint: título "La muerte de Flash" + CTA storyHint (texto mínimo)', () => {
+  it('T1 no hay ningún <section> anidado (evita romper el conteo arquitectural de ScrollShell)', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-hint-title').text()).toMatch(/muerte de Flash/i)
-    expect(wrapper.find('.ch3-hint-cta').text().length).toBeGreaterThan(0)
+    expect(wrapper.findAll('section').length).toBe(0)
   })
 
-  // ── T3: 5 emblemas clicables ───────────────────────────────────────────────
-  it('T3 emblemas: 5 .ch3-mark (button) con aria-label', () => {
+  // ── T2: REGRESSION LOCK — narrativa destapada sin click (defecto 4 TASK-007) ──
+  it('T2 los 5 leads + beat V completo están en el texto renderizado SIN ningún click', () => {
     const { wrapper } = mountCh3()
-    const marks = wrapper.findAll('.ch3-mark')
-    expect(marks.length).toBe(5)
-    marks.forEach((m) => {
-      expect(m.element.tagName).toBe('BUTTON')
-      expect((m.attributes('aria-label') || '').length).toBeGreaterThan(0)
-    })
+    const text = wrapper.text()
+    // Cada beat expone su lead como texto plano — probamos con un fragmento
+    // largo (>25 chars) del inicio de cada párrafo real de bio.eras.3 (ES).
+    const leadFragments = [
+      'La muerte de Flash parecía solo eso',
+      'Llevaba Pink Parrot entre el entusiasmo',
+      'Fue en ese desorden donde el ágil',
+      'La publicidad digital de esa era todavía',
+      'Fue una época de crecer en todos los frentes',
+    ]
+    for (const fragment of leadFragments) {
+      expect(text, `falta el fragmento "${fragment}" en el texto sin click`).toContain(fragment)
+    }
   })
 
-  it('T3 emblemas: NO hay muro de texto por defecto (sin .ch3-bio-card)', () => {
+  it('T2 innerText total supera holgadamente los 91 caracteres del baseline pre-rediseño', () => {
     const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-bio-card').exists()).toBe(false)
+    expect(wrapper.text().length).toBeGreaterThan(500)
   })
 
-  // ── T4: panel pergamino ─────────────────────────────────────────────────────
-  it('T4 panel: oculto por defecto', () => {
+  // ── T3: REGRESSION LOCK — el gate por click no vuelve ───────────────────
+  it('T3 no existen .ch3-mark ni .ch3-panel (patrón de emblemas+modal retirado)', () => {
     const { wrapper } = mountCh3()
+    expect(wrapper.find('.ch3-mark').exists()).toBe(false)
     expect(wrapper.find('.ch3-panel').exists()).toBe(false)
   })
 
-  it('T4 panel: click en emblema abre recuadro con fragmento de la historia', async () => {
-    const { wrapper } = mountCh3({ locale: 'es' })
-    await wrapper.findAll('.ch3-mark')[0].trigger('click')
-    await flushPromises()
-    const panel = wrapper.find('.ch3-panel')
-    expect(panel.exists()).toBe(true)
-    expect(panel.attributes('role')).toBe('dialog')
-    expect(wrapper.find('.ch3-panel-text').text()).toMatch(/Flash/)
-  })
-
-  it('T4 panel: botón cerrar oculta el recuadro', async () => {
+  // ── T4: expansor — profundización opcional, nunca condición de acceso ──
+  it('T4 beats I-IV tienen expansor "Seguir leyendo"; el beat V (remate) no', () => {
     const { wrapper } = mountCh3()
-    await wrapper.findAll('.ch3-mark')[0].trigger('click')
-    await flushPromises()
-    await wrapper.find('.ch3-panel-close').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('.ch3-panel').exists()).toBe(false)
+    const beats = wrapper.findAllComponents(Ch3StoryBeat)
+    for (let i = 0; i < 4; i++) {
+      expect(beats[i].find('.ch3-beat-more').exists(), `beat ${i} debería tener expansor`).toBe(true)
+    }
+    expect(beats[4].find('.ch3-beat-more').exists(), 'beat V (remate) no debería tener expansor').toBe(false)
   })
 
-  // ── T5: navegación prev/next + reactividad ─────────────────────────────────
-  it('T5 nav: "siguiente" avanza al próximo fragmento', async () => {
-    const { wrapper } = mountCh3({ locale: 'es' })
-    await wrapper.findAll('.ch3-mark')[0].trigger('click')
+  it('T4 click en "Seguir leyendo" revela el resto del párrafo y togglea aria-expanded', async () => {
+    const { wrapper } = mountCh3()
+    const beat0 = wrapper.findAllComponents(Ch3StoryBeat)[0]
+    const btn = beat0.find('.ch3-beat-more')
+    expect(btn.attributes('aria-expanded')).toBe('false')
+    const restBefore = beat0.find('.ch3-beat-rest').text()
+    await btn.trigger('click')
     await flushPromises()
-    const next = wrapper.findAll('.ch3-panel-arrow')[1]
-    await next.trigger('click')
-    await flushPromises()
-    expect(wrapper.find('.ch3-panel-text').text()).toMatch(/Pink Parrot/)
+    expect(btn.attributes('aria-expanded')).toBe('true')
+    // El resto ya estaba en el DOM (grid-rows: 0fr colapsado, no v-if) — lo
+    // que cambia es la clase is-open, no la presencia del texto.
+    expect(beat0.find('.ch3-beat-rest').classes()).toContain('is-open')
+    expect(restBefore.length).toBeGreaterThan(0)
   })
 
-  it('T5 reactive: toggle locale es→en → CTA actualiza sin re-mount', async () => {
+  // ── T5: REGRESSION LOCK — bounce-easing + fuentes anacrónicas retiradas ──
+  it('T5 ningún cubic-bezier con parámetro Y fuera de [0,1] (bounce-easing retirado)', () => {
+    const matches = [...CH3_SOURCE.matchAll(/cubic-bezier\(([^)]+)\)/g)]
+    expect(matches.length).toBeGreaterThan(0)
+    for (const m of matches) {
+      const params = m[1].split(',').map((n) => parseFloat(n.trim()))
+      const [, y1, , y2] = params
+      expect(y1, `cubic-bezier(${m[1]}) tiene Y1 fuera de [0,1]`).toBeGreaterThanOrEqual(0)
+      expect(y1).toBeLessThanOrEqual(1)
+      expect(y2, `cubic-bezier(${m[1]}) tiene Y2 fuera de [0,1]`).toBeGreaterThanOrEqual(0)
+      expect(y2).toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('T5 Inter / Cinzel / Lobster no se usan en ch3 (anacronismos retirados)', () => {
+    expect(CH3_SOURCE).not.toMatch(/Inter Variable/)
+    expect(CH3_SOURCE).not.toMatch(/Cinzel/)
+    expect(CH3_SOURCE).not.toMatch(/Lobster/)
+  })
+
+  it('T5 image-rendering: pixelated no aparece (2013 es vector, no pixel art)', () => {
+    expect(CH3_SOURCE).not.toMatch(/image-rendering:\s*pixelated/)
+  })
+
+  // ── T6: REGRESSION LOCK — assets Kingdom New Lands retirados ────────────
+  it('T6 los assets Kingdom (sky/far/mountains/path/window/parchment/marks) ya no se referencian', () => {
+    const retired = [
+      'ch3-sky.webp', 'ch3-far.png', 'ch3-mountains.png', 'ch3-path.png',
+      'ch3-window.png', 'ch3-parchment.webp', 'ch3-flash-fallen.png',
+      'ch3-mark-rebuild.png', 'ch3-mark-standard.png', 'ch3-mark-orb.png',
+      'ch3-html5-future.png',
+    ]
+    for (const asset of retired) {
+      expect(CH3_SOURCE, `${asset} no debería seguir referenciado`).not.toContain(asset)
+    }
+  })
+
+  // ── T7: reactividad de locale ────────────────────────────────────────────
+  it('T7 toggle locale es→en actualiza el hero sin re-mount', async () => {
     const { wrapper, i18n } = mountCh3({ locale: 'es' })
-    const ctaEs = wrapper.find('.ch3-hint-cta').text()
+    const titleEs = wrapper.find('.ch3-hero-title').text()
     i18n.global.locale.value = 'en'
     await flushPromises()
-    const ctaEn = wrapper.find('.ch3-hint-cta').text()
-    expect(ctaEn.length).toBeGreaterThan(0)
-    expect(ctaEn).not.toBe(ctaEs)
+    const titleEn = wrapper.find('.ch3-hero-title').text()
+    expect(titleEn.length).toBeGreaterThan(0)
+    expect(titleEn).not.toBe(titleEs)
   })
 
-  // ── T6: CSS / script source ─────────────────────────────────────────────────
-  it('T6 CSS: .ch3-stage overflow-y auto + max-height 100dvh', () => {
-    expect(CH3_SOURCE).toMatch(/overflow-y:\s*auto/)
-    expect(CH3_SOURCE).toMatch(/max-height:\s*100dvh/)
+  // ── T8: PRM no rompe el mount ────────────────────────────────────────────
+  it('T8 monta sin errores bajo prefers-reduced-motion', () => {
+    expect(() => mountCh3({ prefersReduced: true })).not.toThrow()
   })
 
-  it('T6 CSS: .ch3-parallax sticky + las 4 capas referencian sus assets', () => {
-    expect(CH3_SOURCE).toMatch(/\.ch3-parallax\s*\{[\s\S]*?position:\s*sticky/)
-    expect(CH3_SOURCE).toMatch(/ch3-sky\.webp/)
-    expect(CH3_SOURCE).toMatch(/ch3-far\.png/)
-    expect(CH3_SOURCE).toMatch(/ch3-mountains\.png/)
-    expect(CH3_SOURCE).toMatch(/ch3-path\.png/)
-  })
-
-  it('T6 CSS agua/vida: reflejo scaleY(-1) + ondas al click + bandada de pájaros', () => {
-    expect(CH3_SOURCE).toMatch(/scaleY\(-1\)/)
-    expect(CH3_SOURCE).toMatch(/function spawnRipple/)
-    expect(CH3_SOURCE).toMatch(/\.ch3-ripple/)
-    expect(CH3_SOURCE).toMatch(/\.ch3-bird/)
-  })
-
-  it('T6 CSS: recuadro usa textura pergamino + PRM guard', () => {
-    expect(CH3_SOURCE).toMatch(/ch3-parchment\.webp/)
-    expect(CH3_SOURCE).toMatch(/prefers-reduced-motion:\s*reduce/)
-    expect(CH3_SOURCE).toMatch(/transform:\s*none\s*!important/)
-  })
-
-  it('T6 script: handler de scroll + apertura de cuento presentes', () => {
-    expect(CH3_SOURCE).toMatch(/@scroll="onScroll"/)
-    expect(CH3_SOURCE).toMatch(/function openStory/)
-  })
-
-  // ── T7: escena de entrada (ch3 = landing del sitio) ────────────────────────
-  it('T7 entrada: estados is-waiting/is-arriving + watch de activeChapter + fill backwards', () => {
-    expect(CH3_SOURCE).toMatch(/is-waiting/)
-    expect(CH3_SOURCE).toMatch(/is-arriving/)
-    expect(CH3_SOURCE).toMatch(/scrollState\.activeChapter/)
-    expect(CH3_SOURCE).toMatch(/ch3-arrive-mark/)
-    // backwards (no both): al terminar la coreografía el transform vuelve al
-    // parallax de puntero (--mx/--sx) en vez de quedar congelado
-    expect(CH3_SOURCE).not.toMatch(/is-arriving[^}]*animation:[^;]*\bboth\b/)
-  })
-
-  it('T7 entrada: sin scroll shell (tests) la escena está completa — sin is-waiting', () => {
-    const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-waiting')
-    expect(wrapper.find('.ch3-stage').classes()).not.toContain('is-arriving')
-  })
-
-  // ── T8: ventana rota (browser Y2K muerto, correlato de ch2) ────────────────
-  it('T8 ventana: solo aparece en la llegada cinemática — ausente por defecto', () => {
-    const { wrapper } = mountCh3()
-    expect(wrapper.find('.ch3-window').exists()).toBe(false)
-  })
-
-  it('T8 ventana: source referencia ch3-window.png + máquina de estados + cristales', () => {
-    expect(CH3_SOURCE).toMatch(/ch3-window\.png/)
-    expect(CH3_SOURCE).toMatch(/function crumbleWindow/)
-    expect(CH3_SOURCE).toMatch(/\.ch3-shard/)
-    expect(CH3_SOURCE).toMatch(/is-crumbling/)
-    // el primer click desmorona la ventana en vez de crear onda
-    expect(CH3_SOURCE).toMatch(/windowState\.value === 'framed'[\s\S]*?crumbleWindow\(\)/)
+  // ── T9: sin em-dash en el copy nuevo ─────────────────────────────────────
+  it('T9 ningún texto nuevo (ch3.* i18n) contiene el carácter em-dash', () => {
+    const es = JSON.parse(readFileSync(resolve(process.cwd(), 'src/i18n/es.json'), 'utf8'))
+    const en = JSON.parse(readFileSync(resolve(process.cwd(), 'src/i18n/en.json'), 'utf8'))
+    const flatten = (obj) => JSON.stringify(obj)
+    expect(flatten(es.ch3)).not.toContain(EM_DASH)
+    expect(flatten(en.ch3)).not.toContain(EM_DASH)
   })
 })

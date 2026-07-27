@@ -99,11 +99,7 @@
     "closeOverlay": "Cerrar",
     "warDispatch": "PARTE DE GUERRA",
     "flashWar": "La gran guerra: Flash vs Apple · 2010",
-    "deathOfFlash": "La muerte de Flash",
-    "storyHint": "Toca los emblemas para descubrir la historia",
-    "storyPrev": "Anterior",
-    "storyNext": "Siguiente",
-    "storyPage": "Página {n} de {total}"
+    "deathOfFlash": "La muerte de Flash"
   },
   "avatar": {
     "ariaTemplate": "Avatar de Rafael — capítulo {chapter} activo",
@@ -156,6 +152,27 @@
       "6": {
         "text": "Y desde finales de 2023 sigo en Software Mind aplicando automatización y herramientas a data science. Y ahora la IA y los agentes me dan algo que llevo esperando desde que tenía siete años jugando en DOS: la capacidad de construir todo lo que siempre quise, automatizarlo, y prototipar a la velocidad de la imaginación.\n\nMirando para atrás, todo encaja raro de bien. Los años de competitivo me dieron la cabeza de sistemas. Los juegos Flash me dieron la velocidad de iterar. Los advergames me enseñaron a contar historias dentro del código. La web me dio el lienzo y el ágil. AR/VR me enseñó a prototipar lo imposible. Liderar equipos me enseñó que el código solo no construye nada grande. QA me dio el rigor. Data science me dio los datos.\n\nCada etapa parecía un salto. Vista de lejos, era una sola línea."
       }
+    }
+  },
+  "ch3": {
+    "hero": {
+      "title": "2013. La web aprende a moverse sin plugin.",
+      "sub": "Flash muere en el celular y mi carrera salta con la web.",
+      "cta": "La historia completa"
+    },
+    "beats": {
+      "0": { "kicker": "EL FINAL" },
+      "1": { "kicker": "RECONSTRUIR" },
+      "2": { "kicker": "EL MÉTODO" },
+      "3": { "kicker": "EL LÍMITE" },
+      "4": { "kicker": "EL SALTO" }
+    },
+    "ui": {
+      "readMore": "Seguir leyendo",
+      "readLess": "Cerrar",
+      "phoneNote": "El plugin nunca llegó aquí",
+      "infobar": "Se bloqueó el complemento Adobe Flash Player",
+      "runOnce": "Ejecutar esta vez"
     }
   },
   "projects": {

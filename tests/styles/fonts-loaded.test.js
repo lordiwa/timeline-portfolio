@@ -108,7 +108,12 @@ describe('Fonts — source-level (Task 5.1)', () => {
       { chapter: 'ch0', pattern: /\[data-chapter="0"\][\s\S]*?--font-body\s*:\s*['"]VT323['"]/ },
       { chapter: 'ch1', pattern: /\[data-chapter="1"\][\s\S]*?--font-body\s*:\s*['"]Comic Neue['"]/ },
       { chapter: 'ch2', pattern: /\[data-chapter="2"\][\s\S]*?--font-body\s*:\s*['"]Verdana['"]/ },
-      { chapter: 'ch3', pattern: /\[data-chapter="3"\][\s\S]*?--font-body\s*:\s*['"]Lobster['"]/ },
+      // TASK-009: ch3 ya no usa Lobster (fuente skeumorphic Web 2.0 de la maqueta
+      // retirada). La spec (.planning/design/03-ch3-muerte-de-flash.md §5) fija
+      // Open Sans, pero la lista blanca de TASK-009 no incluye package.json ni
+      // main.js (no hay forma de self-hostear un @fontsource nuevo) — se usa un
+      // stack de sistema equivalente sin anacronismos, documentado en el hand-off.
+      { chapter: 'ch3', pattern: /\[data-chapter="3"\][\s\S]*?--font-body\s*:\s*['"]Segoe UI['"]/ },
       { chapter: 'ch4', pattern: /\[data-chapter="4"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },
       { chapter: 'ch5', pattern: /\[data-chapter="5"\][\s\S]*?--font-body\s*:\s*['"]Inter Variable['"]/ },
       { chapter: 'ch6', pattern: /\[data-chapter="6"\][\s\S]*?--font-body\s*:\s*['"]Audiowide['"]/ },

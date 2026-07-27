@@ -40,7 +40,7 @@ const FONT_BODY_BY_CHAPTER = {
   0: "'VT323', ui-monospace, monospace",
   1: "'Comic Neue', 'Comic Sans MS', cursive",
   2: "'Verdana', 'Trebuchet MS', sans-serif",
-  3: "'Lobster', Georgia, serif",
+  3: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
   4: "'Audiowide', 'Eurostile', sans-serif",
   5: "'Inter Variable', system-ui, sans-serif",
   6: "'Audiowide', sans-serif",
@@ -108,10 +108,14 @@ describe('theme-tokens.test.js — per-era token completeness (THM-03)', () => {
     expect(block).toContain('--c-accent: #5af2ff')
   })
 
-  it('T11: ch3 section token block uses the real ember palette (exception resolved)', () => {
+  // T11 actualizado por TASK-009 (rediseño total de ch3): la paleta ember/oro
+  // Kingdom New Lands era ya un stub heredado de una maqueta retirada; el
+  // rediseño usa Flat UI Colors (Designmodo 2013), fuente de verdad
+  // .planning/design/03-ch3-muerte-de-flash.md §4.
+  it('T11: ch3 section token block uses the 2013 Flat UI Colors palette (TASK-009 redesign)', () => {
     const block = extractBlock(source, 3)
-    expect(block).toContain('--c-bg: #1c100c')
-    expect(block).toContain('--c-accent: #ffa94d')
+    expect(block).toContain('--c-bg: #ecf0f1')
+    expect(block).toContain('--c-accent: #3498db')
   })
 
   it('T12: ch5 section token block uses the real dark-cinema palette (exception resolved)', () => {
