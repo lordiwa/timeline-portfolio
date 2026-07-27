@@ -10,15 +10,23 @@
         ]
       },
       {
-        "type": "command",
         "matcher": "clear|compact",
-        "command": "node \"C:\\Users\\RafaelMatovelle\\.claude\\plugins\\cache\\hivemind-marketplace\\hivemind\\0.18.0\\context-monitor\\session-start.mjs\""
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\RafaelMatovelle\\.claude\\plugins\\cache\\hivemind-marketplace\\hivemind\\0.18.0\\context-monitor\\session-start.mjs\""
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "node \"C:\\Users\\RafaelMatovelle\\.claude\\plugins\\cache\\hivemind-marketplace\\hivemind\\0.18.0\\context-monitor\\stop-hook.mjs\""
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:\\Users\\RafaelMatovelle\\.claude\\plugins\\cache\\hivemind-marketplace\\hivemind\\0.18.0\\context-monitor\\stop-hook.mjs\""
+          }
+        ]
       }
     ]
   },
