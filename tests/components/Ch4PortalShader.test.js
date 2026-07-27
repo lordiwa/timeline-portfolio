@@ -73,7 +73,11 @@ function makeGLMock({ loseContext = false, renderer = 'Mock GPU' } = {}) {
     enableVertexAttribArray: vi.fn(),
     vertexAttribPointer: vi.fn(),
     useProgram: vi.fn(),
-    getUniformLocation: vi.fn(() => ({})),
+    // Tagged con el nombre del uniform (T17 MEDIUM aspect lock): permite
+    // distinguir en uniform1f.mock.calls qué llamada corresponde a qué
+    // uniform sin depender de identidad de objeto (cada llamada real de GL
+    // real también devuelve locations opacas — el tag es solo para test).
+    getUniformLocation: vi.fn((_program, name) => ({ name })),
     enable: vi.fn(),
     blendFunc: vi.fn(),
     viewport: vi.fn(),
@@ -574,5 +578,104 @@ describe('Ch4PortalShader.vue', () => {
     const declared = declaredUniformNames(glsl)
     const listed = listedUniformNames(SHADER_SOURCE, 'OPTICS_UNIFORM_NAMES')
     expect([...declared].sort()).toEqual([...listed].sort())
+  })
+
+  // ── T17 regression lock CONDUCTUAL: u_aspect del Pass A = aspecto de
+  // DISPLAY, no el del FBO (MEDIUM, ronda de corrección final TASK-010) ────
+  // applySize() capea halfW/halfH a 960/540 de forma INDEPENDIENTE (spec
+  // §7.2) — apenas un cap engancha sin el otro, halfW/halfH deja de coincidir
+  // con fullW/fullH y el portal se estira elíptico contra el halo CSS
+  // circular. Se intercepta el valor real que recibe el uniform (no se
+  // "grep-ea" el source) filtrando uniform1f.mock.calls por el nombre
+  // taggeado en getUniformLocation. Confirmado rojo contra el código viejo
+  // (gl.uniform1f(u.u_aspect, halfW / halfH)) antes de commitear — ver hand-off.
+  function withDevicePixelRatio(value, fn) {
+    const orig = window.devicePixelRatio
+    Object.defineProperty(window, 'devicePixelRatio', { value, configurable: true })
+    try { return fn() } finally {
+      Object.defineProperty(window, 'devicePixelRatio', { value: orig, configurable: true })
+    }
+  }
+
+  function withCanvasRect(width, height, fn) {
+    const orig = HTMLCanvasElement.prototype.getBoundingClientRect
+    HTMLCanvasElement.prototype.getBoundingClientRect = () => ({
+      width, height, top: 0, left: 0, right: width, bottom: height, x: 0, y: 0, toJSON() {},
+    })
+    try { return fn() } finally {
+      HTMLCanvasElement.prototype.getBoundingClientRect = orig
+    }
+  }
+
+  // PRM fuerza renderStaticFrame() síncrono (sin RAF): renderWorld (Pass A)
+  // corre antes que renderOptics (Pass C), así que la primera llamada de
+  // u_aspect en el log es siempre Pass A y la segunda siempre Pass C.
+  function measureAspectUniforms(cw, ch, dpr) {
+    const glMock = makeGLMock()
+    const restore = patchWebGL(glMock)
+    let wrapper
+    try {
+      withDevicePixelRatio(dpr, () => {
+        withCanvasRect(cw, ch, () => {
+          wrapper = mountShader({ chapter: ref(4), prefersReduced: ref(true) })
+        })
+      })
+      return glMock.uniform1f.mock.calls
+        .filter(([loc]) => loc?.name === 'u_aspect')
+        .map(([, v]) => v)
+    } finally {
+      restore()
+      wrapper?.unmount()
+    }
+  }
+
+  it('T17 MEDIUM: u_aspect del Pass A = fullW/fullH (display), no halfW/halfH (FBO) — 1440x900 @ dpr1.5 (AC5, caps de ambos ejes enganchados)', () => {
+    const dpr = 1.5
+    const [passAAspect, passCAspect] = measureAspectUniforms(1440, 900, dpr)
+    const fullW = Math.round(1440 * dpr) // 2160
+    const fullH = Math.round(900 * dpr)  // 1350
+    const displayAspect = fullW / fullH  // 1.6
+    const fboAspectBug = 960 / 540       // 1.7778 — valor viejo, buggy (ambos caps enganchan: 1080>960, 675>540)
+    expect(passAAspect).toBeCloseTo(displayAspect, 4)
+    expect(passCAspect).toBeCloseTo(displayAspect, 4) // Pass C ya usaba fullW/fullH — sanity, no debía cambiar
+    expect(passAAspect).not.toBeCloseTo(fboAspectBug, 2)
+  })
+
+  it('T17 MEDIUM: u_aspect del Pass A = fullW/fullH (display), no halfW/halfH (FBO) — ultrawide 3440x1440 @ dpr1 (~35% de estiramiento sin el fix)', () => {
+    const dpr = 1
+    const [passAAspect, passCAspect] = measureAspectUniforms(3440, 1440, dpr)
+    const fullW = Math.round(3440 * dpr) // 3440
+    const fullH = Math.round(1440 * dpr) // 1440
+    const displayAspect = fullW / fullH  // ~2.389
+    const fboAspectBug = 960 / 540       // 1.7778 — valor viejo, buggy (ambos caps enganchan: 1720>960, 720>540)
+    expect(passAAspect).toBeCloseTo(displayAspect, 4)
+    expect(passCAspect).toBeCloseTo(displayAspect, 4)
+    expect(passAAspect).not.toBeCloseTo(fboAspectBug, 2)
+  })
+
+  // ── T18 regression lock: matchMedia('(pointer: coarse)') cacheado ───────
+  // (LOW, ronda de corrección final TASK-010). Antes updateLens() llamaba
+  // matchMedia en CADA frame del RAF — violaba "cero allocaciones por frame"
+  // (spec §7.5). N frames no deben producir N llamadas.
+  it('T18 LOW: matchMedia("(pointer: coarse)") se cachea — 10 frames de RAF no producen 10 llamadas nuevas', () => {
+    vi.useFakeTimers()
+    const restore = patchWebGL(makeGLMock())
+    const matchMediaSpy = vi.spyOn(window, 'matchMedia')
+    let wrapper
+    try {
+      wrapper = mountShader({ chapter: ref(4) })
+      const coarseCalls = () => matchMediaSpy.mock.calls.filter(([q]) => q === '(pointer: coarse)').length
+      const callsAtMount = coarseCalls()
+      // detectInitialTier() (initGL, mount) es el único consumidor esperado: <=1.
+      expect(callsAtMount).toBeLessThanOrEqual(1)
+      // Avanza ~10 frames del RAF loop (16ms cada uno, mock en tests/setup.js).
+      vi.advanceTimersByTime(16 * 10)
+      expect(coarseCalls()).toBe(callsAtMount) // sin cacheo, esto sería callsAtMount + 10
+    } finally {
+      matchMediaSpy.mockRestore()
+      restore()
+      wrapper?.unmount()
+      vi.useRealTimers()
+    }
   })
 })

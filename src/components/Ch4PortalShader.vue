@@ -124,6 +124,11 @@ export const TIER_CONFIG = {
 const TIER_ORDER = ['LOW', 'MED', 'HIGH']
 
 // ── Lente reveladora (spec §4.6) ────────────────────────────────────────────
+// LOW (ronda de corrección TASK-010): antes esta constante estaba muerta —
+// el radio real vivía hardcodeado por triplicado en el GLSL de opticsFragSrc
+// (era una trampa para el próximo que la tocara). Ahora se inyecta como
+// ${LENS_R} directo en el template literal del shader (ver opticsFragSrc,
+// spec §4.6) — esta declaración es la ÚNICA fuente de verdad.
 const LENS_R            = 0.14   // radio del círculo, en espacio p (aspect-corregido)
 const LENS_LERP         = 0.06   // inercia: fracción de la distancia recorrida por frame
 const LENS_ORBIT_PERIOD_S = 23   // mobile sin puntero: período de la órbita lissajous
@@ -273,6 +278,18 @@ let vignetteMerge = 0
 let lensX = 0
 let lensY = 0
 
+// LOW (ronda de corrección TASK-010): MediaQueryList cacheado — antes
+// updateLens() llamaba window.matchMedia('(pointer: coarse)') en CADA frame
+// del RAF loop, violando la higiene de "cero allocaciones por frame" (spec
+// §7.5). detectInitialTier() ya es el primer consumidor (corre una sola vez
+// en initGL); getCoarsePointerMql() lo memoiza ahí y updateLens() reusa la
+// misma instancia sin volver a llamar matchMedia.
+let coarsePointerMql = null
+function getCoarsePointerMql() {
+  if (!coarsePointerMql) coarsePointerMql = window.matchMedia?.('(pointer: coarse)') ?? null
+  return coarsePointerMql
+}
+
 function detectInitialTier() {
   const params = new URLSearchParams(window.location?.search ?? '')
   const forced = params.get('ch4tier')
@@ -288,7 +305,7 @@ function detectInitialTier() {
   // Max). undefined explícito (no default numérico) para poder distinguir
   // "no hay señal" de "la señal dice 4".
   const mem = nav.deviceMemory
-  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
+  const coarse = getCoarsePointerMql()?.matches ?? false
   const mobile = coarse && window.innerWidth < 900
   if (mobile) return 'LOW'
   // TASK-010 (ronda de completado): umbral endurecido de OR a AND. Con la
@@ -368,7 +385,7 @@ function updateResponsive() {
 // ambos casos, en el mismo espacio "p" (aspect-corregido) que el shader.
 function updateLens(t) {
   const aspect = fullW / fullH
-  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches ?? false
+  const coarse = getCoarsePointerMql()?.matches ?? false
   let targetX, targetY
   if (coarse) {
     const portalPX = (portalUV[0] - 0.5) * aspect
@@ -702,7 +719,8 @@ function opticsFragSrc({ taps, sde, lens }) {
       }
 
       #if LENS
-      // Círculo de radio 0.14 en espacio p (aspect-corregido) que sigue al
+      // Círculo de radio LENS_R (inyectado desde JS, única fuente de verdad —
+      // LOW ronda de corrección TASK-010) en espacio p (aspect-corregido) que sigue al
       // puntero con inercia (calculada en JS): dentro, la escena se reemplaza
       // por su wireframe Sobel teñido con la paleta del universo SIGUIENTE —
       // "ves la realidad que viene, escondida detrás de la actual".
@@ -719,12 +737,12 @@ function opticsFragSrc({ taps, sde, lens }) {
       // portalUV, así que hereda la corrección de este único punto.
       vec2 p = (vec2(uv.x, 1.0 - uv.y) - 0.5) * vec2(u_aspect, 1.0);
       float lensDist = length(p - u_lensPos);
-      float lensMask = smoothstep(0.14, 0.09, lensDist) * u_lensOn;
+      float lensMask = smoothstep(${LENS_R}, ${(LENS_R - 0.05).toFixed(3)}, lensDist) * u_lensOn;
       vec2  bufPx = 1.0 / u_bufRes;
       vec3  wire = u_edgeTintN * sobelEdge(uv, bufPx) + u_colBgN * 0.4;
       color = mix(color, wire, lensMask * 0.9);
       // Aro fino brillante — borde de cristal de la lente.
-      color += u_colVortexN * smoothstep(0.012, 0.0, abs(lensDist - 0.14)) * 0.6 * u_lensOn;
+      color += u_colVortexN * smoothstep(0.012, 0.0, abs(lensDist - ${LENS_R})) * 0.6 * u_lensOn;
       #endif
 
       // Viñeta binocular — dos oculares que se funden a óvalo único cuando
@@ -930,7 +948,20 @@ function renderWorld(t, warpR, lensBoost) {
   gl.uniform1f(u.u_time, t)
   gl.uniform2f(u.u_portal, portalUV[0], portalUV[1])
   gl.uniform2f(u.u_pointer, ptrMx + driftX, ptrMy + driftY)
-  gl.uniform1f(u.u_aspect, halfW / halfH)
+  // MEDIUM (ronda de corrección TASK-010): u_aspect es el aspecto de
+  // PANTALLA (fullW/fullH), no el del FBO del Pass A. applySize() capea
+  // halfW/halfH a 960/540 de forma INDEPENDIENTE (spec §7.2, presupuesto de
+  // fill-rate) — apenas un cap engancha sin el otro, halfW/halfH deja de
+  // coincidir con el aspecto real de display, y todas las correcciones por
+  // aspecto de la §4 (p = (uv-0.5)*vec2(aspect,1.0), portal, lensing, warp)
+  // quedan estiradas: el portal se ve elíptico y desregistrado contra el
+  // halo CSS .ch4-portal-pulse (círculo perfecto) y el aro de la lente del
+  // Pass C, que YA usa fullW/fullH (línea ~998) y por eso no tiene el bug.
+  // Medido: 1440x900 @ dpr1.5 → FBO 1.78 vs display 1.6 (~10% estiramiento);
+  // ultrawide 21:9 → ~35%. Fix: pasar el aspecto de display, dejando la
+  // resolución del FBO (halfW/halfH) intacta — no toca el presupuesto de
+  // fill-rate de §7.2, solo corrige qué aspecto usa la corrección visual.
+  gl.uniform1f(u.u_aspect, fullW / fullH)
   gl.uniform1f(u.u_warpR, warpR)
   gl.uniform1f(u.u_lensBoost, lensBoost)
   gl.uniform3fv(u.u_colVortex, curr.colVortex)
@@ -1183,6 +1214,9 @@ function destroy() {
   if (resizeTimer) clearTimeout(resizeTimer)
   window.removeEventListener('pointermove', onPointer)
   window.removeEventListener('resize', scheduleResize)
+  // Libera el MediaQueryList cacheado (LOW, ver getCoarsePointerMql arriba):
+  // el próximo mount lo recalcula fresco, igual que un reload real de página.
+  coarsePointerMql = null
   if (gl) {
     const canvas = canvasRef.value
     if (canvas) canvas.removeEventListener('webglcontextlost', onContextLost)
