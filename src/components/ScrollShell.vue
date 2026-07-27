@@ -283,9 +283,18 @@ defineExpose({ shellEl })
  * `.ch{N}-layout` (stacking context que rompía el snap) — no toca esta
  * regla ni `.chapter-section` base, así que este cambio no lo viola.
  * ───────────────────────────────────────────────────────────────────────── */
+/* LOW (cierre ronda 3 de review): `var(--chapter-viewports, 1)` con fallback
+ * explícito. Hoy `data-viewports` y `--chapter-viewports` siempre se
+ * estampan juntos (ver binding en el <template> arriba, línea ~127-128), así
+ * que la custom property nunca falta en la práctica — pero si un refactor
+ * futuro del binding rompiera ese acoplamiento, `var()` sin fallback vuelve
+ * la declaración inválida at-computed-value-time y por IACVT anula TODA la
+ * propiedad `height` (cae a `auto`, no al `100dvh` base de `.chapter-section`
+ * sin `[data-viewports]`), no sólo el `calc()`. El fallback blinda ese caso
+ * gratis sin cambiar el comportamiento actual. */
 .chapter-section[data-viewports] {
-  height: calc(var(--chapter-viewports) * 100vh);
-  height: calc(var(--chapter-viewports) * 100dvh);
+  height: calc(var(--chapter-viewports, 1) * 100vh);
+  height: calc(var(--chapter-viewports, 1) * 100dvh);
   display: block;
   overflow: clip;
 }
@@ -382,13 +391,30 @@ defineExpose({ shellEl })
  * junto a `.chapter-section[data-viewports]` (arriba, <style scoped>) para
  * el mecanismo completo. Ningún capítulo la usa todavía.
  * ───────────────────────────────────────────────────────────────────────── */
+/* MEDIUM (cierre ronda 3 de review, ver comentario de review en
+ * tasks/TASK-014.json): `overflow: hidden` acá NO afecta el anclaje sticky
+ * de `.chapter-stage` mismo — eso lo deciden los ANCESTROS (ya resuelto
+ * arriba con `overflow: clip` en `.chapter-section[data-viewports]`) — pero
+ * SÍ vuelve a `.chapter-stage` un scroll container programáticamente
+ * scrolleable para sus DESCENDIENTES. Escenario concreto: un capítulo
+ * futuro mete contenido en flujo más alto que el viewport dentro de este
+ * stage; Tab-navigation, find-in-page o navegación por fragmento pueden
+ * scrollear en silencio ESTE contenedor (sin scrollbar visible ni gesto de
+ * recuperación), desalineando la coreografía del sticky. El lock de scroll
+ * anidado (tests/integration/scroll-shell-no-nested-scroll.test.js) no lo
+ * detecta porque sólo prohíbe `auto|scroll`, no `hidden`. `overflow: clip`
+ * imposibilita todo scroll —incluido el programático— y conserva el mismo
+ * recorte visual que `hidden`; no agrega riesgo de compatibilidad porque
+ * el shell ya depende de `clip` en `.chapter-section[data-viewports]`
+ * arriba. NUNCA volver a `hidden` acá — ver
+ * tests/integration/scroll-stage-no-programmatic-scroll.test.js. */
 .chapter-stage {
   position: sticky;
   top: 0;
   height: 100vh;
   height: 100dvh;
   width: 100%;
-  overflow: hidden;
+  overflow: clip;
   display: flex;
   align-items: center;
   justify-content: center;

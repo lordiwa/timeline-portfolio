@@ -94,7 +94,15 @@ function stripComments(src) {
     // `//` que viene inmediatamente después de `:` (el de `http://` /
     // `https://`) — sigue permitiendo strippear un `//` de comentario real
     // más adelante en esa misma línea, si lo hay.
-    .replace(/(?<!:)\/\/.*$/gm, '')
+    // LOW (cierre ronda 3): `(?<!:)` sólo cubre URLs con esquema explícito
+    // (`http://`). Una URL protocol-relative (`url(//cdn.x/a.png)`) NO lleva
+    // `:` antes de `//`, así que el lookbehind no la protege y el strip se
+    // come cualquier declaración real que siga en la misma línea (falso
+    // negativo confirmado: `background: url(//cdn.x.com/a.png); overflow-y:
+    // auto;` → el lock devolvía null). El segundo lookbehind `(?<!url\()`
+    // cubre ese caso: excluye también el `//` que viene inmediatamente
+    // después de `url(`, sin requerir esquema.
+    .replace(/(?<!:)(?<!url\()\/\/.*$/gm, '')
 }
 
 function stripLegitimateScrollShellRule(src) {
@@ -183,6 +191,21 @@ describe('TASK-014 regression lock: el mecanismo del shell no reintroduce scroll
       scanForNestedScroll(css),
       'El strip de comentarios `//` se comió la declaración "overflow-y: auto" que seguía a la ' +
         'URL en la misma línea — falso negativo del lock.'
+    ).not.toBeNull()
+  })
+
+  // LOW (cierre ronda 3) — misma clase de falso negativo que el test de
+  // arriba, pero para una URL protocol-relative (`url(//cdn.x/a.png)`, sin
+  // esquema `http:`), que el lookbehind `(?<!:)` por sí solo no cubre porque
+  // no hay `:` antes del `//`. Antes del segundo lookbehind `(?<!url\()`
+  // este test pasa a rojo (se puede confirmar revirtiendo el regex a
+  // `(?<!:)\/\/.*$/gm`): el strip se come "overflow-y: auto" completa.
+  it('LOW ronda 3 fix: una URL protocol-relative "url(//...)" en la misma línea no se come la declaración overflow que la sigue', () => {
+    const css = '.some-wrapper { background: url(//cdn.x.com/a.png); overflow-y: auto; }'
+    expect(
+      scanForNestedScroll(css),
+      'El strip de comentarios `//` se comió la declaración "overflow-y: auto" que seguía a una ' +
+        'URL protocol-relative (sin esquema `http:`) en la misma línea — falso negativo del lock.'
     ).not.toBeNull()
   })
 })

@@ -401,11 +401,17 @@ describe('ScrollShell multi-viewport mechanism (TASK-014)', () => {
   // — flex centraría el hijo a mitad de la sección y rompería el sticky).
   // ─────────────────────────────────────────────────────────────────────────
   it('T4 CSS: .chapter-section[data-viewports] declara calc(var(--chapter-viewports) * 100dvh) y display:block', () => {
+    // NOTA (LOW, cierre ronda 3): el patrón acepta un fallback opcional
+    // `, 1` en el var() — TASK-014 ronda 3 le agregó `var(--chapter-viewports, 1)`
+    // para blindar contra IACVT si el binding que estampa data-viewports y
+    // la custom property alguna vez se desacopla (ver comentario junto a la
+    // regla en ScrollShell.vue). El mecanismo que este test verifica (calc()
+    // multiplicando la altura, display:block) no cambia.
     expect(SCROLL_SHELL_SOURCE).toMatch(
-      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports\)\s*\*\s*100vh\)/
+      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports(?:,\s*1)?\)\s*\*\s*100vh\)/
     )
     expect(SCROLL_SHELL_SOURCE).toMatch(
-      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports\)\s*\*\s*100dvh\)/
+      /\.chapter-section\[data-viewports\]\s*\{[^}]*calc\(var\(--chapter-viewports(?:,\s*1)?\)\s*\*\s*100dvh\)/
     )
     expect(SCROLL_SHELL_SOURCE).toMatch(
       /\.chapter-section\[data-viewports\]\s*\{[^}]*display:\s*block/
