@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "nodes": [
+    {
+      "id": "task-008",
+      "type": "task",
+      "ref": "tasks/TASK-008.json",
+      "label": "Sistema de tokens y chasis: reemplazar los 71.8 KB de CSS ad-hoc"
+    }
+  ],
+  "edges": []
+}

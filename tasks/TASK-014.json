@@ -1,0 +1,32 @@
+{
+  "key": "TASK-014",
+  "title": "Shell de scroll: permitir capitulos multi-viewport con anclaje real",
+  "description": "TICKET DE ARQUITECTURA, desbloquea el scrollytelling de ch3, ch4, ch5 y ch6. Creado el 2026-07-27 por decision explicita de Rafael tras un hallazgo de verificacion en navegador durante TASK-009.\n\nEL PROBLEMA, medido en vivo: src/components/ScrollShell.vue define un contenedor con scroll-snap-type y mandatory donde cada seccion mide exactamente un viewport. Con esa restriccion, un capitulo que necesita mas altura no tiene a donde crecer. En TASK-009 el developer resolvio metiendo todo el contenido de ch3 en un contenedor .ch3-stage con scrollHeight de 4181 px dentro de un clientHeight de 735 px y overflow-y auto, con la seccion padre en overflow hidden y 31 elementos con texto fuera de pantalla. No fue un error suyo: App.vue y ScrollShell.vue estan fuera de la lista blanca de todos los tickets de capitulo, asi que el scroll anidado era su unica salida legal.\n\nPOR QUE HAY QUE ARREGLARLO EN LA ARQUITECTURA Y NO EN CADA CAPITULO: un scroll anidado dentro de un shell con snap obligatorio compite con el scroll del sitio. El visitante puede saltar al capitulo siguiente sin haber visto el contenido interno, lo que rompe el criterio de que quien solo scrollea se lleva la sustancia. Y las cuatro specs de direccion de arte dependen de recorrido de scroll: el Acto 1 de ch3 se scrubea con el scroll, ch4 coreografia su entrada en cuatro beats, ch5 revela su panel de transmision con sticky de 200dvh, y ch6 disuelve su escena en ASCII a lo largo del scroll. Con secciones de un viewport nada de eso se puede ejecutar.\n\nQUE HAY QUE CONSTRUIR: que el shell acepte secciones de mas de un viewport conservando la sensacion de snap entre capitulos. El enfoque esperado es anclaje real con position sticky dentro de una seccion alta, en vez de scroll anidado: la seccion mide varios viewports, su contenido queda anclado mientras dura el recorrido, y el snap se aplica al inicio de cada capitulo y no a cada pantalla intermedia. Revisar scroll-snap-align y scroll-snap-stop para que un capitulo alto no se pueda saltar sin recorrerlo. La spec .planning/design/00-sistema-visual-global.md tiene la seccion de transiciones entre capitulos; alinearse con ella.\n\nRIESGO ALTO Y EXPLICITO: este es el unico ticket del redisenio autorizado a tocar el shell, que afecta a los 7 capitulos, incluidos ch0, ch1 y ch2 que Rafael pidio preservar porque le gustan. Va con verificacion estricta y commit propio para poder revertir de forma limpia si algo se rompe.\n\nLISTA BLANCA DE ARCHIVOS. Solo se pueden modificar: src/components/ScrollShell.vue, src/App.vue, src/styles/** en lo que respecta al layout de scroll, src/composables/useScrollState.js si el calculo de capitulo activo lo requiere, y tests/**. CUALQUIER otro archivo esta fuera de alcance: si hace falta tocarlo, se para y se reporta al orquestador.\n\nPROHIBIDO TOCAR: src/phaser/ch2/MatchScene.js y el minijuego, el audio procedural del dial-up, DialUpScreen.vue, y el contenido interno de cualquier Chapter{N}Content.vue. Este ticket cambia el continente, nunca el contenido.\n\nNOTA PARA EL SIGUIENTE PASO: cuando este ticket cierre, TASK-009 se retoma para convertir el scroll anidado de .ch3-stage en el mecanismo nuevo, y TASK-010, TASK-011 y TASK-012 lo usan desde el principio.",
+  "acceptance_criteria": [
+    "Una seccion de capitulo puede medir mas de un viewport de alto y su contenido se recorre con el scroll principal del sitio, sin ningun contenedor de scroll anidado.",
+    "El capitulo 3 deja de tener un contenedor con scroll interno: se verifica que ningun descendiente de section#chapter-3 tenga scrollHeight mayor que su clientHeight con overflow-y auto o scroll.",
+    "La sensacion de snap entre capitulos se conserva: al terminar un capitulo el siguiente engancha, y un capitulo alto no se puede saltar entero de un solo gesto de scroll.",
+    "NO REGRESION, criterio bloqueante y el mas importante de este ticket: los 7 capitulos siguen montando y siguen siendo alcanzables por scroll y por click en la timeline. ch0, ch1 y ch2 conservan su comportamiento actual, incluido el minijuego con su canvas de 360x420 y el disparo del audio del dial-up al entrar a ch1.",
+    "El indicador de capitulo activo sigue funcionando: la timeline marca el capitulo correcto y el HUD cambia de era en el momento correcto, tambien en capitulos altos.",
+    "Funciona en desktop y en mobile portrait y landscape, y respeta prefers-reduced-motion.",
+    "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si vuelve a aparecer un contenedor de scroll anidado dentro de una seccion de capitulo."
+  ],
+  "status": "in_progress",
+  "priority": "critical",
+  "labels": [
+    "arquitectura",
+    "scroll",
+    "signature",
+    "desbloqueante"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T11:54:54.298Z",
+  "updated_at": "2026-07-27T11:55:37.367Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

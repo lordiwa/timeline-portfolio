@@ -1,0 +1,47 @@
+{
+  "key": "TASK-012",
+  "title": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA",
+  "description": "Climax narrativo de todo el sitio y el ticket con mayor presupuesto tecnico y de arte. Rafael pidio textualmente: \"el final con los robots puedes usar shaders, ascii una mezcla de ultra belleza visual y volver al terminal al binario ahora que se habla con la ai. estilo ultra futurista\".\n\nFUENTE DE VERDAD, LEERLA ENTERA ANTES DE TOCAR CODIGO: .planning/design/06-ch6-climax-terminal-ia.md. Es especificacion implementable con pseudocodigo GLSL y fuentes citadas. Complementa, sin reemplazar, a .planning/design/00-sistema-visual-global.md.\n\nDIRECCION APROBADA, resumen: la escena espacial existente pasa a ser telon y se disuelve en texto mediante un PostFXPipeline de Phaser que renderiza ASCII con glifos procedurales de 5x7, luminancia Rec.601, dither Bayer y wipe por fBm. De ahi pasa a binario significativo, que no es decorativo: es el bitstream real de la tesis del portfolio, que se decodifica caracter a caracter. Y termina en un prompt con cursor de bloque identico al de 1995, cerrando el circulo con ch0.\n\nEL UNISONO, que es lo que hoy falta: el robot y Rafael completan los mismos struts del anillo y comparten un cursor. No son dos grupos separados parados uno al lado del otro, que es lo que hay hoy.\n\nDECISION DE RAFAEL SOBRE EL CIERRE: el capitulo hace EXPLICITO que el portfolio fue construido por el mas una flota de agentes, y la frase final alterna autor palabra por palabra entre humano e IA. Rafael lo eligio sabiendo que para un recruiter en 2026 eso no resta autoria sino que demuestra saber dirigir agentes.\n\nNARRATIVA A DESTAPAR, defectos 2 y 3 de TASK-007: hoy Chapter6Content.vue no tiene ningun consumidor de bio.eras[6].text, o sea que 143 palabras de cierre-sintesis son codigo muerto, y el unico nodo de texto esta gateado por el evento arrival-complete de Phaser, que llega tras un boot asincrono mas un tween de 3500 ms. Verificado en vivo: el innerText del capitulo mide 0 caracteres. La conversacion con la IA debe vivir en el DOM desde el montaje, con prompt auto-tipeado, latencia visible y las 143 palabras llegando en streaming por tokens.\n\nRESCATE ANTES DE ARTE NUEVO: buena parte del climax YA EXISTE y no se ve. La banda de camara final de SpaceScene.js esta en el rango 1350 a 1890 y deja fuera de encuadre 2 de los 3 planetas-proyecto, remoose en y=1080 y ar-vr en y=594, mas 2 drones. Ademas computeZoom calcula contra window en vez del rect del host: medido, el canvas queda en 1536x864 dentro de un host de 1521x791 con un offset vertical de -72.8 px. Primero se arregla computeZoom y se traen esos elementos a la banda visible, y recien despues se evalua arte nuevo.\n\nPERFORMANCE: degradacion en 5 tiers segun la spec. Bajo prefers-reduced-motion el resultado es estatico y bello, nunca una pantalla vacia.\n\nLISTA BLANCA DE ARCHIVOS. Regla establecida por Rafael tras el incidente del 2026-07-27, en el que agentes sin restriccion tocaron archivos fuera de su ticket y rompieron cuatro cosas que funcionaban. Solo se pueden modificar: src/components/Chapter6Content.vue, src/phaser/SpaceScene.js, cualquier subcomponente o pipeline nuevo de ch6 que se cree dentro de src/components/ o src/phaser/, el bloque de ch6 dentro de src/styles/, y tests/**. Los archivos de i18n se pueden tocar SOLO para claves de ch6. src/phaser/index.js se puede tocar SOLO si el pipeline nuevo lo exige, y el cambio debe ser aditivo y no puede afectar el arranque de la escena de ch2. CUALQUIER otro archivo esta fuera de alcance: si hace falta tocarlo, se para y se reporta al orquestador.\n\nPROHIBIDO TOCAR, son exactamente lo que se rompio la vez pasada: src/phaser/ch2/MatchScene.js y el minijuego match-3, el audio procedural del dial-up de 2001, DialUpScreen.vue, y Chapter0Content.vue, Chapter1Content.vue, Chapter2Content.vue, Chapter3Content.vue, Chapter4Content.vue y Chapter5Content.vue. Nota: Chapter0Content.vue y TerminalScroll.vue se pueden LEER para que el cierre circular cite a 1995 con precision, pero no se editan.",
+  "acceptance_criteria": [
+    "El innerText de section#chapter-6 deja de ser 0 y contiene las 143 palabras de cierre desde el montaje, sin depender del evento arrival-complete de Phaser ni de ningun tween. Verificable deshabilitando Phaser.",
+    "El texto es accesible a lectores de pantalla e indexadores, presente en el DOM independientemente del timing del canvas.",
+    "La escena se disuelve en ASCII mediante el pipeline descrito por la spec, con glifos procedurales, luminancia Rec.601 y dither Bayer.",
+    "El binario que aparece es significativo y decodificable: corresponde al bitstream real del texto de la tesis, no a digitos aleatorios. Se verifica decodificando una muestra.",
+    "El cierre termina en un prompt cuyo cursor de bloque es visualmente identico al de ch0 1995, y esa cita es deliberada y verificable comparando ambos componentes.",
+    "El unisono esta representado: el robot y la figura humana completan los mismos struts del anillo y comparten un cursor. No quedan como dos figuras separadas paradas una al lado de la otra.",
+    "La frase final alterna autor palabra por palabra entre humano e IA, y el capitulo declara explicitamente que el portfolio fue construido por Rafael junto a una flota de agentes.",
+    "computeZoom calcula contra el rect del host y ya no contra window, y los 2 planetas-proyecto y 2 drones que hoy quedan fuera de encuadre son visibles dentro de la banda de camara.",
+    "Existen los 5 tiers de degradacion y bajo prefers-reduced-motion el capitulo queda estatico y bello, nunca vacio.",
+    "Ningun texto nuevo introduce el caracter em-dash.",
+    "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente y jugable; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch6.",
+    "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si ch6 vuelve a depender de un evento de Phaser para renderizar su texto de bio."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "signature",
+    "ch6",
+    "climax",
+    "shader",
+    "ascii"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-008"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T08:13:47.782Z",
+      "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch6 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter6Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch6 que todavia referencian el difunto chapter-themes.css.\n\nNOTA: la porcion de ch2 NO se migra nunca y queda en el archivo global de forma permanente, por decision registrada en TASK-008. Motivo: ch2 esta fuera del alcance del redisenio y Chapter2Content.vue esta prohibido en todos los tickets."
+    }
+  ],
+  "created_at": "2026-07-27T05:48:52.658Z",
+  "updated_at": "2026-07-27T08:13:47.782Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

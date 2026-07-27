@@ -1,0 +1,44 @@
+{
+  "key": "TASK-010",
+  "title": "ch4 2015: el salto entre realidades, shader multi-pass con optica de headset",
+  "description": "Rediseño total de ch4. Rafael pidio textualmente que \"se sienta el salto entre realidades\" y que la seccion sea excesivamente impresionante con shaders. Este capitulo tiene permiso para ser el mas espectacular tecnicamente antes del climax de 2026.\n\nFUENTE DE VERDAD, LEERLA ENTERA ANTES DE TOCAR CODIGO: .planning/design/04-ch4-salto-entre-realidades.md. Es especificacion implementable con pseudocodigo GLSL y fuentes citadas. Complementa, sin reemplazar, a .planning/design/00-sistema-visual-global.md.\n\nDIAGNOSTICO: el shader actual corre a 320x180, usa blend aditivo y el portal es un elemento 2D en una esquina. No ocluye nada y no tiene volumen, por eso no impresiona.\n\nDIRECCION APROBADA, resumen: WebGL crudo multi-pass dentro de Ch4PortalShader. La spec descarta Phaser y three.js para este caso con justificacion de costo de bundle. Pase A a media resolucion: tunel raymarcheado de 24 pasos, nebulosa por domain warping y parallax real calculado en el shader. Pase B: feedback ping-pong que deja eco del salto. Pase C, optica de headset: godrays segun GPU Gems 3, distorsion de barril con el modelo Brown-Conrady, aberracion cromatica por canal, viñeta binocular, grain, y una lente Sobel que revela la realidad siguiente. Entrada coreografiada en 4 beats entre 0 y 1900 ms para que entrar al capitulo se lea como ponerse el visor.\n\nPERFORMANCE, criterio duro: tres tiers adaptativos HIGH, MED y LOW apuntando a 60 fps, con deteccion de capacidad. Bajo prefers-reduced-motion no se apaga a una pantalla vacia sino que congela el frame heroe en t=7.3 definido por la spec.\n\nDEFECTO A CORREGIR: el capitulo mide 887 px de alto dentro de un viewport de 791 px por overflow-y auto sin cota de altura mas un margin-top de 20vh, o sea que hoy las tarjetas se cortan. Verificado en vivo en el navegador.\n\nCONTENIDO: las descripciones de proyecto siguen siendo placeholder por decision de Rafael, que las completara al final. El diseño debe tolerarlas sin que se vean como un error.\n\nLISTA BLANCA DE ARCHIVOS. Regla establecida por Rafael tras el incidente del 2026-07-27, en el que agentes sin restriccion tocaron archivos fuera de su ticket y rompieron cuatro cosas que funcionaban. Solo se pueden modificar: src/components/Chapter4Content.vue, src/components/Ch4PortalShader.vue, cualquier subcomponente nuevo de ch4 que se cree dentro de src/components/, el bloque de ch4 dentro de src/styles/, y tests/**. Los archivos de i18n se pueden tocar SOLO para claves de ch4. CUALQUIER otro archivo esta fuera de alcance: si hace falta tocarlo, se para y se reporta al orquestador en vez de improvisar.\n\nPROHIBIDO TOCAR, son exactamente lo que se rompio la vez pasada: src/phaser/ch2/MatchScene.js y el minijuego match-3, el audio procedural del dial-up de 2001, DialUpScreen.vue, Chapter0Content.vue, Chapter1Content.vue, Chapter2Content.vue, Chapter3Content.vue, Chapter5Content.vue, Chapter6Content.vue y src/phaser/SpaceScene.js.",
+  "acceptance_criteria": [
+    "El shader corre multi-pass segun la spec: tunel raymarcheado, feedback ping-pong y pase de optica de headset con godrays, distorsion de barril y aberracion cromatica. No es un fondo 2D aditivo.",
+    "La entrada al capitulo esta coreografiada en los 4 beats definidos por la spec, entre 0 y 1900 ms, y se lee como ponerse un visor.",
+    "Existen los tres tiers adaptativos de performance con deteccion de capacidad, y el capitulo sostiene 60 fps en tier HIGH en una laptop comun. Se reporta la medicion real.",
+    "Bajo prefers-reduced-motion el capitulo muestra el frame heroe estatico definido en la spec y sigue siendo bello. No queda en negro ni vacio.",
+    "El recorte esta corregido: el contenido de ch4 se ve completo sin scroll interno a 1440x900 y a 1366x768, y funciona en mobile portrait y landscape.",
+    "El texto del capitulo es legible sobre el shader con contraste verificado segun la spec.",
+    "Las descripciones placeholder no se leen como un error visual dentro de la composicion.",
+    "Ningun texto nuevo introduce el caracter em-dash.",
+    "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch4.",
+    "La suite de tests existente sigue en verde y se agregan locks de regresion sobre el fallback de prefers-reduced-motion y sobre la cota de altura que hoy provoca el recorte."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "signature",
+    "ch4",
+    "shader",
+    "webgl"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-008"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T08:13:41.521Z",
+      "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch4 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter4Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch4 que todavia referencian el difunto chapter-themes.css."
+    }
+  ],
+  "created_at": "2026-07-27T05:47:41.237Z",
+  "updated_at": "2026-07-27T08:13:41.521Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

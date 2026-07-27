@@ -1,0 +1,37 @@
+{
+  "key": "TASK-006",
+  "title": "Ola 0: cuatro bugs de cableado que hacen sentir el sitio roto",
+  "description": "Cuatro defectos con causa raíz ya identificada por la auditoría de TASK-004. Los cuatro son features que el código intenta implementar y que nunca funcionaron por apuntar al elemento o al momento equivocado. Ninguno requiere rediseño: son correcciones de cableado con impacto visible inmediato.\n\n1. SKIP-LINK SIEMPRE VISIBLE. SkipLink.vue:46 registra el listener de scroll sobre window, pero window nunca scrollea: el scroller real es main#main-content (overflow-y: scroll). handleScrollOnce nunca corre y isHidden nunca pasa a true, por eso el link flota sobre los 7 chapters. Fix: atachar el listener al elemento shell.\n\n2. MINIJUEGO EN ESTADO TIME UP AL LLEGAR. ScrollShell monta los 7 chapters al boot y nunca los desmonta, así que Chapter2Content vive desde la carga. activePanel arranca en 'home', FlashStage pasa active=true de inmediato y el watch de Ch2MiniGame con immediate:true llama mountGame(), arrancando el cronómetro real de 60s al cargar la página. Cuando el visitante scrollea hasta ch2, el minuto ya pasó. Fix: condicionar active a la visibilidad real del chapter, como ya hace Chapter6Content con activeChapter===6.\n\n3. ITEM ACTIVO DEL TIMELINE ILEGIBLE. StickyTimeline.vue:62 pone data-chapter en cada boton como identificador, pero el selector [data-chapter=N] de chapter-themes.css matchea esos botones y sobreescribe su --c-bg con el de su propia era. La regla activa pinta color: var(--c-bg) sobre --c-track-active (#e7e7f0 global), fallando en ch5 (blanco sobre #e7e7f0, ~1.2:1) y ch3 (~1.1:1). ch4 y ch6 pasan por coincidencia. Fix: renombrar el atributo del timeline para que deje de colisionar, y usar colores fijos verificados contra WCAG AA para el estado activo.\n\n4. SIN CANAL DE CONTACTO ALCANZABLE POR TECLADO. ContactHUD.vue:31 renderiza un <a> sin href cuando contact.email está vacío. Un ancla sin href no entra en el tab order, así que usuarios de teclado y lector de pantalla no pueden alcanzarlo pese al aria-disabled. Fix: renderizar un button deshabilitado, o no renderizar el icono hasta que haya dato. NOTA: llenar contact.js con los datos reales es trabajo separado que depende de input de Rafael; este ticket solo corrige la accesibilidad del estado vacío.",
+  "acceptance_criteria": [
+    "El skip-link es invisible en reposo y se vuelve visible solo al recibir foco por teclado, verificado en los 7 chapters.",
+    "El minijuego de ch2 no arranca su cronómetro hasta que el chapter 2 es el activo; al llegar scrolleando se ve en estado jugable, no en TIME UP.",
+    "El ítem activo del timeline alcanza contraste WCAG AA (4.5:1 mínimo) contra su fondo en los 7 chapters, verificado con valores calculados y no a ojo.",
+    "Ningún elemento interactivo del ContactHUD queda fuera del tab order; el estado deshabilitado es perceptible por lector de pantalla.",
+    "Los tests existentes siguen en verde, incluido tests/integration/chapter-overlap-ch6.test.js.",
+    "Se agregan locks de regresión para el gating de visibilidad del minijuego y para el contraste del tick activo."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "design",
+    "bugfix",
+    "a11y",
+    "ola-0"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T02:46:16.599Z",
+      "body": "ENMIENDA DE ALCANCE tras re-auditar sobre el codigo actual (74 commits nuevos). Dos de los cuatro items originales YA ESTAN ARREGLADOS por Rafael y salen del ticket:\n\n- ELIMINADO: \"minijuego en estado TIME UP\". Verificado en vivo: ch2 se ve en TIME 60s / SCORE 0, jugable. Corregido.\n- ELIMINADO: \"item activo del timeline ilegible\". Verificado en vivo: el timeline se rediseño con marcadores en rombo y color por era, y el item activo se lee bien en los 7 chapters. Corregido.\n\nSIGUEN VIGENTES, re-verificados contra el codigo de hoy:\n- Skip-link permanentemente visible. Causa raiz confirmada: SkipLink.vue:46 registra el listener en window, pero el que scrollea es #main-content (ScrollShell.vue:119). Verificado por DOM en vivo: activeElement es BODY, el link no tiene foco, opacity 1, visibility visible, rect de 172x24 en top 8px.\n- ContactHUD.vue:31 renderiza un ancla sin href en el estado vacio, fuera del tab order.\n\nSE AGREGAN al ticket, misma naturaleza (defectos de cableado y foco, todos con causa raiz identificada):\n- vite.config.js:6 no declara isCustomElement para <marquee>, produciendo el warning \"Failed to resolve component: marquee\" desde MarqueeBanner.vue:30.\n- ScrollShell.vue:123 tiene .scroll-shell{outline:none} scoped (0-2-0) que le gana por especificidad al :focus-visible global de App.vue:270 (0-1-0); el segundo stop del tab-order no muestra foco.\n- BootScreen.vue:243 llama engine.setMuted(true) salteando el composable, desincronizando el ref que lee SoundToggle.vue:32; el icono de sonido miente hasta el proximo click.\n- DialUpScreen.vue:140-143 declara role=dialog aria-modal=true sin focus trap ni foco inicial; las flechas scrollean los capitulos por detras durante ~4s.\n- Chapter2Content.vue:369-374: la cinematica de 5.9s no atrapa el foco; se puede tabular a elementos ocultos bajo el overlay opaco."
+    }
+  ],
+  "created_at": "2026-07-27T02:15:13.883Z",
+  "updated_at": "2026-07-27T02:46:16.599Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

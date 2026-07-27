@@ -1,0 +1,38 @@
+{
+  "key": "TASK-007",
+  "title": "Destapar la narrativa: 323 palabras muertas y 366 gateadas por clicks",
+  "description": "El ticket de mayor retorno por linea de codigo de todo el backlog. El sitio tiene 1088 palabras de narrativa escritas y traducidas a ambos idiomas, y el 30% no llega nunca al usuario. Las dos causas principales son una linea de codigo cada una.\n\nEl efecto narrativo es que el sitio cuenta una historia completa de 1995 a 2018 y se queda mudo exactamente en los dos capitulos que debian cerrar el arco de tres decadas. El parrafo de cierre de ch6, que es la tesis del portfolio (\"Cada etapa parecia un salto. Vista de lejos, era una sola linea\"), es codigo muerto que nadie lee.\n\nDEFECTOS:\n1. Chapter5Content.vue:70 tiene const showText = false hardcodeado. Envuelve todo el bloque de texto (180 palabras: number8, BairesDev R&D, VivoEnVivo, RocketSnail, Remoose) en un v-if sin ninguna UI para activarlo. bioParagraphs se sigue calculando en runtime y nunca se pinta.\n2. Chapter6Content.vue no tiene ningun consumidor de bio.eras[6].text. Grep confirma cero referencias a bio.eras en ese archivo. Son 143 palabras, el cierre-sintesis que conecta explicitamente cada era anterior.\n3. Chapter6Content.vue:279-281: el unico nodo de texto es un <p v-if=\"arrivalDone\"> gateado por el evento Phaser arrival-complete, que llega tras boot asincrono mas un tween de 3500ms. Sin fallback estatico, innerText del chapter da vacio.\n4. Chapter3Content.vue:96,101-103: 270 palabras repartidas en 5 parrafos, cada uno detras del click en su emblema. Sin interactuar, el chapter solo muestra el hint \"Toca los emblemas para descubrir la historia\".\n5. Chapter2Content.vue:226: activePanel arranca en 'home' y la bio vive en el panel ABOUT, asi que se renderizan 8 de 104 palabras por defecto.\n\nRESTRICCION DE DISEÑO: ch5 y ch6 son capitulos visualmente cargados (escena de cine con multitud de 125 personajes, escena espacial con shader GLSL). Meter un bloque de texto plano encima puede arruinar la composicion. La solucion debe integrar el texto en el lenguaje visual de cada capitulo, no pegarlo por encima. Para ch3 y ch2 el gating por interaccion puede ser deliberado; la correccion minima es que el visitante que NO interactua se lleve igual la sustancia del capitulo.",
+  "acceptance_criteria": [
+    "Un visitante que solo scrollea, sin hacer un solo click, lee sustancia de carrera en los 7 chapters. Verificable: el innerText de cada section.chapter-section es no vacio y contiene texto de bio, no solo mantra o hints.",
+    "Las 180 palabras de ch5 y las 143 de ch6 son visibles sin interaccion adicional.",
+    "El texto de ch6 existe en el DOM independientemente del timing de Phaser: no depende de arrival-complete ni de ningun tween para estar presente y ser accesible a lectores de pantalla e indexadores.",
+    "El texto integrado en ch5 y ch6 respeta la composicion visual existente; no se superpone de forma ilegible sobre la multitud ni sobre la escena espacial, verificado por captura en navegador a 1440x900 y a 1366x768.",
+    "ch3 y ch2 entregan al menos el primer parrafo o un resumen sustantivo sin requerir clicks, conservando la interaccion como via de profundizacion.",
+    "Ningun texto nuevo introduce el caracter em-dash.",
+    "Los 512 tests existentes siguen en verde y se agregan locks de regresion que fallen si showText vuelve a apagarse o si ch6 deja de renderizar bio."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "narrativa",
+    "contenido",
+    "ola-1"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T05:50:06.053Z",
+      "body": "ABSORBIDO POR EL REDISEÑO SIGNATURE, 2026-07-27. Este ticket no se ejecuta por separado.\n\nMotivo: TASK-007 toca exactamente los mismos archivos que el rediseño de ch3 a ch6. Hacerlos como dos trabajos separados significa tocar el mismo archivo dos veces, que es literalmente el modo de falla del incidente del 2026-07-27, cuando agentes sin restriccion rompieron el minijuego de ch2, el audio del dial-up, la multitud de ch5 y la escena de ch6. Rafael acepto la fusion.\n\nSus cinco defectos quedan repartidos como criterios de aceptacion bloqueantes de los tickets de capitulo:\n- Defecto 1 (Chapter5Content.vue:70, const showText = false, 180 palabras muertas) va en TASK-011.\n- Defectos 2 y 3 (Chapter6Content.vue sin consumidor de bio.eras[6].text, y el unico nodo de texto gateado por el evento arrival-complete de Phaser) van en TASK-012.\n- Defecto 4 (270 palabras de ch3 detras de clicks en emblemas) va en TASK-009.\n- Defecto 5 (ch2 arranca en el panel home y solo renderiza 8 de 104 palabras) NO se ejecuta: ch2 quedo fuera del alcance del rediseño porque Rafael dijo que hasta Flash le gusta el sitio, y ch2 esta en la lista de archivos prohibidos de todos los tickets nuevos por ser lo que se rompio la vez pasada.\n\nBaseline verificada en vivo en el navegador el 2026-07-27 sobre master, que confirma los defectos: innerText por capitulo ch0 437, ch1 1842, ch2 262, ch3 91, ch4 1103, ch5 0, ch6 0."
+    }
+  ],
+  "created_at": "2026-07-27T02:46:25.247Z",
+  "updated_at": "2026-07-27T05:50:06.053Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

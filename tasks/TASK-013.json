@@ -1,0 +1,37 @@
+{
+  "key": "TASK-013",
+  "title": "Cierre de contenido: guiones de los textos faltantes, em-dash y contacto",
+  "description": "Ticket FINAL del rediseño, por decision explicita de Rafael: \"ponlos como placeholders y haz para el final la lista de textos como guiones y lo que falta para completar pero al final\". Va despues de que los cuatro capitulos esten rediseñados, para que los guiones se escriban conociendo el espacio real que cada texto ocupa en el diseño terminado.\n\nQUE FALTA HOY, medido: 14 de 14 descripciones de proyecto son placeholder y dicen \"Reseña en preparacion\". src/data/contact.js esta vacio, asi que el HUD muestra un solo icono de sobre inerte y LinkedIn y GitHub no se montan: no hay ningun canal de contacto en todo el sitio, lo cual es grave para un portfolio cuyo objetivo declarado es conseguir entrevistas con recruiters internacionales.\n\nEMPRESAS SIN CONTENIDO REAL: BlueLizard, Matte CG, Joju Games, ARVR Studio, Metrodigi, number8, BairesDev, VivoEnVivo, RocketSnail, Remoose y Software Mind.\n\nENTREGABLE PRINCIPAL, que es un documento y no codigo: un archivo que liste, para cada texto faltante, un GUION con la estructura exacta que ese texto necesita, el limite de caracteres que impone el diseño ya terminado, el tono, y preguntas concretas y respondibles para que Rafael lo complete rapido. La idea es que el pueda llenarlo como un formulario en vez de enfrentarse a una pagina en blanco. Debe cubrir tambien los datos de contacto.\n\nSEGUNDO ENTREGABLE: reescritura de los textos existentes que contengan el caracter em-dash, que hoy esta prohibido por regla del proyecto. Se conoce al menos uno preexistente en el contenido de la era 5, en espaniol y con su equivalente en ingles. Se presenta el antes y el despues de cada frase para que Rafael apruebe, porque es contenido de autor y no se cambia sin su visto bueno.\n\nPARIDAD DE IDIOMAS: cada guion cubre espaniol e ingles. El espaniol corre entre 15 y 20 por ciento mas largo que el ingles, y el diseño ya terminado tiene que tolerar ambos.\n\nLISTA BLANCA DE ARCHIVOS. Regla establecida por Rafael tras el incidente del 2026-07-27. Solo se pueden modificar: el documento de guiones que se cree bajo .planning/, src/data/contact.js, src/data/projects.js, src/i18n/locales/es.json y en.json, y tests/**. NINGUN componente ni hoja de estilo se toca en este ticket: si un texto real no entra en el espacio que dejo el diseño, se reporta al orquestador en vez de retocar el layout por cuenta propia.\n\nPROHIBIDO TOCAR: cualquier archivo de src/components/, src/styles/ y src/phaser/.",
+  "acceptance_criteria": [
+    "Existe un documento versionado en el repo con un guion por cada texto faltante: las 14 descripciones de proyecto y los datos de contacto. Cada guion declara estructura, limite de caracteres derivado del diseño ya terminado, tono y las preguntas concretas que Rafael debe responder.",
+    "Los limites de caracteres de cada guion salen del diseño real ya implementado en los tickets anteriores, no de una estimacion.",
+    "Cada guion cubre espaniol e ingles y contempla que el espaniol corre entre 15 y 20 por ciento mas largo.",
+    "Se listan todas las frases del contenido existente que contienen el caracter em-dash, con su reescritura propuesta en ambos idiomas, presentadas como antes y despues para aprobacion de Rafael.",
+    "Ninguna reescritura se aplica al repo sin la aprobacion explicita de Rafael, porque es contenido de autor.",
+    "Se documenta el estado de src/data/contact.js y que datos exactos hacen falta para que el HUD monte LinkedIn, GitHub y correo.",
+    "Ningun archivo de src/components/, src/styles/ ni src/phaser/ fue modificado en este ticket.",
+    "NO REGRESION, criterio bloqueante: los 7 capitulos siguen montando y la suite de tests sigue en verde."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "contenido",
+    "i18n",
+    "cierre"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-009",
+    "TASK-010",
+    "TASK-011",
+    "TASK-012"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T05:49:34.562Z",
+  "updated_at": "2026-07-27T05:49:34.562Z",
+  "jira_key": null,
+  "verification_tier": "uat-only",
+  "marker": "[EXPLICIT]"
+}

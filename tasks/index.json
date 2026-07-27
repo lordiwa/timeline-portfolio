@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T01:31:14.332Z",
+  "generated_at": "2026-07-27T11:55:37.367Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -18,6 +18,72 @@
       "title": "Draft an implementation plan against the stated goals/scope",
       "status": "todo",
       "priority": "high"
+    },
+    {
+      "key": "TASK-004",
+      "title": "Auditoría de diseño signature-level de los 7 chapters",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-005",
+      "title": "Escalera de fidelidad: sistema de diseño derivado del año",
+      "status": "todo",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-006",
+      "title": "Ola 0: cuatro bugs de cableado que hacen sentir el sitio roto",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-007",
+      "title": "Destapar la narrativa: 323 palabras muertas y 366 gateadas por clicks",
+      "status": "todo",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-008",
+      "title": "Sistema de tokens y chasis: reemplazar los 71.8 KB de CSS ad-hoc",
+      "status": "done",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-009",
+      "title": "ch3 2013: la muerte de Flash, del stage que muere al renacimiento flat",
+      "status": "blocked",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-010",
+      "title": "ch4 2015: el salto entre realidades, shader multi-pass con optica de headset",
+      "status": "todo",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-011",
+      "title": "ch5 pandemia: LA TRANSMISION, broadcast anclado en VivoEnVivo",
+      "status": "todo",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-012",
+      "title": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA",
+      "status": "todo",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-013",
+      "title": "Cierre de contenido: guiones de los textos faltantes, em-dash y contacto",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-014",
+      "title": "Shell de scroll: permitir capitulos multi-viewport con anclaje real",
+      "status": "in_progress",
+      "priority": "critical"
     }
   ]
 }

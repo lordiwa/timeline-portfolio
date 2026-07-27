@@ -1,0 +1,45 @@
+{
+  "key": "TASK-011",
+  "title": "ch5 pandemia: LA TRANSMISION, broadcast anclado en VivoEnVivo",
+  "description": "Rediseño de ch5. Rafael pidio textualmente que la parte de la pandemia, con la tele y el monton de personajes, se pula muchisimo.\n\nFUENTE DE VERDAD, LEERLA ENTERA ANTES DE TOCAR CODIGO: .planning/design/05-ch5-pandemia-broadcast.md. Es especificacion implementable. Complementa, sin reemplazar, a .planning/design/00-sistema-visual-global.md.\n\nDIRECCION APROBADA, resumen: el capitulo deja de ser cine en pixel art y pasa a ser LA TRANSMISION, usando el medio real de 2020 a 2022, el broadcast y el streaming. Esta anclado narrativamente en VivoEnVivo, que era la plataforma propia de Rafael, asi que la pantalla del capitulo no es una tele generica sino su producto. La pantalla gana el chrome de transmision de la epoca: indicador EN VIVO, scanlines, glitch de compresion generado proceduralmente y lower-thirds por escena.\n\nLA MULTITUD DE 125 PERSONAJES SE CONSERVA INTACTA. Es un elemento que Rafael valora, ya se rompio una vez en el incidente anterior y le importo. NO se tocan ni el rAF ni los sprite sheets. Lo que se corrige es la fotografia sobre ella: grade soft-light por escena, brillo entre 0.42 y 0.68, multiplicador de escala entre 0.85 y 1.15 y saturacion en 0.82. Cualquier cambio que altere la cantidad o el comportamiento de los personajes es una regresion, no una mejora.\n\nNARRATIVA A DESTAPAR, defecto 1 de TASK-007: Chapter5Content.vue linea 70 tiene un const showText = false hardcodeado que envuelve todo el bloque de texto en un v-if sin ninguna UI para activarlo. Son 180 palabras de carrera sobre number8, BairesDev R&D, VivoEnVivo, RocketSnail y Remoose que nunca llegan al usuario: el innerText del capitulo mide 0 caracteres, verificado en vivo hoy en el navegador. La spec elimina ese flag y ubica el texto en un panel lateral de stream con timestamps, siempre presente en el DOM, revelado por scroll con sticky de 200dvh y fallback de 100dvh. En mobile se convierte en layout de app de streaming.\n\nVERIFICAR ANTES: hay que comprobar si el scroll-snap del shell tolera secciones de 200dvh. Si no, se usa el fallback ya aprobado en la seccion 4.2 de la spec.\n\nCONTENIDO: el em-dash preexistente en el texto de la era 5 NO se toca en este ticket. Rafael decidio reescribir todos los textos al final, en un ticket aparte.\n\nLISTA BLANCA DE ARCHIVOS. Regla establecida por Rafael tras el incidente del 2026-07-27, en el que agentes sin restriccion tocaron archivos fuera de su ticket y rompieron cuatro cosas que funcionaban. Solo se pueden modificar: src/components/Chapter5Content.vue, cualquier subcomponente nuevo de ch5 que se cree dentro de src/components/, el bloque de ch5 dentro de src/styles/, y tests/**. Los archivos de i18n se pueden tocar SOLO para claves de ch5. Si hace falta tocar src/App.vue por el tema del scroll-snap de 200dvh, se para y se consulta al orquestador ANTES de editarlo, porque App.vue afecta a los 7 capitulos. CUALQUIER otro archivo esta fuera de alcance.\n\nPROHIBIDO TOCAR, son exactamente lo que se rompio la vez pasada: src/phaser/ch2/MatchScene.js y el minijuego match-3, el audio procedural del dial-up de 2001, DialUpScreen.vue, Chapter0Content.vue, Chapter1Content.vue, Chapter2Content.vue, Chapter3Content.vue, Chapter4Content.vue, Chapter6Content.vue y src/phaser/SpaceScene.js.",
+  "acceptance_criteria": [
+    "El innerText de section#chapter-5 deja de ser 0 y contiene las 180 palabras de carrera sin requerir interaccion. El flag const showText = false ya no existe.",
+    "El texto esta integrado en el lenguaje visual de la escena como panel de transmision con timestamps, no pegado como bloque plano encima de la ilustracion.",
+    "La multitud sigue teniendo 125 personajes y su comportamiento de animacion es identico al de antes del ticket. Se verifica y se reporta el conteo.",
+    "El grade fotografico de la spec esta aplicado: soft-light por escena, brillo en el rango 0.42 a 0.68, escala entre 0.85 y 1.15 y saturacion 0.82.",
+    "La pantalla proyectada tiene el chrome de transmision: indicador EN VIVO, scanlines, glitch de compresion procedural y lower-thirds por escena.",
+    "El contraste del texto sobre la escena es de al menos 8.9:1 en el peor caso, medido y reportado.",
+    "En mobile el capitulo adopta el layout de app de streaming descrito por la spec y funciona en portrait y landscape.",
+    "Toda animacion nueva esta gateada por prefers-reduced-motion.",
+    "Ningun texto nuevo introduce el caracter em-dash. El em-dash preexistente del contenido de Rafael queda intacto para el ticket final de textos.",
+    "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch5.",
+    "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si showText vuelve a apagarse o si el conteo de personajes de la multitud cambia."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "signature",
+    "ch5",
+    "narrativa",
+    "broadcast"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-008"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T08:13:44.482Z",
+      "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch5 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter5Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch5 que todavia referencian el difunto chapter-themes.css."
+    }
+  ],
+  "created_at": "2026-07-27T05:48:12.752Z",
+  "updated_at": "2026-07-27T08:13:44.482Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

@@ -1,0 +1,53 @@
+{
+  "key": "TASK-009",
+  "title": "ch3 2013: la muerte de Flash, del stage que muere al renacimiento flat",
+  "description": "Rediseño total de ch3. Rafael dijo textualmente que hasta Flash le gusta el sitio y que DESDE la muerte de Flash lo siente desordenado, poco impresionante y que no evoca lo que cada era representa. Este capitulo es exactamente donde el sitio se cae, y todo lo que viene despues arrastra el quiebre.\n\nFUENTE DE VERDAD, LEERLA ENTERA ANTES DE TOCAR CODIGO: .planning/design/03-ch3-muerte-de-flash.md. Es especificacion implementable, no sugerencia. Complementa, sin reemplazar, a .planning/design/00-sistema-visual-global.md.\n\nDIRECCION APROBADA, resumen: ch3 abandona el pixel art y usa el medio real de 2013. Acto 1, pinned y scrubbeado por scroll: un navegador de 2013 con el stage de Flash de 550x400 muriendo en pantalla, el degrade que se drena, el gloss que se despega capa a capa, el vector que colapsa a flat, y un telefono mostrando el puzzle de plugin faltante. Acto 2: el renacimiento flat con la paleta Flat UI de la epoca, Open Sans de 300 a 700, grid tipo Bootstrap 3, ghost buttons e iconos long shadow. Parallax de scroll con factores 0.06, 0.14 y 0.26, implementado con animaciones scroll-driven de CSS y fallback rAF, estatico bajo prefers-reduced-motion.\n\nNARRATIVA A DESTAPAR, defecto 4 de TASK-007: hoy 270 palabras estan escondidas detras de clicks en emblemas y un visitante que solo scrollea ve 91 caracteres, apenas el hint. La spec resuelve esto con 5 beats en zig-zag donde el lead siempre esta visible y hay un expansor inline para profundizar. El beat V va completo.\n\nLIMPIEZAS: se elimina el bounce-easing que aparece en tres lugares, y la fuente Inter anacronica para 2013.\n\nLISTA BLANCA DE ARCHIVOS. Regla establecida por Rafael tras el incidente del 2026-07-27, en el que agentes sin restriccion tocaron archivos fuera de su ticket y rompieron cuatro cosas que funcionaban. Solo se pueden modificar: src/components/Chapter3Content.vue, cualquier subcomponente nuevo de ch3 que se cree dentro de src/components/, el bloque de ch3 dentro de src/styles/, y tests/**. Los archivos de i18n src/i18n/locales/es.json y en.json se pueden tocar SOLO para claves de ch3. CUALQUIER otro archivo esta fuera de alcance: si hace falta tocarlo, se para y se reporta al orquestador en vez de improvisar.\n\nPROHIBIDO TOCAR, son exactamente lo que se rompio la vez pasada: src/phaser/ch2/MatchScene.js y el minijuego match-3, el audio procedural del dial-up de 2001, DialUpScreen.vue, Chapter0Content.vue, Chapter1Content.vue, Chapter2Content.vue, Chapter4Content.vue, Chapter5Content.vue, Chapter6Content.vue y src/phaser/SpaceScene.js.",
+  "acceptance_criteria": [
+    "El innerText de section#chapter-3 contiene sustancia de carrera sin requerir un solo click: el lead de los 5 beats esta siempre visible y el total supera holgadamente los 91 caracteres actuales.",
+    "La interaccion de los emblemas se conserva como via de profundizacion, no como condicion para acceder a la narrativa.",
+    "La muerte de Flash esta representada visualmente como escena dramatica segun el Acto 1 de la spec, y no como un simple titulo sobre un fondo.",
+    "El capitulo ya no usa pixel art como lenguaje visual dominante y adopta el vocabulario flat de 2013 descrito en la spec, con la paleta y la tipografia que la spec fija.",
+    "El parallax usa animaciones scroll-driven de CSS con fallback rAF, y queda completamente estatico bajo prefers-reduced-motion.",
+    "El bounce-easing desaparece de Chapter3Content.vue y la fuente Inter ya no se usa en ch3.",
+    "Ningun texto nuevo introduce el caracter em-dash.",
+    "El capitulo se ve completo y sin recortes a 1440x900 y a 1366x768, y funciona en mobile portrait y landscape.",
+    "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch3.",
+    "La suite de tests existente sigue en verde y se agregan locks de regresion que fallen si el lead de los beats vuelve a quedar detras de un click."
+  ],
+  "status": "blocked",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "signature",
+    "ch3",
+    "narrativa"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-008"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T08:13:38.736Z",
+      "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch3 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter3Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch3 que todavia referencian el difunto chapter-themes.css.\n\nNOTA DE ESTADO VISUAL: tras TASK-008 quedan 4 declaraciones font-family Cinzel en Chapter3Content.vue apuntando a una fuente que ya no se carga, asi que los titulos de ch3 caen a serif generica. Es degradacion transitoria conocida y aceptada. Este ticket la resuelve al elegir la tipografia autentica de 2013 que manda la spec."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T09:16:03.122Z",
+      "body": "HALLAZGO DE VERIFICACION EN NAVEGADOR, no detectable por tests. Medido en vivo sobre el commit 672ca4a.\n\nLO BUENO, verificado: el innerText de section#chapter-3 pasa de 91 a 1954 caracteres en el navegador real, confirmando la medicion en jsdom del developer. Los otros seis capitulos quedan intactos: ch0 457, ch1 1842, ch2 309, ch4 1103, ch5 0, ch6 0. El canvas del minijuego de ch2 sigue en 360x420. Avatar, timeline y HUD presentes. El Acto 1 se ve implementado con la ventana de 2013, la barra de plugin bloqueado, el stage muriendo y el telefono con el mensaje. El Acto 2 se ve claramente 2013: flat, paisaje geometrico, tipografia grande y ghost button.\n\nEL PROBLEMA ESTRUCTURAL: el contenido de ch3 vive dentro de un contenedor .ch3-stage con scrollHeight de 4181 px dentro de un clientHeight de 735 px y overflow-y auto, mientras la seccion padre tiene overflow hidden y una altura fija de exactamente un viewport. Hay 31 elementos con texto fuera de pantalla. O sea: el capitulo entero es un scroll anidado dentro de un shell que tiene scroll-snap y mandatory.\n\nPOR QUE IMPORTA: el criterio de aceptacion dice que un visitante que solo scrollea, sin un solo click, se lleva la sustancia del capitulo. Con el contenido atrapado en un scroll interno anidado, ese criterio se cumple en el DOM pero no en la experiencia: el scroll-snap del shell compite con el scroll interno y el visitante puede saltar al capitulo siguiente sin haber visto nada del Acto 2. Ademas es el mismo modo de falla que el ticket de ch4 identifica como defecto a corregir, ahi con 887 px en 791; aca es 4181 en 735.\n\nCAUSA RAIZ, y no es del developer: src/App.vue y src/components/ScrollShell.vue estan fuera de la lista blanca de todos los tickets de capitulo, y son los que definen el scroll-snap y la altura de seccion. El developer resolvio con un scroll interno porque era la unica salida dentro de su alcance. La spec de ch5 ya anticipaba esta tension con su pregunta abierta sobre si el shell tolera secciones de 200dvh.\n\nDECISION PENDIENTE DE RAFAEL: el scrollytelling es central en las specs de ch3, ch4, ch5 y ch6, y con secciones de un solo viewport no se puede ejecutar. Hace falta decidir si se amplia el alcance para que el shell tolere secciones multi-viewport, lo que toca los 7 capitulos y merece su propio ticket con verificacion cuidadosa. TASK-009 queda EN PAUSA hasta esa decision, sin cerrar y sin ir al reviewer, porque la respuesta puede cambiar la implementacion entera."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T11:55:20.954Z",
+      "body": "BLOQUEADO POR TASK-014. Rafael decidio el 2026-07-27 crear un ticket de arquitectura dedicado para que el shell acepte capitulos de mas de un viewport con anclaje real, en vez de aceptar el scroll anidado o achicar el capitulo a una sola pantalla.\n\nEL TRABAJO DE ESTE TICKET NO SE DESCARTA. El commit 672ca4a queda en master y es buena base: el rediseño flat de 2013 esta implementado, el innerText subio de 91 a 1954 caracteres verificado en navegador, el Acto 1 con la ventana de 2013 y el plugin bloqueado esta armado, y el Acto 2 se ve autenticamente 2013. Lo unico que cambia al retomar es el MECANISMO de recorrido: el contenedor .ch3-stage con overflow-y auto y 4181 px de contenido dentro de 735 px se convierte al anclaje real que provea TASK-014.\n\nAL RETOMAR, ademas de la conversion del scroll, quedan pendientes de este ticket:\n- La verificacion visual a 1440x900 y a 1366x768 y en mobile portrait y landscape, que el developer no pudo hacer por no tener navegador y el orquestador no pudo completar por la ventana de Chrome oculta.\n- La tipografia: la spec pide Open Sans pero la lista blanca no incluia package.json ni main.js, asi que se uso un stack de sistema equivalente sin anacronismos. Decidir si se amplia el alcance para self-hostear la fuente autentica.\n- La capa de animacion scroll-driven nativa quedo implementada como mejora progresiva pero sin verificar visualmente.\n- Los assets de Kingdom New Lands de ch3 quedaron huerfanos en public/assets/ y hay que archivarlos a old/ con entry en CHANGELOG.md segun CLAUDE.md seccion 6.5. public/assets/ estaba fuera de la lista blanca del developer.\n- La base .project-card sin scope en chapter-components.css no se pudo migrar porque ch2 y ch5 dependen de ella y ambos estan prohibidos. Requiere un ticket con ch2 y ch5 en su lista blanca, o resolverse en TASK-011.\n- main.js importa @fontsource/lobster sin ningun consumidor real, deuda muerta en el bundle."
+    }
+  ],
+  "created_at": "2026-07-27T05:47:09.722Z",
+  "updated_at": "2026-07-27T11:55:20.954Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

@@ -1,0 +1,37 @@
+{
+  "key": "TASK-005",
+  "title": "Escalera de fidelidad: sistema de diseño derivado del año",
+  "description": "Keystone del rediseño signature. Hoy los 7 chapters comparten tokens y solo difieren en decoración, por eso la curva de fidelidad técnica es plana y el sitio se siente 2/10 pese a prometer tres décadas de evolución tecnológica.\n\nEste ticket define, como especificación medible y escrita, la escalera de fidelidad: para cada chapter, derivados de su año, la paleta (hex reales, muestreados no inventados), la resolución de arte, el presupuesto de motion, la tipografía y el verbo de interacción del visitante.\n\nEscalera acordada con Rafael:\nch0 1995: 4 colores CGA, arte 128px con dithering, motion nulo salvo cursor, bitmap monoespaciada, verbo LEER.\nch1 2001: 16 colores web-safe saturados, GIFs 96px, marquee y blink deliberadamente feos, tipografía web-safe, verbo LEER+HOVER.\nch2 2009: 256 colores con degradés, sprites 64px, tweens con easing, webfont pixel, verbo JUGAR.\nch3 2013: color pleno ilustrado, 1376x768, parallax por scroll, display serif, verbo DESCUBRIR.\nch4 2015: glow y profundidad, alta resolución por capas, parallax mas puntero 3D, variable font, verbo EXPLORAR.\nch5 2022: cine de alto contraste, multitud viva, rAF continuo, variable font, verbo OBSERVAR.\nch6 2026: full color con luz real, resolución nativa alta mas shader, WebGL y física, variable font kinética, verbo OPERAR.\n\nRAZON DE SER: el CHANGELOG de assets documenta que las ~30 iteraciones fallidas de busts y el rework revertido de junio 2026 tuvieron una causa raíz común: se generó arte sin especificación medible, con hex inventados por un agente en vez de muestreados del asset de referencia. Esta escalera es el criterio de aceptación que impide repetir ese modo de falla. Ningún ticket de arte o de CSS posterior arranca sin ella.",
+  "acceptance_criteria": [
+    "Existe un documento versionado en el repo con una fila por chapter y las columnas paleta, resolución de arte, presupuesto de motion, tipografía y verbo de interacción.",
+    "Los hex de cada paleta están muestreados de assets reales existentes con una herramienta de pixel-sampling, no inventados; el documento registra de qué archivo salió cada color.",
+    "Cada fila declara un presupuesto de motion verificable (por ejemplo: sin animación / solo transiciones CSS / parallax / rAF / shader) y no una descripción vaga.",
+    "La escalera es monotónicamente creciente en fidelidad de ch0 a ch6 en todas las columnas cuantificables.",
+    "El documento declara explicitamente que ch6 recibe el mayor presupuesto técnico y de arte, por ser el clímax narrativo.",
+    "Los tickets de arte y de CSS posteriores referencian este documento como criterio de aceptación."
+  ],
+  "status": "todo",
+  "priority": "critical",
+  "labels": [
+    "design",
+    "signature",
+    "keystone",
+    "spec"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T05:50:15.742Z",
+      "body": "SATISFECHO Y SUPERADO POR EL PANEL DE DIRECCION DE ARTE, 2026-07-27.\n\nLa escalera de fidelidad que pedia este ticket existe ahora en .planning/design/00-sistema-visual-global.md, escrita por un panel de cinco agentes de direccion de arte despachados por hivemind con modelo Fable 5.\n\nIMPORTANTE: la escalera que este ticket describia en su cuerpo quedo OBSOLETA en su premisa. Estaba redactada asumiendo que cada capitulo debia ser pixel art de su epoca, con resoluciones en pixeles por capitulo. Rafael corrigio esa premisa explicitamente: el sitio debe escalar no en pixel art necesariamente sino evocando lo que cada era representa, o sea que cada era usa el MEDIO de su epoca. La escalera nueva es: ch0 texto fosforo, ch1 HTML crudo, ch2 vector con tweens, ch3 flat con el primer parallax, ch4 profundidad con puntero, ch5 broadcast continuo, ch6 WebGL con shader y monoespaciada cinetica como climax.\n\nLa razon de ser de este ticket sigue vigente y se respeta: ningun trabajo de arte arranca sin especificacion medible, para no repetir las aproximadamente 30 iteraciones fallidas de busts y el rework revertido de junio 2026, cuya causa raiz comun fue generar arte con hex inventados en vez de muestreados. La spec nueva mantiene la exigencia de pixel-sampling obligatorio antes de generar arte, y declara explicitamente que los hex de ch3-sky y ch4-portal todavia requieren muestreo con herramienta porque el panel solo hizo verificacion visual.\n\nLa implementacion vive en TASK-008, que es el ticket base del que dependen TASK-009 a TASK-012."
+    }
+  ],
+  "created_at": "2026-07-27T02:14:53.838Z",
+  "updated_at": "2026-07-27T05:50:15.742Z",
+  "jira_key": null,
+  "verification_tier": "uat-only",
+  "marker": "[EXPLICIT]"
+}
