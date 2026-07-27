@@ -1,143 +1,188 @@
-# HANDOFF.md — Sesion PAUSADA
+# HANDOFF.md — snapshot de retoma
 
-**Pausada:** 2026-07-27, a pedido de Rafael
-**Sesion:** 20260727T013114Z-db71132a
+**Actualizado:** 2026-07-27, tarde
+**Sesión:** `20260727T013114Z-db71132a`
 
 > La fuente de verdad completa es `state/sessions/20260727T013114Z-db71132a/session.json`.
-> Este archivo es el resumen operativo para retomar rapido.
+> Este archivo es el resumen operativo para retomar rápido.
 
 ## Objetivo
 
-Rafael califico la belleza del sitio en 0/10 y pide 10/10, con el estandar declarado de
-que parezca un sitio de 50.000 dolares. Hasta Flash (ch0, ch1, ch2) le gusta; desde la
-muerte de Flash (ch3 en adelante) lo siente desordenado y que no evoca lo que cada era
-representa. Autorizo cambiar todo el arte y todo el estilo.
+Rafael calificó la belleza del sitio en 0/10 y pide 10/10, con el estándar declarado
+de que parezca un sitio de 50.000 dólares. Hasta Flash (ch0, ch1, ch2) le gusta y se
+preservan. Desde la muerte de Flash (ch3 en adelante) se rediseña todo. Autorizó
+cambiar todo el arte y todo el estilo.
 
-## ATENCION AL RETOMAR: TASK-014 quedo a medias, SIN COMMIT
+---
 
-Cuando Rafael pauso habia un `hivemind:developer` trabajando en **TASK-014**. Se lo dejo
-terminar a proposito, pero **no llego a commitear**. Verificado con `git status` al
-cerrar la sesion: quedaron **287 lineas sin commitear** en el working tree.
+## AL RETOMAR: hacé esto en orden
 
-Archivos modificados y NO commiteados:
+1. **`git log --oneline -12`** y **`git status`**. Debe haber ~10 commits locales sin
+   push. Si el working tree tiene `src/i18n/`, `src/data/contact.js` o
+   `ContactHUD.vue` modificados, es TASK-013 que quedó a medias: ver abajo.
+2. **`npm run test:run`.** Si hay rojos, mirá cuáles antes de asumir regresión: los
+   de títulos de capítulo, largo ES contra EN y conteo de proyectos son del contenido
+   nuevo y los arregla TASK-013.
+3. **Despachar el review de cierre de TASK-010** (ver abajo).
+4. Seguir el orden de tickets de la tabla.
 
-- `src/components/ScrollShell.vue` (+105)
-- `src/composables/useScrollState.js` (+36)
-- `tests/components/ScrollShell.test.js` (+98)
-- `tests/composables/useScrollState.test.js` (+51)
-- `tests/integration/scroll-shell-no-nested-scroll.test.js` (sin trackear, es el lock
-  de regresion que pedia el ticket)
-
-**Ese trabajo NO esta verificado, NO esta revisado y NO se sabe si deja los tests en
-verde.** Toca el shell de scroll, que gobierna los 7 capitulos, asi que es lo mas
-riesgoso del rediseno.
-
-**Como retomarlo, en orden:**
-
-1. `npm run test:run` para ver en que estado quedo la suite.
-2. Verificar en navegador que los 7 capitulos siguen montando y que ch0, ch1 y ch2 no
-   se degradaron, con atencion especial al watcher de `activeChapter` del que depende
-   el overlay del dial-up y con el el audio del modem.
-3. Si esta sano: pedirle a un `hivemind:developer` que lo complete y commitee, y
-   despues mandarlo al reviewer.
-4. Si esta roto o a mitad de camino: `git checkout -- src/ tests/` y re-despachar el
-   ticket desde cero. No hay nada que perder, porque nada de eso esta commiteado.
+---
 
 ## Estado de los tickets
 
-| Ticket | Que es | Estado |
+| Ticket | Qué es | Estado |
 |---|---|---|
-| TASK-008 | Tokens y chasis | **DONE**, review verde, 2 commits |
-| TASK-014 | Shell de scroll multi-viewport | in_progress, developer quedo corriendo |
-| TASK-009 | ch3 muerte de Flash | **blocked** por TASK-014, commit `672ca4a` ya en master |
-| TASK-010 | ch4 salto entre realidades | todo |
-| TASK-011 | ch5 pandemia broadcast | todo |
-| TASK-012 | ch6 climax terminal IA | todo |
-| TASK-013 | Cierre de contenido | todo, uat-only, PARA en Gate 2 a proposito |
+| TASK-008 | Tokens y chasis RAFAEL-OS | **DONE**, review verde, 2 commits |
+| TASK-014 | Shell multi-viewport con anclaje sticky | **DONE**, review verde ronda 3, 4 commits |
+| TASK-009 | ch3, la muerte de Flash | **DONE**, review verde ronda 2, 3 commits |
+| TASK-007 | Destapar la narrativa | **DONE** como absorbido, defectos repartidos |
+| TASK-010 | ch4, salto entre realidades | **in_progress** — corrección landeada, FALTA EL REVIEW DE CIERRE |
+| TASK-013 | Cierre de contenido | **in_progress** — cargando los textos finales |
+| TASK-017 | Techo de fps global | todo, **alta, desbloqueante** |
+| TASK-011 | ch5, la transmisión | todo |
+| TASK-012 | ch6, el clímax | todo |
+| TASK-015 | Calibrar el parallax de ch3 | todo, media |
+| TASK-016 | Craft polish de ch2 | todo, baja, **2 ítems esperan a Rafael** |
+| TASK-001 | CI | todo — **NO cerrar**, nunca se hizo y sigue siendo real |
+| TASK-006 | Cuatro bugs de cableado | todo — **NO cerrar**, siguen vivos |
+| TASK-002/003/004/005 | Superados | **Rafael pidió cerrarlos**, bloqueados por guard |
 
-## Commits de esta sesion, todos locales y sin push
+---
 
-- `3f0e91d` feat(TASK-008): sistema de tokens y chasis RAFAEL-OS
-- `1c4ec06` fix(TASK-008): font-body section-only, easing sin overshoot, corner marks
-- `672ca4a` feat(ch3): rediseño total "la muerte de Flash" a flat 2013 (TASK-009)
+## Lo que quedó a medio camino
 
-## Por que TASK-009 quedo bloqueado
+### TASK-010 — falta el review de cierre
 
-Verificacion en navegador encontro que el contenido de ch3 quedo dentro de un
-contenedor `.ch3-stage` con scrollHeight 4181 px dentro de clientHeight 735 px y
-`overflow-y: auto`, con 31 elementos de texto fuera de pantalla. Ese scroll anidado
-compite con el `scroll-snap-type: y mandatory` del shell, asi que el visitante puede
-saltar al capitulo siguiente sin ver el Acto 2.
+Su ronda de corrección **ya landeó** en `a2747fe`: se arregló el HIGH de la lente
+Sobel espejada en el eje Y, más seis MEDIUM. Verificado por el orquestador — el flip
+está en `Ch4PortalShader.vue:720`, la viñeta y el suelo dobles se borraron de verdad,
+y el rAF quedó gateado por capítulo activo.
 
-No fue culpa del developer: `App.vue` y `ScrollShell.vue` estaban fuera de la lista
-blanca de todos los tickets de capitulo. Rafael decidio crear TASK-014 para que el
-shell acepte capitulos altos con anclaje real, y despues ch3 se adapta.
+**Falta:** despachar `hivemind:reviewer` con `model: 'fable'` sobre el rango completo
+`f632edb..a2747fe`, tres commits: `8e8e85a`, `93c90e4`, `a2747fe`. Hacerlo **con la
+suite en verde**, o sea después de que TASK-013 termine; si no, el reviewer se
+confunde con rojos que no son suyos.
 
-El trabajo de ch3 NO se descarta: el rediseño flat de 2013 esta bien, el innerText
-subio de 91 a 1954 caracteres verificado en navegador, y el Acto 2 se ve
-autenticamente 2013. Solo cambia el mecanismo de recorrido.
+Si da PASS, cerrar enlazando los tres commits.
 
-## Pendientes registrados en el comentario de TASK-009
+### TASK-013 — cargando el contenido
 
-Verificacion visual a 1440x900 y 1366x768 y en mobile; la tipografia Open Sans que no
-se pudo self-hostear por lista blanca; la capa scroll-driven nativa sin verificar;
-los assets huerfanos de Kingdom en `public/assets/` que hay que archivar a `old/` con
-entry en CHANGELOG segun CLAUDE.md §6.5; la base `.project-card` sin scope que no se
-pudo migrar porque ch2 y ch5 dependen de ella; y `@fontsource/lobster` importado sin
-consumidor.
+Rafael entregó sus textos finales en **`.planning/GUION-TEXTOS-FINAL.md`**, que es
+fuente de verdad de contenido y **se copia verbatim**: no se edita, no se resume, no
+se "mejora". Es contenido de autor.
 
-## LIMITACION DE ENTORNO, sin resolver
+Al guardar este handoff había un agente vivo cargándolo, **sin commitear todavía**.
+Estado exacto del working tree en ese momento (`git status`):
 
-La ventana de Chrome esta OCULTA. Con `visibilityState: hidden` Chrome estrangula
-timers, rAF y scroll suave. Medido en esta sesion: el scroll suave no avanza (hay que
-usar `behavior: 'instant'`), el watcher del dial-up nunca dispara, Phaser queda pausado,
-y el renderer llego a congelarse dos veces al capturar pantalla.
+```
+ M src/App.vue                       ← solo fin de línea, sin diff real
+ M src/components/ContactHUD.vue     ← campos nuevos: teléfono y ubicación
+ M src/data/contact.js               ← datos reales de Rafael
+ M src/i18n/es.json                  ← los 7 textos de era + proyectos + UI
+ M src/i18n/en.json                  ← traducción al inglés en curso
+ M tests/data/contact.test.js
+```
 
-Se puede verificar DOM, innerText, layout, estilos computados y consola. NO se puede
-verificar nada animado: shaders de ch4, escena de ch6, multitud de ch5, minijuego de
-ch2 ni el audio del modem. Rafael tiene que traer la ventana al frente; se le pidio
-cuatro veces.
+**Si al retomar eso sigue sin commitear**, el agente murió a mitad. Verificá el
+trabajo contra `.planning/GUION-TEXTOS-FINAL.md` y, si está sano, pedí a un
+`hivemind:developer` que lo complete y commitee. Si está a medias, `git checkout --
+src/ tests/` y re-despachar: no hay nada que perder porque nada está commiteado.
 
-## Baseline vigente (el antes, para probar que nada se rompio)
+**Chequeos obligatorios de ese trabajo:** la era 3 debe quedar con **exactamente 5
+párrafos** (el componente los parte uno por beat, y de los beats 1 a 4 solo muestra
+las 2 primeras oraciones); deben quedar **13 tarjetas de proyecto, no 14** (se
+elimina la de AR/VR duplicada en ch6, hay tests que cuentan 14); y paridad de claves
+ES/EN sin huérfanas.
 
-Dev server en `http://localhost:5176/`, viewport 1536x791.
+**Dato que condiciona ch5 y ch6:** el texto creció mucho. La era 5 pasó de 1.013 a
+~4.188 caracteres y la era 6 de 806 a ~2.031. Las eras 0 y 4 triplicaron y sus
+capítulos ya están construidos para el texto viejo, así que pueden desbordar.
+**Regla: el texto de Rafael no se recorta para que entre. Si no entra, cambia el
+diseño.**
 
-innerText por capitulo: ch0 437 a 457 (varia, la terminal escribe en vivo), ch1 1842,
-ch2 262 a 309 (varia, contadores dinamicos del stage), ch3 1954 (era 91 antes del
-rediseño), ch4 1103, ch5 0, ch6 0. Los ceros de ch5 y ch6 son defectos conocidos que
-arreglan TASK-011 y TASK-012.
+---
 
-Canvas del minijuego de ch2: 360x420. Shell: scrollHeight 5146, clientHeight 735.
-Avatar, timeline y HUD presentes. Consola sin errores, unico warning el conocido de
-`marquee` sin `isCustomElement`.
+## Bloqueado por guard: los cuatro tickets superados
 
-Modem de 2001: confirmado funcionando con un espia sobre `AudioContext` que conto 125
-osciladores y 50 buffer sources al entrar al capitulo. El trigger es un watcher sobre
-`activeChapter` en `DialUpScreen.vue` mas `sessionStorage.rm-dialup-seen`.
+Rafael pidió cerrar TASK-002, 003, 004 y 005 como superados y **dio el veredicto
+verbalmente**. Pero los cuatro son `uat-only` y el guard no deja firmar un comentario
+de UAT mientras `loop_auth.uat_delegated_to_orchestrator` sea `false`, que es lo que
+Rafael eligió a propósito.
 
-## Reglas de proceso, en 150 caracteres
+**Dos salidas, las dos legítimas:** pasar a modo harness y cerrarlos, o que Rafael
+conceda la delegación. **No forzar el guard.**
 
-Baseline primero. Un capitulo por commit. Lista blanca de archivos. Verifico en Chrome
-antes de commitear. Solo hivemind. Locks de no-regresion.
+Ojo: **TASK-001 y TASK-006 NO se cierran.** No están superados. TASK-006 son cuatro
+bugs de cableado concretos que siguen vivos, incluido el warning de `marquee` sin
+`isCustomElement` que aparece en consola hoy.
 
-## Autorizaciones del loop, session-scoped
+---
 
-Cierre automatico en review verde SI. Consolidacion automatica SI. Delegacion de UAT
-NO. Push a remoto NO. Version bump NO. Rafael debe re-confirmarlas al retomar, porque
-no persisten entre sesiones.
+## Decisiones de producto pendientes de Rafael
 
-## Especificaciones de direccion de arte, fuente de verdad de los tickets
+1. **ch3 quedó en 11 viewports** con arquitectura de deck y crossfades, o sea ~60%
+   del recorrido total del sitio, y la rueda funciona como botón de "siguiente
+   slide". Se desvía de la spec, que pedía que el Acto 2 fluyera normal como una
+   landing de 2013. Hay 2-3 viewports recortables sin perder contenido.
+2. **TASK-016**, dos de tres ítems: el fondo de grilla hexagonal y el borde de acento
+   lateral de ch2. Ambos defendibles como auténticos de la época Y2K.
+3. **El teléfono en el HUD de contacto**: campo nuevo, siempre visible. Riesgo de
+   scraping, decisión suya.
 
-- `.planning/design/00-sistema-visual-global.md`
-- `.planning/design/03-ch3-muerte-de-flash.md`
-- `.planning/design/04-ch4-salto-entre-realidades.md`
-- `.planning/design/05-ch5-pandemia-broadcast.md`
-- `.planning/design/06-ch6-climax-terminal-ia.md`
+---
 
-## Al retomar
+## Cinco lecciones que costaron caro. Aplicalas desde el primer dispatch
 
-1. Leer `state/session.json`, despues el bundle de la sesion.
-2. Revisar `git log` por el commit de TASK-014, segun la seccion de arriba.
-3. Re-confirmar con Rafael las autorizaciones del loop antes de volver a modo loop.
-4. No despachar nada fuera de hivemind: el hook `.claude/hooks/enforce-hivemind.mjs`
-   lo bloquea y Rafael pidio no quitarlo nunca.
+1. **`overflow: hidden` crea un scroll container.** Seis apariciones esta sesión.
+   Rompió `position: sticky` dos veces y `animation-timeline: scroll()` una vez.
+   **Regla: si el contenedor solo quiere recorte visual, va `clip`, nunca `hidden`.**
+2. **Un verde no prueba nada.** Los dos HIGH de TASK-014, el parallax muerto de
+   TASK-009 y la lente espejada de TASK-010 estuvieron **todos verdes en la suite
+   completa**: jsdom no hace layout y el WebGL está mockeado. Exigir **progresión
+   medida en dos puntos distintos**, no la existencia de la animación.
+3. **`canvas.toDataURL()` miente** bajo automatización CDP: devuelve bytes idénticos
+   aunque el WebGL renderice a 110 fps. Usar `Page.captureScreenshot`, que pasa por
+   el compositor nativo. Y `gl.readPixels` en negro con `preserveDrawingBuffer:
+   false` es lo **esperado**, no un síntoma.
+4. **Para lockear CSS**, compilar el `<style scoped>` real con `@vue/compiler-sfc` y
+   verificar cascada con `getComputedStyle`. Los regex sobre texto fuente son ciegos
+   a especificidad, que es como se coló un HIGH entero.
+5. **Los subagentes recortan alcance si no se les prohíbe.** El developer de ch4 cortó
+   la lente Sobel, el efecto firma del capítulo, "por presupuesto de sesión". **Poner
+   en cada dispatch: si algo de la spec no entra, se PARA y se reporta.**
+
+---
+
+## Entorno
+
+- **Chrome oculto**: `visibilityState: hidden` pausa Phaser y todo rAF. **Workaround
+  validado**: los developers levantan su propio Chrome **headed** vía CDP crudo con
+  WebSocket nativo de Node. Headless usa software rendering y degrada justo los
+  shaders y las animaciones de compositor que hay que medir.
+- **`gh` instalado** (2.96.0, en `C:\Program Files\GitHub CLI\gh.exe`) pero **sin
+  autenticar** y fuera del PATH de la sesión. Hay dos reportes de bug del framework
+  escritos y scrubbeados en `.claude/framework-bug-reports/` esperando
+  `gh auth login`.
+
+---
+
+## Reglas de proceso
+
+Baseline primero. Un capítulo por commit. Lista blanca de archivos en cada dispatch.
+Verificar en Chrome antes de commitear. **Solo hivemind** — el hook
+`.claude/hooks/enforce-hivemind.mjs` bloquea `Agent` y `Workflow` fuera del equipo, y
+Rafael pidió no quitarlo nunca. Locks de no regresión en cada ticket.
+
+**Autorizaciones del loop, session-scoped, se re-confirman al retomar:** cierre
+automático en review verde SÍ, consolidación automática SÍ. Delegación de UAT NO,
+push a remoto NO, version bump NO.
+
+## Fuentes de verdad
+
+**Diseño:** `.planning/design/00-sistema-visual-global.md`,
+`03-ch3-muerte-de-flash.md`, `04-ch4-salto-entre-realidades.md`,
+`05-ch5-pandemia-broadcast.md`, `06-ch6-climax-terminal-ia.md`.
+
+**Contenido:** `.planning/GUION-TEXTOS-FINAL.md`.
+
+Las specs ganan sobre el cuerpo del ticket si hay conflicto.

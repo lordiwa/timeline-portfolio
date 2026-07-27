@@ -1,0 +1,31 @@
+{
+  "key": "TASK-018",
+  "title": "ch0 y ch4 desbordan con el texto final de Rafael, medido en Chrome",
+  "description": "Descubierto el 2026-07-27 al cargar los textos finales de Rafael en TASK-013. Medido con geometria real en Chrome headed via CDP, no estimado.\n\n## Causa\n\nEl texto de Rafael crecio mucho respecto del placeholder que esos capitulos tenian cuando se construyeron. La era 0 paso de 363 a 1086 caracteres y la era 4 de 581 a 1744. Los dos capitulos estan maquetados para el texto viejo.\n\nRegla que aplica y que ya se instruyo en TASK-013: **el texto de Rafael NO se recorta para que entre. Si no entra, el que cambia es el diseno.**\n\n## Mediciones reales (scrollHeight menos clientHeight)\n\n**ch0, el mas urgente:**\n\n- 1440x900: `.ch0-content` entra, pero el wrapper `#chapter-0` recorta ~72 px.\n- 1366x768: `.ch0-content` se pasa **143 px**, y el wrapper recorta ~72 px.\n- Mobile portrait 390x844: `.ch0-content` se pasa **694 px**.\n- Mobile landscape 844x390: `.ch0-content` se pasa **738 px**.\n\nEn mobile una fraccion grande del texto nuevo de la era 0 es sencillamente invisible hoy.\n\n**ch4, menor pero real:**\n\n- `.ch4-content` y `.ch4-layout` NO desbordan por si mismos, simplemente crecen.\n- El wrapper `#chapter-4`, con `100dvh` fijo, recorta **80 a 96 px** abajo en los cuatro tamanos medidos.\n\n## Contexto importante sobre ch0\n\nRafael pidio preservar ch0, ch1 y ch2 porque le gustan, y solo elevarlos en craft. Este ticket NO es licencia para rediselarlos: es para que el texto que el escribio se pueda leer completo. La identidad CRT de terminal MS-DOS se conserva.\n\nEl mecanismo multi-viewport que entrego TASK-014 es la salida natural si el capitulo necesita mas alto: `:chapter-viewports=\"{ 0: N }\"` en App.vue mas `.chapter-stage` como elemento ROOT del componente. El contrato completo esta documentado en el bloque de comentario de `ScrollShell.vue`. Ojo con la trampa del wrapper intermedio, que costo un HIGH entero en TASK-014.\n\n## LISTA BLANCA\n\n`src/components/Chapter0Content.vue`, `src/components/Chapter4Content.vue`, `src/App.vue` solo para pasar el prop de viewports, `src/styles/**` en lo que respecta a esos dos capitulos, y `tests/**`.\n\nPROHIBIDO: `ScrollShell.vue` y `useScrollState.js` (cerrados por TASK-014), `src/phaser/ch2/MatchScene.js`, `DialUpScreen.vue` y el audio del dial-up, `src/i18n/**` y `src/data/**` (el contenido es de Rafael y no se toca), y cualquier otro `Chapter{N}Content.vue`.\n\n## Verificacion exigida\n\nMedir con `getBoundingClientRect` y `scrollHeight` en Chrome **headed** via CDP, a 1440x900, 1366x768, 390x844 portrait y 844x390 landscape. Numeros antes y despues. Headless no sirve para nada animado y ademas ya dio artefactos de viewport en este proyecto.\n\nRecordar la leccion recurrente: si hace falta un contenedor de recorte, va `overflow: clip`, nunca `hidden`. Costo seis apariciones y tres HIGH en esta sesion.",
+  "acceptance_criteria": [
+    "El texto completo de la era 0 es legible sin recorte a 1440x900, 1366x768, mobile portrait y mobile landscape. Medido con geometria real, no estimado.",
+    "El texto completo de la era 4 es legible sin recorte en los mismos cuatro tamanos.",
+    "ch0 conserva su identidad visual de terminal CRT MS-DOS: Rafael pidio preservar ch0 a ch2 y este ticket solo resuelve que su texto quepa.",
+    "Ningun texto de src/i18n ni src/data se modifica ni se recorta para lograrlo.",
+    "NO REGRESION: los 7 capitulos siguen montando, el minijuego de ch2 conserva su canvas de 360x420, y el audio del dial-up sigue disparandose al entrar a ch1.",
+    "La suite sigue en verde y se agrega un lock de regresion que falle si ch0 o ch4 vuelven a recortar su contenido."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "ch0",
+    "ch4",
+    "overflow",
+    "contenido-real"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T18:47:52.718Z",
+  "updated_at": "2026-07-27T18:47:52.718Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

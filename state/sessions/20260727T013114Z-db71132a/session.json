@@ -2,10 +2,10 @@
   "schema_version": 2,
   "session_id": "20260727T013114Z-db71132a",
   "lifecycle_state": "active",
-  "updated_at": "2026-07-27T12:07:23.609Z",
-  "active_task": "TASK-008",
+  "updated_at": "2026-07-27T18:30:15.275Z",
+  "active_task": "TASK-013",
   "workflow_step": "impl",
-  "mode": "harness",
+  "mode": "loop",
   "loop_auth": {
     "auto_close_on_green_review": true,
     "auto_push_after_close": false,
@@ -13,7 +13,7 @@
     "auto_version_bump_on_milestone": false,
     "auto_consolidate": true
   },
-  "next_action": "SESION PAUSADA POR RAFAEL EL 2026-07-27. Snapshot operativo completo en HANDOFF.md, leerlo primero. PRIMER PASO AL RETOMAR: correr git log --oneline -5 y ver si aparece un commit de TASK-014, porque cuando Rafael pauso habia un hivemind:developer trabajando en ese ticket y se lo dejo terminar a proposito, ya que matarlo a mitad podia dejar archivos editados sin commit. Si el commit aparece, ese trabajo NO esta verificado ni revisado: hay que verificarlo en navegador y mandarlo al reviewer antes de cerrarlo. Si no aparece, TASK-014 sigue in_progress sin trabajo landeado y hay que re-despacharlo. SEGUNDO PASO: re-confirmar con Rafael las autorizaciones del loop, que son session-scoped y no persisten: cierre automatico en review verde, consolidacion automatica, y las tres que quedaron denegadas. TERCERO: volver a modo loop con loop-ctl set-mode y retomar el orden TASK-014, despues TASK-009 que quedo blocked esperandolo, despues ch4, ch5, ch6 y por ultimo TASK-013. Estado de tickets al pausar: TASK-008 done con review verde; TASK-014 in_progress; TASK-009 blocked por TASK-014 con su commit 672ca4a ya en master y su rediseño flat de 2013 aprovechable; TASK-010, TASK-011, TASK-012 y TASK-013 en todo. Commits locales sin push: 3f0e91d, 1c4ec06 y 672ca4a. PUNTO ANTERIOR DE RETOMA, ya superado: hay un reviewer EN VUELO (modelo fable, depth light) sobre el rango 3f0e91d..1c4ec06, que es el pase de correccion de TASK-008. Al volver: si da PASS, primero mandar al developer el hallazgo pendiente de bounce-easing en StickyTimeline.vue linea 294 (segunda ocurrencia del mismo cubic-bezier; la primera ya se arreglo con var(--ease-standard)), pidiendo que barra el archivo entero por si hay mas, y despues cerrar TASK-008 con close_task y arrancar TASK-009. Si da BLOCK, es el retry 2 de 2 permitidos y un tercer HIGH obliga a parar y avisar a Rafael. Snapshot operativo en HANDOFF.md. Commits locales de la sesion, sin push: 3f0e91d y 1c4ec06. Drive loop autonomo sobre keys TASK-008 a TASK-013, confirmado por Rafael el 2026-07-27. Orden por dependencias: TASK-008 (tokens y chasis) primero porque los cuatro capitulos dependen de el; despues ch3, ch4, ch5 y ch6 que no dependen entre si; al final TASK-013 (cierre de contenido), que es uat-only y PARA en Gate 2 a proposito porque toca los textos de autor de Rafael. Entre cada capitulo el orquestador entra con el navegador y verifica que nada se solape, que no se haya perdido nada de lo que si queremos (minijuego de ch2, audio del modem de 2001, multitud de 125 personajes de ch5, avatar, timeline y HUD) y que se cumplan los requerimientos visuales que dio Rafael; si algo falla vuelve al developer sin consultarlo.",
+  "next_action": "ESTADO AL 2026-07-27 tarde. TRES TICKETS CERRADOS con review verde: TASK-008 (2 commits), TASK-014 (4 commits) y TASK-009 (3 commits). TASK-007 cerrado como absorbido. 10 commits locales SIN PUSH.\n\nEN VUELO AL GUARDAR ESTE ESTADO:\n(1) TASK-013 cargando los textos finales de Rafael. Agente vivo. Tiene modificados en working tree src/i18n/es.json, src/data/contact.js, src/components/ContactHUD.vue y tests/data/contact.test.js.\n(2) TASK-010 ch4: su ronda de correccion YA LANDEO en el commit a2747fe. Falta despachar el review de cierre.\n\nORDEN AL RETOMAR:\n1. Verificar que TASK-013 termino y commiteo.\n2. Correr npm run test:run. Si hay rojos, verificar que sean de contenido (titulos de capitulo, comparacion de largo ES vs EN, conteo de proyectos). Esos los debe arreglar TASK-013 y NO son regresion de ch4.\n3. Recien con la suite verde, despachar hivemind:reviewer con model fable sobre el rango completo de TASK-010: f632edb..a2747fe, tres commits 8e8e85a, 93c90e4 y a2747fe.\n4. Si da PASS, cerrar TASK-010 enlazando los tres commits.\n5. Seguir con TASK-017 (techo de fps global, prioridad alta, desbloqueante porque mientras exista ningun capitulo puede demostrar 60fps), despues TASK-011 ch5 y TASK-012 ch6.\n\nBLOQUEADO POR GUARD, decision pendiente de Rafael: TASK-002, TASK-003, TASK-004 y TASK-005 son uat-only y no se pueden cerrar porque loop_auth.uat_delegated_to_orchestrator es false, que es lo que Rafael eligio a proposito. Rafael YA dio el veredicto verbalmente el 2026-07-27 (cerralos como superados) pero el guard exige que el comentario uat lo firme el humano, o salir de modo loop. Opciones: pasar a modo harness y cerrarlos, o que Rafael conceda la delegacion. NO forzar el guard.\n\nNO CERRAR TASK-001 NI TASK-006: no estan superados. TASK-001 (CI) nunca se hizo y sigue siendo real aunque de baja prioridad para un portafolio. TASK-006 son cuatro bugs de cableado concretos que siguen vivos, incluido el warning de marquee sin isCustomElement que aparece en consola hoy.",
   "handoff_summary": "REDISEÑO SIGNATURE EN CURSO. Rafael califico la belleza del sitio en 0/10 y el estandar declarado es que parezca un sitio de 50.000 dolares. Diagnostico suyo: hasta Flash (ch0, ch1, ch2) le gusta; DESDE la muerte de Flash (ch3 en adelante) lo siente desordenado, poco impresionante y que no evoca lo que cada era representa. Autorizo cambiar todo el arte y todo el estilo, aclarando que lo actual es solo una maqueta. Pidio: shaders flotando atras en ch4 con sensacion de salto entre realidades, pulir muchisimo ch5 (la tele y la multitud), y un final ch6 con shaders mas ASCII que vuelva al terminal y al binario ahora que se habla con una IA, en estilo ultra futurista.\n\nDECISIONES CERRADAS CON EL: redisenio total de ch3 a ch6 con ch0 a ch2 solo elevados en craft; el chasis compartido entra y se crea un sistema de tokens que reemplaza los 71.8 KB de chapter-themes.css; Higgsfield queda apagado asi que todo lo no-pixel es procedural (GLSL, SDF, ruido, Canvas, SVG, CSS); los 14 placeholders y el em-dash de la era 5 se resuelven al final en TASK-013 con guiones de texto; el cierre de ch6 declara EXPLICITAMENTE que el portfolio lo construyo Rafael junto a una flota de agentes, con la frase final alternando autor palabra por palabra.\n\nEL PANEL DE DIRECCION DE ARTE YA CORRIO: 5 agentes hivemind:researcher con modelo Fable 5 entregaron .planning/design/00-sistema-visual-global.md, 03-ch3-muerte-de-flash.md, 04-ch4-salto-entre-realidades.md, 05-ch5-pandemia-broadcast.md y 06-ch6-climax-terminal-ia.md. Esas specs son la fuente de verdad de los tickets y ganan sobre el cuerpo del ticket si hay conflicto.\n\nTICKETS CREADOS: TASK-008 tokens y chasis (base), TASK-009 ch3, TASK-010 ch4, TASK-011 ch5, TASK-012 ch6, TASK-013 cierre de contenido. Cada uno lleva lista blanca de archivos, lista de archivos prohibidos y criterios de no regresion bloqueantes. TASK-005 quedo satisfecho y superado por la spec 00 (su premisa pixel-art era obsoleta); TASK-007 quedo absorbido y sus 5 defectos repartidos como criterios de aceptacion de los tickets de capitulo, salvo el defecto 5 de ch2 que no se ejecuta porque ch2 esta fuera de alcance.\n\nBASELINE VERIFICADA EN MASTER, es el antes que prueba que no se rompio nada: viewport 1536x791, dev server en 5176. innerText por capitulo ch0 437, ch1 1842, ch2 262, ch3 91, ch4 1103, ch5 0, ch6 0. Modem de 2001 CONFIRMADO sonando, medido con un espia sobre AudioContext que conto 125 osciladores y 50 buffer sources al entrar al capitulo. Minijuego de ch2 montado y centrado, canvas 360x420 en x=764 y=251. Consola sin errores, unico warning el conocido de marquee sin isCustomElement. PENDIENTE: la baseline interactiva del minijuego y de la escena Phaser de ch6 requiere que Rafael traiga la ventana de Chrome al frente, porque con visibilityState hidden Phaser y todos los rAF quedan pausados.\n\nINCIDENTE VIGENTE COMO LECCION: el 2026-07-27 el orquestador despacho 17 agentes genericos en workflows propios y rompio el minijuego de ch2, el modem, la multitud de ch5 y la escena de ch6; Rafael califico ese proceso 0/10. Mitigacion activa y auditada: hook PreToolUse .claude/hooks/enforce-hivemind.mjs (commit eebdac8) que bloquea Agent y Workflow fuera de hivemind. Rafael dijo nunca quitarlo. La rama task-007-rondas-1-2-wip (8025278) guarda trabajo rescatable por partes pero NO se mergea entera porque su base es anterior al hook y lo borraria.\n\nREGLAS DE PROCESO, en 150 caracteres: baseline primero, un capitulo por commit, lista blanca de archivos, verificacion en Chrome antes de commitear, solo hivemind, locks de no-regresion.",
   "open_questions": [
     "Rafael tiene que traer la ventana de Chrome al frente para que el orquestador pueda verificar lo animado entre capitulos: shaders de ch4, escena Phaser de ch6, multitud de ch5 y minijuego de ch2.",
@@ -22,8 +22,11 @@
     "Verificar si el scroll-snap del shell tolera secciones de 200dvh para el panel de stream de ch5; hay fallback aprobado en la seccion 4.2 de esa spec."
   ],
   "blockers": [
-    "contact.js sigue vacio y 14 de 14 descripciones de proyecto son placeholder. Por decision de Rafael no bloquea el redisenio: se resuelve al final en TASK-013 entregando guiones de texto en vez de esperar el contenido.",
-    "La baseline interactiva esta bloqueada por entorno: con la ventana de Chrome oculta el visibilityState es hidden y Phaser junto con todos los rAF quedan pausados."
+    "gh CLI instalado (version 2.96.0, en C:\\Program Files\\GitHub CLI\\gh.exe) pero SIN AUTENTICAR y fuera del PATH que tomo la sesion. Los dos reportes de bug del framework estan escritos y con secretos scrubbeados en .claude/framework-bug-reports/ esperando que Rafael corra gh auth login. Para filar: gh issue create --repo HexingBot/hivemind --title TITULO --body-file RUTA.",
+    "La ventana de Chrome sigue oculta. Workaround encontrado y validado: los developers levantan su propio Chrome HEADED via CDP crudo con WebSocket nativo de Node. Headless NO sirve para verificar shaders ni animaciones de compositor porque usa software rendering y degrada justo lo que hay que medir.",
+    "DECISION DE PRODUCTO PENDIENTE DE RAFAEL: ch3 quedo en 11 viewports con arquitectura de deck y crossfades, o sea aproximadamente 60 por ciento del recorrido total del sitio, y la rueda funciona como boton de siguiente slide. Se desvia de la spec 03 seccion 3, que pedia que el Acto 2 fluyera normal como una landing de 2013. Hay 2 o 3 viewports recortables sin perder contenido. Lo decide Rafael mirando el sitio.",
+    "Cuatro tickets uat-only bloqueados para cierre por el guard de UAT. Ver next_action.",
+    "contact.js ganó campos nuevos (telefono y ubicacion) que no existian en el shape ni en el HUD. TASK-013 los esta implementando. Rafael debe decidir si mostrar el telefono en un HUD siempre visible le preocupa por scraping."
   ],
   "decisions": [
     {
@@ -85,6 +88,41 @@
       "at": "2026-07-27T06:00:00.000Z",
       "decision": "El loop corre autonomo con cierre automatico en review verde y consolidacion automatica, pero SIN delegacion de UAT, sin push a remoto y sin version bump",
       "rationale": "Rafael eligio autonomia total revisando al final, con la condicion de que el orquestador entre con el navegador entre capitulos. TASK-013 es uat-only y toca sus textos de autor, asi que debe parar en Gate 2 para su aprobacion."
+    },
+    {
+      "at": "2026-07-27T13:35:12.180Z",
+      "decision": "TASK-014 entrega SOLO el mecanismo del shell; la migracion de ch3 pertenece a TASK-009. El AC#2 del ticket quedo redefinido",
+      "rationale": "El ticket se contradecia consigo mismo entre su AC#2 y su nota de cierre, y su lista blanca prohibia tocar contenido de capitulo. Rafael eligio mantener el commit del shell chico y revertible de forma limpia, que era el punto del ticket de riesgo alto."
+    },
+    {
+      "at": "2026-07-27T13:35:12.180Z",
+      "decision": "LECCION DE TASK-014: los tests de regex sobre texto fuente son ciegos a interacciones de cascada y especificidad de CSS. Los dos HIGH del ticket estuvieron verdes en la suite",
+      "rationale": "Cada fix introdujo el siguiente defecto y ningun test lo vio, porque jsdom no hace layout. La contramedida que funciono fue compilar el style scoped real con @vue/compiler-sfc y verificar cascada con getComputedStyle, mas medicion CDP en Chrome real con la topologia exacta documentada. Aplicar el mismo estandar en los tickets de capitulo."
+    },
+    {
+      "at": "2026-07-27T16:22:26.173Z",
+      "decision": "Se autorizo excepcionalmente tocar ScrollShell.vue (cerrado por TASK-014) SOLO para el contrato PRM del mecanismo multi-viewport",
+      "rationale": "Bajo prefers-reduced-motion la seccion conservaba N*100dvh mientras el contenido fluia en menos, dejando 4 a 6 viewports en blanco. Es un defecto del mecanismo que ch4, ch5 y ch6 heredarian igual, y arreglarlo cuatro veces en cada capitulo es el mismo error que ya se pago. Ahora una seccion [data-viewports] colapsa a height auto con piso de 100dvh bajo PRM, documentado en el contrato para que los tickets siguientes lo den por sentado."
+    },
+    {
+      "at": "2026-07-27T16:22:26.173Z",
+      "decision": "LECCION RECURRENTE, tercera vez en esta sesion: overflow hidden crea scroll container y rompe tanto position sticky como animation-timeline scroll(nearest)",
+      "rationale": "Costo dos HIGH en TASK-014 y uno en TASK-009. La regla para ch4, ch5 y ch6: si el contenedor solo quiere recorte visual, usar overflow clip, nunca hidden. Y verificar PROGRESION medida, no la existencia de la animacion: getAnimations() y computed style prueban que existe, no que avanza."
+    },
+    {
+      "at": "2026-07-27T18:30:15.275Z",
+      "decision": "Rafael entrego sus textos finales en .planning/GUION-TEXTOS-FINAL.md el 2026-07-27. Es fuente de verdad de contenido y se copia VERBATIM, no se edita ni se resume",
+      "rationale": "Es contenido de autor. Ademas resolvio las cuatro preguntas abiertas: cuenta la pandemia por sus efectos sin nombrarla nunca, elimina la tarjeta duplicada de AR/VR en ch6 (quedan 13 tarjetas, no 14), repensa los titulos de las eras 0 y 1 sacando la palabra Pre-carrera, y elige la frase de cierre con su reparto palabra por palabra entre humano e IA."
+    },
+    {
+      "at": "2026-07-27T18:30:15.275Z",
+      "decision": "El texto crecio mucho y eso condiciona el diseno de los capitulos que faltan. NO se recorta el texto de Rafael para que entre: si no entra, el que cambia es el diseno",
+      "rationale": "Medido: era0 de 363 a 1111, era1 de 1469 a 2131, era4 de 581 a 1801, era5 de 1013 a 4188, era6 de 806 a 2031. Las eras 0 y 4 triplicaron y sus capitulos YA estan construidos para el texto viejo, asi que pueden desbordar; se instruyo medir y reportar, no arreglar. Las eras 5 y 6 hoy no muestran nada, asi que TASK-011 y TASK-012 pueden disenarse conociendo el largo real en vez de adivinando, lo que evita rehacerlos dos veces."
+    },
+    {
+      "at": "2026-07-27T18:30:15.275Z",
+      "decision": "El jefe de Remoose queda como mi jefe, sin nombre. DECIDIDO, no es un pendiente",
+      "rationale": "Rafael lo decidio el 2026-07-27. Marcado como final en la nota 5 de la Parte 5 del guion para que ningun agente futuro vuelva a proponer nombrarlo."
     }
   ],
   "subagent_results": [
@@ -144,13 +182,19 @@
       "artifacts": [
         ".planning/design/06-ch6-climax-terminal-ia.md"
       ]
+    },
+    {
+      "at": "2026-07-27T18:30:15.275Z",
+      "agent": "orchestrator",
+      "task": "lecciones tecnicas acumuladas de la sesion, aplicar en ch5 y ch6",
+      "summary": "LECCION 1, seis apariciones: overflow hidden CREA scroll container. Rompio position sticky dos veces en TASK-014 y animation-timeline scroll(nearest) una vez en TASK-009, y volvio a aparecer en ch4. Regla del proyecto: si el contenedor solo quiere recorte visual, usar overflow clip, NUNCA hidden. LECCION 2: un verde no prueba nada. Los dos HIGH de TASK-014, el parallax muerto de TASK-009 y la lente espejada de TASK-010 estuvieron TODOS verdes en la suite completa, porque jsdom no hace layout y el WebGL esta mockeado. Verificar PROGRESION MEDIDA en dos puntos distintos del recorrido, no la existencia de la animacion: getAnimations() y el computed style prueban que existe, no que avanza. LECCION 3: canvas.toDataURL() devuelve bytes identicos aunque el WebGL renderice a 110fps bajo automatizacion CDP. Usar Page.captureScreenshot, que pasa por el compositor nativo. Y gl.readPixels da negro con preserveDrawingBuffer false, que es lo ESPERADO y no un sintoma: activarlo tras un query param de debug y leer DENTRO del frame de dibujo. LECCION 4: para lockear CSS, compilar el style scoped real con @vue/compiler-sfc y verificar cascada con getComputedStyle. Los regex sobre texto fuente son ciegos a especificidad, que es exactamente como se colo el HIGH del safeguard en TASK-014. LECCION 5: los subagentes recortan alcance por su cuenta si no se les prohibe. El developer de ch4 corto la lente Sobel, que era el efecto firma del capitulo, por presupuesto de sesion. Regla en los dispatches: si algo de la spec no entra, se PARA y se reporta al orquestador, nunca se recorta callado."
     }
   ],
   "pending_human_confirmation": null,
   "loop_state": {
-    "current_ticket": "TASK-014",
+    "current_ticket": "TASK-013",
     "phase": "impl",
-    "iteration": 3,
-    "completed_this_run": 1
+    "iteration": 1,
+    "completed_this_run": 3
   }
 }

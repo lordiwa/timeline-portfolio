@@ -14,7 +14,7 @@
     "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch4.",
     "La suite de tests existente sigue en verde y se agregan locks de regresion sobre el fallback de prefers-reduced-motion y sobre la cota de altura que hoy provoca el recorte."
   ],
-  "status": "todo",
+  "status": "in_progress",
   "priority": "critical",
   "labels": [
     "design",
@@ -34,10 +34,15 @@
       "author": "orchestrator",
       "at": "2026-07-27T08:13:41.521Z",
       "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch4 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter4Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch4 que todavia referencian el difunto chapter-themes.css."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T18:36:53.796Z",
+      "body": "## Bookkeeping: commits landeados, review de cierre PENDIENTE — 2026-07-27\n\nRegistro los commits aca porque `linked_commits` recien se graba al cerrar, y el ticket todavia no cierra. Si la sesion se corta, esta es la traza.\n\n**Rango completo del ticket: `f632edb..a2747fe`, tres commits.**\n\n1. `8e8e85a` feat(TASK-010): ch4 shader multi-pass WebGL con optica de headset y fix de layout\n2. `93c90e4` fix(TASK-010): lente reveladora Sobel, DOF por capas, stagger fino y recalibracion de tiers\n3. `a2747fe` fix(TASK-010): lente espejada en Y, doble vineta/suelo, tiers y paridad de uniforms\n\n### Estado real\n\nRonda 1 de review dio **BLOCK** por 1 HIGH: la lente reveladora Sobel estaba espejada en el eje Y. `Ch4PortalShader.vue` subia `u_lensPos` sin voltear, mientras el Pass C construye `p` desde `gl_FragCoord`, que es de abajo hacia arriba. La prueba de que era bug y no convencion estaba dentro del propio shader: para los godrays SI volteaba, con `vec2 lightUV = vec2(u_portal.x, 1.0 - u_portal.y)`. En mobile ademas la orbita lissajous giraba alrededor del punto espejado del portal.\n\nEl commit `a2747fe` lo arreglo con un solo cambio del lado del shader (`vec2 p = (vec2(uv.x, 1.0 - uv.y) - 0.5) * vec2(u_aspect, 1.0)` en la linea 720), que cubre a la vez el caso de puntero en desktop y la orbita en mobile. Verificado de forma independiente por el orquestador.\n\nTambien se cerraron 6 MEDIUM: se borraron la vineta y el suelo dobles que la spec seccion 3.2 mandaba eliminar (quedaban superpuestos a los del Pass C); `image-rendering: auto` en el canvas para cortar la herencia de `pixelated`; Pass B con `decay` restaurado a `mix(0.20, 0.90, warpEnv)` y salteado en tier LOW segun la matriz de la seccion 7.3; deteccion de tier consciente de que `navigator.deviceMemory` es undefined en Firefox y Safari; el rAF del parallax DOM gateado por `activeChapter === 4`; y un lock de paridad de nombres de uniforms entre el GLSL y los arrays de JS.\n\nSuite en 604 tests verdes al momento de ese commit. Build compila.\n\n### LO QUE FALTA PARA CERRAR\n\nDespachar `hivemind:reviewer` con `model: 'fable'` sobre el rango completo `f632edb..a2747fe`.\n\n**Condicion importante: hacerlo con la suite en verde.** Al momento de escribir esto hay 5 tests en rojo que NO son de ch4: son del trabajo de TASK-013 en vuelo (titulos de capitulo, comparacion de largo ES contra EN, conteo de proyectos). Mandar un reviewer con la suite roja lo haria reportar defectos ajenos y perder una ronda.\n\n### Nota de leccion, para ch5 y ch6\n\nLa lente espejada estuvo **verde en los 591 tests** de la suite completa. Con el WebGL mockeado en jsdom, ningun test puede atrapar un error de espacio de coordenadas ni un fallo de compilacion GLSL. El propio reviewer lo marco como brecha estructural y por eso se agrego el lock de paridad de uniforms, que cierra la clase typo pero no la de coordenadas.\n\nPara lo animado, la unica verificacion que sirve es progresion MEDIDA en dos puntos distintos del recorrido, en Chrome headed. Y ojo: `canvas.toDataURL()` devuelve bytes identicos aunque el WebGL este renderizando; hay que usar `Page.captureScreenshot`, que pasa por el compositor nativo."
     }
   ],
   "created_at": "2026-07-27T05:47:41.237Z",
-  "updated_at": "2026-07-27T08:13:41.521Z",
+  "updated_at": "2026-07-27T18:36:53.796Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

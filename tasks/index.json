@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T11:55:37.367Z",
+  "generated_at": "2026-07-27T18:47:52.718Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -40,7 +40,7 @@
     {
       "key": "TASK-007",
       "title": "Destapar la narrativa: 323 palabras muertas y 366 gateadas por clicks",
-      "status": "todo",
+      "status": "done",
       "priority": "critical"
     },
     {
@@ -52,13 +52,13 @@
     {
       "key": "TASK-009",
       "title": "ch3 2013: la muerte de Flash, del stage que muere al renacimiento flat",
-      "status": "blocked",
+      "status": "done",
       "priority": "critical"
     },
     {
       "key": "TASK-010",
       "title": "ch4 2015: el salto entre realidades, shader multi-pass con optica de headset",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "critical"
     },
     {
@@ -76,14 +76,38 @@
     {
       "key": "TASK-013",
       "title": "Cierre de contenido: guiones de los textos faltantes, em-dash y contacto",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "high"
     },
     {
       "key": "TASK-014",
       "title": "Shell de scroll: permitir capitulos multi-viewport con anclaje real",
-      "status": "in_progress",
+      "status": "done",
       "priority": "critical"
+    },
+    {
+      "key": "TASK-015",
+      "title": "ch3: calibrar magnitud del parallax y paridad nativa/rAF, mas overflow clip restante",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-016",
+      "title": "ch2 craft polish: tres hallazgos de diseno del hook impeccable",
+      "status": "todo",
+      "priority": "low"
+    },
+    {
+      "key": "TASK-017",
+      "title": "Techo de fps global: loops rAF de capitulo corriendo sin gate en todo el sitio",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-018",
+      "title": "ch0 y ch4 desbordan con el texto final de Rafael, medido en Chrome",
+      "status": "todo",
+      "priority": "high"
     }
   ]
 }

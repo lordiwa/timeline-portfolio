@@ -1,0 +1,29 @@
+{
+  "key": "TASK-016",
+  "title": "ch2 craft polish: tres hallazgos de diseno del hook impeccable",
+  "description": "Registrado el 2026-07-27 desde el hook de diseno `impeccable`, disparado durante TASK-010. NO se toco en el momento por dos razones: `src/styles/chapter-components.css` estaba en la lista blanca del developer de ch4 corriendo en vivo, y ch2 esta fuera del alcance del redisenio.\n\nContexto: Rafael dijo que hasta Flash (ch0, ch1, ch2) le gusta y pidio que esos capitulos se eleven SOLO en craft, conservando su identidad CRT, GeoCities y Flash. Este ticket es craft, no redisenio: ninguno de los tres cambios puede alterar el caracter Y2K del capitulo.\n\nTampoco se suprimio ninguno con ignore-value: la regla del proyecto es arreglar o escalar, nunca silenciar.\n\n## 1. chapter-components.css:1139 — animacion de propiedad de layout (el mas solido de los tres)\n\n`[data-chapter=\"2\"] .flash-preloader-fill { transition: width 80ms linear; }`\n\nAnimar `width` provoca reflow en cada paso. Para una barra de preloader es la propiedad semanticamente correcta, pero `transform: scaleX()` con `transform-origin: left` se ve identico, corre en el compositor y no toca el layout.\n\nCuidado al implementarlo: el gradiente `linear-gradient(90deg, ...)` se deforma con scaleX si se aplica al mismo elemento que lo pinta. Hay que separar la capa que escala de la que pinta el gradiente, o usar un wrapper con overflow y mover el hijo.\n\nJuicio del orquestador: mejora real, de bajo riesgo, sin costo visual.\n\n## 2. chapter-components.css:182 — fondo de grilla decorativa\n\n`[data-chapter=\"2\"] .flash-y2k-bg` combina scanlines, hex grid y blobs flotando.\n\nCriterio del hook: una grilla decorativa dibujada con capas de linear-gradient de linea fina y celda en pixeles fijos es una firma recurrente de UI generada; reservar las grillas para superficies que de verdad son canvas, mapa, plano o instrumento de medicion.\n\nJuicio del orquestador: FALSO POSITIVO DEFENDIBLE. Un hex grid con scanlines es literalmente lo que se veia en un intro Flash de 2001-2003, que es justo la epoca que ch2 evoca. El criterio del hook apunta a grillas puestas por defecto sin intencion; esta tiene intencion de epoca documentada. Decide Rafael.\n\n## 3. chapter-components.css:745 — borde de acento lateral\n\n`[data-chapter=\"2\"] .flash-dispatch { border-left: 3px solid #b8ff3a; }` sobre un borde cian de 1px.\n\nCriterio del hook: el borde grueso de color en un solo lado de una tarjeta es el tell mas reconocible de UI generada por IA.\n\nJuicio del orquestador: DISCUTIBLE. El tell es real y frecuente, pero en un HUD cyber Y2K con cian y lima lee como cromo de epoca, no como tarjeta de dashboard moderno. Si Rafael lo quiere cambiar, la alternativa que conserva el caracter es marcar el borde con la misma familia cromatica en menos peso, o resolver la jerarquia con fondo en vez de con borde. Decide Rafael.\n\n## LISTA BLANCA\n\n`src/styles/chapter-components.css` solo en los bloques `[data-chapter=\"2\"]` mencionados, y `tests/**`.\n\nPROHIBIDO: `src/phaser/ch2/MatchScene.js` y el minijuego, `DialUpScreen.vue` y el audio del dial-up, `ScrollShell.vue`, `useScrollState.js`, y cualquier `Chapter{N}Content.vue`. Este ticket es CSS de ch2 y nada mas.\n\n## Nota de proceso\n\nLos puntos 2 y 3 requieren decision de Rafael ANTES de implementarse, porque tocan el caracter visual de un capitulo que el pidio preservar. El punto 1 se puede ejecutar sin consulta: es una mejora tecnica sin cambio visual.",
+  "acceptance_criteria": [
+    "La barra de preloader de ch2 anima con transform en vez de width, y se ve identica a la actual. Verificado comparando capturas antes y despues, no razonando.",
+    "El minijuego de ch2 sigue funcionando con su canvas de 360x420 y el audio del dial-up sigue disparandose al entrar a ch1.",
+    "Los puntos 2 y 3 (grilla decorativa y borde de acento lateral) NO se implementan sin decision explicita de Rafael registrada en este ticket.",
+    "La suite sigue en verde."
+  ],
+  "status": "todo",
+  "priority": "low",
+  "labels": [
+    "ch2",
+    "craft",
+    "design-hook",
+    "needs-rafael-decision"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T17:19:56.464Z",
+  "updated_at": "2026-07-27T17:19:56.464Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

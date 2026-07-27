@@ -2,10 +2,28 @@
   "schema_version": 1,
   "nodes": [
     {
+      "id": "task-007",
+      "type": "task",
+      "ref": "tasks/TASK-007.json",
+      "label": "Destapar la narrativa: 323 palabras muertas y 366 gateadas por clicks"
+    },
+    {
       "id": "task-008",
       "type": "task",
       "ref": "tasks/TASK-008.json",
       "label": "Sistema de tokens y chasis: reemplazar los 71.8 KB de CSS ad-hoc"
+    },
+    {
+      "id": "task-009",
+      "type": "task",
+      "ref": "tasks/TASK-009.json",
+      "label": "ch3 2013: la muerte de Flash, del stage que muere al renacimiento flat"
+    },
+    {
+      "id": "task-014",
+      "type": "task",
+      "ref": "tasks/TASK-014.json",
+      "label": "Shell de scroll: permitir capitulos multi-viewport con anclaje real"
     }
   ],
   "edges": []

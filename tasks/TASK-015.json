@@ -1,0 +1,31 @@
+{
+  "key": "TASK-015",
+  "title": "ch3: calibrar magnitud del parallax y paridad nativa/rAF, mas overflow clip restante",
+  "description": "Follow-up derivado del review de ronda 2 de TASK-009 (2026-07-27, veredicto PASS). Son hallazgos MEDIUM y LOW que no bloquearon el cierre pero que tocan la calidad visual, que es justo el objetivo del redisenio.\n\n## 1. La magnitud del parallax no honra la spec, solo su proporcion\n\nLas constantes -36/-84/-156 px son 600 x (0,06 / 0,14 / 0,26). La PROPORCION entre las tres capas es exacta a la spec seccion 7, pero el factor EFECTIVO por pixel de scroll es factor/rango, y ahi se pierde:\n\n- Ruta nativa: el rango es 2vh, asi que a vh=900 el cielo se mueve con factor efectivo 0,02 cuando la spec pide 0,06, y la colina frontal con 0,087 cuando la spec pide 0,26. O sea el efecto es aproximadamente un tercio de lo especificado.\n- Concretamente: el cielo recorre 36 px donde la spec pide ~108 px.\n\nPor que importa: Rafael califico la belleza del sitio en 0/10 y pidio 10/10 con el estandar de un sitio de 50.000 dolares. Un parallax tres veces mas debil de lo especificado es apenas perceptible, y el parallax es justo lo que da profundidad al hero del Acto 2.\n\n## 2. Las dos rutas no son paritarias entre navegadores\n\n- Ruta rAF: `heroLocalP = clamp(continuousSlide, 0, 1)` recorre hy de 0 a 1 en 1vh, lo que da factores efectivos 0,04 / 0,093 / 0,173, o sea EL DOBLE de la ruta nativa.\n- Ademas las ventanas no coinciden: la rAF arranca en overallVh 3,0 y la nativa en 2,5.\n- Escenario concreto: en el handoff del hero, Firefox (que usa rAF) y Chrome (que usa la timeline nativa) difieren hasta 0,25 de hy, o sea ~39 px de desfase en la colina frontal.\n\nEl checklist de la spec seccion 10.9 pide explicitamente paridad entre ambas rutas.\n\nFix sugerido por el reviewer: derivar los multiplicadores del rango real (factor x rangoPx, calculado donde ya se calcula el rango en `applyNativeHeroRange`) y alinear la ventana rAF a la nativa, de 2,5 a 4,5 unidades.\n\n## 3. overflow hidden restante, CUARTA aparicion de la misma trampa\n\n`Chapter3Content.vue:548` — `.ch3-act1-scene` conserva `overflow: hidden`, que lo vuelve un contenedor programaticamente scrolleable. Impacto bajo (el contenido es decorativo con aria-hidden y el \"Ejecutar esta vez\" es un span con pointer-events none), pero find-in-page sobre el texto del telefono podria scrollearlo en silencio. Pasar a `clip` por consistencia.\n\nContexto: esta misma trampa costo dos HIGH en TASK-014 (rompio position sticky) y uno en TASK-009 (rompio animation-timeline). La regla del proyecto quedo establecida: si el contenedor solo quiere recorte visual, va `clip`, nunca `hidden`.\n\n## 4. Referencia colgada a Lobster\n\n`chapter-components.css:81` declara `font-family: 'Lobster', Georgia, serif` para una fuente que ya no se carga. Hoy es inerte porque todos los capitulos que montan ProjectCard la pisan con su propio override, pero si un capitulo futuro monta ProjectCard sin override cae a Georgia en silencio. Limpiar cuando se migre la base `.project-card`, que ya esta registrado para TASK-011.\n\n## 5. Trampa heredable del contrato PRM, documentar en los tickets de capitulo\n\n`ScrollShell.vue:340-346` — un capitulo con `data-viewports` que NO desancle su stage bajo prefers-reduced-motion vera su seccion colapsar a ~1 viewport con el resto del recorrido inalcanzable. Esta bien documentado en el comentario del contrato, pero los tickets de ch4, ch5 y ch6 deben recibirlo como instruccion EXPLICITA en su dispatch en vez de descubrirlo.\n\n## Nota de infraestructura\n\n`npm run test:since` no existe en este repo (los scripts son `test` y `test:run`), asi que el gate escalado del framework no es ejecutable tal cual. Hoy es inocuo porque la suite completa corre en ~19 s, pero conviene registrarlo.\n\n## LISTA BLANCA\n\n`src/components/Chapter3Content.vue`, `src/utils/ch3Progress.js`, `tests/**`. Para el punto 3 solo la linea de `.ch3-act1-scene`.\n\nPROHIBIDO: `src/components/ScrollShell.vue` (cerrado por TASK-014, el punto 5 es solo documentacion en los dispatches, no cambio de codigo), `src/styles/chapter-components.css` (el punto 4 pertenece a TASK-011), y el contenido de cualquier otro Chapter{N}Content.vue.\n\n## Verificacion exigida\n\nLa leccion de esta sesion: verificar PROGRESION medida, no la existencia de la animacion. `getAnimations()` y el computed style prueban que la animacion existe, no que avanza. Muestrear en al menos dos scrollTop distintos y comparar las dos rutas (nativa y rAF) con numeros concretos. Chrome headed, no headless: headless usa software rendering y degrada justo las animaciones de compositor.",
+  "acceptance_criteria": [
+    "Los factores efectivos del parallax por pixel de scroll corresponden a los 0,06, 0,14 y 0,26 que fija la spec seccion 7, no solo su proporcion entre capas. Verificado midiendo el desplazamiento real en pixeles sobre un rango de scroll conocido.",
+    "La ruta nativa (animation-timeline) y la ruta de fallback rAF producen el mismo desplazamiento en el mismo punto del recorrido, con la misma ventana de activacion. Verificado midiendo ambas rutas y comparando numeros, no razonando.",
+    "`.ch3-act1-scene` usa overflow clip en vez de hidden.",
+    "El parallax sigue completamente estatico bajo prefers-reduced-motion.",
+    "NO REGRESION, criterio bloqueante: los 7 capitulos siguen montando, el minijuego de ch2 conserva su canvas de 360x420, el audio del dial-up sigue disparandose al entrar a ch1, y ch3 conserva su innerText sin requerir clicks.",
+    "La suite sigue en verde y se agrega un lock que falle si los factores del parallax vuelven a divergir entre la ruta nativa y la rAF."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "ch3",
+    "visual-polish",
+    "parallax",
+    "follow-up"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T16:32:37.462Z",
+  "updated_at": "2026-07-27T16:32:37.462Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

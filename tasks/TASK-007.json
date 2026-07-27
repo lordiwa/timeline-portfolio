@@ -11,7 +11,7 @@
     "Ningun texto nuevo introduce el caracter em-dash.",
     "Los 512 tests existentes siguen en verde y se agregan locks de regresion que fallen si showText vuelve a apagarse o si ch6 deja de renderizar bio."
   ],
-  "status": "todo",
+  "status": "done",
   "priority": "critical",
   "labels": [
     "design",
@@ -28,10 +28,15 @@
       "author": "orchestrator",
       "at": "2026-07-27T05:50:06.053Z",
       "body": "ABSORBIDO POR EL REDISEÑO SIGNATURE, 2026-07-27. Este ticket no se ejecuta por separado.\n\nMotivo: TASK-007 toca exactamente los mismos archivos que el rediseño de ch3 a ch6. Hacerlos como dos trabajos separados significa tocar el mismo archivo dos veces, que es literalmente el modo de falla del incidente del 2026-07-27, cuando agentes sin restriccion rompieron el minijuego de ch2, el audio del dial-up, la multitud de ch5 y la escena de ch6. Rafael acepto la fusion.\n\nSus cinco defectos quedan repartidos como criterios de aceptacion bloqueantes de los tickets de capitulo:\n- Defecto 1 (Chapter5Content.vue:70, const showText = false, 180 palabras muertas) va en TASK-011.\n- Defectos 2 y 3 (Chapter6Content.vue sin consumidor de bio.eras[6].text, y el unico nodo de texto gateado por el evento arrival-complete de Phaser) van en TASK-012.\n- Defecto 4 (270 palabras de ch3 detras de clicks en emblemas) va en TASK-009.\n- Defecto 5 (ch2 arranca en el panel home y solo renderiza 8 de 104 palabras) NO se ejecuta: ch2 quedo fuera del alcance del rediseño porque Rafael dijo que hasta Flash le gusta el sitio, y ch2 esta en la lista de archivos prohibidos de todos los tickets nuevos por ser lo que se rompio la vez pasada.\n\nBaseline verificada en vivo en el navegador el 2026-07-27 sobre master, que confirma los defectos: innerText por capitulo ch0 437, ch1 1842, ch2 262, ch3 91, ch4 1103, ch5 0, ch6 0."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T18:23:45.413Z",
+      "body": "## CERRADO COMO ABSORBIDO — 2026-07-27, por decision de Rafael\n\nSus 5 defectos se repartieron como criterios de aceptacion de los tickets de capitulo, por decision explicita registrada en el estado de sesion el 2026-07-27.\n\n**Por que se absorbio en vez de ejecutarse aparte:** este ticket tocaba exactamente los mismos archivos que los tickets de redisenio de capitulo. Tocar el mismo archivo en dos trabajos separados es el modo de falla que rompio el minijuego de ch2, el audio del modem, la multitud de ch5 y la escena de ch6 en el incidente del 2026-07-27 con 17 agentes genericos, que Rafael califico 0/10.\n\n**Destino de cada defecto:**\n\n- Defecto de ch3 (270 palabras gateadas por clicks): EJECUTADO y verificado en TASK-009, ya cerrado. El innerText de ch3 paso de 91 a 1993 caracteres sin requerir un solo click, medido en Chrome real. Los leads de los 5 beats estan siempre visibles y los emblemas quedaron como via de profundizacion, no como condicion de acceso.\n- Defecto de ch4 (recorte de 887 px en 791): EJECUTADO en TASK-010, verificado sin recorte a 1440x900, 1366x768 y mobile portrait y landscape.\n- Defecto de ch5 (`Chapter5Content.vue:70 const showText=false`, 180 palabras muertas): asignado a TASK-011 como criterio de aceptacion.\n- Defecto de ch6 (`bio.eras.6.text` sin ningun consumidor, 143 palabras muertas): asignado a TASK-012 como criterio de aceptacion.\n- Defecto de ch2 (96 palabras gateadas): NO se ejecuta. ch2 quedo fuera del alcance del redisenio por decision de Rafael, que pidio preservar ch0 a ch2 porque le gustan.\n\n**Contexto que cambio despues:** Rafael entrego sus textos finales el 2026-07-27 en `.planning/GUION-TEXTOS-FINAL.md`, y el texto crecio mucho respecto del que este ticket auditaba. La era 5 paso de 1013 a ~4188 caracteres y la era 6 de 806 a ~2031. O sea TASK-011 y TASK-012 ahora destapan mas narrativa de la que este ticket contabilizaba, y ademas pueden disenarse conociendo el largo real en vez de adivinando.\n\nNo se pierde nada al cerrarlo: el trabajo esta repartido y trazable."
     }
   ],
   "created_at": "2026-07-27T02:46:25.247Z",
-  "updated_at": "2026-07-27T05:50:06.053Z",
+  "updated_at": "2026-07-27T18:23:45.413Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

@@ -1,0 +1,30 @@
+{
+  "key": "TASK-017",
+  "title": "Techo de fps global: loops rAF de capitulo corriendo sin gate en todo el sitio",
+  "description": "Descubierto el 2026-07-27 durante TASK-010 y confirmado de forma independiente por el reviewer. Es un hallazgo de performance de TODO el sitio, no de un capitulo.\n\n## Como se encontro\n\nEl developer de ch4 no lograba demostrar 60 fps en el tier HIGH del shader. En vez de asumir que era culpa de su shader, hizo un A/B contra HEAD sin modificar y descubrio que el retune del shader casi no movia la aguja: ~37 fps antes y despues. La causa estaba en otro lado.\n\n**La medicion que lo destapa: ch0 en reposo, sin ningun shader corriendo, ya topa en ~47,7 fps, contra ~60 de una pestana en blanco.** O sea el sitio pierde ~20% de frame budget antes de que empiece cualquier trabajo visual.\n\n## Causa raiz, verificada por el reviewer\n\nDos loops de rAF corren permanentemente desde el mount, sin importar en que capitulo este el visitante:\n\n1. **`src/components/Chapter5Content.vue:369`** — el mas caro. Corre la maquina de estados de la multitud mas `renderChar` por cada uno de los 125 personajes, cada frame, desde el mount. Aunque el visitante este en ch0.\n2. **`src/components/Chapter4Content.vue:147`** — escribe 4 CSS custom properties por frame via `style.setProperty`, lo que invalida estilo cada frame. Tambien desde el mount.\n\nContraste que prueba que se puede hacer bien: **el shader WebGL de ch4 SI esta gateado** con un watch sobre `activeChapter === 4` que arranca y para el loop, y ademas no pinta con `document.hidden`. Y ch3 no tiene loop permanente: solo anima on-scroll. O sea el patron correcto ya existe en el repo, solo que no se aplico parejo.\n\n## Por que importa\n\nRafael califico la belleza del sitio en 0/10 y pide 10/10, con el estandar de que parezca un sitio de 50.000 dolares. Un sitio que se siente pesado no se siente caro. Y los capitulos que faltan (ch5 y ch6) van a sumar mas trabajo por frame sobre un presupuesto que ya arranca comprometido.\n\nAdemas bloquea la verificacion honesta del criterio de 60 fps de cualquier ticket de capitulo: mientras el techo global exista, ningun capitulo puede demostrar que cumple.\n\n## Alcance\n\nGatear TODOS los loops de capitulo por `activeChapter`, siguiendo el patron que ya usa `Ch4PortalShader.vue`. Considerar ademas pausar animaciones CSS fuera de pantalla.\n\nEl fix de `Chapter4Content.vue:147` puede haberse hecho ya dentro de TASK-010, porque ese archivo estaba en su lista blanca. Verificar antes de empezar para no duplicar.\n\n## LISTA BLANCA\n\n`src/components/Chapter5Content.vue`, `src/components/Chapter6Content.vue`, `src/components/Chapter0Content.vue`, `src/components/Chapter1Content.vue`, `src/components/Chapter2Content.vue`, `src/styles/**` en lo que respecta a pausar animaciones offscreen, y `tests/**`.\n\nPROHIBIDO: `ScrollShell.vue` y `useScrollState.js` (cerrados por TASK-014), `src/phaser/ch2/MatchScene.js` y el minijuego, y `DialUpScreen.vue` con su audio procedural.\n\nCUIDADO ESPECIAL: la multitud de 125 personajes de ch5 y el minijuego de ch2 son justo lo que se rompio en el incidente de los 17 agentes. Gatear un loop mal puede dejarlos congelados o sin arrancar. Verificar que siguen animando cuando SI estan en pantalla, no solo que dejan de correr cuando no.\n\n## Verificacion exigida\n\nMedicion de fps ANTES y DESPUES en el mismo Chrome headed, en ch0 en reposo, que es donde el defecto se manifiesta mas limpio. Numeros concretos. El objetivo es acercar ch0 en reposo a los ~60 fps de una pestana en blanco.\n\nY verificar que cada capitulo sigue animando correctamente cuando esta activo: la multitud de ch5, el minijuego de ch2, la terminal de ch0, el marquee de ch1, el shader de ch4.",
+  "acceptance_criteria": [
+    "Ningun loop de rAF de capitulo corre cuando su capitulo no es el activo. Verificado instrumentando los callbacks y contando ejecuciones desde otro capitulo.",
+    "ch0 en reposo sube de forma medible respecto de la baseline de ~47,7 fps, acercandose a los ~60 de una pestana en blanco. Medido antes y despues en el mismo Chrome headed, con numeros reportados.",
+    "Cada capitulo sigue animando correctamente cuando SI es el activo: la multitud de 125 personajes de ch5, el minijuego de ch2 con su canvas de 360x420, la terminal de ch0, el marquee de ch1 y el shader de ch4.",
+    "El audio del dial-up sigue disparandose al entrar a ch1.",
+    "La suite sigue en verde y se agrega un lock que falle si un loop de capitulo vuelve a arrancar sin gate de capitulo activo."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "performance",
+    "cross-chapter",
+    "fps",
+    "desbloqueante"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-27T18:11:15.469Z",
+  "updated_at": "2026-07-27T18:11:15.469Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

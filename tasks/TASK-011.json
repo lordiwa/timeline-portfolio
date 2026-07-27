@@ -35,10 +35,15 @@
       "author": "orchestrator",
       "at": "2026-07-27T08:13:44.482Z",
       "body": "CRITERIO ADICIONAL heredado del re-scope de AC3 de TASK-008: este ticket debe retirar la porcion de ch5 del archivo intermedio src/styles/chapter-components.css y llevarla a Chapter5Content.vue, que si esta en tu lista blanca. TASK-008 dejo ese archivo como parada intermedia declarada porque su propia lista blanca no autorizaba ningun componente de capitulo. Al terminar, reporta cuantas lineas migraste. Aprovecha el mismo pase para limpiar los comentarios de ch5 que todavia referencian el difunto chapter-themes.css."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-27T15:55:59.971Z",
+      "body": "## Hallazgo de diseno registrado desde TASK-009 (2026-07-27) — tipografia de ch5\n\nEl hook de diseno `impeccable` marco `overused-font` sobre Inter. La linea que senalo (`src/styles/eras.css:115`) es un falso positivo: esta dentro de un comentario donde el developer de TASK-009 documenta una correccion citando `chapter-components.css:1401-1402`, no es una declaracion de fuente.\n\nPero el hallazgo de fondo es real y cae dentro del alcance de ESTE ticket:\n\n- `src/styles/eras.css:179` declara `--font-body: 'Inter Variable', system-ui, sans-serif` como fuente de cuerpo de ch5.\n- `src/styles/chapter-components.css:1402` declara `[data-chapter=\"5\"] .project-card-title { font-family: 'Inter Variable', ... }`.\n- `src/styles/inter-variable-latin.css` carga el subset. En el bundle son 133.324 B (48.256 latin + 85.068 latin-ext), o sea el consumidor de fuente mas caro del sitio.\n\nNO se toco en TASK-009 por dos razones: `eras.css` estaba siendo editado en vivo por el developer de ese ticket, y la tipografia de ch5 pertenece a este ticket, cuya spec `.planning/design/05-ch5-pandemia-broadcast.md` dice explicitamente \"cero fuentes nuevas\". Tampoco se suprimio el hallazgo con ignore-value: la regla del proyecto es arreglar, no silenciar.\n\nCriterio del hook: Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans y Space Grotesk aparecen en tantos sitios que ya no distinguen, y cada oleada de UI generada por IA converge en ese mismo punado de caras.\n\nLectura del orquestador para cuando se ejecute este ticket: Inter es de 2017, asi que para la era 2020-2022 NO es un anacronismo como si lo era en ch3. El problema no es de epoca sino de caracter: es la eleccion mas generica posible para un capitulo que Rafael quiere que se sienta un producto de streaming propio (VivoEnVivo), y el estandar declarado es que el sitio parezca de 50.000 dolares.\n\nDos caminos, a decidir con la spec en la mano:\n1. Cambiar la cara de ch5 por una con personalidad de broadcast. Si se hace, hay 133 KB de presupuesto de fuentes que se liberan, lo cual da margen real.\n2. Confirmar Inter como intencional si la spec lo sostiene, y en ese caso registrar la excepcion de forma explicita en vez de dejar el hallazgo abierto.\n\nLa decision final es de Rafael porque es de caracter visual, no tecnica."
     }
   ],
   "created_at": "2026-07-27T05:48:12.752Z",
-  "updated_at": "2026-07-27T08:13:44.482Z",
+  "updated_at": "2026-07-27T15:55:59.971Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"
