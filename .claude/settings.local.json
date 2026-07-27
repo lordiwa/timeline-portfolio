@@ -81,7 +81,8 @@
       "PowerShell(Get-Process *)",
       "PowerShell(git pull *)",
       "PowerShell(git *)",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(node *)"
     ]
   }
 }
