@@ -30,7 +30,7 @@ Formato per entry:
   necesita foto de fondo bajo la dirección "broadcast/cine oscuro". TASK-011
   (rediseño ch5, spec `05-ch5-pandemia-broadcast.md`) es quien decide si la
   escena necesita arte nuevo.
-- **Commit hash del cambio:** ver hand-off de TASK-008 (se completa post-commit).
+- **Commit hash del cambio:** `3f0e91d`
 
 ---
 

@@ -287,8 +287,14 @@ watch(activeChapter, (newCh, oldCh) => {
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Pulso viajero en la espina (transiciones de era 2026-07-09).
- * Cuando el nodo activo cambia: pop scale 1→1.35→1 (300ms spring) y
+ * Cuando el nodo activo cambia: pop scale 1→1.35→1 (300ms) y
  * ráfaga de glow más intensa en el rombo (::before).
+ * Easing (pase de correccion post-3f0e91d, hallazgo de diseño): var(--ease-standard)
+ * — cubic-bezier(0.2, 0, 0, 1), curva de desaceleracion sin overshoot (tokens.css
+ * §4.4) — reemplaza el bounce-easing elastico cubic-bezier(0.34, 1.56, 0.64, 1)
+ * anterior. Un objeto real desacelera hasta detenerse; no rebota mas alla de su
+ * posicion final. Se reutiliza el token global en vez de inventar un valor nuevo
+ * (Ponytail/MINIMALISM.md: primero mirar si ya existe la curva adecuada).
  * La clase .tick-button--popping se aplica solo al nodo que acaba de
  * activarse (JS watch sobre activeChapter, 320ms timeout).
  * PRM: el watcher JS no aplica la clase bajo prefersReduced — nunca llega aquí.
@@ -314,7 +320,7 @@ watch(activeChapter, (newCh, oldCh) => {
 }
 
 .tick-button--popping[aria-current="true"] {
-  animation: node-pop 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: node-pop 300ms var(--ease-standard) forwards;
 }
 
 .tick-button--popping[aria-current="true"]::before {

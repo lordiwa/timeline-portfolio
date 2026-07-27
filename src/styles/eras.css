@@ -10,11 +10,25 @@
  * en la linea 169 del archivo viejo).
  *
  * Una era puede sobreescribir EXACTAMENTE: --era-progress, --c-bg, --c-fg,
- * --c-accent, --c-border, --c-focus, --c-surface (donde aplica), --font-body,
- * y nada mas salvo casos ya shipped documentados inline (--c-accent-2/--c-mantra
- * en ch6, consumidos por Chapter6Content.vue / GlobalMantra.vue). --bg-image se
- * declara SOLO en el scope de section (nunca en :root) para no contaminar los
- * .bg-layer de otros chapters via herencia — igual que el archivo viejo.
+ * --c-accent, --c-border, --c-focus, --c-surface (donde aplica), y nada mas
+ * salvo casos ya shipped documentados inline (--c-accent-2/--c-mantra en ch6,
+ * consumidos por Chapter6Content.vue / GlobalMantra.vue).
+ *
+ * --font-body y --bg-image se declaran SIEMPRE en un bloque de scope SOLO
+ * section (`[data-chapter="N"]`, sin el `:root[data-active-chapter="N"]`
+ * companero), nunca dentro del bloque de doble scope. Motivo (fix de pase de
+ * correccion, hallazgo MEDIO del reviewer sobre 3f0e91d): el archivo viejo
+ * excluia deliberadamente --font-body del scope :root[data-active-chapter]
+ * ("SIN --font-body en claves ilegibles"). Estampar --font-body en :root
+ * filtra la fuente de la era activa hacia CUALQUIER elemento fuera de las
+ * <section> que lea var(--font-body, ...) por herencia — el unico caso real
+ * hoy es GlobalMantra.vue (componente fijo cross-chapter, fuera de las
+ * sections), que pasaba de su sans-serif declarado a VT323/Comic Neue/Lobster
+ * segun la era activa. El chasis nunca corre ese riesgo porque usa su propio
+ * --hud-font invariante (chassis.css) y NUNCA lee --font-body. --bg-image ya
+ * seguia este mismo patron section-only en ch6 desde el commit original (evita
+ * contaminar los .bg-layer de otros chapters via herencia); ahora es la regla
+ * general para todo token no-doble-scope, no una excepcion de ch6.
  *
  * Desviacion documentada de la spec (11-token contract, --font-display separado
  * de --font-body, --ease-era por era): TASK-008 mantiene el --font-body UNICO ya
@@ -44,8 +58,12 @@
     --c-accent: #aaaaaa;       /* VGA light gray (color 7) */
     --c-border: #555555;
     --c-focus: #ffffff;
-    --font-body: 'VT323', ui-monospace, monospace;
     /* contrast(#ffffff, #000000) = 21:1 — WCAG AAA sin tradeoff (era-authentic). */
+  }
+  /* --font-body SOLO en scope de section — ver header, GlobalMantra.vue es el
+     unico consumidor fuera de sections y no debe re-tematizarse por chapter. */
+  [data-chapter="0"] {
+    --font-body: 'VT323', ui-monospace, monospace;
   }
 
   /* ── ch1 — HTML 90s crudo (2001) — sin excepcion, valores shipped intactos ── */
@@ -57,8 +75,10 @@
     --c-accent: #ffff00;
     --c-border: #ffffff;
     --c-focus: #ffffff;
-    --font-body: 'Comic Neue', 'Comic Sans MS', cursive;
     /* contrast(#ff00ff, #000080) = 3.2:1 — chapter 1 (HTML 90s crudo) accepts 3.2:1 here as era-authentic tradeoff per THM-05; era-accurate visual identity (Comic Sans + magenta on starry navy) demands this. Compensated by larger font-size 18px+ minimum which improves perceived legibility. */
+  }
+  [data-chapter="1"] {
+    --font-body: 'Comic Neue', 'Comic Sans MS', cursive;
   }
 
   /* ── ch2 — Flash/Y2K (2009) — EXCEPCION resuelta ───────────────────────────
@@ -73,8 +93,10 @@
     --c-border: #4a6890;
     --c-focus: #b8ff3a;
     --c-surface: #0e1c34;
-    --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
     /* contrast(#f8fcff, #050a18) ≈ 17.9:1 — WCAG AAA sin tradeoff. */
+  }
+  [data-chapter="2"] {
+    --font-body: 'Verdana', 'Trebuchet MS', sans-serif;
   }
 
   /* ── ch3 — Web 2.0 / "la muerte de Flash" (2013) — EXCEPCION resuelta ─────
@@ -91,8 +113,10 @@
     --c-border: #4a2e22;
     --c-focus: #ffa94d;
     --c-surface: #241410;
-    --font-body: 'Lobster', Georgia, serif;
     /* contrast(#f3e4d0, #1c100c) ≈ 13.1:1 — WCAG AAA sin tradeoff. */
+  }
+  [data-chapter="3"] {
+    --font-body: 'Lobster', Georgia, serif;
   }
 
   /* ── ch4 — AR/VR (2015) — sin excepcion, valores shipped intactos ─────────── */
@@ -105,9 +129,11 @@
     --c-border: #2050a0;
     --c-focus: #00ffff;
     --c-surface: #142050;
-    --font-body: 'Audiowide', 'Eurostile', sans-serif;
     /* contrast(#b0d0ff, #0a0f2e) ≈ 11.8:1 — WCAG AAA sin tradeoff.
        Sin --bg-image: ch4 maneja su fondo internamente (Chapter4Content.vue). */
+  }
+  [data-chapter="4"] {
+    --font-body: 'Audiowide', 'Eurostile', sans-serif;
   }
 
   /* ── ch5 — Broadcast/cine (2021) — EXCEPCION resuelta + limpieza de asset ──
@@ -125,13 +151,15 @@
     --c-border: #3a2e22;
     --c-focus: #818cf8;
     --c-surface: #221a12;
-    --font-body: 'Inter Variable', system-ui, sans-serif;
     /* contrast(#efe7db, #171009) ≈ 13.6:1 — WCAG AAA sin tradeoff. */
+  }
+  [data-chapter="5"] {
+    --font-body: 'Inter Variable', system-ui, sans-serif;
   }
 
   /* ── ch6 — Phaser/Synthwave, climax (2026) — sin excepcion (ya era el mismo
    * valor a ambos lados en el archivo viejo). --c-accent-2/--c-mantra se
-   * conservan: consumidos hoy por Chapter6Content.vue y GlobalMantra.vue
+   * conservan: consumidos hoy por Chapter6Content.vue / GlobalMantra.vue
    * (var(--c-mantra, var(--c-fg))) — quitarlos cambiaria el color real
    * renderizado, no es una limpieza neutra. */
   [data-chapter="6"],
@@ -145,12 +173,13 @@
     --c-border: #4dffff;
     --c-focus: #ffd95c;
     --c-surface: #0a061f;
-    --font-body: 'Audiowide', sans-serif;
     /* contrast(#c0e0ff, #1a0e3d) ≈ 10.6:1 — WCAG AAA sin tradeoff. */
   }
-  /* --bg-image SOLO en scope de section, nunca en :root (evita contaminar
-     bg-layers de otros chapters via herencia) — igual que el archivo viejo. */
+  /* --font-body y --bg-image SOLO en scope de section, nunca en :root (evita
+     contaminar bg-layers/font de otros chapters via herencia) — patron unico
+     desde este pase de correccion, ver header. */
   [data-chapter="6"] {
+    --font-body: 'Audiowide', sans-serif;
     --bg-image: url('/assets/ch6-bg.webp');
   }
 

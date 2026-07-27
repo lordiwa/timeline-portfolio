@@ -141,20 +141,32 @@ watch(prefersReduced, (isPRM) => {
   transition: border-color 300ms ease, box-shadow 300ms ease;
 }
 
-/* Muescas de esquina (top-left / bottom-right) — detalle de cabina, asimétrico
-   y discreto. Mismo lenguaje que los corner brackets del stage ch2. */
+/* Muesca de calibración (bottom-right, pase de correccion post-3f0e91d,
+   hallazgo del hook de diseño sobre 3f0e91d).
+   Decision de direccion de arte: el sitio SI tiene una identidad legitima de
+   corner brackets (RAFAEL-OS, spec §6.1 "hairlines de fosforo, corner
+   brackets, vidrio oscuro"; el mismo vocabulario vive en el stage ch2, fuera
+   de alcance). No se retira el concepto. Se corrige la EJECUCION que delataba
+   patron generado: 2 esquinas simetricas x 4 capas de linear-gradient
+   apiladas, con grosor (2px) y largo (10px) inventados sin relacion a ningun
+   token. Ahora es UN solo trazo asimetrico (bottom-right, como la marca de
+   calibracion de un visor real, no una decoracion de esquina completa) que
+   consume el MATERIAL del chasis en vez de tenidos crudos: color de
+   --hud-line (spec §6.3 "los pseudo-elementos pasan a consumir --hud-line/
+   --hud-radius/--hud-glow" — antes solo ::before lo hacia), grosor 1px igual
+   al hairline del marco (::before), largo var(--sp-sm) (escala de espaciado
+   real, no un pixel suelto) y el glow en --hud-glow via drop-shadow en vez de
+   una opacity plana. */
 .sticky-avatar::after {
   content: '';
   position: absolute;
   inset: -4px;
   pointer-events: none;
   background:
-    linear-gradient(to right, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) top left / 100% 2px no-repeat,
-    linear-gradient(to bottom, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) top left / 2px 100% no-repeat,
-    linear-gradient(to left, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) bottom right / 100% 2px no-repeat,
-    linear-gradient(to top, var(--c-accent) 0, var(--c-accent) 10px, transparent 10px) bottom right / 2px 100% no-repeat;
-  opacity: 0.85;
-  transition: opacity 300ms ease;
+    linear-gradient(to left, var(--hud-line) 0, var(--hud-line) var(--sp-sm), transparent var(--sp-sm)) bottom right / 100% 1px no-repeat,
+    linear-gradient(to top, var(--hud-line) 0, var(--hud-line) var(--sp-sm), transparent var(--sp-sm)) bottom right / 1px 100% no-repeat;
+  filter: drop-shadow(0 0 var(--hud-glow) color-mix(in srgb, var(--c-accent) 45%, transparent));
+  transition: filter 300ms ease;
 }
 
 /* PRM de los pseudo-elementos del marco: fusionado en el bloque PRM único

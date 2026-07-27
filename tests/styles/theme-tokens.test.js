@@ -23,7 +23,28 @@ function extractBlock(src, chapter) {
   return match ? match[1] : ''
 }
 
-const REQUIRED_TOKENS = ['--c-bg', '--c-fg', '--c-accent', '--c-border', '--c-focus', '--font-body', '--era-progress']
+// Helper (pase de correccion post-3f0e91d, hallazgo MEDIO del reviewer): extrae
+// el bloque de scope SOLO section `[data-chapter="N"] { ... }` — sin el `,` que
+// lo uniria al `:root[data-active-chapter="N"]` companero. --font-body (y
+// --bg-image en ch6) viven EXCLUSIVAMENTE aqui; nunca dentro de extractBlock().
+function extractSectionOnlyBlock(src, chapter) {
+  const regex = new RegExp(`\\[data-chapter="${chapter}"\\]\\s*\\{([\\s\\S]*?)\\n\\s*\\}`)
+  const match = src.match(regex)
+  return match ? match[1] : ''
+}
+
+const REQUIRED_TOKENS = ['--c-bg', '--c-fg', '--c-accent', '--c-border', '--c-focus', '--era-progress']
+
+// --font-body verbatim esperado por era, SOLO en el bloque section-only.
+const FONT_BODY_BY_CHAPTER = {
+  0: "'VT323', ui-monospace, monospace",
+  1: "'Comic Neue', 'Comic Sans MS', cursive",
+  2: "'Verdana', 'Trebuchet MS', sans-serif",
+  3: "'Lobster', Georgia, serif",
+  4: "'Audiowide', 'Eurostile', sans-serif",
+  5: "'Inter Variable', system-ui, sans-serif",
+  6: "'Audiowide', sans-serif",
+}
 
 describe('theme-tokens.test.js — per-era token completeness (THM-03)', () => {
   // T1-T7: Cada era (0..6) tiene los tokens requeridos
@@ -42,7 +63,8 @@ describe('theme-tokens.test.js — per-era token completeness (THM-03)', () => {
     const block = extractBlock(source, 0)
     expect(block).toContain('--c-bg: #000000')
     expect(block).toContain('--c-fg: #ffffff')
-    expect(block).toContain("--font-body: 'VT323', ui-monospace, monospace")
+    const sectionOnly = extractSectionOnlyBlock(source, 0)
+    expect(sectionOnly).toContain("--font-body: 'VT323', ui-monospace, monospace")
   })
 
   // T9: ch1 verbatim — valores exactos de UI-SPEC §4.2
@@ -50,8 +72,32 @@ describe('theme-tokens.test.js — per-era token completeness (THM-03)', () => {
     const block = extractBlock(source, 1)
     expect(block).toContain('--c-bg: #000080')
     expect(block).toContain('--c-fg: #ff00ff')
-    expect(block).toContain("--font-body: 'Comic Neue', 'Comic Sans MS', cursive")
+    const sectionOnly = extractSectionOnlyBlock(source, 1)
+    expect(sectionOnly).toContain("--font-body: 'Comic Neue', 'Comic Sans MS', cursive")
   })
+
+  // T13 (pase de correccion post-3f0e91d, hallazgo MEDIO del reviewer):
+  // --font-body vive SOLO en el scope de section — nunca dentro del bloque de
+  // doble scope que tambien abre :root[data-active-chapter="N"]. Si esto
+  // regresiona, GlobalMantra.vue (unico consumidor de --font-body fuera de las
+  // <section>) vuelve a heredar la fuente de la era activa en vez de su
+  // sans-serif declarado (ver header de eras.css).
+  for (let i = 0; i <= 6; i++) {
+    it(`T13.${i}: chapter ${i} --font-body is declared ONLY in the section-only scope, never in :root`, () => {
+      const doubleScopeBlock = extractBlock(source, i)
+      expect(
+        doubleScopeBlock,
+        `chapter ${i}: --font-body reapareció en el bloque de doble scope (contamina :root[data-active-chapter="${i}"])`
+      ).not.toContain('--font-body')
+
+      const sectionOnlyBlock = extractSectionOnlyBlock(source, i)
+      expect(
+        sectionOnlyBlock,
+        `chapter ${i}: falta el bloque section-only [data-chapter="${i}"] { --font-body: ...; }`
+      ).toContain(`--font-body: ${FONT_BODY_BY_CHAPTER[i]}`)
+    })
+  }
+
 
   // T10 (AC#2 regression lock): las 3 excepciones de paleta quedan resueltas —
   // ch2/ch3/ch5 declaran la paleta REAL de la escena (la que antes solo vivía
