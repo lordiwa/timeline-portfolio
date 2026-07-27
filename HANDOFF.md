@@ -13,16 +13,35 @@ que parezca un sitio de 50.000 dolares. Hasta Flash (ch0, ch1, ch2) le gusta; de
 muerte de Flash (ch3 en adelante) lo siente desordenado y que no evoca lo que cada era
 representa. Autorizo cambiar todo el arte y todo el estilo.
 
-## ATENCION AL RETOMAR: hay un developer que quedo corriendo
+## ATENCION AL RETOMAR: TASK-014 quedo a medias, SIN COMMIT
 
-Cuando Rafael pauso, habia un `hivemind:developer` trabajando en **TASK-014**. Se lo
-dejo terminar a proposito: matarlo a mitad podia dejar archivos editados sin commit,
-que es peor que dejarlo cerrar.
+Cuando Rafael pauso habia un `hivemind:developer` trabajando en **TASK-014**. Se lo dejo
+terminar a proposito, pero **no llego a commitear**. Verificado con `git status` al
+cerrar la sesion: quedaron **287 lineas sin commitear** en el working tree.
 
-**Primer paso al retomar:** correr `git log --oneline -5` y ver si aparece un commit de
-TASK-014. Si aparece, ese trabajo NO esta verificado ni revisado todavia: hay que
-verificarlo en navegador y mandarlo al reviewer antes de cerrarlo. Si no aparece, el
-ticket sigue en `in_progress` sin trabajo landeado y hay que re-despacharlo.
+Archivos modificados y NO commiteados:
+
+- `src/components/ScrollShell.vue` (+105)
+- `src/composables/useScrollState.js` (+36)
+- `tests/components/ScrollShell.test.js` (+98)
+- `tests/composables/useScrollState.test.js` (+51)
+- `tests/integration/scroll-shell-no-nested-scroll.test.js` (sin trackear, es el lock
+  de regresion que pedia el ticket)
+
+**Ese trabajo NO esta verificado, NO esta revisado y NO se sabe si deja los tests en
+verde.** Toca el shell de scroll, que gobierna los 7 capitulos, asi que es lo mas
+riesgoso del rediseno.
+
+**Como retomarlo, en orden:**
+
+1. `npm run test:run` para ver en que estado quedo la suite.
+2. Verificar en navegador que los 7 capitulos siguen montando y que ch0, ch1 y ch2 no
+   se degradaron, con atencion especial al watcher de `activeChapter` del que depende
+   el overlay del dial-up y con el el audio del modem.
+3. Si esta sano: pedirle a un `hivemind:developer` que lo complete y commitee, y
+   despues mandarlo al reviewer.
+4. Si esta roto o a mitad de camino: `git checkout -- src/ tests/` y re-despachar el
+   ticket desde cero. No hay nada que perder, porque nada de eso esta commiteado.
 
 ## Estado de los tickets
 
