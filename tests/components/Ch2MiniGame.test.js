@@ -27,7 +27,302 @@ vi.mock('@/phaser/ch2/index.js', () => ({
   GAME_HEIGHT: 420,
 }))
 
+// TASK-020 ronda de corrección — suite-flake fix (2026-07-27): los specs de
+// carrera async de mountGame() más abajo verificaron empíricamente (ver
+// reporte de hand-off) que un SEGUNDO `import('@/phaser/ch2/index.js')`
+// disparado mientras el primero sigue pendiente vía `vi.doMock()` NO
+// deduplica contra la promesa en vuelo — cae al módulo REAL (bypassea el
+// mock), que a su vez hace `import Phaser from 'phaser'` real: parsear ese
+// paquete es caro y su costo es no-determinista bajo la carga de CPU
+// compartida con el resto de la suite (confirmado: 14/14 verde aislado, rojo
+// intermitente ya con solo 3 archivos corriendo juntos). Mockear también el
+// specifier `phaser` (una entrada de módulo DISTINTA — no sujeta a la
+// limitación de re-registro por-test de arriba, porque nunca se re-registra:
+// es un `vi.mock()` estático de toda la vida del archivo) hace que esa ruta
+// de fallback sea instantánea Y nos da una señal directa, causal y
+// determinista: `phaserGameCtorSpy` sólo se invoca si algo llegó a construir
+// un `Phaser.Game` REAL (es decir, si el import cayó al módulo sin mockear),
+// nunca por el camino feliz mockeado (`createMiniGameSpy` no usa `Phaser.Game`
+// en absoluto). Ya no depende de que un import real reviente dentro de una
+// ventana de tiempo real fija.
+const phaserGameCtorSpy = vi.fn()
+vi.mock('phaser', () => {
+  class FakeScene {}
+  class FakeGame {
+    constructor(config) {
+      phaserGameCtorSpy(config)
+      // No-op suficiente para que un `wrapper.unmount()` de limpieza (p.ej.
+      // durante un reintento de setup, ver describe de "ronda de
+      // corrección" más abajo) no reviente si `game.value` terminó siendo
+      // esta instancia real en vez del fake de `createMiniGameSpy`.
+      this.destroy = vi.fn()
+      this.scene = { pause: vi.fn(), resume: vi.fn() }
+      this.events = { on: vi.fn(), off: vi.fn(), emit: vi.fn() }
+    }
+  }
+  return {
+    default: {
+      AUTO: 'AUTO',
+      Scale: { FIT: 'FIT', CENTER_BOTH: 'CENTER_BOTH' },
+      Game: FakeGame,
+      Scene: FakeScene,
+      Math: { Between: () => 0 },
+    },
+  }
+})
+
 import Ch2MiniGame from '@/components/Ch2MiniGame.vue'
+
+// TASK-020 ronda de corrección — carrera async en mountGame() (HIGH del review
+// de cierre). El re-chequeo post-await previo solo miraba `hostRef.value`, que
+// nunca cambia (el host no tiene v-if): no protegía de nada. Cada spec usa
+// `vi.resetModules()` + `vi.doMock()` para diferir la resolución del
+// `await import('@/phaser/ch2/index.js')` y así abrir una ventana real donde
+// `activeChapter` puede cambiar (o un segundo mountGame() puede dispararse)
+// MIENTRAS el chunk sigue "en vuelo" — exactamente la ventana que el incidente
+// del 2026-07-27 explotó.
+//
+// Nota de método: en este entorno (Vitest 4 + vite-node) `vi.doMock` solo
+// intercepta el import dinámico que YA está "en vuelo" en el momento del
+// registro (el módulo mockeado queda cacheado en el registry desde la primera
+// resolución, pendiente o no) — un SEGUNDO `import()` del mismo especificador
+// iniciado DESPUÉS, aunque se re-registre `doMock`, cae al módulo real
+// (comprobado empíricamente con un experimento aislado, ver reporte de
+// hand-off). Por eso cada spec abre exactamente UN import en vuelo (una sola
+// instancia montada, un solo `mountGame()` que llega a la línea del `await
+// import`); el segundo disparo de `mountGame()` en el spec de "doble
+// instancia" debe ser interceptado por el guard de `loading.value` ANTES de
+// llegar a esa línea, así que nunca inicia un segundo `import()` real — que
+// es exactamente la propiedad que el guard debe garantizar.
+//
+// Fix de flake de suite (2026-07-27, ronda de corrección de este mismo test):
+// el diseño original usaba un spy de `console.error` + una ventana de tiempo
+// real fija (~400ms) como proxy de "el segundo import cayó al módulo Phaser
+// real y reventó". Confirmado empíricamente: 14/14 verde en aislamiento, pero
+// rojo intermitente ya con solo 3 archivos de test corriendo juntos (no hace
+// falta la suite completa) — el módulo `phaser` real es pesado de parsear y
+// ese costo es no-determinista bajo la carga de CPU compartida con el resto
+// de la suite, así que la ventana fija de 400ms a veces no alcanzaba.
+// Reemplazo #1: mockear también el specifier `phaser` (ver arriba, junto al
+// mock de `@/phaser/ch2/index.js`) — un `vi.mock()` estático que nunca se
+// re-registra, así que no está sujeto a la limitación de `doMock` de arriba.
+// Esto hace que la ruta de fallback (si el guard falla y el segundo import
+// cae al módulo real de `@/phaser/ch2/index.js`) sea instantánea, y da una
+// señal directa: `phaserGameCtorSpy` sólo se invoca si algo construyó un
+// `Phaser.Game` REAL — el camino feliz mockeado (`createMiniGameSpy`) nunca
+// toca `Phaser.Game`. Ya no depende de un import real reventando dentro de
+// una ventana de tiempo fija.
+// Reemplazo #2 (el que estabilizó la suite): instrumentado con logging
+// temporal, se confirmó que INCLUSO con el fallback #1 en su lugar, un
+// `vi.doMock()` posterior a un `vi.resetModules()` a veces no llega a
+// interceptar el import EN ABSOLUTO — ni el `vi.doMock()` de este spec ni
+// el `vi.mock()` estático de arriba, cae directo al módulo real sin pasar
+// por ningún mock. La probabilidad de esto escala con cuánta actividad
+// async ya corrió ANTES en el mismo archivo (0/40 fallos cuando este
+// describe corre PRIMERO en el archivo — antes de cualquier otro test que
+// ya haya resuelto este import — vs. intermitente cuando corre después de
+// "Phase 04.2 mini-game shell" + "TASK-020 gate site-level"), combinado con
+// la carga de CPU del resto de la suite. Es una falla de la infraestructura
+// de mocking de Vitest 4 + vite-node bajo concurrencia, no un bug de
+// `Ch2MiniGame.vue` ni de estos specs. Por eso este describe se ubica
+// DELIBERADAMENTE primero en el archivo (antes de "Phase 04.2 mini-game
+// shell" y "TASK-020 gate site-level", que sí resuelven el import
+// exitosamente y "envejecen" el registro de módulos) y el spec de "doble
+// instancia" además trae un reintento acotado como defensa en profundidad
+// (ver comentario en el spec).
+describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mountGame()', () => {
+  beforeEach(() => {
+    createMiniGameSpy.mockClear()
+    destroySpy.mockClear()
+    pauseSpy.mockClear()
+    resumeSpy.mockClear()
+    phaserGameCtorSpy.mockClear()
+  })
+
+  // El timing exacto de cuántos ticks de microtarea hacen falta para que el
+  // scheduler de Vue procese el watcher `flush:'post'` varía según qué corrió
+  // antes en el mismo proceso de test (verificado empíricamente: un número
+  // fijo de `flushPromises()` es no-determinista acá). Se poll-ea el estado
+  // OBSERVABLE (la clase `.ch2-minigame-loading` del DOM, reflejo directo de
+  // `loading.value`) en vez de contar ticks a ciegas.
+  async function waitForLoadingState(wrapper, expected, { tries = 25 } = {}) {
+    for (let i = 0; i < tries; i += 1) {
+      await flushPromises()
+      // Un solo flushPromises() no alcanza a drenar un segundo ciclo del
+      // scheduler de Vue que a veces hace falta acá (verificado empíricamente
+      // corriendo esta suite en secuencia) — el `setTimeout` fuerza un límite
+      // de macrotarea real que sí lo garantiza.
+      await new Promise((r) => setTimeout(r, 0))
+      if (wrapper.find('.ch2-minigame-loading').exists() === expected) return
+    }
+    throw new Error(
+      `Timed out esperando .ch2-minigame-loading presente=${expected}`
+    )
+  }
+
+  // Poll acotado por iteraciones (no por un tiempo real fijo) para darle al
+  // eventual fallback (si el guard falla) oportunidad de resolver/rechazar,
+  // sin depender de un número mágico de ms — cada iteración es una vuelta
+  // real de macrotarea, así que bajo carga de CPU simplemente toma más
+  // iteraciones en llegar, nunca menos tiempo real del necesario.
+  async function settle({ tries = 30 } = {}) {
+    for (let i = 0; i < tries; i += 1) {
+      await flushPromises()
+      await new Promise((r) => setTimeout(r, 5))
+    }
+  }
+
+  it('zombie: activeChapter sale de 2 ANTES de que el import resuelva → el juego NO se crea', async () => {
+    vi.resetModules()
+    let releaseImport
+    const deferredImport = new Promise((resolve) => {
+      releaseImport = resolve
+    })
+    vi.doMock('@/phaser/ch2/index.js', () => deferredImport)
+
+    const activeChapter = ref(2)
+    const wrapper = mount(Ch2MiniGame, {
+      props: { active: true },
+      global: {
+        provide: {
+          prm: { prefersReduced: ref(false) },
+          scrollState: { activeChapter },
+        },
+      },
+    })
+    // El watch immediate dispara mountGame(): queda colgado en el await import().
+    // Se espera el estado observable (loading=true) en vez de contar ticks a
+    // ciegas — ver nota de método arriba del describe.
+    await waitForLoadingState(wrapper, true)
+    expect(createMiniGameSpy).not.toHaveBeenCalled()
+
+    // El visitante ya se fue de ch2 (scrolleó a ch3) ANTES de que el chunk de
+    // Phaser resuelva — el escenario "zombie" del HIGH.
+    activeChapter.value = 0
+    await flushPromises()
+
+    // El chunk llega tarde y resuelve.
+    releaseImport({
+      createMiniGame: createMiniGameSpy,
+      GAME_WIDTH: 360,
+      GAME_HEIGHT: 420,
+    })
+    await flushPromises()
+    await flushPromises()
+
+    // Sin el guard, esto fallaría: createMiniGame() se invocaría igual y el
+    // Phaser.Game arrancaría su rAF en background para siempre.
+    expect(createMiniGameSpy).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+  })
+
+  it('doble instancia: un segundo mountGame() disparado con el import original en vuelo NO inicia otra descarga/instancia', async () => {
+    // Defensa en profundidad (ver nota de método arriba del describe): aun
+    // ubicado primero en el archivo, si el `vi.doMock()` no llegara a
+    // interceptar el PRIMER import (falla de infraestructura, no del guard),
+    // se detecta ANTES de ejercer el guard (vía `mockHit`, confirmando que
+    // el import realmente quedó pendiente en NUESTRA promesa) y se reintenta
+    // con una generación fresca. Si el guard estuviera roto de verdad,
+    // reintentar no lo ocultaría: la aserción real corre recién después de
+    // confirmar que el setup fue limpio.
+    let wrapper
+    let releaseImport
+    const MAX_SETUP_ATTEMPTS = 8
+
+    for (let attempt = 1; attempt <= MAX_SETUP_ATTEMPTS; attempt += 1) {
+      createMiniGameSpy.mockClear()
+      phaserGameCtorSpy.mockClear()
+      vi.resetModules()
+
+      let release
+      let mockHit = false
+      const deferred = new Promise((res) => { release = res })
+      vi.doMock('@/phaser/ch2/index.js', () => {
+        mockHit = true
+        return deferred
+      })
+
+      const activeChapter = ref(0)
+      wrapper = mount(Ch2MiniGame, {
+        props: { active: true },
+        global: {
+          provide: {
+            prm: { prefersReduced: ref(false) },
+            scrollState: { activeChapter },
+          },
+        },
+      })
+      await flushPromises() // chapter 0 → no monta todavía, ningún import iniciado
+
+      // Entra a ch2: dispara el ÚNICO mountGame() que debería llegar a
+      // `await import`; queda colgado ahí (game.value sigue null mientras
+      // tanto). Se espera el estado observable (loading=true) en vez de
+      // contar ticks a ciegas — ver nota de método arriba del describe. Bajo
+      // carga extrema el poll acotado por iteraciones puede agotarse sin que
+      // eso signifique nada sobre el guard (ver catch abajo) — se trata igual
+      // que "mockHit false": descartar el intento y reintentar.
+      activeChapter.value = 2
+      try {
+        await waitForLoadingState(wrapper, true, { tries: 60 })
+      } catch (err) {
+        release()
+        wrapper.unmount()
+        if (attempt === MAX_SETUP_ATTEMPTS) throw err
+        continue
+      }
+
+      if (mockHit) {
+        releaseImport = release
+        // Sale y vuelve a entrar mientras el import original sigue sin
+        // resolver — el patrón exacto del incidente "doble instancia".
+        // destroyGame() es no-op (game.value null); el segundo mountGame()
+        // debe ser bloqueado por el guard de `loading.value` ANTES de tocar
+        // `import()` de nuevo. Si NO lo bloquea, ese segundo intento cae al
+        // módulo real (ver nota de método arriba del describe) y construye
+        // un `Phaser.Game` real — detectable vía `phaserGameCtorSpy`.
+        activeChapter.value = 0
+        await flushPromises()
+        activeChapter.value = 2
+        await flushPromises()
+        break
+      }
+
+      // El primer import ya cayó al módulo real (bypasseó nuestro doMock)
+      // antes de que pudiéramos siquiera ejercer el guard bajo prueba —
+      // descartar este intento y reintentar con una generación fresca. Se
+      // libera la promesa propia (no tiene listeners, es inerte) y se deja
+      // asentar cualquier resolución real en vuelo antes de desmontar, para
+      // no ensuciar el siguiente intento.
+      release()
+      await settle()
+      wrapper.unmount()
+      if (attempt === MAX_SETUP_ATTEMPTS) {
+        throw new Error(
+          `vi.doMock no interceptó el import tras ${MAX_SETUP_ATTEMPTS} intentos — infraestructura de mocking bajo carga, no el guard bajo prueba`
+        )
+      }
+    }
+
+    releaseImport({
+      createMiniGame: createMiniGameSpy,
+      GAME_WIDTH: 360,
+      GAME_HEIGHT: 420,
+    })
+    await settle()
+
+    // Sin el guard de `loading.value`, esto fallaría con 2+ llamadas a
+    // createMiniGameSpy (si por alguna razón el segundo intento sí llegara a
+    // pasar por el mock) o con phaserGameCtorSpy invocado (si cayó al módulo
+    // real, que es el caso comprobado empíricamente) — cualquiera de los dos
+    // es una instancia huérfana con su rAF corriendo y canvas huérfano en el
+    // host.
+    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
+    expect(phaserGameCtorSpy).not.toHaveBeenCalled()
+
+    wrapper.unmount()
+  })
+})
 
 function mountMiniGame({ active = true } = {}) {
   return mount(Ch2MiniGame, {
@@ -203,175 +498,6 @@ describe('Ch2MiniGame.vue — TASK-020 gate site-level (activeChapter)', () => {
     await flushPromises()
     await flushPromises()
     expect(createMiniGameSpy).toHaveBeenCalledTimes(3)
-  })
-})
-
-// TASK-020 ronda de corrección — carrera async en mountGame() (HIGH del review
-// de cierre). El re-chequeo post-await previo solo miraba `hostRef.value`, que
-// nunca cambia (el host no tiene v-if): no protegía de nada. Cada spec usa
-// `vi.resetModules()` + `vi.doMock()` para diferir la resolución del
-// `await import('@/phaser/ch2/index.js')` y así abrir una ventana real donde
-// `activeChapter` puede cambiar (o un segundo mountGame() puede dispararse)
-// MIENTRAS el chunk sigue "en vuelo" — exactamente la ventana que el incidente
-// del 2026-07-27 explotó.
-//
-// Nota de método: en este entorno (Vitest 4 + vite-node) `vi.doMock` solo
-// intercepta el import dinámico que YA está "en vuelo" en el momento del
-// registro (el módulo mockeado queda cacheado en el registry desde la primera
-// resolución, pendiente o no) — un SEGUNDO `import()` del mismo especificador
-// iniciado DESPUÉS, aunque se re-registre `doMock`, puede caer al módulo real
-// (comprobado empíricamente: cargó Phaser real y falló en
-// `CanvasFeatures.js` por falta de canvas en jsdom). Por eso cada spec abre
-// exactamente UN import en vuelo (una sola instancia montada, un solo
-// `mountGame()` que llega a la línea del `await import`); el segundo disparo
-// de `mountGame()` en el spec de "doble instancia" es interceptado por el
-// guard de `loading.value` ANTES de llegar a esa línea, así que nunca inicia
-// un segundo `import()` real — que es exactamente la propiedad que el guard
-// debe garantizar.
-describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mountGame()', () => {
-  beforeEach(() => {
-    createMiniGameSpy.mockClear()
-    destroySpy.mockClear()
-    pauseSpy.mockClear()
-    resumeSpy.mockClear()
-  })
-
-  // El timing exacto de cuántos ticks de microtarea hacen falta para que el
-  // scheduler de Vue procese el watcher `flush:'post'` varía según qué corrió
-  // antes en el mismo proceso de test (verificado empíricamente: un número
-  // fijo de `flushPromises()` es no-determinista acá). Se poll-ea el estado
-  // OBSERVABLE (la clase `.ch2-minigame-loading` del DOM, reflejo directo de
-  // `loading.value`) en vez de contar ticks a ciegas.
-  async function waitForLoadingState(wrapper, expected, { tries = 25 } = {}) {
-    for (let i = 0; i < tries; i += 1) {
-      await flushPromises()
-      // Un solo flushPromises() no alcanza a drenar un segundo ciclo del
-      // scheduler de Vue que a veces hace falta acá (verificado empíricamente
-      // corriendo esta suite en secuencia) — el `setTimeout` fuerza un límite
-      // de macrotarea real que sí lo garantiza.
-      await new Promise((r) => setTimeout(r, 0))
-      if (wrapper.find('.ch2-minigame-loading').exists() === expected) return
-    }
-    throw new Error(
-      `Timed out esperando .ch2-minigame-loading presente=${expected}`
-    )
-  }
-
-  it('zombie: activeChapter sale de 2 ANTES de que el import resuelva → el juego NO se crea', async () => {
-    vi.resetModules()
-    let releaseImport
-    const deferredImport = new Promise((resolve) => {
-      releaseImport = resolve
-    })
-    vi.doMock('@/phaser/ch2/index.js', () => deferredImport)
-
-    const activeChapter = ref(2)
-    const wrapper = mount(Ch2MiniGame, {
-      props: { active: true },
-      global: {
-        provide: {
-          prm: { prefersReduced: ref(false) },
-          scrollState: { activeChapter },
-        },
-      },
-    })
-    // El watch immediate dispara mountGame(): queda colgado en el await import().
-    // Se espera el estado observable (loading=true) en vez de contar ticks a
-    // ciegas — ver nota de método arriba del describe.
-    await waitForLoadingState(wrapper, true)
-    expect(createMiniGameSpy).not.toHaveBeenCalled()
-
-    // El visitante ya se fue de ch2 (scrolleó a ch3) ANTES de que el chunk de
-    // Phaser resuelva — el escenario "zombie" del HIGH.
-    activeChapter.value = 0
-    await flushPromises()
-
-    // El chunk llega tarde y resuelve.
-    releaseImport({
-      createMiniGame: createMiniGameSpy,
-      GAME_WIDTH: 360,
-      GAME_HEIGHT: 420,
-    })
-    await flushPromises()
-    await flushPromises()
-
-    // Sin el guard, esto fallaría: createMiniGame() se invocaría igual y el
-    // Phaser.Game arrancaría su rAF en background para siempre.
-    expect(createMiniGameSpy).not.toHaveBeenCalled()
-
-    wrapper.unmount()
-  })
-
-  it('doble instancia: un segundo mountGame() disparado con el import original en vuelo NO inicia otra descarga/instancia', async () => {
-    // `vi.doMock` en este entorno solo intercepta el import dinámico que
-    // consume la PRIMERA llamada — si el guard de `loading.value` no
-    // bloqueara el segundo `mountGame()` ANTES de la línea `await import`,
-    // ese segundo intento caería al módulo `phaser` real (sin mockear) y
-    // reventaría en jsdom (falta canvas real) — exactamente la señal que
-    // distingue "el guard bloqueó a tiempo" de "se coló un segundo intento".
-    // Sin este spy, un `createMiniGameSpy` llamado 1 vez es ambiguo: podría
-    // significar que el guard funcionó, O que el segundo intento fue
-    // bloqueado por accidente porque su promesa de fallback no llegó a
-    // resolver dentro de la ventana del test (falso verde comprobado
-    // empíricamente durante el desarrollo de este spec).
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    vi.resetModules()
-    let releaseImport
-    const deferredImport = new Promise((resolve) => {
-      releaseImport = resolve
-    })
-    vi.doMock('@/phaser/ch2/index.js', () => deferredImport)
-
-    const activeChapter = ref(0)
-    const wrapper = mount(Ch2MiniGame, {
-      props: { active: true },
-      global: {
-        provide: {
-          prm: { prefersReduced: ref(false) },
-          scrollState: { activeChapter },
-        },
-      },
-    })
-    await flushPromises() // chapter 0 → no monta todavía, ningún import iniciado
-
-    // Entra a ch2: dispara el ÚNICO mountGame() que debería llegar a
-    // `await import`; queda colgado ahí (game.value sigue null mientras
-    // tanto). Se espera el estado observable (loading=true) antes de
-    // disparar el segundo intento — ver nota de método arriba del describe.
-    activeChapter.value = 2
-    await waitForLoadingState(wrapper, true)
-
-    // Sale y vuelve a entrar mientras el import original sigue sin resolver —
-    // el patrón exacto del incidente "doble instancia". destroyGame() es
-    // no-op (game.value null); el segundo mountGame() debe ser bloqueado por
-    // el guard de `loading.value` ANTES de tocar `import()` de nuevo.
-    activeChapter.value = 0
-    await flushPromises()
-    activeChapter.value = 2
-    await flushPromises()
-
-    releaseImport({
-      createMiniGame: createMiniGameSpy,
-      GAME_WIDTH: 360,
-      GAME_HEIGHT: 420,
-    })
-    await flushPromises()
-    await flushPromises()
-
-    // Ventana de seguridad real (no microtask): si el guard NO bloqueó el
-    // segundo intento, ese intento cae al módulo `phaser` real, que tarda
-    // ~300ms en fallar en jsdom (comprobado empíricamente) antes de loguear
-    // el error vía `console.error` dentro del catch del componente.
-    await new Promise((r) => setTimeout(r, 400))
-
-    // Sin el guard de `loading.value`, esto fallaría con 2+ llamadas (o con
-    // errSpy invocado por el intento fallido que cayó al módulo real) y una
-    // instancia huérfana con su rAF corriendo y canvas huérfano en el host.
-    expect(createMiniGameSpy).toHaveBeenCalledTimes(1)
-    expect(errSpy).not.toHaveBeenCalled()
-
-    wrapper.unmount()
   })
 })
 
