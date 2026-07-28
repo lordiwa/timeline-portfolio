@@ -106,8 +106,17 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
   // Plantado en rojo manualmente (revirtiendo act1LayerOp a la fórmula vieja
   // en memoria: `clamp(1 - Math.max(0, overallVh - ACT1_UNITS) / 0.5, 0, 1)`)
   // antes de escribir el fix — con esa fórmula, T-orange1 fallaba con
-  // act1LayerOp=1 y T-orange2 con act1LayerOp=1 en los 4 pasos que tocan la
-  // franja crítica.
+  // act1LayerOp=1 (paso 1 aterriza exactamente en overallVh=ACT1_UNITS=3,
+  // donde esa fórmula todavía da 1). CORRECCIÓN DE NOTA (review de cierre de
+  // TASK-025, ronda 3 — el comentario anterior sobredeclaraba la evidencia):
+  // con esa misma fórmula vieja, T-orange2 SÓLO falla en el paso 1 — los
+  // pasos 2..7 aterrizan en overallVh>=3.5, donde `overallVh-ACT1_UNITS>=0.5`
+  // ya hace que la fórmula vieja dé 0 sin necesitar el fix. Y como el
+  // `expect()` dentro del loop del test aborta en el PRIMER fallo, ese loop
+  // ni siquiera llega a evaluar los pasos posteriores al 1 — así que nunca
+  // pudo haber reportado "4 pasos" fallando. El lock sigue siendo válido
+  // (paso 1 es justamente el click que reportó Rafael), sólo se corrige acá
+  // la descripción de qué falló exactamente al plantar el rojo.
   it('T-orange1 el paso "hero" (stepToOverallVh(1), el click exacto que reportó Rafael) no deja la capa del Acto 1 encima', () => {
     const frame = computeCh3Frame(stepToOverallVh(1))
     expect(frame.act1LayerOp).toBeLessThanOrEqual(0.05) // mismo umbral pointer-events de Chapter3Content.vue
@@ -150,6 +159,19 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
     // scrub se comprimió a propósito, ACT1_UNITS (presupuesto físico,
     // AC#7) no se tocó.
     expect(P1_COMPLETE_VH).toBeLessThan(ACT1_UNITS)
+
+    // LOW (review de cierre de TASK-025): P1_COMPLETE_VH también tiene que
+    // ser estrictamente positivo — es el DIVISOR de p1 (`p1 = overallVh /
+    // P1_COMPLETE_VH`, ver computeCh3Frame()). Si ACT1_UNITS bajara de
+    // ~0.66, o ACT1_FADE_DURATION/SLIDE_PLATEAU*ACT2_STEP_VH subieran lo
+    // suficiente, P1_COMPLETE_VH (= ACT1_UNITS - SLIDE_PLATEAU*ACT2_STEP_VH
+    // - ACT1_FADE_DURATION) podría cruzar a 0 o negativo sin que ningún
+    // otro test lo note — un divisor <=0 no lanza (JS: x/0 = Infinity,
+    // x/negativo cambia de signo), así que el scrub del Acto 1 colapsaría
+    // EN SILENCIO (p1 saltaría a 0, Infinity o NaN según el signo de
+    // overallVh) en vez de fallar ruidosamente. Esta aserción es la que
+    // detectaría ese colapso si alguna de esas constantes cambia en el futuro.
+    expect(P1_COMPLETE_VH).toBeGreaterThan(0)
   })
 
   // ── Cierre: el progreso no crece sin límite pasado el último slide ──────

@@ -899,10 +899,21 @@ onBeforeUnmount(() => {
   }
 
   /* ── Renacimiento: blanqueo + acento HTML5 (spec §3 tramo p 0.85-1.00) ──── */
+  /* MEDIUM (review de cierre de TASK-025): decorativas + aria-hidden, pero
+   * SIN `pointer-events:none` seguían siendo hit-testeables aun con opacity
+   * calculada en 0 (calc() puede dar negativo; el navegador clampea el
+   * PINTADO a 0 pero el hit-test por defecto no distingue). Medido con CDP
+   * real (Chrome headed) en overallVh=0: `elementFromPoint()` sobre el
+   * centro de `.ch3-act1-title` devolvía `.ch3-act1-accent`, invisible,
+   * en vez del título — exactamente la clase de artefacto que este ticket
+   * vino a matar (AC#1: "ningún elemento lo tapa", prueba geométrica). Sin
+   * handlers propios (ambas son puramente decorativas), así que
+   * `pointer-events:none` no quita ninguna interacción real. */
   .ch3-act1-white,
   .ch3-act1-accent {
     position: absolute;
     z-index: 4;
+    pointer-events: none;
   }
   .ch3-act1-white {
     inset: 0;
