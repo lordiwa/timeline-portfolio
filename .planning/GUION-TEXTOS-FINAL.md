@@ -153,9 +153,9 @@ Reparto de palabras para la alternancia (impares humano, pares IA):
 
 | # | Cap | Proyecto | Descripción |
 |---|---|---|---|
-| 1 | ch2 | BlueLizard Games | Mi primer trabajo: Game Tester. 15 fallas críticas encontradas en la entrevista, delante del productor. |
-| 2 | ch2 | Matte CG | Gameplay programmer en plena era dorada del Flash. Títulos como Lost Realms 2 y Megamind Amazing Machine. |
-| 3 | ch2 | Joju Games | Bingo Blingo en Facebook y advergames para Coca-Cola y más: meter una marca en una mecánica sin matar la diversión. |
+| 1 | ch2 | BlueLizard Games | Entré de Game Tester con 15 fallas críticas encontradas en la entrevista, delante del productor. Ahí aprendí a programar profesionalmente y salí gameplay programmer en plena era dorada del Flash: Lost Realms 2, Megamind Amazing Machine. |
+| 2 | ch2 | Matte CG | Advergames para Coca-Cola, Sanofi y Marlboro, en 2D, 3D, AR y VR. Meter una marca en una mecánica sin matar la diversión. |
+| 3 | ch2 | Joju Games | Bingo Blingo en Facebook. Mi primer trabajo remoto, y mi primer contacto con metodologías ágiles y Scrum. |
 | 4 | ch3 | Pink Parrot | Agencia de publicidad digital en plena transición de Flash a la web. Interactividad de juegos aplicada a marcas. |
 | 5 | ch4 | ARVR Studio | Empresa propia de VR y AR aplicadas a publicidad, adelantada una década a su mercado. El negocio no; la apuesta sí. |
 | 6 | ch4 | Metrodigi | Primer liderazgo real: equipo remoto en la India, web apps grandes con Node, Angular y Vue. Y el regreso al QA. |
@@ -171,6 +171,14 @@ Reparto de palabras para la alternancia (impares humano, pares IA):
 ELIMINA (queda solo en ch4). Quedan 13 tarjetas, no 14: hay que quitarla del
 data source, no solo dejarla vacía. Remoose queda en ambos capítulos con
 ángulos distintos (ch5 = el producto y la sociedad; ch6 = la puerta a la IA).
+
+**Corrección de atribución (2026-07-28):** las filas 1, 2 y 3 (BlueLizard
+Games, Matte CG, Joju Games) tenían la atribución cruzada entre sí. Rafael la
+detectó revisando el sitio en vivo y dictó el contenido correcto — ver
+TASK-026. BlueLizard Games es donde entró de Game Tester y salió gameplay
+programmer (la convergencia QA/dev, tesis del sitio); Matte CG son los
+advergames de Coca-Cola/Sanofi/Marlboro; Joju Games es Bingo Blingo, su
+primer trabajo remoto y primer contacto con Scrum.
 
 ---
 
