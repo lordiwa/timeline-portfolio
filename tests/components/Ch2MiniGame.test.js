@@ -178,7 +178,7 @@ describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mo
     const deferredImport = new Promise((resolve) => {
       releaseImport = resolve
     })
-    vi.doMock('@/phaser/ch2/index.js', () => deferredImport)
+    vi.doMock('@/phaser/ch2/index.js', async () => deferredImport)
 
     const activeChapter = ref(2)
     const wrapper = mount(Ch2MiniGame, {
@@ -218,17 +218,23 @@ describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mo
   })
 
   it('doble instancia: un segundo mountGame() disparado con el import original en vuelo NO inicia otra descarga/instancia', async () => {
-    // Defensa en profundidad (ver nota de método arriba del describe): aun
-    // ubicado primero en el archivo, si el `vi.doMock()` no llegara a
-    // interceptar el PRIMER import (falla de infraestructura, no del guard),
-    // se detecta ANTES de ejercer el guard (vía `mockHit`, confirmando que
-    // el import realmente quedó pendiente en NUESTRA promesa) y se reintenta
-    // con una generación fresca. Si el guard estuviera roto de verdad,
-    // reintentar no lo ocultaría: la aserción real corre recién después de
-    // confirmar que el setup fue limpio.
+    // Reintento acotado (ver nota de método arriba del describe): bajo
+    // contención de CPU externa a esta suite, `vi.doMock()` puede perder la
+    // carrera contra el `import()` que dispara `mount()` y el import cae al
+    // módulo real sin pasar por NINGÚN mock — se detecta vía `mockHit` ANTES
+    // de ejercer el guard bajo prueba. Confirmado empíricamente que la causa
+    // raíz de que esto "arrastrara" a specs sin relación (T2, T4, T4b, T5,
+    // gate, AC5) NO era la cantidad de `vi.resetModules()` en el archivo,
+    // sino un `vi.doMock()` de un intento fallido que quedaba SIN CONSUMIR y
+    // era consumido por accidente por un import de un test totalmente
+    // distinto más adelante — por eso cada intento fallido se limpia con
+    // `vi.doUnmock()` (ver más abajo) antes de reintentar o de tirar el
+    // error final. Con esa limpieza, reintentar es seguro y no arrastra
+    // nada; si el guard estuviera roto de verdad, ningún reintento lo
+    // ocultaría — la aserción real corre recién tras confirmar el setup.
+    const MAX_SETUP_ATTEMPTS = 3
     let wrapper
     let releaseImport
-    const MAX_SETUP_ATTEMPTS = 8
 
     for (let attempt = 1; attempt <= MAX_SETUP_ATTEMPTS; attempt += 1) {
       createMiniGameSpy.mockClear()
@@ -238,10 +244,14 @@ describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mo
       let release
       let mockHit = false
       const deferred = new Promise((res) => { release = res })
-      vi.doMock('@/phaser/ch2/index.js', () => {
+      vi.doMock('@/phaser/ch2/index.js', async () => {
         mockHit = true
         return deferred
       })
+      // Deja asentar el registro del mock antes de disparar el trigger que
+      // lo consume — un macrotask real acá (no un simple microtask tick)
+      // reduce la fracción de intentos donde `vi.doMock` pierde la carrera.
+      await new Promise((r) => setTimeout(r, 20))
 
       const activeChapter = ref(0)
       wrapper = mount(Ch2MiniGame, {
@@ -260,12 +270,13 @@ describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mo
       // tanto). Se espera el estado observable (loading=true) en vez de
       // contar ticks a ciegas — ver nota de método arriba del describe. Bajo
       // carga extrema el poll acotado por iteraciones puede agotarse sin que
-      // eso signifique nada sobre el guard (ver catch abajo) — se trata igual
-      // que "mockHit false": descartar el intento y reintentar.
+      // eso signifique nada sobre el guard — se trata igual que "mockHit
+      // false": limpiar y reintentar.
       activeChapter.value = 2
       try {
         await waitForLoadingState(wrapper, true, { tries: 60 })
       } catch (err) {
+        vi.doUnmock('@/phaser/ch2/index.js')
         release()
         wrapper.unmount()
         if (attempt === MAX_SETUP_ATTEMPTS) throw err
@@ -288,12 +299,16 @@ describe('Ch2MiniGame.vue — TASK-020 ronda de corrección: carrera async en mo
         break
       }
 
-      // El primer import ya cayó al módulo real (bypasseó nuestro doMock)
-      // antes de que pudiéramos siquiera ejercer el guard bajo prueba —
-      // descartar este intento y reintentar con una generación fresca. Se
-      // libera la promesa propia (no tiene listeners, es inerte) y se deja
-      // asentar cualquier resolución real en vuelo antes de desmontar, para
-      // no ensuciar el siguiente intento.
+      // El registro de `vi.doMock()` de este intento nunca fue consumido
+      // (el import de esta prueba cayó al módulo real, bypasseándolo) — si
+      // se deja así, queda "colgado" y un test COMPLETAMENTE DISTINTO más
+      // adelante en el archivo (p.ej. T2, que también hace
+      // `import('@/phaser/ch2/index.js')` vía el `vi.mock()` estático)
+      // puede terminar consumiéndolo por accidente, resolviendo a
+      // `undefined` en vez del payload esperado — la causa raíz confirmada
+      // empíricamente del efecto cascada que este `doUnmock()` cierra, sea
+      // que reintentemos o no.
+      vi.doUnmock('@/phaser/ch2/index.js')
       release()
       await settle()
       wrapper.unmount()
