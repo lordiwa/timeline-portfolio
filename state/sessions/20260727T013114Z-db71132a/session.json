@@ -2,9 +2,9 @@
   "schema_version": 2,
   "session_id": "20260727T013114Z-db71132a",
   "lifecycle_state": "active",
-  "updated_at": "2026-07-27T20:45:53.029Z",
+  "updated_at": "2026-07-27T21:34:33.767Z",
   "active_task": "TASK-017",
-  "workflow_step": "fetch",
+  "workflow_step": "impl",
   "mode": "loop",
   "loop_auth": {
     "auto_close_on_green_review": true,
@@ -30,11 +30,6 @@
   ],
   "decisions": [
     {
-      "at": "2026-07-26T00:00:00.000Z",
-      "decision": "El climax narrativo es 2026: humanos y robots trabajando al unisono como sintesis de todo lo anterior",
-      "rationale": "Definido por Rafael. El arco pasa de cronologico a acumulativo."
-    },
-    {
       "at": "2026-07-27T05:30:00.000Z",
       "decision": "Nuevo objetivo: belleza de 0/10 a 10/10 con el estandar de parecer un sitio de 50.000 dolares. Redisenio total de ch3 a ch6; ch0 a ch2 solo se elevan en craft conservando su identidad CRT, GeoCities y Flash",
       "rationale": "Rafael dijo que hasta Flash le gusta y que desde la muerte de Flash lo siente desordenado. Preservar ch0-ch2 ademas reduce el riesgo sobre el minijuego y el modem, que son justo lo que se rompio en el incidente anterior."
@@ -48,16 +43,6 @@
       "at": "2026-07-27T05:30:00.000Z",
       "decision": "Cada era usa el MEDIO de su epoca en vez de ser pixel art de esa epoca. Higgsfield queda apagado, asi que todo lo no-pixel se resuelve procedural con GLSL, SDF, ruido, Canvas, SVG y CSS",
       "rationale": "Rafael pidio que escale no en pixel art necesariamente sino evocando lo que cada era representa. El analisis de herramientas mostro que los MCP de imagen no son el cuello de botella: shaders, ASCII y terminal son 90% codigo, con Phaser 3.90 soportando pipelines WebGL custom."
-    },
-    {
-      "at": "2026-07-27T05:30:00.000Z",
-      "decision": "TASK-007 se fusiona con el redisenio: destapar la narrativa de cada capitulo ocurre en el mismo pase que su redisenio visual",
-      "rationale": "TASK-007 toca exactamente los mismos archivos. Tocar el mismo archivo en dos trabajos separados es el modo de falla que rompio el minijuego, el modem, la multitud y la escena de ch6 en el incidente anterior."
-    },
-    {
-      "at": "2026-07-27T05:30:00.000Z",
-      "decision": "La direccion de arte la define Fable 5 mediante 5 agentes hivemind:researcher en paralelo que entregan especificacion implementable en .planning/design/, no codigo",
-      "rationale": "Rafael pidio explicitamente usar Fable 5 para definir los cambios de diseño. El hook enforce-hivemind solo admite subagent_type hivemind:*, y el researcher es read-only sobre codigo con Write para specs, asi que puede especificar sin poder romper nada."
     },
     {
       "at": "2026-07-27T06:00:00.000Z",
@@ -103,6 +88,21 @@
       "at": "2026-07-27T18:30:15.275Z",
       "decision": "El jefe de Remoose queda como mi jefe, sin nombre. DECIDIDO, no es un pendiente",
       "rationale": "Rafael lo decidio el 2026-07-27. Marcado como final en la nota 5 de la Parte 5 del guion para que ningun agente futuro vuelva a proponer nombrarlo."
+    },
+    {
+      "at": "2026-07-27T20:15:00.000Z",
+      "decision": "La estetica la define la spec de Fable 5 en .planning/design/ y GANA sobre el texto de un criterio de aceptacion. El unico limite es que no dane la navegacion ni la legibilidad",
+      "rationale": "Rafael, textual: \"lo que fable 5 recomiende esteticamente yo me acoto mientras no dane la navegacion\". Resolvio el conflicto del AC5 de TASK-010, que pedia \"sin scroll interno\" mientras la spec 04 seccion 8 lo diseno a proposito con fade. Corolario operativo: no consultarle decisiones de gusto, pero arreglar igual cualquier cosa que tape contenido, corte texto o vuelva algo inalcanzable, con prueba geometrica por getBoundingClientRect y no a ojo."
+    },
+    {
+      "at": "2026-07-27T21:40:00.000Z",
+      "decision": "La causa raiz del techo de fps global NO era la multitud de ch5 sino el Phaser.Game de ch2 corriendo desde la carga de la pagina. TASK-017 queda blocked por TASK-020",
+      "rationale": "El developer de TASK-017 midio y encontro que su propio fix no movia la aguja: ~15 fps antes y despues bajo throttle 4x. En vez de reportar el 60.30 contra 60.23 sin throttle como mejora y cerrar, declaro que no era atribuible y siguio buscando. scene.pause() no detiene el loop interno de Phaser, asi que Phaser.DOM.RequestAnimationFrame.step disparaba ~60/seg en ch0 con el juego jamas visitado. Retirandolo en diagnostico, ch0 recupera 60 fps limpios a 4x de throttle."
+    },
+    {
+      "at": "2026-07-27T22:10:00.000Z",
+      "decision": "El Phaser.Game del minijuego de ch2 se DESTRUYE al salir del capitulo y se RECREA al volver, replicando el patron de Chapter6Content.vue. DECIDIDO por Rafael, no es un pendiente",
+      "rationale": "Se le presento el trade-off directo contra la alternativa de solo detener el loop conservando la instancia, y eligio destruir y recrear sabiendo que eso PIERDE una partida en curso al scrollear fuera de ch2 y volver. Esa perdida es comportamiento decidido y esperado, no un defecto a mitigar con persistencia de estado. Modifica el AC6 del ticket: lo que se verifica es que al volver el juego arranque limpio y jugable, no que la partida sobreviva."
     }
   ],
   "subagent_results": [
@@ -166,9 +166,9 @@
   ],
   "pending_human_confirmation": null,
   "loop_state": {
-    "current_ticket": "TASK-017",
-    "phase": "fetch",
-    "iteration": 2,
+    "current_ticket": "TASK-020",
+    "phase": "impl",
+    "iteration": 3,
     "completed_this_run": 4
   }
 }

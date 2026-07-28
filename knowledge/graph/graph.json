@@ -30,6 +30,18 @@
       "type": "task",
       "ref": "tasks/TASK-014.json",
       "label": "Shell de scroll: permitir capitulos multi-viewport con anclaje real"
+    },
+    {
+      "id": "task-017",
+      "type": "task",
+      "ref": "tasks/TASK-017.json",
+      "label": "Techo de fps global: loops rAF de capitulo corriendo sin gate en todo el sitio"
+    },
+    {
+      "id": "task-020",
+      "type": "task",
+      "ref": "tasks/TASK-020.json",
+      "label": "El minijuego de ch2 corre un Phaser.Game permanente desde la carga de la pagina"
     }
   ],
   "edges": []

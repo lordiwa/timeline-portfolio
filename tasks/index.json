@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T21:21:10.230Z",
+  "generated_at": "2026-07-28T02:50:52.362Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -100,7 +100,7 @@
     {
       "key": "TASK-017",
       "title": "Techo de fps global: loops rAF de capitulo corriendo sin gate en todo el sitio",
-      "status": "blocked",
+      "status": "done",
       "priority": "high"
     },
     {
@@ -118,8 +118,20 @@
     {
       "key": "TASK-020",
       "title": "El minijuego de ch2 corre un Phaser.Game permanente desde la carga de la pagina",
-      "status": "todo",
+      "status": "done",
       "priority": "critical"
+    },
+    {
+      "key": "TASK-021",
+      "title": "ch3: scroll mas sensible y navegacion como roadmap paso a paso",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-022",
+      "title": "ch6: misma carrera async que TASK-020 en el await import del Phaser.Game",
+      "status": "todo",
+      "priority": "high"
     }
   ]
 }
