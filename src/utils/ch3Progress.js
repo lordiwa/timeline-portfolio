@@ -85,6 +85,58 @@ export function slideWeight(diff) {
 // sección, devuelve TODO lo que applyProgress() necesita escribir al DOM.
 // Pura: mismo input siempre produce el mismo output, cero efectos de lado.
 //
+// ── Fade-out de la capa del Acto 1 (TASK-025) — constantes de módulo (antes
+// vivían dentro de computeCh3Frame como locals; se hoistean para poder
+// derivar P1_COMPLETE_VH de ellas ANTES de calcular p1, ver más abajo).
+//
+// HIGH (TASK-025, hallazgo de verificación CDP real — "cuadrado naranja"
+// reportado por Rafael en UAT, 2026-07-28): la capa del Acto 1 se apagaba
+// recién a partir de overallVh === ACT1_UNITS ("DESPUÉS de terminar su
+// propio scrub"). Pero el hero (slide 0) alcanza su propia meseta de
+// opacity:1 ANTES de eso — su crossfade arranca en diff=-SLIDE_PLATEAU, o
+// sea en overallVh = ACT1_UNITS - SLIDE_PLATEAU*ACT2_STEP_VH (2.84 con los
+// valores actuales), 0.16 unidades ANTES de ACT1_UNITS. Con el fade-out del
+// Acto 1 arrancando recién en ACT1_UNITS, había una franja real (confirmada
+// con CDP: click en el paso "hero" del roadmap, que aterriza exactamente en
+// overallVh===ACT1_UNITS vía stepToOverallVh(1)) donde el hero YA estaba a
+// opacity:1 (botón "The full story" listo) y la capa del Acto 1 SEGUÍA a
+// opacity:1 y pointer-events:auto — el frame final del Acto 1 (blanqueo +
+// acento HTML5 naranja opaco, tramo p1 0.85-1.00) quedaba pintado ENCIMA del
+// hero, tapando su texto y bloqueando su botón. `document.elementFromPoint()`
+// en el centro del botón del hero devolvía `.ch3-act1-white`, no el botón.
+export const ACT1_FADE_DURATION = 0.5
+export const ACT1_FADE_END = ACT1_UNITS - SLIDE_PLATEAU * ACT2_STEP_VH // 2.84
+export const ACT1_FADE_START = ACT1_FADE_END - ACT1_FADE_DURATION // 2.34
+
+// P1_COMPLETE_VH (TASK-025, ronda 2 — hallazgo de verificación CDP real,
+// riesgo R1 marcado explícitamente en el dispatch de este ticket): la
+// primera versión del fix de arriba dejaba `p1 = overallVh / ACT1_UNITS` sin
+// tocar, así que p1 sólo llegaba a 1 (clímax completo: blanqueo + acento
+// HTML5 a opacity:1, spec 03 tramo p 0.85-1.00) en overallVh===ACT1_UNITS(3)
+// — es decir, DESPUÉS de que ACT1_FADE_START(2.34) ya había empezado a
+// apagar la capa entera y DESPUÉS de ACT1_FADE_END(2.84) donde la capa ya
+// está en opacity:0. Confirmado con CDP real (Chrome headed, muestreo de
+// --ch3-p / opacity de `.ch3-act1-white` y `.ch3-act1-accent` en fracciones
+// 0/0.5/0.85/0.9/0.947/0.97/1.0 de ACT1_UNITS): como un padre a opacity:0
+// apaga TODO su subárbol sin importar el opacity local del hijo (opacity es
+// multiplicativo en el árbol de render), la intensidad COMPUESTA del
+// blanqueo/acento nunca superaba ~9% antes de caer a 0 — el clímax del Acto
+// 1 (la razón de ser del tramo final de la spec) quedaba prácticamente
+// invisible, justo lo que el riesgo R1 del dispatch pedía verificar.
+//
+// FIX: p1 completa su propio recorrido (llega a 1, clímax a opacity:1 real)
+// EN ACT1_FADE_START, no en ACT1_UNITS — el scrub local del Acto 1 se
+// comprime a P1_COMPLETE_VH unidades en vez de las 3 completas de
+// ACT1_UNITS (que sigue intacto: es el presupuesto FÍSICO del Acto 1 dentro
+// de la sección, del que derivan TOTAL_UNITS/CH3_VIEWPORTS — AC#7 de este
+// ticket prohíbe tocarlo, y no se toca). El resultado: el clímax se renderiza
+// COMPLETO (opacity:1 real, no un valor que un padre invisible descarta) y
+// RECIÉN DESPUÉS esa imagen ya completa es la que hace crossfade con el
+// hero durante la ventana [ACT1_FADE_START, ACT1_FADE_END] — la "disolución"
+// que el comentario original de esta función prometía, pero ahora disolviendo
+// un clímax que sí se vio, no una versión a medio renderizar.
+export const P1_COMPLETE_VH = ACT1_FADE_START // 2.34
+
 // HIGH (hallazgo de verificación CDP real en esta sesión, no detectable por
 // ningún test de jsdom): la primera versión de `continuousSlide` clampeaba
 // el PISO en 0 (`clamp(overallVh - ACT1_UNITS, 0, ACT2_SLIDE_COUNT - 1)`).
@@ -98,39 +150,12 @@ export function slideWeight(diff) {
 // es el lock de regresión de ESTE bug específico — plantado en rojo
 // revirtiendo el `Math.min` a un `clamp` con piso 0 antes de escribir el fix.
 export function computeCh3Frame(overallVh) {
-  const p1 = clamp(overallVh / ACT1_UNITS, 0, 1)
+  const p1 = clamp(overallVh / P1_COMPLETE_VH, 0, 1)
 
-  // HIGH (TASK-025, hallazgo de verificación CDP real — "cuadrado naranja"
-  // reportado por Rafael en UAT, 2026-07-28): esta capa se apagaba recién a
-  // partir de overallVh === ACT1_UNITS ("DESPUÉS de terminar su propio
-  // scrub", ver el comentario que reemplaza éste). Pero el hero (slide 0)
-  // alcanza su propia meseta de opacity:1 ANTES de eso — su crossfade
-  // arranca en diff=-SLIDE_PLATEAU, o sea en overallVh = ACT1_UNITS -
-  // SLIDE_PLATEAU*ACT2_STEP_VH (2.84 con los valores actuales), 0.16
-  // unidades ANTES de ACT1_UNITS. Con el fade-out del Acto 1 arrancando recién
-  // en ACT1_UNITS, hay una franja real (confirmada con CDP: click en el paso
-  // "hero" del roadmap, que aterriza exactamente en overallVh===ACT1_UNITS
-  // vía stepToOverallVh(1)) donde el hero YA está a opacity:1 (botón "The
-  // full story" listo) y la capa del Acto 1 SIGUE a opacity:1 y pointer-
-  // events:auto — el frame final del Acto 1 (blanqueo + acento HTML5 naranja
-  // opaco, tramo p1 0.85-1.00) queda pintado ENCIMA del hero, tapando su
-  // texto y bloqueando su botón. `document.elementFromPoint()` en el centro
-  // del botón del hero devolvía `.ch3-act1-white`, no el botón. Un scroll
-  // continuo pasa por ese overallVh en un frame y casi no se nota; un salto
-  // programático (click) puede quedarse aterrizado EXACTAMENTE ahí — por eso
-  // "scrolleando un poco se destraba" (cualquier avance mueve overallVh lejos
-  // del punto exacto).
-  //
-  // FIX: la capa del Acto 1 termina de apagarse (opacity:0) PARA CUANDO el
-  // hero alcanza su propia meseta, no después — arranca la misma duración de
-  // fade de antes (0.5 unidades) pero terminando en ese punto en vez de
-  // empezar ahí. La franja final del blanqueo/acento pasa a hacer crossfade
-  // CON el hero (una disolución) en vez de sostenerse opaca y cortarse de
-  // golpe — más allá de ese punto, sigue las mismas fórmulas CSS de p1 de
-  // siempre, simplemente ya no son visibles porque la capa entera lo es.
-  const ACT1_FADE_DURATION = 0.5
-  const act1FadeEnd = ACT1_UNITS - SLIDE_PLATEAU * ACT2_STEP_VH
-  const act1LayerOp = clamp(1 - Math.max(0, overallVh - (act1FadeEnd - ACT1_FADE_DURATION)) / ACT1_FADE_DURATION, 0, 1)
+  // El fade-out de la capa entera: un solo booleano/valor gobierna
+  // opacity+pointer-events (ver applyProgress() en Chapter3Content.vue) —
+  // constantes ACT1_FADE_DURATION/ACT1_FADE_END/ACT1_FADE_START arriba.
+  const act1LayerOp = clamp(1 - Math.max(0, overallVh - ACT1_FADE_START) / ACT1_FADE_DURATION, 0, 1)
 
   // Sin piso: si el piso fuera 0, continuousSlide quedaría en 0 (peso pleno
   // del hero) durante TODO el Acto 1 — ver el HIGH de arriba. El techo sí se

@@ -28,6 +28,9 @@ import {
   CH3_VIEWPORTS,
   CH3_STEP_COUNT,
   SLIDE_PLATEAU,
+  ACT1_FADE_START,
+  ACT1_FADE_END,
+  P1_COMPLETE_VH,
   slideWeight,
   computeCh3Frame,
   stepToOverallVh,
@@ -43,7 +46,14 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
     const frame = computeCh3Frame(ACT1_UNITS / 2)
     expect(frame.slides[0].opacity).toBe(0)
     // El Acto 1 mismo debe estar a mitad de su propio scrub, no en 0 ni en 1.
-    expect(frame.p1).toBeCloseTo(0.5, 5)
+    // TASK-025 ronda 2: el divisor de p1 es P1_COMPLETE_VH (2.34), no
+    // ACT1_UNITS (3) — ver el comentario de esa constante en ch3Progress.js.
+    // ACT1_UNITS/2 = 1.5 sigue cayendo bien dentro de [0, P1_COMPLETE_VH],
+    // así que "a mitad del Acto 1" en términos de scroll físico da
+    // p1 = 1.5/2.34 ≈ 0.641, no 0.5 — ya no están alineados 1:1 porque el
+    // scrub se comprimió a propósito (el clímax debe completarse ANTES de
+    // que arranque el fade-out de la capa, ACT1_FADE_START).
+    expect(frame.p1).toBeCloseTo(ACT1_UNITS / 2 / P1_COMPLETE_VH, 5)
   })
 
   it('T3 justo cuando el Acto 1 termina (overallVh = ACT1_UNITS) el hero alcanza opacity 1', () => {
@@ -110,6 +120,36 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
       if (s === 0) continue // step 0 = el Acto 1 ES el contenido, no hay "tapado"
       expect(frame.act1LayerOp, `paso ${s}`).toBeLessThanOrEqual(0.05)
     }
+  })
+
+  // ── TASK-025 ronda 2 — riesgo R1 marcado explícitamente en el dispatch:
+  // el fix de T-orange1/T-orange2 (arriba) apaga la capa del Acto 1 en
+  // ACT1_FADE_END(2.84), ANTES de ACT1_UNITS(3) — eso por sí solo no prueba
+  // que el CLÍMAX (p1=1, blanqueo+acento a opacity:1, spec 03 tramo p
+  // 0.85-1.00) siga siendo visible: si p1 completa su recorrido DESPUÉS de
+  // que la capa ya empezó a apagarse, el clímax se renderiza a un opacity
+  // local que un padre semi-transparente (o ya invisible) descarta —
+  // confirmado con CDP real (Chrome headed, .planning/LECCIONES-TECNICAS.md
+  // §6): sin este fix, la intensidad COMPUESTA del blanqueo/acento nunca
+  // superaba ~9% antes de caer a 0. Plantado en rojo revirtiendo P1_COMPLETE_VH
+  // a ACT1_UNITS en memoria antes de escribir este test: con esa reversión,
+  // en overallVh=ACT1_FADE_START (2.34) p1 daba 2.34/3=0.78, NO 1 — fallaba.
+  it('T-orange3 el clímax del Acto 1 (p1=1) se completa ANTES o EN el arranque del fade-out de la capa, nunca después', () => {
+    const atFadeStart = computeCh3Frame(ACT1_FADE_START)
+    expect(atFadeStart.p1).toBe(1) // clímax ya completo, a opacity:1 real
+    expect(atFadeStart.act1LayerOp).toBe(1) // ...Y la capa todavía a brillo pleno cuando eso pasa
+
+    // Sigue en el clímax (p1 no retrocede) durante TODA la ventana de fade.
+    const mid = computeCh3Frame((ACT1_FADE_START + ACT1_FADE_END) / 2)
+    expect(mid.p1).toBe(1)
+    const atFadeEnd = computeCh3Frame(ACT1_FADE_END)
+    expect(atFadeEnd.p1).toBe(1)
+    expect(atFadeEnd.act1LayerOp).toBe(0)
+
+    // P1_COMPLETE_VH sigue siendo estrictamente menor que ACT1_UNITS — el
+    // scrub se comprimió a propósito, ACT1_UNITS (presupuesto físico,
+    // AC#7) no se tocó.
+    expect(P1_COMPLETE_VH).toBeLessThan(ACT1_UNITS)
   })
 
   // ── Cierre: el progreso no crece sin límite pasado el último slide ──────
