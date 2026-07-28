@@ -1,188 +1,159 @@
 # HANDOFF.md — snapshot de retoma
 
-**Actualizado:** 2026-07-27, tarde
+**Actualizado:** 2026-07-28, pausa por corte de internet
 **Sesión:** `20260727T013114Z-db71132a`
 
-> La fuente de verdad completa es `state/sessions/20260727T013114Z-db71132a/session.json`.
-> Este archivo es el resumen operativo para retomar rápido.
+> Fuente de verdad completa: `state/sessions/20260727T013114Z-db71132a/session.json`.
+> Este archivo es el resumen operativo.
 
-## Objetivo
+## AL RETOMAR: en este orden
 
-Rafael calificó la belleza del sitio en 0/10 y pide 10/10, con el estándar declarado
-de que parezca un sitio de 50.000 dólares. Hasta Flash (ch0, ch1, ch2) le gusta y se
-preservan. Desde la muerte de Flash (ch3 en adelante) se rediseña todo. Autorizó
-cambiar todo el arte y todo el estilo.
-
----
-
-## AL RETOMAR: hacé esto en orden
-
-1. **`git log --oneline -12`** y **`git status`**. Debe haber ~10 commits locales sin
-   push. Si el working tree tiene `src/i18n/`, `src/data/contact.js` o
-   `ContactHUD.vue` modificados, es TASK-013 que quedó a medias: ver abajo.
-2. **`npm run test:run`.** Si hay rojos, mirá cuáles antes de asumir regresión: los
-   de títulos de capítulo, largo ES contra EN y conteo de proyectos son del contenido
-   nuevo y los arregla TASK-013.
-3. **Despachar el review de cierre de TASK-010** (ver abajo).
-4. Seguir el orden de tickets de la tabla.
+1. `git log --oneline -10` y `git status`. Deben verse **36 commits sin push**.
+2. **Leer "Lo que quedó a medias" acá abajo antes de despachar nada.**
+3. Levantar el sitio: `npm run dev` → http://localhost:5173/
+4. Retomar TASK-025, que es lo único abierto a medio camino.
 
 ---
 
-## Estado de los tickets
+## Lo que pasó en esta tanda
 
-| Ticket | Qué es | Estado |
+Rafael usó el sitio en vivo mientras corrían agentes en paralelo. Encontró en
+minutos dos cosas que ni la suite ni un reviewer independiente habían visto.
+
+**Cerrado y commiteado:**
+
+| Commit | Qué |
+|---|---|
+| `7d69ef3` | Saca el teléfono de Rafael del ContactHUD y de `contact.js` |
+| `c8fd6a7` | Mata la cascada de `vi.doMock` de Ch2MiniGame bajo vitest paralelo |
+| `652be19` | Corrige la atribución cruzada de las 3 tarjetas de la era Flash |
+| `9883bee` | Redacta el teléfono del guion de textos |
+| `4caa7b2` | **WIP sin terminar de TASK-025**, ver abajo |
+
+---
+
+## Lo que quedó a medias — TASK-025, leer completo
+
+El developer del **cuadrado naranja de ch3** fue **detenido a mitad**, justo
+cuando iba a commitear. Su último mensaje decía que tenía todo verde, pero
+**no alcanzó a correr su checklist de pre-entrega ni a reportar la causa raíz**.
+
+Su trabajo está preservado en `4caa7b2` (89 inserciones sobre
+`src/utils/ch3Progress.js` y `tests/utils/ch3Progress.test.js`). Es un commit de
+preservación, **no es una entrega**.
+
+**Falta, y sin esto no se cierra:**
+- Qué era el cuadrado naranja concretamente. Nadie lo reportó todavía.
+- Verificar los 8 pasos del roadmap, adelante y atrás.
+- La medición geométrica en Chrome headed.
+- **TASK-024 entero**, que iba después y ni se empezó.
+
+**Al retomar:** verificar ese diff contra los AC de TASK-025, correr la suite, y
+decidir si se completa sobre eso o se descarta y se redespacha limpio.
+
+### El bug, en palabras de Rafael
+
+> "en ch3 termina en un cuadrado naranja sobere el texto y no se puede ni leer ni
+> clickear el boton hasta dragear un poco para reproducri solo dar click en step 2"
+
+La pista más valiosa es que **scrolleando un poco se destraba**: el salto por
+click deja el capítulo en un estado que el siguiente frame de scroll corrige.
+
+---
+
+## PENDIENTE CRÍTICO ANTES DEL PRIMER PUSH
+
+**No pushear sin hacer esto primero.** Rafael lo autorizó explícitamente el
+2026-07-28.
+
+El repo `github.com/lordiwa/timeline-portfolio` es **público** (verificado). El
+teléfono de Rafael está en el historial desde `b55dd30` y **nunca se pusheó**.
+Sacarlo de los archivos no lo saca del historial.
+
+El número cargado difería del real en **un solo dígito**, o sea trivialmente
+enumerable. "Estaba mal igual" no es mitigación.
+
+**Decisión de Rafael: reescribir el historial y recién ahí pushear.** Como nada
+está pusheado, el rewrite es gratis y sin riesgo.
+
+**Costo conocido y aceptado:** cambia el hash de ~20 commits, así que los
+`linked_commits` de los tickets quedan apuntando a hashes muertos. Es
+contabilidad interna; reconstruirla después del rewrite.
+
+**Hacerlo con CERO agentes corriendo.** Reescribir bajo agentes activos les
+corrompe el trabajo.
+
+---
+
+## Tickets
+
+| Ticket | Qué | Estado |
 |---|---|---|
-| TASK-008 | Tokens y chasis RAFAEL-OS | **DONE**, review verde, 2 commits |
-| TASK-014 | Shell multi-viewport con anclaje sticky | **DONE**, review verde ronda 3, 4 commits |
-| TASK-009 | ch3, la muerte de Flash | **DONE**, review verde ronda 2, 3 commits |
-| TASK-007 | Destapar la narrativa | **DONE** como absorbido, defectos repartidos |
-| TASK-010 | ch4, salto entre realidades | **in_progress** — corrección landeada, FALTA EL REVIEW DE CIERRE |
-| TASK-013 | Cierre de contenido | **in_progress** — cargando los textos finales |
-| TASK-017 | Techo de fps global | todo, **alta, desbloqueante** |
-| TASK-011 | ch5, la transmisión | todo |
-| TASK-012 | ch6, el clímax | todo |
-| TASK-015 | Calibrar el parallax de ch3 | todo, media |
-| TASK-016 | Craft polish de ch2 | todo, baja, **2 ítems esperan a Rafael** |
-| TASK-001 | CI | todo — **NO cerrar**, nunca se hizo y sigue siendo real |
-| TASK-006 | Cuatro bugs de cableado | todo — **NO cerrar**, siguen vivos |
-| TASK-002/003/004/005 | Superados | **Rafael pidió cerrarlos**, bloqueados por guard |
+| TASK-025 | Cuadrado naranja de ch3 | **in_progress, WIP en `4caa7b2`** — crítico, Rafael lo sufre |
+| TASK-024 | Stepper horizontal, arriba, centrado, más visible | in_progress, **sin empezar** |
+| TASK-021 | ch3 scroll sensible + roadmap | in_progress — el HIGH ya se arregló en `c8fd6a7`, **falta re-review** |
+| TASK-023 | Sacar el teléfono | in_progress — código listo, **falta re-review**; los 2 HIGH ya se cerraron |
+| TASK-026 | Tarjetas era Flash | in_progress — **falta review** |
+| TASK-027 | Tests flaky por timeout bajo carga | todo, media |
+| TASK-011 / TASK-012 | ch5 y ch6, los dos capítulos sin texto en pantalla | todo — **es el trabajo grande que sigue** |
+| TASK-015 / 016 / 018 / 019 / 022 | Cola normal | todo |
+| TASK-001 / TASK-006 | **NO CERRAR.** CI nunca se hizo; los 4 bugs de cableado siguen vivos | todo |
 
----
-
-## Lo que quedó a medio camino
-
-### TASK-010 — falta el review de cierre
-
-Su ronda de corrección **ya landeó** en `a2747fe`: se arregló el HIGH de la lente
-Sobel espejada en el eje Y, más seis MEDIUM. Verificado por el orquestador — el flip
-está en `Ch4PortalShader.vue:720`, la viñeta y el suelo dobles se borraron de verdad,
-y el rAF quedó gateado por capítulo activo.
-
-**Falta:** despachar `hivemind:reviewer` con `model: 'fable'` sobre el rango completo
-`f632edb..a2747fe`, tres commits: `8e8e85a`, `93c90e4`, `a2747fe`. Hacerlo **con la
-suite en verde**, o sea después de que TASK-013 termine; si no, el reviewer se
-confunde con rojos que no son suyos.
-
-Si da PASS, cerrar enlazando los tres commits.
-
-### TASK-013 — cargando el contenido
-
-Rafael entregó sus textos finales en **`.planning/GUION-TEXTOS-FINAL.md`**, que es
-fuente de verdad de contenido y **se copia verbatim**: no se edita, no se resume, no
-se "mejora". Es contenido de autor.
-
-Al guardar este handoff había un agente vivo cargándolo, **sin commitear todavía**.
-Estado exacto del working tree en ese momento (`git status`):
+**Bloqueado por el guard de UAT:** TASK-013, 002, 003, 004 y 005. El texto de
+Rafael **ya está entregado y cargado**, verificado. Solo falta el asiento de
+aprobación. Rafael tiene que correr:
 
 ```
- M src/App.vue                       ← solo fin de línea, sin diff real
- M src/components/ContactHUD.vue     ← campos nuevos: teléfono y ubicación
- M src/data/contact.js               ← datos reales de Rafael
- M src/i18n/es.json                  ← los 7 textos de era + proyectos + UI
- M src/i18n/en.json                  ← traducción al inglés en curso
- M tests/data/contact.test.js
+node "C:/Users/RafaelMatovelle/.claude/plugins/cache/hivemind-marketplace/hivemind/0.18.0/dist/loop-ctl.cjs" set-mode --repo-root "C:/Users/RafaelMatovelle/Documents/mato-new-portfolio" --mode harness
 ```
 
-**Si al retomar eso sigue sin commitear**, el agente murió a mitad. Verificá el
-trabajo contra `.planning/GUION-TEXTOS-FINAL.md` y, si está sano, pedí a un
-`hivemind:developer` que lo complete y commitee. Si está a medias, `git checkout --
-src/ tests/` y re-despachar: no hay nada que perder porque nada está commiteado.
-
-**Chequeos obligatorios de ese trabajo:** la era 3 debe quedar con **exactamente 5
-párrafos** (el componente los parte uno por beat, y de los beats 1 a 4 solo muestra
-las 2 primeras oraciones); deben quedar **13 tarjetas de proyecto, no 14** (se
-elimina la de AR/VR duplicada en ch6, hay tests que cuentan 14); y paridad de claves
-ES/EN sin huérfanas.
-
-**Dato que condiciona ch5 y ch6:** el texto creció mucho. La era 5 pasó de 1.013 a
-~4.188 caracteres y la era 6 de 806 a ~2.031. Las eras 0 y 4 triplicaron y sus
-capítulos ya están construidos para el texto viejo, así que pueden desbordar.
-**Regla: el texto de Rafael no se recorta para que entre. Si no entra, cambia el
-diseño.**
+Al orquestador el clasificador le bloquea ese comando. **No rodearlo editando
+`session.json` a mano** — es justo el guard que impide autofirmarse la aprobación.
 
 ---
 
-## Bloqueado por guard: los cuatro tickets superados
+## Lecciones nuevas de esta tanda
 
-Rafael pidió cerrar TASK-002, 003, 004 y 005 como superados y **dio el veredicto
-verbalmente**. Pero los cuatro son `uat-only` y el guard no deja firmar un comentario
-de UAT mientras `loop_auth.uat_delegated_to_orchestrator` sea `false`, que es lo que
-Rafael eligió a propósito.
+1. **Una redacción de PII sin commitear es frágil.** Se redactó el teléfono del
+   guion y quedó en el working tree mientras corrían tres agentes. Uno lo
+   revirtió temporalmente para no commitear trabajo ajeno, y el número volvió a
+   un commit. **Regla: un cambio de privacidad se commitea en el acto.**
+2. **Nunca transcribir PII dentro de un ticket.** El número real de Rafael
+   terminó escrito en el ticket que pedía eliminarlo. Describir por patrón.
+3. **Un grep de control acotado a `src/` y `tests/` no alcanza.** Barrer el repo
+   entero: `.planning/`, `tasks/` y `state/` también se commitean.
+4. **Sexta confirmación del patrón:** Rafael encontró usando el sitio 10 minutos
+   un bug bloqueante que sobrevivió a la suite completa Y a un reviewer
+   independiente. jsdom no hace layout. **El UAT humano no es opcional acá.**
+5. **La condición normal de este proyecto es multi-agente.** Un test verde en una
+   máquina tranquila no prueba nada: la cascada de Ch2MiniGame solo aparecía con
+   dos procesos de vitest a la vez. Verificar bajo contención real.
 
-**Dos salidas, las dos legítimas:** pasar a modo harness y cerrarlos, o que Rafael
-conceda la delegación. **No forzar el guard.**
-
-Ojo: **TASK-001 y TASK-006 NO se cierran.** No están superados. TASK-006 son cuatro
-bugs de cableado concretos que siguen vivos, incluido el warning de `marquee` sin
-`isCustomElement` que aparece en consola hoy.
-
----
-
-## Decisiones de producto pendientes de Rafael
-
-1. **ch3 quedó en 11 viewports** con arquitectura de deck y crossfades, o sea ~60%
-   del recorrido total del sitio, y la rueda funciona como botón de "siguiente
-   slide". Se desvía de la spec, que pedía que el Acto 2 fluyera normal como una
-   landing de 2013. Hay 2-3 viewports recortables sin perder contenido.
-2. **TASK-016**, dos de tres ítems: el fondo de grilla hexagonal y el borde de acento
-   lateral de ch2. Ambos defendibles como auténticos de la época Y2K.
-3. **El teléfono en el HUD de contacto**: campo nuevo, siempre visible. Riesgo de
-   scraping, decisión suya.
+Las 7 lecciones anteriores siguen en `.planning/LECCIONES-TECNICAS.md`. **Leerlo
+antes de despachar nada.**
 
 ---
 
-## Cinco lecciones que costaron caro. Aplicalas desde el primer dispatch
+## Autorizaciones vigentes (session-scoped, re-confirmar al retomar)
 
-1. **`overflow: hidden` crea un scroll container.** Seis apariciones esta sesión.
-   Rompió `position: sticky` dos veces y `animation-timeline: scroll()` una vez.
-   **Regla: si el contenedor solo quiere recorte visual, va `clip`, nunca `hidden`.**
-2. **Un verde no prueba nada.** Los dos HIGH de TASK-014, el parallax muerto de
-   TASK-009 y la lente espejada de TASK-010 estuvieron **todos verdes en la suite
-   completa**: jsdom no hace layout y el WebGL está mockeado. Exigir **progresión
-   medida en dos puntos distintos**, no la existencia de la animación.
-3. **`canvas.toDataURL()` miente** bajo automatización CDP: devuelve bytes idénticos
-   aunque el WebGL renderice a 110 fps. Usar `Page.captureScreenshot`, que pasa por
-   el compositor nativo. Y `gl.readPixels` en negro con `preserveDrawingBuffer:
-   false` es lo **esperado**, no un síntoma.
-4. **Para lockear CSS**, compilar el `<style scoped>` real con `@vue/compiler-sfc` y
-   verificar cascada con `getComputedStyle`. Los regex sobre texto fuente son ciegos
-   a especificidad, que es como se coló un HIGH entero.
-5. **Los subagentes recortan alcance si no se les prohíbe.** El developer de ch4 cortó
-   la lente Sobel, el efecto firma del capítulo, "por presupuesto de sesión". **Poner
-   en cada dispatch: si algo de la spec no entra, se PARA y se reporta.**
-
----
-
-## Entorno
-
-- **Chrome oculto**: `visibilityState: hidden` pausa Phaser y todo rAF. **Workaround
-  validado**: los developers levantan su propio Chrome **headed** vía CDP crudo con
-  WebSocket nativo de Node. Headless usa software rendering y degrada justo los
-  shaders y las animaciones de compositor que hay que medir.
-- **`gh` instalado** (2.96.0, en `C:\Program Files\GitHub CLI\gh.exe`) pero **sin
-  autenticar** y fuera del PATH de la sesión. Hay dos reportes de bug del framework
-  escritos y scrubbeados en `.claude/framework-bug-reports/` esperando
-  `gh auth login`.
-
----
+- Cierre automático en review verde: **SÍ**
+- Consolidación automática: **SÍ**
+- Push a remoto: **SÍ, pero solo después del rewrite de historial**
+- Delegación de UAT: **NO**
+- Version bump: **NO**
 
 ## Reglas de proceso
 
-Baseline primero. Un capítulo por commit. Lista blanca de archivos en cada dispatch.
-Verificar en Chrome antes de commitear. **Solo hivemind** — el hook
-`.claude/hooks/enforce-hivemind.mjs` bloquea `Agent` y `Workflow` fuera del equipo, y
-Rafael pidió no quitarlo nunca. Locks de no regresión en cada ticket.
-
-**Autorizaciones del loop, session-scoped, se re-confirman al retomar:** cierre
-automático en review verde SÍ, consolidación automática SÍ. Delegación de UAT NO,
-push a remoto NO, version bump NO.
+Solo hivemind — el hook `.claude/hooks/enforce-hivemind.mjs` bloquea `Agent` y
+`Workflow` fuera del equipo, y Rafael pidió no quitarlo nunca. Lista blanca de
+archivos en cada dispatch. Prohibido recortar alcance en silencio. Verificar en
+Chrome headed por CDP; headless no sirve.
 
 ## Fuentes de verdad
 
-**Diseño:** `.planning/design/00-sistema-visual-global.md`,
-`03-ch3-muerte-de-flash.md`, `04-ch4-salto-entre-realidades.md`,
-`05-ch5-pandemia-broadcast.md`, `06-ch6-climax-terminal-ia.md`.
-
+**Diseño:** `.planning/design/00-sistema-visual-global.md` y `03-` a `06-`.
 **Contenido:** `.planning/GUION-TEXTOS-FINAL.md`.
+**Lecciones:** `.planning/LECCIONES-TECNICAS.md`.
 
-Las specs ganan sobre el cuerpo del ticket si hay conflicto.
+Las specs ganan sobre el cuerpo de un ticket. El único límite es que no dañe la
+navegación ni la legibilidad.

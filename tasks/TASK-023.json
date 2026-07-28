@@ -1,0 +1,33 @@
+{
+  "key": "TASK-023",
+  "title": "Sacar el telefono del ContactHUD y del shape de contacto",
+  "description": "PEDIDO DIRECTO DE RAFAEL, 2026-07-28: sacar el telefono del sitio.\n\nNOTA DE PRIVACIDAD: este ticket NO transcribe ningun numero, ni el que estaba cargado ni el real. Es un ticket sobre eliminar un dato personal de un repo publico; repetirlo en la descripcion derrota su proposito. Las busquedas de control se expresan por patron, no por literal.\n\n## Contexto\n\nTASK-013 agrego dos campos nuevos al shape de contacto que no existian en el D3-10 original: `phone` y `location`. El telefono se cargo con un valor literal en `src/data/contact.js:13` y se renderea en `src/components/ContactHUD.vue` como un anchor `tel:` con href sanitizado, dentro de un HUD que esta **visible en los 7 capitulos del sitio**.\n\nLos comentarios del codigo (contact.js:7-8, ContactHUD.vue:16-19) lo justifican como \"decision explicita de Rafael\", pero en el estado de sesion figuraba como decision PENDIENTE suya. Se implemento sin que el confirmara el riesgo. Al preguntarselo el 2026-07-28 respondio que lo saquen.\n\n**Dato adicional: el numero cargado ademas estaba MAL**, por un digito. NO se corrige el valor: se ELIMINA el campo. Escribir el numero correcto en un repo publico indexable seria peor que dejar el equivocado, asi que el valor correcto no se registra en ningun lado del repo.\n\n## Alcance\n\n1. Eliminar `phone` de `src/data/contact.js`.\n2. Eliminar el bloque del anchor `tel:` de `src/components/ContactHUD.vue`, junto con `phoneDisabled`, `phoneHref` y sus comentarios.\n3. Eliminar las claves i18n huerfanas del telefono (`contact.phoneAria` y cualquier otra) de `es.json` y `en.json`. Verificar paridad ES/EN sin huerfanas al terminar.\n4. Actualizar los tests que asertan sobre el telefono en `tests/data/contact.test.js` y donde aparezca en `tests/**`.\n5. Limpiar el CSS del HUD que quede sin selector, si lo hay.\n\n## Lo que NO se toca\n\n`location: 'Quito, Ecuador'` **SE QUEDA**. Rafael solo pidio sacar el telefono, y una ciudad es de riesgo bajo. No lo elimines de arrastre.\n\nEl email y los demas links del HUD se quedan como estan.\n\n## LISTA BLANCA\n\n`src/data/contact.js`, `src/components/ContactHUD.vue`, `src/i18n/locales/es.json` y `en.json` **solo** para las claves del telefono, y `tests/**`.\n\nPROHIBIDO TOCAR: cualquier `Chapter{N}Content.vue`, `ScrollShell.vue`, `useScrollState.js`, `src/phaser/`, `Ch2MiniGame.vue`.\n\nSi algo del alcance no entra, **PARAR Y REPORTAR** al orquestador. No recortar en silencio.\n\n## Nota de verificacion\n\nEl sitio esta levantado y Rafael lo esta usando en vivo mientras esto corre. El cambio va a llegarle por HMR, esta avisado. Aun asi: verificar que el HUD no quede con un hueco de layout ni con un separador colgado donde estaba el anchor, medido con getBoundingClientRect, no a ojo.\n\nGrep de control antes de dar por terminado, por patron: `[0-9]{7}` sobre `src/data/contact.js`, mas `phoneHref`, `phoneAria` y `tel:` sobre `src/` y `tests/`. Ninguno debe devolver nada.",
+  "acceptance_criteria": [
+    "El campo phone ya no existe en src/data/contact.js.",
+    "El ContactHUD ya no renderea ningun anchor tel: ni ningun rastro del numero, en ninguno de los 7 capitulos.",
+    "Una busqueda por patron de secuencias de 7+ digitos sobre src/data/contact.js, y de 'phoneHref', 'phoneAria' y 'tel:' sobre src/ y tests/, devuelve cero resultados.",
+    "Las claves i18n del telefono se eliminaron de es.json y en.json, y la paridad ES/EN queda sin claves huerfanas en ninguna de las dos direcciones.",
+    "El campo location 'Quito, Ecuador' SIGUE presente y sigue renderizandose en el HUD.",
+    "El email y el resto de links del HUD siguen funcionando igual que antes.",
+    "El HUD no queda con hueco de layout ni separador colgado donde estaba el telefono, verificado por getBoundingClientRect y no a ojo.",
+    "La suite queda en verde: los tests que asertaban sobre el telefono se actualizaron, no se borraron sin reemplazo."
+  ],
+  "status": "in_progress",
+  "priority": "high",
+  "labels": [
+    "privacidad",
+    "contacto",
+    "pedido-rafael",
+    "hud"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-28T16:51:06.622Z",
+  "updated_at": "2026-07-28T16:52:41.398Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

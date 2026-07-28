@@ -1,0 +1,37 @@
+{
+  "key": "TASK-025",
+  "title": "ch3: al clickear un paso del roadmap queda un cuadrado naranja tapando el texto y el boton",
+  "description": "HALLAZGO DE RAFAEL EN UAT EN VIVO, 2026-07-28, textual: \\\"en ch3 termina en un cuadrado naranja sobere el texto y no se puede ni leer ni clickear el boton hasta dragear un poco para reproducri solo dar click en step 2\\\".\\n\\n## Repro que dio Rafael\\n\\n1. Entrar a ch3.\\n2. Hacer click en el **paso 2** del roadmap que entrego TASK-021.\\n3. El capitulo termina con un **cuadrado naranja encima del texto**.\\n4. El texto no se puede leer y el boton no se puede clickear.\\n5. **Scrolleando un poco se destraba.**\\n\\nEl paso 5, \\\"scrolleando un poco se destraba\\\", es la pista mas valiosa: apunta a que el salto por click deja el capitulo en un estado intermedio que el proximo frame de scroll corrige. Sospechar del camino de click-to-scroll (`stepToOverallVh`) contra el rAF que scrubea el progreso: probablemente el salto programatico no dispara el recalculo que si dispara el scroll del usuario, y algo queda pintado con el valor de progreso viejo. Investigar tambien si el cuadrado naranja es un elemento del Acto 1 (el stage de Flash muriendo, que es scrubbeado) que quedo con opacidad o transform de otro punto del recorrido, o el long-shadow 45 grados del paso activo del roadmap desbordado.\\n\\nNaranja es paleta Flat UI, que es la del capitulo por la spec 03, asi que es un elemento legitimo de ch3 mal posicionado o mal dimensionado, no un placeholder ni un color de error.\\n\\n**No asumir la causa: reproducirla primero en Chrome headed y medir.** El bug es de LAYOUT y de estado de scroll, y por eso ni la suite ni el reviewer lo vieron: jsdom no hace layout. Es la quinta vez en este proyecto que un defecto real sobrevive a un verde.\\n\\n## Severidad\\n\\nBloqueante de uso. Deja contenido ilegible y un control inalcanzable, que es exactamente el limite que Rafael puso sobre la autoridad estetica de las specs: la estetica la manda la spec, pero si tapa contenido o vuelve algo inalcanzable se arregla igual.\\n\\n## Verificar el rango completo, no solo el paso 2\\n\\nRafael reporto el paso 2 porque es el que probo. **Probar los 8 pasos**, en los dos sentidos (saltos hacia adelante y hacia atras, y saltos de mas de un paso), porque es muy probable que el defecto no sea exclusivo de ese paso.\\n\\n## LISTA BLANCA\\n\\n`src/components/Ch3Roadmap.vue`, `src/components/Chapter3Content.vue`, `src/components/Ch3StoryBeat.vue`, `src/utils/ch3Progress.js`, el bloque de ch3 dentro de `src/styles/`, y `tests/**`.\\n\\nPROHIBIDO TOCAR: `ScrollShell.vue` y `useScrollState.js` (cerrados por TASK-014), `src/phaser/`, `Ch2MiniGame.vue`, `App.vue`, `ContactHUD.vue` y cualquier otro `Chapter{N}Content.vue`.\\n\\nSi el arreglo exigiera tocar el mecanismo del shell, **PARAR Y REPORTAR**. No modificarlo por cuenta propia.\\n\\n## No regresion\\n\\nNo romper nada de lo que TASK-021 entrego y el reviewer ya valido: los 8 pasos clickeables, el caption N/8, la sincronizacion bidireccional con el scroll, la accesibilidad por teclado con foco visible y anuncios, la sensibilidad de ~458px por paso y los 8 viewports, el Acto 1 scrubbeando la muerte del stage de Flash, los 5 beats con su lead visible sin click, y el expansor Seguir leyendo.\\n\\n**Leccion 1 del proyecto, ya costo tres HIGH:** `overflow: hidden` crea scroll container y rompe `position: sticky` y `animation-timeline: scroll()`. Si la tentacion es \\\"recorto el cuadrado naranja con overflow hidden\\\", esa NO es la fix: va `clip`, y encima probablemente el problema sea de estado de scroll, no de recorte.\\n\\n## Verificacion\\n\\nChrome headed por CDP; receta y bloqueadores resueltos en `.planning/LECCIONES-TECNICAS.md` seccion 6. Headless no sirve.\\n\\nEl lock nuevo tiene que reproducir el ESCENARIO (saltar por click a un paso y evaluar el estado resultante), no la existencia del elemento. Si el lock solo puede correr en jsdom, no sirve para este bug: decilo y proponé como se lockea de verdad.",
+  "acceptance_criteria": [
+    "Al saltar por click a cualquiera de los 8 pasos del roadmap, el texto del paso destino queda legible: ningun elemento lo tapa, verificado con getBoundingClientRect y no a ojo.",
+    "El boton del paso destino es clickeable inmediatamente despues del salto, sin necesidad de scrollear para destrabarlo.",
+    "El defecto se reprodujo primero en Chrome headed y se reporta la causa raiz encontrada, no una hipotesis: que elemento es el cuadrado naranja y por que quedaba mal posicionado o dimensionado.",
+    "Se probaron los 8 pasos, en saltos hacia adelante y hacia atras, incluidos saltos de mas de un paso, y se reporta el resultado de cada uno.",
+    "NO REGRESION: los 8 pasos siguen clickeables, el caption N/8 sigue correcto, y la sincronizacion con el scroll real sigue funcionando en ambos sentidos.",
+    "NO REGRESION: el Acto 1 sigue scrubeando la muerte del stage de Flash, los 5 beats siguen mostrando su lead sin click, y el expansor Seguir leyendo sigue funcionando.",
+    "NO REGRESION: la sensibilidad de TASK-021 no cambia; ch3 sigue en 8 viewports y ~458px por paso.",
+    "NO REGRESION de accesibilidad: foco visible y anuncios a lectores de pantalla siguen funcionando tras el salto por click.",
+    "Existe un lock que reproduce el escenario del salto por click y su estado resultante. Si no puede correr en jsdom, se dice explicitamente y se propone como lockearlo de verdad.",
+    "La suite queda en verde."
+  ],
+  "status": "in_progress",
+  "priority": "critical",
+  "labels": [
+    "bug",
+    "ch3",
+    "navegacion",
+    "ux",
+    "hallazgo-rafael",
+    "bloqueante"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-28T17:07:11.083Z",
+  "updated_at": "2026-07-28T17:08:50.749Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

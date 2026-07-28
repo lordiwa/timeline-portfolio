@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T02:50:52.362Z",
+  "generated_at": "2026-07-28T18:07:04.191Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -124,7 +124,7 @@
     {
       "key": "TASK-021",
       "title": "ch3: scroll mas sensible y navegacion como roadmap paso a paso",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "high"
     },
     {
@@ -132,6 +132,36 @@
       "title": "ch6: misma carrera async que TASK-020 en el await import del Phaser.Game",
       "status": "todo",
       "priority": "high"
+    },
+    {
+      "key": "TASK-023",
+      "title": "Sacar el telefono del ContactHUD y del shape de contacto",
+      "status": "in_progress",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-024",
+      "title": "ch3: el stepper va horizontal, arriba de todo, centrado y mas visible",
+      "status": "in_progress",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-025",
+      "title": "ch3: al clickear un paso del roadmap queda un cuadrado naranja tapando el texto y el boton",
+      "status": "in_progress",
+      "priority": "critical"
+    },
+    {
+      "key": "TASK-026",
+      "title": "Corregir la atribucion de las tres tarjetas de la era Flash (ch2)",
+      "status": "in_progress",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-027",
+      "title": "Tests intermitentes por timeout bajo carga multi-agente (ScrollShell, chapter-overlap-ch6)",
+      "status": "todo",
+      "priority": "medium"
     }
   ]
 }

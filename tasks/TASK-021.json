@@ -16,7 +16,7 @@
     "NO REGRESION: los 7 capitulos siguen montando, el minijuego de ch2 conserva su canvas, el audio del dial-up sigue disparandose al entrar a ch1 y el shader de ch4 sigue pintando.",
     "La suite sigue en verde y se agregan locks de la nueva sensibilidad y del roadmap. La progresion se verifica MEDIDA en dos puntos distintos del recorrido, no por la existencia de la animacion."
   ],
-  "status": "todo",
+  "status": "in_progress",
   "priority": "high",
   "labels": [
     "design",
@@ -29,9 +29,15 @@
   "depends_on": [],
   "linked_commits": [],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-28T17:06:29.107Z",
+      "body": "REVIEW DE CIERRE (reviewer independiente, Fable 5, rango cd19950..4de0b3d): **BLOCK**.\n\nTodo lo que TASK-021 pidio sobre ch3 esta bien hecho, bien lockeado y bien medido. Los 12 AC de ch3 pasan, incluido el AC7 estructural: App.vue ya importa CH3_VIEWPORTS y el contract test rechaza cualquier numero literal, o sea que la trampa de paridad quedo cerrada de raiz. Si el rango fuera solo cd19950, seria PASS sin reservas.\n\nLO QUE BLOQUEA (HIGH): la contencion de cascada que declara 4de0b3d es empiricamente FALSA. El reviewer corrio la suite completa 4 veces: 3 corridas consecutivas ROJAS con la misma cascada de 7 tests en tests/components/Ch2MiniGame.test.js. En aislamiento, 3/3 verdes, 14/14. O sea la firma exacta (\"verde aislado, rojo en suite\") que c054d96 dice haber eliminado sigue viva.\n\nMecanica: vi.doMock pierde la carrera del primer import en los 3 intentos, el spec de doble instancia tira su error de infraestructura, y pese al vi.doUnmock() de limpieza el registry del specifier @/phaser/ch2/index.js queda envenenado. Los 6 tests siguientes del archivo mueren con \"[vitest] vi.mock(...) is not returning an object\".\n\nDATO OPERATIVO QUE CAMBIA LA LECTURA: la condicion adversa que lo dispara es otro agente corriendo vitest en paralelo. En este proyecto eso NO es carga extrema excepcional, es la condicion NORMAL. Por eso el AC12 no se cumple de forma reproducible.\n\nLAS DOS PREGUNTAS OBLIGATORIAS SE CONTESTARON BIEN, y a favor del developer:\n1. El sensor SI se pone rojo si se revierte el guard. Dos caminos cubiertos y la senal es causal (spy sobre el constructor de Phaser.Game), no un proxy de timing. Ademas la polaridad de falla es correcta: cuando el harness no intercepta, TIRA ERROR, nunca degrada a verde vacuo. No es decoracion.\n2. El reintento de 3 NO enmascara fallas reales. Discrimina bien: solo reintenta ante mockHit false o timeout de setup. El escenario bajo prueba y las aserciones corren UNA sola vez, fuera del loop. Agotar los 3 intentos tira error, no skip ni pass.\n\nEl problema es un tercero que ninguna de las dos preguntas anticipaba: el harness falla demasiado seguido y ARRASTRA a 6 hermanos.\n\nFIX ESTRUCTURAL SUGERIDO POR EL REVIEWER: sacar el describe de carrera async a su propio archivo de test. El aislamiento por worker de Vitest garantiza que el envenenamiento del registry no cruce archivos, o sea que la contencion pasa a ser estructural en vez de probabilistica. El archivo aislado ya demostro 3/3 verde.\n\nLOW recogidos (no bloquean, se arreglan de paso):\n- tests/utils/ch3Progress.test.js: el comentario de T8b atribuye mal que lockea. T8b lockea la DIVISION en computeCh3Frame, no el valor de ACT2_STEP_VH; el valor lo lockea T8.\n- El developer reporto foco de 2.4px pero la regla :focus-visible de App.vue:280 declara outline 3px. Probable artefacto de escala en la medicion CDP. Documentarlo para que la proxima medicion no \"corrija\" el CSS por error.\n- Chapter3Content.vue: el comentario de roadmapSteps sobredeclara. El array deriva su largo de BEAT_META.length + 3 literales, no de CH3_STEP_COUNT. Riesgo real nulo porque T11 lockea la divergencia.\n- La lista blanca de este ticket dice src/i18n/locales/*.json pero los archivos reales son src/i18n/*.json. El de CLAUDE.md 7.1 esta desactualizado. El diff toco los correctos.\n\nADEMAS, HALLAZGO DE RAFAEL EN UAT EN VIVO, que ningun test vio y que el review tampoco podia ver porque jsdom no hace layout: al hacer click en el paso 2 del roadmap, ch3 termina en un cuadrado naranja encima del texto; no se puede leer ni clickear el boton hasta scrollear un poco. Va como TASK-025 y se arregla en la misma ronda.\n\nVuelve a in_progress. No se cierra hasta que la suite completa este verde de forma reproducible con otro proceso de vitest corriendo en paralelo."
+    }
+  ],
   "created_at": "2026-07-28T02:43:17.817Z",
-  "updated_at": "2026-07-28T02:43:17.817Z",
+  "updated_at": "2026-07-28T17:06:31.561Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

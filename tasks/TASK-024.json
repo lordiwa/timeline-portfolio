@@ -1,0 +1,35 @@
+{
+  "key": "TASK-024",
+  "title": "ch3: el stepper va horizontal, arriba de todo, centrado y mas visible",
+  "description": "PEDIDO DIRECTO DE RAFAEL, 2026-07-28, textual: \\\"el stepper de ch3 porfa horizontal arriba de todo centrado que sea mas visible\\\".\\n\\nEs feedback sobre el roadmap que entrego TASK-021, mirando el sitio en vivo. TASK-021 no se toca ni se reabre: entrego lo que pidio el ticket y la posicion no estaba especificada. Esto es la calibracion sobre lo entregado.\\n\\n## Que cambia\\n\\nTres cosas concretas, todas suyas:\\n\\n1. **Horizontal.** El roadmap de 8 pasos hoy no tiene esa orientacion.\\n2. **Arriba de todo**, no al costado ni abajo.\\n3. **Centrado.**\\n4. **Mas visible.** Es el unico item con margen de interpretacion. Rafael lo mira en vivo y no lo esta encontrando lo suficiente. Subir presencia por contraste, tamano y peso, NO por animacion llamativa: el capitulo es 2013 y la spec 03 manda el lenguaje visual.\\n\\n## Restricciones que NO se negocian\\n\\n**El chasis tiene ocupantes en la zona superior.** El developer de TASK-021 ya encontro y arreglo TRES colisiones geometricas reales contra ContactHUD, LangToggle y GlobalMantra. Mover el stepper arriba y centrado lo mete DE VUELTA en esa zona.\\n\\nAntes de elegir la posicion final: medir con getBoundingClientRect los rects de ContactHUD, LangToggle, GlobalMantra y StickyTimeline en los viewports de prueba, y demostrar cero solape. **La prueba es geometrica, no a ojo.** En este proyecto \\\"se ve bien\\\" ya fallo cuatro veces.\\n\\nOjo tambien con TASK-019, que esta abierto justamente porque esos HUD se superponen al contenido en mobile Y en desktop. No agregar un cuarto elemento al monton sin medir.\\n\\nEl capitulo esta pineado y el stepper tiene que seguir pegado arriba durante todo el recorrido de ch3 sin tapar el contenido del Acto 1 (la muerte del stage de Flash, que es scrubbeada) ni los slides del Acto 2.\\n\\n**Leccion 1 del proyecto, ya costo tres HIGH:** `overflow: hidden` crea scroll container y rompe `position: sticky`. Si un contenedor solo quiere recorte visual, va `clip`.\\n\\n## Lo que se conserva de TASK-021\\n\\nTodo lo demas del roadmap queda como esta y es NO REGRESION:\\n- Los 8 pasos: paso 0 = el Acto 1 entero, pasos 1-7 = los slides del Acto 2.\\n- Clickeable para saltar directo a un paso.\\n- El caption tipo \\\"5/8 THE METHOD\\\".\\n- Sincronizacion con la posicion real de scroll en AMBOS sentidos.\\n- Navegable por teclado con foco visible de 2.4px y saltos anunciados a lectores de pantalla. **La accesibilidad no se degrada al reorientar.** Un rail horizontal cambia el eje de las flechas esperadas: revisar que el manejo de teclado siga siendo coherente.\\n- El lenguaje visual de 2013 de la spec 03: paleta Flat UI, Open Sans, ghost buttons. No puede parecer un componente moderno pegado encima.\\n- Bajo prefers-reduced-motion el capitulo sigue recorrible y el roadmap sigue funcionando.\\n- La sensibilidad de scroll calibrada (~458px por paso, 8 viewports) NO se toca.\\n\\n## LISTA BLANCA\\n\\n`src/components/Chapter3Content.vue`, el subcomponente del roadmap de ch3 creado por TASK-021, `src/utils/ch3Progress.js` **solo si la posicion lo exige y sin cambiar TOTAL_UNITS**, el bloque de ch3 dentro de `src/styles/`, y `tests/**`.\\n\\nPROHIBIDO TOCAR: `ScrollShell.vue` y `useScrollState.js` (cerrados por TASK-014), `src/phaser/`, `Ch2MiniGame.vue`, `ContactHUD.vue`, `App.vue` y cualquier otro `Chapter{N}Content.vue`. Si el stepper choca con un HUD, **el que se mueve es el stepper**, no el HUD: los HUD son globales y tocarlos es TASK-019.\\n\\nSi el chasis no diera lugar arriba sin romper algo, **PARAR Y REPORTAR**. No recortar el alcance en silencio ni resolverlo tapando contenido.\\n\\n## Verificacion\\n\\nChrome headed por CDP; la receta y los bloqueadores resueltos estan en `.planning/LECCIONES-TECNICAS.md` seccion 6. Headless no sirve.\\n\\nUn verde no prueba nada: jsdom no hace layout. Los locks tienen que medir POSICION real, no la existencia del elemento.",
+  "acceptance_criteria": [
+    "El stepper de ch3 se rendea horizontal, anclado arriba y centrado en el eje horizontal, verificado con getBoundingClientRect y no a ojo.",
+    "El stepper tiene mayor presencia visual que en TASK-021, y se reporta que cambio concretamente: contraste, tamano, peso. Sin recurrir a animacion llamativa que rompa el lenguaje 2013 de la spec 03.",
+    "Cero solape geometrico contra ContactHUD, LangToggle, GlobalMantra y StickyTimeline, demostrado con los rects medidos en los viewports de prueba.",
+    "El stepper no tapa el contenido del Acto 1 scrubbeado ni los slides del Acto 2 en ningun punto del recorrido de ch3.",
+    "NO REGRESION: los 8 pasos siguen clickeables, el caption sigue mostrando el paso actual y el total, y la sincronizacion con el scroll sigue funcionando en ambos sentidos.",
+    "NO REGRESION de accesibilidad: sigue navegable por teclado con foco visible y anuncios a lectores de pantalla, y el manejo de flechas es coherente con la nueva orientacion horizontal.",
+    "NO REGRESION: la sensibilidad de scroll de TASK-021 no cambia; ch3 sigue en 8 viewports y ~458px por paso.",
+    "Bajo prefers-reduced-motion el capitulo sigue recorrible y el stepper sigue funcionando.",
+    "La suite queda en verde y los locks nuevos miden POSICION real del stepper, no su mera existencia."
+  ],
+  "status": "in_progress",
+  "priority": "high",
+  "labels": [
+    "design",
+    "ch3",
+    "navegacion",
+    "ux",
+    "pedido-rafael"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-28T17:05:37.662Z",
+  "updated_at": "2026-07-28T17:08:52.994Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
