@@ -42,6 +42,9 @@ import { usePRM } from './composables/usePRM'
 import { useBackgroundMorph } from './composables/useBackgroundMorph'
 import { useAudio } from './composables/useAudio'
 import { seoConfig, buildPersonSchema } from './config/seo'
+// TASK-021: CH3_VIEWPORTS se importa de la fuente de verdad (ver el binding
+// :chapter-viewports abajo) en vez de repetir un literal a mano.
+import { CH3_VIEWPORTS } from './utils/ch3Progress'
 
 const shellRef = ref(null)
 // Function ref con identidad estable: arrow inline `el => { shellRef.value = ... }`
@@ -184,11 +187,12 @@ useHead({
   <SkipLink />
   <StickyAvatar />
   <!-- TASK-009 (retomando TASK-014): ch3 "la muerte de Flash" migra al
-       mecanismo multi-viewport de ScrollShell.vue — 11 = TOTAL_UNITS(10) + 1
-       viewport de "release" (ver la constante CH3_VIEWPORTS-equivalente en
-       Chapter3Content.vue: ACT1_UNITS(3) + ACT2_SLIDE_COUNT(7)). Si esas
-       constantes cambian, actualizar este valor en el mismo commit. -->
-  <ScrollShell :ref="setShellRef" :chapter-viewports="{ 3: 11 }" />
+       mecanismo multi-viewport de ScrollShell.vue. TASK-021: el número ya NO
+       se repite a mano — CH3_VIEWPORTS se importa de @/utils/ch3Progress.js
+       (fuente de verdad: ceil(TOTAL_UNITS) + 1 viewport de "release"), y
+       tests/integration/ch3-viewports-contract.test.js falla si este binding
+       deja de referenciar esa constante. -->
+  <ScrollShell :ref="setShellRef" :chapter-viewports="{ 3: CH3_VIEWPORTS }" />
   <StickyTimeline />
   <LangToggle />
   <ContactHUD />

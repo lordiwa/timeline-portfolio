@@ -12,7 +12,9 @@
   anidado adoptando `.chapter-stage` (utility sticky de ScrollShell.vue,
   documentada junto a `.chapter-section[data-viewports]` en ese archivo) como
   elemento ROOT de este componente, con `App.vue` pasando
-  `:chapter-viewports="{ 3: CH3_VIEWPORTS }"` (ver constante abajo).
+  `:chapter-viewports="{ 3: CH3_VIEWPORTS }"` (constante importada de
+  @/utils/ch3Progress.js, ver TASK-021 más abajo — App.vue ya no repite el
+  número a mano).
 
   CONSECUENCIA ARQUITECTURAL (documentada para quien retome este archivo):
   `.chapter-stage` fija `height:100dvh; overflow:clip; position:sticky` — su
@@ -65,7 +67,26 @@
   expresan sin JS recalculando animation-range por elemento — documentado
   como decisión de alcance, no como omisión, en el hand-off de este ticket.
   PRM: el Acto 1 congela en `--ch3-p:0.4` (mismo criterio que 672ca4a) y NO
-  se adjunta ningún listener de scroll; el Acto 2 fluye normal (ver arriba).
+  se adjunta ningún listener de SCROLL (el Acto 2 fluye normal, ver arriba);
+  SÍ se adjunta un IntersectionObserver liviano (ver `initPRMStepObserver()`)
+  para sincronizar el roadmap con qué parte del flujo está en pantalla —
+  única excepción, ver TASK-021 abajo.
+
+  TASK-021 (pedido directo de Rafael, "scroll más sensible" + "roadmap paso a
+  paso"): dos cambios sobre lo anterior, ninguno toca el guion visual ni el
+  mecanismo pin/rAF/scroll-timeline de arriba.
+  - Sensibilidad: `ACT2_STEP_VH` (@/utils/ch3Progress.js) reemplaza el costo
+    implícito de 1.0 viewport/slide por 0.5 — cada slide del Acto 2 cuesta la
+    mitad de scroll físico. El Acto 1 (cinemática scrubbed, no paginada)
+    queda intacto a propósito — ver el comentario de esa constante para la
+    medición completa. `TOTAL_UNITS`/`CH3_VIEWPORTS` se derivan de ella; el
+    literal de `:chapter-viewports` en App.vue ya no se repite a mano, importa
+    `CH3_VIEWPORTS` directo.
+  - Roadmap: `Ch3Roadmap.vue`, un rail de 8 puntos clickeables (1 Acto 1 + 7
+    slides del Acto 2) gateado por `isCh3Active` (ver más abajo) que muestra
+    el paso actual, cuántos faltan, y permite saltar directo. `currentStep`
+    (ref) es la fuente de verdad de qué punto está activo — la escribe
+    `applyProgress()` en modo pin, o `initPRMStepObserver()` bajo PRM.
 -->
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -75,7 +96,16 @@ import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
 import ProjectCard from './ProjectCard.vue'
 import Ch3StoryBeat from './Ch3StoryBeat.vue'
-import { ACT1_UNITS, ACT2_SLIDE_COUNT, TOTAL_UNITS, clamp, computeCh3Frame } from '@/utils/ch3Progress'
+import Ch3Roadmap from './Ch3Roadmap.vue'
+import {
+  ACT1_UNITS,
+  ACT2_SLIDE_COUNT,
+  ACT2_STEP_VH,
+  TOTAL_UNITS,
+  clamp,
+  computeCh3Frame,
+  stepToOverallVh,
+} from '@/utils/ch3Progress'
 
 const { t } = useI18n()
 
@@ -88,6 +118,20 @@ const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n
 // ── PRM ──────────────────────────────────────────────────────────────────────
 const prm = inject('prm', null)
 const reduced = () => prm?.prefersReduced?.value ?? false
+
+// ── Roadmap (TASK-021) — gate de montaje por capítulo activo ────────────────
+// El position:fixed de Ch3Roadmap.vue viviría en el DOM todo el tiempo (los 7
+// ChapterNContent.vue están SIEMPRE montados, ScrollShell sólo los desplaza
+// con scroll) si no se gatea explícitamente — mismo bug que Chapter4Content.vue
+// ya documenta para su propio position:fixed. `scrollState.activeChapter` (el
+// mismo que usa StickyTimeline.vue para su aria-current) resuelve esto: sólo
+// true mientras ch3 cubre >=60% del viewport (ver useScrollState.js), estable
+// durante TODO el pin (no parpadea entre viewports internos). Fallback ref(3)
+// si algún test monta el componente sin proveer 'scrollState' (mismo patrón
+// que Chapter2Content.vue con su activeChapter).
+const scrollState = inject('scrollState', null)
+const activeChapterRef = scrollState?.activeChapter ?? ref(3)
+const isCh3Active = computed(() => activeChapterRef.value === 3)
 
 // ── Destape de la narrativa (spec §8, defecto 4 de TASK-007) ─────────────────
 // Lead visible sin click = las primeras N oraciones del párrafo, partidas por
@@ -139,11 +183,30 @@ const beats = computed(() =>
 
 const closingLine = computed(() => lastSentence(bioParagraphs.value[4] || ''))
 
-// Presupuesto de progreso (ACT1_UNITS, ACT2_SLIDE_COUNT, TOTAL_UNITS) y la
-// matemática pura del scrub (clamp, computeCh3Frame) viven en
-// @/utils/ch3Progress.js — extraídas para poder testearlas sin DOM/scroll
-// real (ver el comentario de ese archivo, incluye el hallazgo HIGH de esta
-// sesión: continuousSlide sin piso, o el hero queda superpuesto al Acto 1).
+// ── Roadmap (TASK-021) — 8 pasos: 0=Acto 1 completo, 1=hero, 2..6=beats 0..4,
+// 7=cierre. Las etiquetas reutilizan las traducciones que YA existen
+// (kickers de los beats) salvo 3 claves nuevas cortas (ch3.roadmap.act1/hero/
+// close) — ver es.json/en.json. CH3_STEP_COUNT (@/utils/ch3Progress.js) es la
+// única fuente de la cantidad de pasos; este array no la repite a mano.
+const roadmapSteps = computed(() => [
+  { label: t('ch3.roadmap.act1') },
+  { label: t('ch3.roadmap.hero') },
+  ...BEAT_META.map((_, i) => ({ label: t(`ch3.beats.${i}.kicker`) })),
+  { label: t('ch3.roadmap.close') },
+])
+
+// currentStep — índice discreto del roadmap (0..7), actualizado sólo cuando
+// applyProgress() detecta un cambio real (ver computeCh3Frame().currentStep)
+// — evita re-render de Ch3Roadmap.vue en cada frame de rAF cuando el paso
+// activo no cambió.
+const currentStep = ref(0)
+
+// Presupuesto de progreso (ACT1_UNITS, ACT2_SLIDE_COUNT, ACT2_STEP_VH,
+// TOTAL_UNITS) y la matemática pura del scrub (clamp, computeCh3Frame,
+// stepToOverallVh) viven en @/utils/ch3Progress.js — extraídas para poder
+// testearlas sin DOM/scroll real (ver el comentario de ese archivo, incluye
+// el hallazgo HIGH de esta sesión: continuousSlide sin piso, o el hero queda
+// superpuesto al Acto 1).
 
 // ── Refs de DOM ────────────────────────────────────────────────────────────
 const stageRef = ref(null) // root .chapter-stage — TASK-014 contrato punto 2
@@ -218,6 +281,13 @@ function applyProgress(overallVh) {
   if (!NATIVE_SUPPORTED) {
     slideEls.value[0]?.style.setProperty('--ch3-hy', frame.heroLocalP.toFixed(4))
   }
+
+  // Roadmap (TASK-021) — sólo escribe el ref si el paso discreto cambió,
+  // para no forzar un re-render de Ch3Roadmap.vue en cada frame de rAF
+  // (frame.currentStep es estable dentro de la meseta de cada slide).
+  if (frame.currentStep !== currentStep.value) {
+    currentStep.value = frame.currentStep
+  }
 }
 
 function flushProgress() {
@@ -239,11 +309,17 @@ function onShellScroll() {
 // parallax. La animación en sí (--ch3-hy 0→1, spec §7) la corre el
 // compositor nativo vía `scroll(nearest block)` (declarado en el <style>
 // bajo @supports) — esta función NO corre por frame, sólo fija el rango.
+//
+// TASK-021: el margen a cada lado del cruce Acto1→hero (antes 0.5/1.5
+// viewports fijos, asumiendo el costo implícito de 1.0 viewport/slide)
+// ahora se expresa como 0.5×/1.5× ACT2_STEP_VH — con la nueva sensibilidad
+// (0.5) el margen físico se reduce a la mitad (0.25/0.75 viewports), la
+// misma proporción relativa al ritmo de los slides que tenía el original.
 function applyNativeHeroRange() {
   if (!NATIVE_SUPPORTED || !sectionEl) return
   const vh = window.innerHeight || document.documentElement.clientHeight || 1
-  const startPx = Math.max(0, sectionEl.offsetTop + (ACT1_UNITS - 0.5) * vh)
-  const endPx = sectionEl.offsetTop + (ACT1_UNITS + 1.5) * vh
+  const startPx = Math.max(0, sectionEl.offsetTop + (ACT1_UNITS - 0.5 * ACT2_STEP_VH) * vh)
+  const endPx = sectionEl.offsetTop + (ACT1_UNITS + 1.5 * ACT2_STEP_VH) * vh
   for (const el of [heroSkyRef.value, heroHillBackRef.value, heroHillFrontRef.value]) {
     if (!el) continue
     el.style.animationRangeStart = `${startPx}px`
@@ -260,20 +336,54 @@ function onResize() {
   })
 }
 
-// scrollToBeats — CTA del hero ("La historia completa"). Bajo PRM el Acto 2
-// fluye en flujo normal (ver <style> PRM) así que un scrollIntoView real
-// funciona; en el modo pineado no hay un elemento al que "entrar" (todo vive
-// en el mismo frame fijo), así que se salta el scroll del shell directo al
-// inicio de la ventana del beat 0.
-function scrollToBeats() {
+// goToStep — navegación paso a paso (TASK-021 AC#4): usada tanto por el CTA
+// del hero ("La historia completa" → goToStep(2), el primer beat) como por
+// cada punto del roadmap (Ch3Roadmap.vue @navigate). step 0 = Acto 1
+// completo, 1..7 = los 7 slides del Acto 2 (hero, 5 beats, cierre) —
+// stepToOverallVh() en @/utils/ch3Progress.js es la ÚNICA fuente de la
+// conversión paso→progreso físico, para no tener dos fórmulas de scroll
+// target divergiendo con el tiempo.
+//
+// Bajo PRM el Acto 2 fluye en flujo normal (ver <style> PRM) así que un
+// scrollIntoView real funciona; en el modo pineado no hay un elemento al que
+// "entrar" (todo vive en el mismo frame fijo), así que se salta el scroll
+// del shell directo a la posición física que corresponde a ese paso.
+function goToStep(step) {
   if (reduced()) {
-    slideEls.value[1]?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    const target = step <= 0 ? sceneRef.value : slideEls.value[clamp(step - 1, 0, ACT2_SLIDE_COUNT - 1)]
+    target?.scrollIntoView({ behavior: 'auto', block: 'start' })
     return
   }
   if (!shellEl || !sectionEl) return
   const vh = window.innerHeight || document.documentElement.clientHeight || 1
-  const target = sectionEl.offsetTop + (ACT1_UNITS + 1) * vh
+  const target = sectionEl.offsetTop + stepToOverallVh(step) * vh
   shellEl.scrollTo({ top: target, behavior: 'smooth' })
+}
+
+// ── Roadmap bajo PRM (TASK-021 AC#4 + AC#9) ─────────────────────────────────
+// Sin el pin (Acto 2 fluye normal bajo PRM, ver <style>), no hay un
+// `overallVh` continuo que leer — así que currentStep se sincroniza con
+// scroll real vía IntersectionObserver en vez de computeCh3Frame(). Banda
+// angosta al centro del viewport (rootMargin -45%/-45%): el primer elemento
+// (Acto 1 o un slide) que la cruza es "el paso actual" — mismo patrón
+// scrollspy que useScrollState.js usa para activeChapter, aplicado aquí a
+// escala de paso en vez de capítulo. `targets[i]` es exactamente el índice
+// de paso (targets[0]=Acto1=step0, targets[1..7]=slideEls[0..6]=step1..7).
+let stepObserver = null
+function initPRMStepObserver() {
+  if (typeof IntersectionObserver === 'undefined') return
+  const targets = [sceneRef.value, ...slideEls.value].filter(Boolean)
+  stepObserver = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        const idx = targets.indexOf(entry.target)
+        if (idx >= 0) currentStep.value = idx
+      }
+    },
+    { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
+  )
+  targets.forEach((el) => stepObserver.observe(el))
 }
 
 onMounted(() => {
@@ -285,6 +395,7 @@ onMounted(() => {
     // el botón ya perdió el brillo especular, ver fórmulas CSS abajo). El
     // Acto 2 no necesita valores de progreso: fluye completo vía CSS PRM.
     sceneRef.value?.style.setProperty('--ch3-p', '0.4')
+    initPRMStepObserver()
     return
   }
 
@@ -301,6 +412,7 @@ onBeforeUnmount(() => {
   if (resizeRaf) cancelAnimationFrame(resizeRaf)
   if (shellEl) shellEl.removeEventListener('scroll', onShellScroll)
   window.removeEventListener('resize', onResize)
+  stepObserver?.disconnect()
 })
 </script>
 
@@ -375,7 +487,7 @@ onBeforeUnmount(() => {
         <div class="ch3-hero-copy">
           <h2 class="ch3-hero-title">{{ t('ch3.hero.title') }}</h2>
           <p class="ch3-hero-sub">{{ t('ch3.hero.sub') }}</p>
-          <button type="button" class="ch3-ghost-btn" @click="scrollToBeats">{{ t('ch3.hero.cta') }}</button>
+          <button type="button" class="ch3-ghost-btn" @click="goToStep(2)">{{ t('ch3.hero.cta') }}</button>
         </div>
       </div>
 
@@ -412,6 +524,17 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
+
+    <!-- Roadmap paso a paso (TASK-021) — fuera de .ch3-scene a propósito:
+         position:fixed (ver Ch3Roadmap.vue), gateado por isCh3Active para no
+         quedar en el DOM (y por lo tanto visible) mientras otro capítulo está
+         activo. -->
+    <Ch3Roadmap
+      v-if="isCh3Active"
+      :steps="roadmapSteps"
+      :current-index="currentStep"
+      @navigate="goToStep"
+    />
   </div>
 </template>
 

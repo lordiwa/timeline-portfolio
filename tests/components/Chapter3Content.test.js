@@ -27,24 +27,61 @@
 
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { defineComponent, h, ref } from 'vue'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Chapter3Content from '@/components/Chapter3Content.vue'
 import Ch3StoryBeat from '@/components/Ch3StoryBeat.vue'
+import Ch3Roadmap from '@/components/Ch3Roadmap.vue'
+import { CH3_STEP_COUNT, ACT1_UNITS, stepToOverallVh } from '@/utils/ch3Progress'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 vi.mock('@/data/projects', () => ({ projects: [] }))
 
-function mountCh3({ locale = 'es', prefersReduced = false } = {}) {
+function mountCh3({ locale = 'es', prefersReduced = false, activeChapter } = {}) {
   const i18n = createTestI18n({ locale })
+  const provide = { prm: { prefersReduced: { value: prefersReduced } } }
+  // TASK-021: scrollState es opcional — cuando se provee, isCh3Active
+  // (Chapter3Content.vue) lo usa para gatear el montaje de Ch3Roadmap.vue.
+  // Sin proveerlo, el fallback ref(3) del componente asume "activo" (mismo
+  // patrón defensivo que Chapter2Content.vue).
+  if (activeChapter !== undefined) {
+    provide.scrollState = { activeChapter: ref(activeChapter), scrollToChapter: vi.fn() }
+  }
   const wrapper = mount(Chapter3Content, {
     global: {
       plugins: [i18n],
-      provide: { prm: { prefersReduced: { value: prefersReduced } } },
+      provide,
       attachTo: document.body,
     },
   })
   return { wrapper, i18n }
+}
+
+// Harness — envuelve Chapter3Content en <main class="scroll-shell"><section>
+// para que sectionEl/shellEl (Chapter3Content.vue onMounted, vía
+// stageRef.closest('section')/closest('.scroll-shell')) resuelvan a
+// elementos reales, igual que la topología real de ScrollShell.vue. mount()
+// standalone (mountCh3 arriba) SIEMPRE deja sectionEl/shellEl en null (no
+// hay ningún <section> ancestro — ver T1 "no hay ningún <section> anidado"),
+// así que goToStep() nunca llega a shellEl.scrollTo en esos tests. Este
+// harness es el único caso de esta suite que SÍ ejercita esa rama.
+const Harness = defineComponent({
+  render() {
+    return h('main', { class: 'scroll-shell' }, [h('section', {}, [h(Chapter3Content)])])
+  },
+})
+
+function mountHarness({ locale = 'es' } = {}) {
+  const i18n = createTestI18n({ locale })
+  const wrapper = mount(Harness, {
+    global: {
+      plugins: [i18n],
+      provide: { prm: { prefersReduced: { value: false } } },
+      attachTo: document.body,
+    },
+  })
+  return wrapper
 }
 
 const CH3_SOURCE = readFileSync(
@@ -223,6 +260,74 @@ describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2
       // applyProgress() le asigna `.inert` — buscamos el ancestro real.
       const slideEl = btn.element.closest('.ch3-slide')
       expect(slideEl?.inert, `slide del beat ${i} debería ser inert con el Acto 1 en pantalla`).toBe(true)
+    }
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// TASK-021 — roadmap paso a paso (AC#3/AC#4) + gate de montaje por capítulo
+// activo. La matemática pura (currentStep, stepToOverallVh, ACT2_STEP_VH)
+// ya está exhaustivamente testeada en tests/utils/ch3Progress.test.js — acá
+// sólo se verifica el WIRING: que Chapter3Content.vue efectivamente monta/
+// oculta el roadmap según el capítulo activo y que un click en un punto
+// efectivamente llama shellEl.scrollTo con el target físico correcto
+// (dirección 1 de la sincronización bidireccional del AC#4 — la dirección
+// 2, scroll real → roadmap, sólo es verificable con layout real, ver la
+// verificación CDP del hand-off de este ticket, Lección 2 de
+// .planning/LECCIONES-TECNICAS.md: jsdom no hace layout).
+describe('Chapter3Content.vue — TASK-021 roadmap (gate + wiring)', () => {
+  it('T11 el roadmap monta con CH3_STEP_COUNT puntos cuando ch3 es el capítulo activo (o sin scrollState provisto, default)', () => {
+    const { wrapper } = mountCh3()
+    const roadmap = wrapper.findComponent(Ch3Roadmap)
+    expect(roadmap.exists()).toBe(true)
+    expect(roadmap.props('steps').length).toBe(CH3_STEP_COUNT)
+    expect(roadmap.props('currentIndex')).toBe(0) // overallVh=0 al montar → paso 0 (Acto 1)
+  })
+
+  it('T12 REGRESSION LOCK: el roadmap NO monta cuando otro capítulo está activo (evita el bleed de position:fixed documentado en Chapter4Content.vue)', () => {
+    const { wrapper } = mountCh3({ activeChapter: 5 })
+    expect(wrapper.findComponent(Ch3Roadmap).exists()).toBe(false)
+  })
+
+  it('T13 el roadmap vuelve a montar si activeChapter cambia a 3 en caliente (reactividad del gate)', async () => {
+    const i18n = createTestI18n({ locale: 'es' })
+    const activeChapter = ref(1)
+    const wrapper = mount(Chapter3Content, {
+      global: {
+        plugins: [i18n],
+        provide: {
+          prm: { prefersReduced: { value: false } },
+          scrollState: { activeChapter, scrollToChapter: vi.fn() },
+        },
+      },
+    })
+    expect(wrapper.findComponent(Ch3Roadmap).exists()).toBe(false)
+    activeChapter.value = 3
+    await flushPromises()
+    expect(wrapper.findComponent(Ch3Roadmap).exists()).toBe(true)
+  })
+
+  it('T14 click en un punto del roadmap navega: shellEl.scrollTo(target físico de stepToOverallVh(paso)) (AC#4, dirección click→scroll)', async () => {
+    // tests/setup.js ya mockea HTMLElement.prototype.scrollTo (jsdom no lo
+    // implementa) — se limpia antes de este test para aislar sus llamadas de
+    // cualquier otro test previo de la suite.
+    HTMLElement.prototype.scrollTo.mockClear()
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarness()
+      const roadmap = wrapper.findComponent(Ch3Roadmap)
+      const dots = roadmap.findAll('.ch3-roadmap-dot')
+      await dots[4].trigger('click') // paso 4 = beat índice 2 ("el método")
+      expect(HTMLElement.prototype.scrollTo).toHaveBeenCalledTimes(1)
+      const call = HTMLElement.prototype.scrollTo.mock.calls[0][0]
+      expect(call.behavior).toBe('smooth')
+      // sectionEl.offsetTop es 0 en jsdom (sin layout real) — el target es
+      // directamente stepToOverallVh(4) * 800px.
+      expect(call.top).toBeCloseTo(stepToOverallVh(4) * 800, 5)
+      expect(stepToOverallVh(4)).toBeGreaterThan(ACT1_UNITS) // sanity: paso 4 cae en el Acto 2
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
     }
   })
 })
