@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T18:07:04.191Z",
+  "generated_at": "2026-07-28T21:09:55.572Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -159,9 +159,15 @@
     },
     {
       "key": "TASK-027",
-      "title": "Tests intermitentes por timeout bajo carga multi-agente (ScrollShell, chapter-overlap-ch6)",
+      "title": "Tests por timeout bajo carga multi-agente (ScrollShell, chapter-overlap-ch6 T4 ya determinista, ContactHUD T10)",
       "status": "todo",
       "priority": "medium"
+    },
+    {
+      "key": "TASK-028",
+      "title": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test",
+      "status": "todo",
+      "priority": "low"
     }
   ]
 }

@@ -1,0 +1,32 @@
+{
+  "key": "TASK-028",
+  "title": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test",
+  "description": "PUNCH LIST del review independiente de TASK-025 (2026-07-28). Dos hallazgos LOW que el reviewer separo del ticket a proposito para no estirarle el alcance a un fix critico que Rafael estaba sufriendo. Se ticketean en vez de quedar como nota suelta: en este proyecto un punch-list sin ticket es un defecto sin rastro.\\n\\n## 1. El caption dice 1/8 mientras la pantalla ya muestra el hero\\n\\n`src/utils/ch3Progress.js:190-192`. Tras el fix de TASK-025, la capa del Acto 1 termina de apagarse en `ACT1_FADE_END` = 2.84, pero `currentStep` sigue devolviendo 0 (caption \\\"1/8\\\", nodo del roadmap marcado como Acto 1) hasta `overallVh` = 3.0.\\n\\nO sea: en la banda [2.84, 3.0) el usuario ve el hero pleno con el Acto 1 ya invisible, y el roadmap le dice que sigue en el Acto 1. Son ~16vh de desajuste.\\n\\nSolo se nota **scrolleando a mano** — el aterrizaje por click no lo pisa, porque `stepToOverallVh(1)` cae en 3.0 exacto, que ya esta fuera de la banda. Por eso ni Rafael ni la verificacion CDP de TASK-025 lo vieron.\\n\\nEs **parcialmente preexistente**, pero se volvio mas notorio con TASK-025 justamente porque ahora el Acto 1 se apaga antes. La direccion propuesta por el reviewer es alinear el umbral de `currentStep` con `ACT1_FADE_END` en vez de con `ACT1_UNITS`, para que la fuente de verdad del caption y la del apagado sean la misma.\\n\\n**CUIDADO, esto toca el AC#5 de TASK-025** (\\\"el caption N/8 sigue correcto\\\") y la sincronizacion bidireccional con el scroll, que ya estan validados por un review. No romperlos: lo que se corrige es DONDE cambia el caption, no que cambie.\\n\\n## 2. El umbral 0.05 de pointer-events esta duplicado como literal\\n\\n`src/components/Chapter3Content.vue:261` decide `pointerEvents` con `frame.act1LayerOp > 0.05`, y el lock de `tests/utils/ch3Progress.test.js` usa el mismo 0.05 como literal propio. El comentario del test lo declara, pero **si alguien cambia el umbral en el componente, el lock no se entera y sigue verde afirmando un contrato que ya no existe**.\\n\\nEse mismo umbral gobierna ademas el `inert` de los slides del Acto 2 (`Chapter3Content.vue:283`), asi que hay tres copias del mismo numero.\\n\\nExtraerlo como constante exportada desde `ch3Progress.js` (donde ya viven `SLIDE_PLATEAU`, `SLIDE_FALLOFF`, `ACT1_FADE_END` y `P1_COMPLETE_VH` por la misma razon) y consumirla desde el componente y el test. Ahi el acoplamiento se vuelve real y un cambio de umbral rompe el lock, que es el punto.\\n\\n## Por que van juntos\\n\\nLos dos son la misma clase de deuda: **una segunda fuente de verdad para un valor que ya tiene duenio**. TASK-025 establecio que `ch3Progress.js` es la unica fuente de los valores que `applyProgress()` escribe; estos dos son los residuos que quedaron fuera de esa consolidacion.\\n\\n## LISTA BLANCA\\n\\n`src/utils/ch3Progress.js`, `src/components/Chapter3Content.vue`, `src/components/Ch3Roadmap.vue`, y `tests/**`.\\n\\nPROHIBIDO TOCAR: `ScrollShell.vue` y `useScrollState.js` (cerrados por TASK-014), `src/phaser/`, `App.vue`, y cualquier `Chapter{N}Content.vue` que no sea el 3.\\n\\n## Verificacion\\n\\nEl punto 1 es un defecto de estado de scroll, asi que jsdom no alcanza para probarlo de verdad: verificar en Chrome headed por CDP scrolleando a mano por la banda [2.84, 3.0) y leyendo el caption real. Receta y bloqueadores resueltos en `.planning/LECCIONES-TECNICAS.md` seccion 6.\\n\\nEl punto 2 si es lockeable en jsdom.\\n\\n## Precedencia\\n\\nNo bloquea a nadie, pero **conviene hacerlo ANTES de TASK-024** (stepper horizontal del roadmap), porque TASK-024 toca `Ch3Roadmap.vue` y el caption, y hacerlo despues significaria tocar dos veces el mismo codigo.",
+  "acceptance_criteria": [
+    "El caption del roadmap y el nodo activo cambian de paso alineados con el apagado real de la capa del Acto 1: en la banda [2.84, 3.0) el roadmap NO dice que el usuario sigue en el Acto 1 mientras el hero se ve pleno.",
+    "La correccion del caption se verifico en Chrome headed por CDP scrolleando a mano por esa banda y leyendo el caption renderizado, no solo por matematica en jsdom.",
+    "NO REGRESION del AC#5 de TASK-025: los 8 pasos siguen clickeables, el caption N/8 sigue siendo correcto en el resto del recorrido, y la sincronizacion bidireccional con el scroll real sigue funcionando en ambos sentidos.",
+    "NO REGRESION: el salto por click a los 8 pasos sigue dejando el texto legible y el boton clickeable, sin reintroducir el cuadrado naranja que arreglo TASK-025.",
+    "El umbral 0.05 de pointer-events/inert vive en UNA sola constante exportada desde ch3Progress.js y la consumen el componente y el test; no quedan literales sueltos.",
+    "Existe un lock que se pone ROJO si el umbral cambia en un lado y no en el otro, y se reporta la evidencia de haberlo plantado en rojo.",
+    "La suite queda en verde."
+  ],
+  "status": "todo",
+  "priority": "low",
+  "labels": [
+    "ch3",
+    "punch-list",
+    "deuda-tecnica",
+    "ux"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-28T21:09:55.572Z",
+  "updated_at": "2026-07-28T21:09:55.572Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
