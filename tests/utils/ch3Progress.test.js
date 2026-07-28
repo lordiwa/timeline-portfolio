@@ -27,6 +27,7 @@ import {
   TOTAL_UNITS,
   CH3_VIEWPORTS,
   CH3_STEP_COUNT,
+  SLIDE_PLATEAU,
   slideWeight,
   computeCh3Frame,
   stepToOverallVh,
@@ -61,11 +62,54 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
   })
 
   // ── Acto 1 layer: se apaga apenas termina, no queda pegado en opacity 1 ──
-  it('T5 la capa del Acto 1 se apaga por completo 0.5 unidades después de terminar su scrub', () => {
+  it('T5 la capa del Acto 1 ya está totalmente apagada para cuando el hero alcanza su propia meseta', () => {
+    // TASK-025 (reemplaza la versión anterior de este test, que afirmaba
+    // `act1LayerOp === 1` en overallVh===ACT1_UNITS — esa aserción ERA el bug:
+    // ver el hallazgo HIGH junto a act1LayerOp en ch3Progress.js). El hero
+    // (slide 0) alcanza weight:1 en overallVh = ACT1_UNITS - SLIDE_PLATEAU*ACT2_STEP_VH;
+    // la capa del Acto 1 debe llegar a 0 A MÁS TARDAR ahí.
+    const heroPlateauStart = ACT1_UNITS - SLIDE_PLATEAU * ACT2_STEP_VH
+    const atHeroPlateauStart = computeCh3Frame(heroPlateauStart)
+    expect(atHeroPlateauStart.act1LayerOp).toBe(0)
+    expect(atHeroPlateauStart.slides[0].opacity).toBeCloseTo(1, 9)
+
+    // Sigue en 0 más adelante (nunca vuelve a subir).
     const atEnd = computeCh3Frame(ACT1_UNITS)
     const halfUnitLater = computeCh3Frame(ACT1_UNITS + 0.5)
-    expect(atEnd.act1LayerOp).toBe(1)
+    expect(atEnd.act1LayerOp).toBe(0)
     expect(halfUnitLater.act1LayerOp).toBe(0)
+
+    // Antes de esa franja de crossfade, la capa del Acto 1 sigue intacta a opacity 1.
+    expect(computeCh3Frame(ACT1_UNITS / 2).act1LayerOp).toBe(1)
+  })
+
+  // ── TASK-025 — regresión del "cuadrado naranja": el salto por click a un
+  // paso NUNCA debe dejar la capa del Acto 1 (opaca, pointer-events:auto en
+  // el componente real) superpuesta a un slide del Acto 2 ya asentado.
+  // Esto SÍ es lockeable en jsdom pese a que el bug se manifestó como un
+  // defecto visual/de click: no depende de layout ni de la cascada CSS real
+  // — computeCh3Frame() es la ÚNICA fuente de los valores que
+  // Chapter3Content.vue escribe como opacity/pointer-events inline
+  // (ver applyProgress() — pointer-events se decide con el mismo umbral 0.05
+  // usado abajo), así que la función pura reproduce el estado resultante
+  // completo del escenario "click en un paso" sin necesitar DOM real.
+  // Plantado en rojo manualmente (revirtiendo act1LayerOp a la fórmula vieja
+  // en memoria: `clamp(1 - Math.max(0, overallVh - ACT1_UNITS) / 0.5, 0, 1)`)
+  // antes de escribir el fix — con esa fórmula, T-orange1 fallaba con
+  // act1LayerOp=1 y T-orange2 con act1LayerOp=1 en los 4 pasos que tocan la
+  // franja crítica.
+  it('T-orange1 el paso "hero" (stepToOverallVh(1), el click exacto que reportó Rafael) no deja la capa del Acto 1 encima', () => {
+    const frame = computeCh3Frame(stepToOverallVh(1))
+    expect(frame.act1LayerOp).toBeLessThanOrEqual(0.05) // mismo umbral pointer-events de Chapter3Content.vue
+    expect(frame.slides[0].opacity).toBe(1) // el hero sigue asentado, no regresiona AC#5/AC#6
+  })
+
+  it('T-orange2 ningún paso del roadmap (0..7) aterriza con la capa del Acto 1 tapando su slide asentado', () => {
+    for (let s = 0; s < CH3_STEP_COUNT; s++) {
+      const frame = computeCh3Frame(stepToOverallVh(s))
+      if (s === 0) continue // step 0 = el Acto 1 ES el contenido, no hay "tapado"
+      expect(frame.act1LayerOp, `paso ${s}`).toBeLessThanOrEqual(0.05)
+    }
   })
 
   // ── Cierre: el progreso no crece sin límite pasado el último slide ──────

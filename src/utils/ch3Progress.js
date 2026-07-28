@@ -61,15 +61,24 @@ export function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v))
 }
 
+// SLIDE_PLATEAU/SLIDE_FALLOFF — umbrales de slideWeight(), nombrados (TASK-025)
+// porque ahora tienen un SEGUNDO caller: act1LayerOp en computeCh3Frame()
+// necesita saber EXACTAMENTE en qué overallVh el hero (slide 0) alcanza su
+// propia meseta (weight 1) para poder terminar de apagar la capa del Acto 1
+// antes de ese punto, no un número mágico independiente que pueda desalinearse
+// con éste si algún día cambia (ver el comentario HIGH junto a act1LayerOp).
+export const SLIDE_PLATEAU = 0.32
+export const SLIDE_FALLOFF = 0.82
+
 // slideWeight(diff) — peso 0..1 de un slide dado su distancia (en unidades)
 // al progreso continuo actual. Meseta plana [-0.32, 0.32] (el slide se lee
 // completo sin transición en curso) y crossfade lineal hasta 0 en ±0.82 —
 // dos slides adyacentes se solapan brevemente durante la transición.
 export function slideWeight(diff) {
   const d = Math.abs(diff)
-  if (d <= 0.32) return 1
-  if (d >= 0.82) return 0
-  return 1 - (d - 0.32) / 0.5
+  if (d <= SLIDE_PLATEAU) return 1
+  if (d >= SLIDE_FALLOFF) return 0
+  return 1 - (d - SLIDE_PLATEAU) / (SLIDE_FALLOFF - SLIDE_PLATEAU)
 }
 
 // computeCh3Frame(overallVh) — dado el progreso total (0..TOTAL_UNITS) de la
@@ -91,14 +100,37 @@ export function slideWeight(diff) {
 export function computeCh3Frame(overallVh) {
   const p1 = clamp(overallVh / ACT1_UNITS, 0, 1)
 
-  // La capa entera del Acto 1 se apaga (opacity 1→0) en las primeras 0.5
-  // unidades DESPUÉS de terminar su propio scrub — sin esto, dos de sus
-  // sub-capas (.ch3-act1-white, .ch3-act1-accent) quedan en opacity:1 para
-  // siempre (sus propias fórmulas CSS nunca vuelven a 0) y el bloque naranja
-  // HTML5 queda pintado encima de todos los slides del Acto 2 (mismo hallazgo
-  // HIGH, confirmado con screenshot real: "02 REBUILD" con fondo naranja
-  // sólido en vez del acento azul de su tono).
-  const act1LayerOp = clamp(1 - Math.max(0, overallVh - ACT1_UNITS) / 0.5, 0, 1)
+  // HIGH (TASK-025, hallazgo de verificación CDP real — "cuadrado naranja"
+  // reportado por Rafael en UAT, 2026-07-28): esta capa se apagaba recién a
+  // partir de overallVh === ACT1_UNITS ("DESPUÉS de terminar su propio
+  // scrub", ver el comentario que reemplaza éste). Pero el hero (slide 0)
+  // alcanza su propia meseta de opacity:1 ANTES de eso — su crossfade
+  // arranca en diff=-SLIDE_PLATEAU, o sea en overallVh = ACT1_UNITS -
+  // SLIDE_PLATEAU*ACT2_STEP_VH (2.84 con los valores actuales), 0.16
+  // unidades ANTES de ACT1_UNITS. Con el fade-out del Acto 1 arrancando recién
+  // en ACT1_UNITS, hay una franja real (confirmada con CDP: click en el paso
+  // "hero" del roadmap, que aterriza exactamente en overallVh===ACT1_UNITS
+  // vía stepToOverallVh(1)) donde el hero YA está a opacity:1 (botón "The
+  // full story" listo) y la capa del Acto 1 SIGUE a opacity:1 y pointer-
+  // events:auto — el frame final del Acto 1 (blanqueo + acento HTML5 naranja
+  // opaco, tramo p1 0.85-1.00) queda pintado ENCIMA del hero, tapando su
+  // texto y bloqueando su botón. `document.elementFromPoint()` en el centro
+  // del botón del hero devolvía `.ch3-act1-white`, no el botón. Un scroll
+  // continuo pasa por ese overallVh en un frame y casi no se nota; un salto
+  // programático (click) puede quedarse aterrizado EXACTAMENTE ahí — por eso
+  // "scrolleando un poco se destraba" (cualquier avance mueve overallVh lejos
+  // del punto exacto).
+  //
+  // FIX: la capa del Acto 1 termina de apagarse (opacity:0) PARA CUANDO el
+  // hero alcanza su propia meseta, no después — arranca la misma duración de
+  // fade de antes (0.5 unidades) pero terminando en ese punto en vez de
+  // empezar ahí. La franja final del blanqueo/acento pasa a hacer crossfade
+  // CON el hero (una disolución) en vez de sostenerse opaca y cortarse de
+  // golpe — más allá de ese punto, sigue las mismas fórmulas CSS de p1 de
+  // siempre, simplemente ya no son visibles porque la capa entera lo es.
+  const ACT1_FADE_DURATION = 0.5
+  const act1FadeEnd = ACT1_UNITS - SLIDE_PLATEAU * ACT2_STEP_VH
+  const act1LayerOp = clamp(1 - Math.max(0, overallVh - (act1FadeEnd - ACT1_FADE_DURATION)) / ACT1_FADE_DURATION, 0, 1)
 
   // Sin piso: si el piso fuera 0, continuousSlide quedaría en 0 (peso pleno
   // del hero) durante TODO el Acto 1 — ver el HIGH de arriba. El techo sí se
