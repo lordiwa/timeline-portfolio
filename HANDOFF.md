@@ -1,6 +1,6 @@
 # HANDOFF.md — snapshot de retoma
 
-**Actualizado:** 2026-07-28, pausa por corte de internet
+**Actualizado:** 2026-07-28, historial reescrito y repo sincronizado
 **Sesión:** `20260727T013114Z-db71132a`
 
 > Fuente de verdad completa: `state/sessions/20260727T013114Z-db71132a/session.json`.
@@ -8,7 +8,8 @@
 
 ## AL RETOMAR: en este orden
 
-1. `git log --oneline -10` y `git status`. Deben verse **36 commits sin push**.
+1. `git log --oneline -10` y `git status`. El repo ya está **sincronizado con
+   `origin/master`** (push del 2026-07-28, HEAD `5899c13`).
 2. **Leer "Lo que quedó a medias" acá abajo antes de despachar nada.**
 3. Levantar el sitio: `npm run dev` → http://localhost:5173/
 4. Retomar TASK-025, que es lo único abierto a medio camino.
@@ -61,27 +62,35 @@ click deja el capítulo en un estado que el siguiente frame de scroll corrige.
 
 ---
 
-## PENDIENTE CRÍTICO ANTES DEL PRIMER PUSH
+## RESUELTO: rewrite de historial + primer push (2026-07-28)
 
-**No pushear sin hacer esto primero.** Rafael lo autorizó explícitamente el
-2026-07-28.
+**HECHO.** El repo `github.com/lordiwa/timeline-portfolio` es público y el
+teléfono de Rafael vivía en el historial desde `b55dd30`, nunca pusheado.
 
-El repo `github.com/lordiwa/timeline-portfolio` es **público** (verificado). El
-teléfono de Rafael está en el historial desde `b55dd30` y **nunca se pusheó**.
-Sacarlo de los archivos no lo saca del historial.
+Se reescribieron los **19 commits** de `b55dd30~1..HEAD` con
+`git filter-branch --index-filter`, sustituyendo la cadena por `[REDACTADO]` en
+los dos únicos archivos afectados: `src/data/contact.js` y
+`.planning/GUION-TEXTOS-FINAL.md`. Se verificó que **no** aparecía en `tasks/`
+ni en `state/` (esos la describen por patrón, correcto).
 
-El número cargado difería del real en **un solo dígito**, o sea trivialmente
-enumerable. "Estaba mal igual" no es mitigación.
+Verificaciones hechas antes de pushear:
 
-**Decisión de Rafael: reescribir el historial y recién ahí pushear.** Como nada
-está pusheado, el rewrite es gratis y sin riesgo.
+- `git log master -S"<cadena>"` → **vacío**: no sobrevive en ningún commit.
+- `git diff backup-pre-rewrite-20260728 master` → **vacío**: el árbol de HEAD
+  quedó byte-idéntico, la reescritura solo tocó estados intermedios.
+- `origin/master` seguía siendo ancestro → push **fast-forward**, sin `--force`.
 
-**Costo conocido y aceptado:** cambia el hash de ~20 commits, así que los
-`linked_commits` de los tickets quedan apuntando a hashes muertos. Es
-contabilidad interna; reconstruirla después del rewrite.
+Push: `9a8c5c4..5899c13`, 37 commits.
 
-**Hacerlo con CERO agentes corriendo.** Reescribir bajo agentes activos les
-corrompe el trabajo.
+**Contabilidad reconstruida:** los `linked_commits` de TASK-010 (2), TASK-017 (1)
+y TASK-020 (2) apuntaban a hashes muertos y se remapearon por asunto+orden. Los
+17 linked_commits de los 6 tickets con commits resuelven y son alcanzables desde
+`master`, verificado con `merge-base --is-ancestor`.
+
+**Queda una rama local `backup-pre-rewrite-20260728`** apuntando al historial
+viejo — todavía contiene el número. Es local y nunca se pushea; borrarla cuando
+Rafael dé el ok (`git branch -D` + `git reflog expire --expire=now --all` +
+`git gc --prune=now`) para sacar el PII también del clon local.
 
 ---
 
@@ -138,7 +147,7 @@ antes de despachar nada.**
 
 - Cierre automático en review verde: **SÍ**
 - Consolidación automática: **SÍ**
-- Push a remoto: **SÍ, pero solo después del rewrite de historial**
+- Push a remoto: **SÍ** (el rewrite previo ya se hizo el 2026-07-28)
 - Delegación de UAT: **NO**
 - Version bump: **NO**
 
