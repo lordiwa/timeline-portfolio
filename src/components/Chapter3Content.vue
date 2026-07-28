@@ -186,8 +186,18 @@ const closingLine = computed(() => lastSentence(bioParagraphs.value[4] || ''))
 // ── Roadmap (TASK-021) — 8 pasos: 0=Acto 1 completo, 1=hero, 2..6=beats 0..4,
 // 7=cierre. Las etiquetas reutilizan las traducciones que YA existen
 // (kickers de los beats) salvo 3 claves nuevas cortas (ch3.roadmap.act1/hero/
-// close) — ver es.json/en.json. CH3_STEP_COUNT (@/utils/ch3Progress.js) es la
-// única fuente de la cantidad de pasos; este array no la repite a mano.
+// close) — ver es.json/en.json.
+//
+// Corrección de comentario (LOW, review de cierre de TASK-021): el texto
+// anterior decía que este array no repetía la cantidad de pasos "a mano"
+// porque la derivaba de CH3_STEP_COUNT. Eso sobredeclara: el largo real sale
+// de 3 entradas `{ label }` literales (act1, hero, close) más el spread de
+// `BEAT_META.map(...)`, NO de una lectura directa de CH3_STEP_COUNT — así
+// que si BEAT_META cambia de longitud sin que nadie toque este array, sí
+// podrían divergir en teoría. El riesgo real es nulo porque T11
+// (tests/utils/ch3Progress.test.js) lockea esa divergencia por otro camino
+// (currentStep vs. CH3_STEP_COUNT); no se cambia el código, sólo el
+// comentario.
 const roadmapSteps = computed(() => [
   { label: t('ch3.roadmap.act1') },
   { label: t('ch3.roadmap.hero') },

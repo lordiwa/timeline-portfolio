@@ -25,6 +25,16 @@ function getBlock(source, chapter) {
 
 describe('focus-ring.test.js — universal focus ring preserved + Pitfall 7 (A11Y-03)', () => {
   // T1: App.vue mantiene el :focus-visible universal con outline 3px solid + offset 3px
+  //
+  // Nota TASK-021 (review de cierre, LOW): el hand-off de ese ticket reportó
+  // haber MEDIDO en Chrome real vía CDP un foco visible de 2.4px sobre el
+  // roadmap de ch3, y lo leyó como posible drift respecto de esta regla. No
+  // lo es: esta regla (:focus-visible de App.vue:280, verificada por T1 acá
+  // abajo) sigue declarando outline 3px solid y sigue siendo el mecanismo
+  // correcto — el 2.4px es un artefacto de la escala de esa medición CDP
+  // puntual (viewport/DPR de esa captura), no un valor real distinto de 3px.
+  // Se documenta acá para que una próxima medición no "corrija" este CSS por
+  // error asumiendo que 2.4px es el valor vigente.
   it('T1: App.vue :focus-visible preserves outline 3px solid var(--c-focus) and outline-offset 3px', () => {
     // Verificar que el bloque :focus-visible existe y tiene las dos declaraciones críticas
     expect(APP_VUE).toMatch(/:focus-visible\s*\{[\s\S]*?outline:\s*3px\s*solid\s*var\(--c-focus\)[\s\S]*?\}/)

@@ -103,11 +103,15 @@ describe('ch3Progress — TASK-021: sensibilidad + roadmap', () => {
     expect(atHero.slides[0].opacity).toBe(1)
     expect(atHero.slides[1].opacity).toBe(0)
     // Punto 2: overallVh = ACT1_UNITS + ACT2_STEP_VH (UN solo "paso" físico
-    // después) — el beat 0 debe estar asentado y el hero debe haberse ido.
-    // Con el 1.0 implícito viejo este mismo overallVh dejaría el hero a
-    // mitad de camino (slideWeight(1)=0 exactamente en el borde, pero un
-    // paso completo de 1.0 nunca "aterriza" en el vecino con sólo 0.5 de
-    // recorrido) — este test es el que falla si ACT2_STEP_VH vuelve a 1.
+    // después, sea cual sea el valor de ACT2_STEP_VH) — el beat 0 debe estar
+    // asentado y el hero debe haberse ido. Corrección de comentario (LOW,
+    // review de cierre de TASK-021): este test es INVARIANTE al valor de
+    // ACT2_STEP_VH — usa la constante, no un número hardcodeado, así que
+    // "aterriza" siempre en el vecino sin importar cuánto valga el paso. Lo
+    // que T8b lockea de verdad es la DIVISIÓN física por slide dentro de
+    // computeCh3Frame (offset = ACT1_UNITS + n * ACT2_STEP_VH, no un 1.0
+    // fijo por slide); que ACT2_STEP_VH sea < 1 (más sensible que el 1.0
+    // implícito viejo) ya lo lockea T8, arriba.
     const oneStepLater = computeCh3Frame(ACT1_UNITS + ACT2_STEP_VH)
     expect(oneStepLater.slides[0].opacity).toBe(0)
     expect(oneStepLater.slides[1].opacity).toBe(1)
