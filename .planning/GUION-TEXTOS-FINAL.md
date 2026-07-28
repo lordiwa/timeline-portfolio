@@ -186,7 +186,7 @@ primer trabajo remoto y primer contacto con Scrum.
 
 ```
 Email:    srparca@gmail.com
-Teléfono: [REDACTADO]
+Teléfono: [REDACTADO — Rafael pidió el 2026-07-28 sacarlo del sitio; TASK-023]
 Ubicación: Quito, Ecuador
 LinkedIn: https://www.linkedin.com/in/rmatovelle/
 GitHub:   https://github.com/lordiwa
