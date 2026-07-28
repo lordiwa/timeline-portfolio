@@ -33,32 +33,29 @@ minutos dos cosas que ni la suite ni un reviewer independiente habían visto.
 
 ---
 
-## Lo que quedó a medias — TASK-025, leer completo
+## TASK-025 cerrado — la causa raíz, para que no se pierda
 
-El developer del **cuadrado naranja de ch3** fue **detenido a mitad**, justo
-cuando iba a commitear. Su último mensaje decía que tenía todo verde, pero
-**no alcanzó a correr su checklist de pre-entrega ni a reportar la causa raíz**.
+El "cuadrado naranja" que reportó Rafael era la **capa del Acto 1**
+(`.ch3-act1-white` + `.ch3-act1-accent`) quedándose en `opacity:1` **y
+`pointer-events:auto`** encima del hero: su fade arrancaba en `overallVh ===
+ACT1_UNITS` (3) mientras el hero ya estaba pleno desde 2.84, y
+`stepToOverallVh(1)` aterriza **exactamente** en 3. Por eso scrollear un poco lo
+destrababa — cualquier avance saca a `overallVh` del punto exacto.
 
-Su trabajo está preservado en `4caa7b2` (89 inserciones sobre
-`src/utils/ch3Progress.js` y `tests/utils/ch3Progress.test.js`). Es un commit de
-preservación, **no es una entrega**.
+**Segunda causa que nadie había visto**, y que apareció sólo porque el dispatch
+pidió verificar el riesgo: apagar la capa en 2.84 dejaba el clímax del Acto 1 sin
+terminar de renderizarse. Como `opacity` es multiplicativo, un padre que se apaga
+anula al hijo, y **la muerte del stage de Flash nunca superaba ~9% de intensidad
+visual**. Se estaba viendo casi apagada desde siempre.
 
-**Falta, y sin esto no se cierra:**
-- Qué era el cuadrado naranja concretamente. Nadie lo reportó todavía.
-- Verificar los 8 pasos del roadmap, adelante y atrás.
-- La medición geométrica en Chrome headed.
-- **TASK-024 entero**, que iba después y ni se empezó.
+Entregado en 3 commits (`7ca7d8a` WIP heredado + `79e2d47` + `de34b73`), con
+review independiente en PASS y 32 mediciones CDP sobre los 8 pasos en 4
+secuencias.
 
-**Al retomar:** verificar ese diff contra los AC de TASK-025, correr la suite, y
-decidir si se completa sobre eso o se descarta y se redespacha limpio.
-
-### El bug, en palabras de Rafael
-
-> "en ch3 termina en un cuadrado naranja sobere el texto y no se puede ni leer ni
-> clickear el boton hasta dragear un poco para reproducri solo dar click en step 2"
-
-La pista más valiosa es que **scrolleando un poco se destraba**: el salto por
-click deja el capítulo en un estado que el siguiente frame de scroll corrige.
+**Lección de método:** el bug lo encontró Rafael usando el sitio 10 minutos, y
+sobrevivió a la suite completa Y a un reviewer independiente. Y el hallazgo del
+9% apareció porque el dispatch listó riesgos concretos a verificar en vez de
+pedir "verificá que ande".
 
 ---
 
@@ -98,8 +95,9 @@ Rafael dé el ok (`git branch -D` + `git reflog expire --expire=now --all` +
 
 | Ticket | Qué | Estado |
 |---|---|---|
-| TASK-025 | Cuadrado naranja de ch3 | **in_progress, WIP en `4caa7b2`** — crítico, Rafael lo sufre |
-| TASK-024 | Stepper horizontal, arriba, centrado, más visible | in_progress, **sin empezar** |
+| TASK-025 | Cuadrado naranja de ch3 | **CERRADO** 2026-07-28, review PASS (`7ca7d8a` + `79e2d47` + `de34b73`) |
+| TASK-028 | Caption ch3 desalineado + umbral 0.05 duplicado | todo, low — **hacerlo ANTES de TASK-024**, tocan los mismos archivos |
+| TASK-024 | Stepper horizontal, arriba, centrado, más visible | in_progress, **sin empezar** — es lo próximo |
 | TASK-021 | ch3 scroll sensible + roadmap | in_progress — el HIGH ya se arregló en `c8fd6a7`, **falta re-review** |
 | TASK-023 | Sacar el teléfono | in_progress — código listo, **falta re-review**; los 2 HIGH ya se cerraron |
 | TASK-026 | Tarjetas era Flash | in_progress — **falta review** |

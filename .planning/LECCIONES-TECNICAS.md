@@ -74,6 +74,18 @@ Dos bloqueadores encontrados el 2026-07-27, **no los redescubras**:
 - La **cinemática ch2→ch3** ("la muerte de Flash", ~5.9 s) se dispara en cualquier salto
   directo a un capítulo posterior y tapa la pantalla. Se saltea con `Escape`, sin efecto
   secundario.
+- **Tercer bloqueador, encontrado el 2026-07-28 en TASK-025.** Con muchas ventanas de Chrome
+  abiertas (le pasó con ~50), Windows le niega `SetForegroundWindow` al proceso de
+  automatización por su restricción de foreground-lock. La página queda en
+  `visibilityState: hidden` y **los `Input.dispatchMouseEvent` sintéticos no llegan al DOM
+  en absoluto** — confirmado con un listener en fase de captura que no recibía nada. Bloquea
+  incluso el BootScreen, o sea el arnés no arranca. Se resuelve **sin depender del z-order
+  real** con dos llamadas CDP: `Page.setWebLifecycleState({state:'active'})` +
+  `Emulation.setFocusEmulationEnabled({enabled:true})`.
+
+  Vale la pena entender el síntoma: no es que el click "no haga efecto", es que el evento
+  **no existe**. Si un día un arnés de verificación parece colgado en el BootScreen sin
+  ningún error, es esto y no un bug del sitio.
 
 ## 7. La estética la manda la spec; el límite es la navegación
 

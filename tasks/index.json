@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T21:09:55.572Z",
+  "generated_at": "2026-07-28T22:49:14.533Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -148,7 +148,7 @@
     {
       "key": "TASK-025",
       "title": "ch3: al clickear un paso del roadmap queda un cuadrado naranja tapando el texto y el boton",
-      "status": "in_progress",
+      "status": "done",
       "priority": "critical"
     },
     {

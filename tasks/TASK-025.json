@@ -14,7 +14,7 @@
     "Existe un lock que reproduce el escenario del salto por click y su estado resultante. Si no puede correr en jsdom, se dice explicitamente y se propone como lockearlo de verdad.",
     "La suite queda en verde."
   ],
-  "status": "in_progress",
+  "status": "done",
   "priority": "critical",
   "labels": [
     "bug",
@@ -26,11 +26,21 @@
   ],
   "assignee": null,
   "depends_on": [],
-  "linked_commits": [],
+  "linked_commits": [
+    "7ca7d8a38de3c81e2f7aa1fa83cbce875a4bb95e",
+    "79e2d47",
+    "de34b73"
+  ],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-28T22:49:14.533Z",
+      "body": "CERRADO con review independiente en PASS (Fable 5, contexto fresco) y su condicion cumplida.\n\n## Causa raiz, doble\n\n1. El \"cuadrado naranja\" era la capa del Acto 1 (`.ch3-act1-white` + `.ch3-act1-accent`, el blanqueo y el acento HTML5 del tramo p 0.85-1.00) quedandose en `opacity:1` Y `pointer-events:auto` encima del hero. Su fade arrancaba en `overallVh === ACT1_UNITS` (3) pero el hero alcanza su meseta antes, en `ACT1_UNITS - SLIDE_PLATEAU*ACT2_STEP_VH` = 2.84. Y `stepToOverallVh(1)` aterriza EXACTAMENTE en 3, dentro de esa franja. De ahi que scrollear un poco lo destrabara: cualquier avance saca a overallVh del punto exacto. Confirmado por CDP: `elementFromPoint()` sobre el centro del boton del hero devolvia `DIV.ch3-act1-white` en vez del `BUTTON`.\n\n2. SEGUNDA CAUSA, que el WIP no habia visto y aparecio al verificar el riesgo R1 del dispatch: apagar la capa en 2.84 dejaba el climax del Acto 1 sin terminar de renderizarse. Como `opacity` es multiplicativo, un padre que se apaga anula al hijo sin importar su opacity local, y la intensidad compuesta del blanqueo/acento nunca superaba ~9%. O sea, la muerte del stage de Flash se estaba viendo casi apagada y nadie lo habia notado. Corregido comprimiendo el scrub local con `P1_COMPLETE_VH`, derivada de las mismas constantes.\n\nEl reviewer re-derivo ambas causas por su cuenta en vez de darlas por buenas, y confirmo que el 9.3% es correcto.\n\n## Verificacion\n\nChrome headed por CDP, 4 secuencias completas de los 8 pasos: forward 0-7, backward 7-0, multi-jump adelante (0,6,1,7,3) y atras (7,1,6,0,4). 32 mediciones con `getBoundingClientRect` + `elementFromPoint`: texto legible y boton clickeable en el 100% de los casos, `act1LayerOp` en 0 y `pointer-events` en none en los 8 aterrizajes.\n\nPRM verificado sin regresion: `applyProgress` ni siquiera corre bajo `prefers-reduced-motion` (early return en onMounted) y el CSS fuerza flujo normal, asi que las cajas no se intersectan. Medido con rects reales.\n\nAC#7 intacto: `ACT1_UNITS`, `ACT2_STEP_VH`, `TOTAL_UNITS` y `CH3_VIEWPORTS` sin tocar; ch3 sigue en 8 viewports y ~458px por paso. El scrub del Acto 1 pasa de 3 a 2.34 unidades (~234vh), todavia POR ENCIMA de los ~220vh que pedia la spec 03 seccion 3.\n\n## Condicion del review, cumplida\n\nEl developer habia dejado en punch-list un hit-test invisible: las dos capas decorativas no tenian `pointer-events:none`, asi que seguian siendo hit-testeables con opacity 0 y bloqueaban seleccionar el texto del titulo del Acto 1. Su argumento de impacto era razonable pero caia dentro de la letra del AC#1. Se arreglo dentro de este ticket en vez de diferirlo. Medicion antes/despues: `elementFromPoint` sobre el centro de `.ch3-act1-title` pasaba de devolver `DIV.ch3-act1-accent` a devolver `H1.ch3-act1-title`.\n\nMas dos LOW: falta de guard `P1_COMPLETE_VH > 0` (el divisor podia cruzar a 0 y colapsar el scrub EN SILENCIO), y un comentario de test que sobredeclaraba su propia evidencia de rojo (decia 4 pasos cuando matematicamente solo puede fallar 1, y el expect aborta en el primero).\n\n## Locks\n\nT-orange1/2/3 en `tests/utils/ch3Progress.test.js`. Corren en jsdom y eso es legitimo acá: `computeCh3Frame()` es funcion pura de `overallVh` y es la UNICA fuente de los valores que `applyProgress()` escribe como opacity/pointer-events inline, asi que el escenario del salto por click se reproduce sin layout. Al ser pura y sin memoria, un mismo test cubre adelante y atras. El reviewer verifico su poder discriminante por matematica propia, no por el dicho del developer: con la formula vieja T-orange1 y T-orange2 fallan, y con el divisor viejo falla T-orange3.\n\n## Suite\n\n642 passed, 3 todo, 1 failed. El unico rojo es `chapter-overlap-ch6 > T4`, ajeno a este diff (ese mount stubbea todos los Chapter*Content salvo ch6, `ch3Progress.js` ni se carga) y ya ticketeado en TASK-027, donde ademas se registro el dato nuevo de que fallo 3/3 incluida una corrida aislada, o sea puede haber degradado a determinista.\n\n## Diferido con ticket, no como nota suelta\n\nTASK-028: el caption del roadmap dice 1/8 durante ~16vh mientras el hero ya se ve pleno, y el umbral 0.05 de pointer-events esta duplicado como literal en tres lugares. Conviene hacerlo antes de TASK-024, que toca los mismos archivos.\n\n## Nota de proceso\n\nLa entrega acumula 3 commits: `7ca7d8a` era un WIP de preservacion de una sesion anterior que nunca paso por review, asi que se reviso el rango acumulado y no solo lo nuevo.\n\nEl bug lo encontro Rafael usando el sitio, y sobrevivio a la suite completa Y a un reviewer independiente. Sexta confirmacion del patron: jsdom no hace layout. El UAT humano no es opcional en este proyecto."
+    }
+  ],
   "created_at": "2026-07-28T17:07:11.083Z",
-  "updated_at": "2026-07-28T17:08:50.749Z",
+  "updated_at": "2026-07-28T22:49:14.533Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

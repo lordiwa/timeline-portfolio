@@ -42,6 +42,12 @@
       "type": "task",
       "ref": "tasks/TASK-020.json",
       "label": "El minijuego de ch2 corre un Phaser.Game permanente desde la carga de la pagina"
+    },
+    {
+      "id": "task-025",
+      "type": "task",
+      "ref": "tasks/TASK-025.json",
+      "label": "ch3: al clickear un paso del roadmap queda un cuadrado naranja tapando el texto y el boton"
     }
   ],
   "edges": []
