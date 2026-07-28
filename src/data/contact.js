@@ -4,13 +4,13 @@
 // NO localStorage, NO query-string. Compromiso: si Rafael cambia un URL, requiere
 // commit + redeploy. Aceptable para portafolio estático.
 // TASK-013: valores finales de Rafael (.planning/GUION-TEXTOS-FINAL.md PARTE 3).
-// phone/location son campos NUEVOS (no existían en el shape D3-10 original) —
-// decisión explícita de Rafael de mostrar el teléfono en un HUD siempre visible
-// pese al riesgo de scraping; ver hand-off de TASK-013 para la discusión completa.
+// location es campo NUEVO (no existía en el shape D3-10 original).
+// TASK-023: se eliminó el campo phone — pedido directo de Rafael 2026-07-28
+// ("sacalo"), ver hand-off de TASK-023. El número que estaba cargado además
+// era incorrecto; no se reemplaza por el correcto en un repo público indexable.
 
 export const contact = {
   email: 'srparca@gmail.com',
-  phone: '[REDACTADO]',
   location: 'Quito, Ecuador',
   linkedinUrl: 'https://www.linkedin.com/in/rmatovelle/',
   githubUrl: 'https://github.com/lordiwa',

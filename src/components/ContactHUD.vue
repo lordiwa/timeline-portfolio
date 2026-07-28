@@ -13,12 +13,13 @@
 // Si contact.email === '' (CONTENT-CHECKLIST §3 no rellenado aún), el icon se renderea
 // con aria-disabled='true' y sin href — defensive (D3-10 verbatim).
 //
-// TASK-013: phone + location son campos NUEVOS del shape (contact.js). phone
-// se renderea como anchor tel: (mismo patrón mailto: del email — decisión
-// explícita de Rafael de exponerlo en un HUD siempre visible, ver hand-off
-// TASK-013). location NO es un link (no hay URL/acción): se renderea como
-// <span> no interactivo con el mismo tratamiento visual .contact-icon, texto
-// vía :title + aria-label (mismo defensive pattern: campo vacío → no renderea).
+// TASK-013: location es campo NUEVO del shape (contact.js). NO es un link
+// (no hay URL/acción): se renderea como <span> no interactivo con el mismo
+// tratamiento visual .contact-icon, texto vía :title + aria-label (mismo
+// defensive pattern: campo vacío → no renderea).
+//
+// TASK-023: se eliminó el anchor tel: (phone) — pedido directo de Rafael
+// 2026-07-28, ver hand-off de TASK-023.
 
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -29,10 +30,7 @@ const { t } = useI18n()
 const emailDisabled = computed(() => !contact.email || contact.email === '')
 const linkedinDisabled = computed(() => !contact.linkedinUrl || contact.linkedinUrl === '')
 const githubDisabled = computed(() => !contact.githubUrl || contact.githubUrl === '')
-const phoneDisabled = computed(() => !contact.phone || contact.phone === '')
 const locationDisabled = computed(() => !contact.location || contact.location === '')
-// tel: href sanitizado — conserva "+" inicial, descarta espacios/separadores visuales.
-const phoneHref = computed(() => `tel:${(contact.phone || '').replace(/[^+\d]/g, '')}`)
 </script>
 
 <template>
@@ -49,22 +47,6 @@ const phoneHref = computed(() => `tel:${(contact.phone || '').replace(/[^+\d]/g,
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="2" y="4" width="20" height="16" rx="2" />
         <path d="m22 7-10 5L2 7" />
-      </svg>
-    </a>
-
-    <!-- Phone anchor: tel: nativo (TASK-013 — campo nuevo, decisión Rafael pese
-         a riesgo de scraping en HUD siempre visible, ver hand-off). Mismo
-         defensive pattern que email: contact.phone='' → NO renderea. -->
-    <a
-      v-if="!phoneDisabled"
-      :href="phoneHref"
-      class="contact-icon"
-      :aria-label="t('contact.phoneAria')"
-      :title="contact.phone"
-    >
-      <!-- SVG teléfono inline — sin libs externas -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
       </svg>
     </a>
 
