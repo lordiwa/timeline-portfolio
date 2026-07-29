@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T09:45:15.214Z",
+  "generated_at": "2026-07-29T15:34:52.281Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -64,7 +64,7 @@
     {
       "key": "TASK-011",
       "title": "ch5 pandemia: LA TRANSMISION, broadcast anclado en VivoEnVivo",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "critical"
     },
     {
@@ -124,7 +124,7 @@
     {
       "key": "TASK-021",
       "title": "ch3: scroll mas sensible y navegacion como roadmap paso a paso",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
     },
     {
