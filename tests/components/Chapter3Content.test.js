@@ -262,6 +262,23 @@ describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2
       expect(slideEl?.inert, `slide del beat ${i} debería ser inert con el Acto 1 en pantalla`).toBe(true)
     }
   })
+
+  // ── T15: REGRESSION LOCK (TASK-028) — el umbral 0.05 de pointer-events/
+  // inert vive en UNA sola constante importada, no como literal repetido.
+  // Plantado en rojo: revirtiendo en memoria `frame.act1LayerOp >
+  // INERT_OPACITY_THRESHOLD` (applyProgress(), línea del pointer-events de
+  // la capa del Acto 1) a `frame.act1LayerOp > 0.05` sin tocar el otro uso
+  // (`slide.opacity <= INERT_OPACITY_THRESHOLD`), la aserción
+  // `not.toMatch(/0\.05/)` fallaba porque el literal volvía a aparecer en
+  // el source — exactamente la clase de drift que este lock existe para
+  // atrapar (un cambio del umbral en un lado que el otro no ve). Restaurado
+  // antes de commitear.
+  it('T15 REGRESSION LOCK: el umbral 0.05 no queda como literal — ambos usos (pointer-events de la capa del Acto 1, inert de los slides) importan INERT_OPACITY_THRESHOLD desde ch3Progress.js', () => {
+    expect(CH3_SOURCE).toMatch(
+      /import\s*\{[^}]*INERT_OPACITY_THRESHOLD[^}]*\}\s*from\s*['"]@\/utils\/ch3Progress['"]/
+    )
+    expect(CH3_SOURCE).not.toMatch(/0\.05/)
+  })
 })
 
 // ─────────────────────────────────────────────────────────────────────────

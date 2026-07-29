@@ -137,6 +137,27 @@ export const ACT1_FADE_START = ACT1_FADE_END - ACT1_FADE_DURATION // 2.34
 // un clímax que sí se vio, no una versión a medio renderizar.
 export const P1_COMPLETE_VH = ACT1_FADE_START // 2.34
 
+// INERT_OPACITY_THRESHOLD (TASK-028, punch-list de cierre de TASK-025):
+// umbral de opacidad por debajo del cual applyProgress() (Chapter3Content.vue)
+// trata un elemento como "prácticamente invisible" y le retira la
+// interacción — antes vivía como el literal 0.05 repetido a mano en TRES
+// lugares (pointer-events de la capa del Acto 1, `inert` de los slides del
+// Acto 2, y el lock de este archivo), sin ninguno enterarse si otro cambiaba.
+//
+// UNA sola constante, no dos, aunque gobierne dos contratos DOM distintos
+// (pointer-events de `.ch3-act1-pin`, capa decorativa; `inert` de los
+// slides del Acto 2, contenido real): no son dos umbrales que hoy
+// coinciden por casualidad, son la MISMA regla de accesibilidad aplicada a
+// dos capas ("por debajo de este opacity, no interceptar click/foco")
+// — exactamente el motivo por el que el `inert` de los slides usa ese
+// mismo número en vez de uno propio (ver el comentario de
+// applyProgress() en Chapter3Content.vue). Si algún día una capa necesita
+// un umbral distinto de la otra, eso es una decisión de diseño nueva que
+// se toma explícitamente separando las constantes en ese momento — hoy
+// unificarlas es lo que hace que un cambio futuro del número se propague
+// solo, en vez de requerir acordarse de tocar dos lugares.
+export const INERT_OPACITY_THRESHOLD = 0.05
+
 // HIGH (hallazgo de verificación CDP real en esta sesión, no detectable por
 // ningún test de jsdom): la primera versión de `continuousSlide` clampeaba
 // el PISO en 0 (`clamp(overallVh - ACT1_UNITS, 0, ACT2_SLIDE_COUNT - 1)`).
@@ -182,12 +203,29 @@ export function computeCh3Frame(overallVh) {
   const heroLocalP = clamp(continuousSlide, 0, 1)
 
   // currentStep — índice discreto 0..CH3_STEP_COUNT-1 para el roadmap
-  // (AC#3/AC#4 TASK-021): 0 mientras el Acto 1 no terminó (overallVh <
-  // ACT1_UNITS); de ahí en más, 1 + el slide de Acto 2 más cercano
-  // (Math.round de continuousSlide, MISMO umbral de 0.5 que separa el peso
-  // pleno de un slide del siguiente en slideWeight — no es un criterio
-  // nuevo, es el que ya gobierna qué slide se ve "asentado" en pantalla).
-  const currentStep = overallVh < ACT1_UNITS
+  // (AC#3/AC#4 TASK-021): 0 mientras la capa del Acto 1 sigue efectivamente
+  // visible (overallVh < ACT1_FADE_END); de ahí en más, 1 + el slide de
+  // Acto 2 más cercano (Math.round de continuousSlide, MISMO umbral de 0.5
+  // que separa el peso pleno de un slide del siguiente en slideWeight — no
+  // es un criterio nuevo, es el que ya gobierna qué slide se ve "asentado"
+  // en pantalla).
+  //
+  // TASK-028 (punch-list de cierre de TASK-025): antes este umbral
+  // comparaba contra ACT1_UNITS (3), pero act1LayerOp (arriba) ya apaga la
+  // capa entera en ACT1_FADE_END (2.84) — 0.16 unidades / ~16vh ANTES. En
+  // esa banda [2.84, 3.0) el hero ya se veía pleno (capa del Acto 1
+  // invisible, pointer-events:none) pero currentStep seguía en 0, así que
+  // el caption del roadmap decía "1/8" y el nodo activo marcaba el Acto 1
+  // mientras la pantalla ya mostraba el Acto 2. Sólo se notaba scrolleando
+  // a mano: el aterrizaje por click no lo pisaba porque stepToOverallVh(1)
+  // cae en overallVh===ACT1_UNITS(3) exacto, ya fuera de la banda — motivo
+  // por el que ni la verificación CDP de TASK-025 ni el uso normal lo
+  // vieron. Comparar contra ACT1_FADE_END (la MISMA constante que decide el
+  // apagado de la capa, no un segundo número independiente) hace que
+  // caption y apagado compartan una única fuente de verdad: no pueden
+  // volver a desalinearse salvo que ACT1_FADE_END mismo cambie, y ahí ambos
+  // se mueven juntos.
+  const currentStep = overallVh < ACT1_FADE_END
     ? 0
     : 1 + clamp(Math.round(continuousSlide), 0, ACT2_SLIDE_COUNT - 1)
 

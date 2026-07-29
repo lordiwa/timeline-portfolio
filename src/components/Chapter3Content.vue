@@ -102,6 +102,7 @@ import {
   ACT2_SLIDE_COUNT,
   ACT2_STEP_VH,
   TOTAL_UNITS,
+  INERT_OPACITY_THRESHOLD,
   clamp,
   computeCh3Frame,
   stepToOverallVh,
@@ -258,7 +259,7 @@ function applyProgress(overallVh) {
   // encima de todos los slides del Acto 2 para siempre).
   if (act1LayerRef.value) {
     act1LayerRef.value.style.opacity = frame.act1LayerOp.toFixed(3)
-    act1LayerRef.value.style.pointerEvents = frame.act1LayerOp > 0.05 ? 'auto' : 'none'
+    act1LayerRef.value.style.pointerEvents = frame.act1LayerOp > INERT_OPACITY_THRESHOLD ? 'auto' : 'none'
   }
 
   // Acto 2 — un slide por índice (0=hero .. 6=cierre), opacity+translateY
@@ -271,16 +272,18 @@ function applyProgress(overallVh) {
   // ProjectCard en slides a opacity:0 (foco sin ninguna indicación visible,
   // WCAG 2.4.3/2.4.7; Enter podía togglear un acordeón invisible). `inert`
   // saca el subtree del tab order Y de la accessibility tree a la vez, con
-  // el MISMO umbral que ya gobierna pointer-events — un solo booleano, dos
-  // efectos. Elección deliberada sobre `visibility: hidden`: `inert` no
-  // toca layout/pintado (el crossfade sigue siendo opacity+transform puro,
-  // sin repintar) y, a diferencia de `visibility: hidden`, NO saca el texto
-  // del innerText — el AC#1 (leads de los 5 beats sin click) sigue
-  // cumpliéndose para slides fuera de foco.
+  // el MISMO umbral (INERT_OPACITY_THRESHOLD, TASK-028 — antes un literal
+  // numérico propio de este bloque, ver el comentario de esa constante en
+  // ch3Progress.js) que ya gobierna pointer-events más arriba — un solo
+  // booleano, dos efectos. Elección deliberada sobre `visibility: hidden`:
+  // `inert` no toca layout/pintado (el crossfade sigue siendo
+  // opacity+transform puro, sin repintar) y, a diferencia de `visibility:
+  // hidden`, NO saca el texto del innerText — el AC#1 (leads de los 5 beats
+  // sin click) sigue cumpliéndose para slides fuera de foco.
   frame.slides.forEach((slide, i) => {
     const el = slideEls.value[i]
     if (!el) return
-    const isInert = slide.opacity <= 0.05
+    const isInert = slide.opacity <= INERT_OPACITY_THRESHOLD
     el.style.opacity = slide.opacity.toFixed(3)
     el.style.transform = `translateY(${slide.translateYpx.toFixed(1)}px)`
     el.style.pointerEvents = isInert ? 'none' : 'auto'

@@ -31,6 +31,7 @@ import {
   ACT1_FADE_START,
   ACT1_FADE_END,
   P1_COMPLETE_VH,
+  INERT_OPACITY_THRESHOLD,
   slideWeight,
   computeCh3Frame,
   stepToOverallVh,
@@ -99,10 +100,12 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
   // Esto SÍ es lockeable en jsdom pese a que el bug se manifestó como un
   // defecto visual/de click: no depende de layout ni de la cascada CSS real
   // — computeCh3Frame() es la ÚNICA fuente de los valores que
-  // Chapter3Content.vue escribe como opacity/pointer-events inline
-  // (ver applyProgress() — pointer-events se decide con el mismo umbral 0.05
-  // usado abajo), así que la función pura reproduce el estado resultante
-  // completo del escenario "click en un paso" sin necesitar DOM real.
+  // Chapter3Content.vue escribe como opacity/pointer-events inline (ver
+  // applyProgress() — pointer-events se decide con INERT_OPACITY_THRESHOLD,
+  // TASK-028, la misma constante importada abajo en vez de un literal
+  // propio de este archivo), así que la función pura reproduce el estado
+  // resultante completo del escenario "click en un paso" sin necesitar DOM
+  // real.
   // Plantado en rojo manualmente (revirtiendo act1LayerOp a la fórmula vieja
   // en memoria: `clamp(1 - Math.max(0, overallVh - ACT1_UNITS) / 0.5, 0, 1)`)
   // antes de escribir el fix — con esa fórmula, T-orange1 fallaba con
@@ -119,7 +122,7 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
   // la descripción de qué falló exactamente al plantar el rojo.
   it('T-orange1 el paso "hero" (stepToOverallVh(1), el click exacto que reportó Rafael) no deja la capa del Acto 1 encima', () => {
     const frame = computeCh3Frame(stepToOverallVh(1))
-    expect(frame.act1LayerOp).toBeLessThanOrEqual(0.05) // mismo umbral pointer-events de Chapter3Content.vue
+    expect(frame.act1LayerOp).toBeLessThanOrEqual(INERT_OPACITY_THRESHOLD) // mismo umbral pointer-events de Chapter3Content.vue
     expect(frame.slides[0].opacity).toBe(1) // el hero sigue asentado, no regresiona AC#5/AC#6
   })
 
@@ -127,7 +130,7 @@ describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 
     for (let s = 0; s < CH3_STEP_COUNT; s++) {
       const frame = computeCh3Frame(stepToOverallVh(s))
       if (s === 0) continue // step 0 = el Acto 1 ES el contenido, no hay "tapado"
-      expect(frame.act1LayerOp, `paso ${s}`).toBeLessThanOrEqual(0.05)
+      expect(frame.act1LayerOp, `paso ${s}`).toBeLessThanOrEqual(INERT_OPACITY_THRESHOLD)
     }
   })
 
@@ -250,5 +253,42 @@ describe('ch3Progress — TASK-021: sensibilidad + roadmap', () => {
   it('T13 stepToOverallVh clampea fuera de rango [0, CH3_STEP_COUNT-1]', () => {
     expect(stepToOverallVh(-3)).toBe(stepToOverallVh(0))
     expect(stepToOverallVh(999)).toBe(stepToOverallVh(CH3_STEP_COUNT - 1))
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// TASK-028 (punch-list de cierre de TASK-025) — el caption del roadmap y el
+// apagado real de la capa del Acto 1 comparten fuente de verdad
+// (ACT1_FADE_END), no ACT1_UNITS. La verificación VISUAL completa (qué dice
+// el caption RENDERIZADO scrolleando a mano por la banda) sólo es posible en
+// Chrome headed por CDP (jsdom no hace layout ni scroll real — ver
+// .planning/LECCIONES-TECNICAS.md §2/§6); esto lockea la matemática pura que
+// esa verificación depende de que sea correcta.
+//
+// Rojo/verde plantado manualmente: revirtiendo `overallVh < ACT1_FADE_END`
+// a `overallVh < ACT1_UNITS` en memoria antes de escribir este bloque, T16
+// fallaba con currentStep=0 en las tres muestras de la banda (esperaba 1) —
+// exactamente el bug del punto 1 del ticket ("el caption dice 1/8 mientras
+// la pantalla ya muestra el hero").
+// ─────────────────────────────────────────────────────────────────────────
+describe('ch3Progress — TASK-028: caption alineado con el apagado real de la capa del Acto 1', () => {
+  it('T16 en la banda [ACT1_FADE_END, ACT1_UNITS) currentStep ya vale 1 (hero) y la capa del Acto 1 ya está apagada', () => {
+    const atFadeEnd = computeCh3Frame(ACT1_FADE_END)
+    expect(atFadeEnd.act1LayerOp).toBe(0)
+    expect(atFadeEnd.currentStep).toBe(1)
+
+    const midBand = computeCh3Frame((ACT1_FADE_END + ACT1_UNITS) / 2)
+    expect(midBand.act1LayerOp).toBe(0)
+    expect(midBand.currentStep).toBe(1)
+
+    const justBeforeUnits = computeCh3Frame(ACT1_UNITS - 0.001)
+    expect(justBeforeUnits.act1LayerOp).toBe(0)
+    expect(justBeforeUnits.currentStep).toBe(1)
+  })
+
+  it('T17 justo ANTES de ACT1_FADE_END, con la capa del Acto 1 todavía visible, currentStep sigue en 0', () => {
+    const justBefore = computeCh3Frame(ACT1_FADE_END - 0.001)
+    expect(justBefore.act1LayerOp).toBeGreaterThan(0)
+    expect(justBefore.currentStep).toBe(0)
   })
 })
