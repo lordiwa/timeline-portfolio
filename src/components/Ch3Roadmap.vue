@@ -252,7 +252,23 @@ function onListKeydown(e) {
 }
 
 /* TASK-024 AC#2 "más visible" — tamaño 32px→40px, borde 2px→3px, peso
-   700→800: presencia por tamaño y peso, no por movimiento nuevo. */
+   700→800: presencia por tamaño y peso, no por movimiento nuevo.
+ *
+ * TASK-024 ronda 3 de review — font-size en ruta de "texto grande" WCAG:
+ * `font-size: 1.2rem` (19.2px) ≥ 18.66px (el umbral real de "grande" para
+ * peso 800/bold — WCAG define "grande" como ≥18pt regular O ≥14pt bold;
+ * 14pt = 18.66px), así que el umbral de contraste baja de 4.5:1 a 3:1 —
+ * el número del dot activo (`--c-focus` sobre blanco, 4.301:1, ver la
+ * regla `.is-current` más abajo) pasa CÓMODO sin tocar la paleta 2013. Un
+ * numeral más grande también sirve directo al AC#2 ("más visible") y
+ * "numerales gigantes" es lenguaje 2013 puro (spec 03 §5, los mismos
+ * numerales 01..05 de los beats). Entra de sobra en el círculo de 40px
+ * (dígito único, ~11px de ancho a este tamaño, contra ~34px de interior
+ * tras el borde de 3px) — verificado sin desborde con CDP real. La rama
+ * compacta (30px de dot) usa el MISMO valor — ver esa regla más abajo —
+ * porque el umbral de "grande" no cambia con el tamaño del dot; si sólo
+ * una rama subiera el font-size, la otra quedaría en 4.301 contra 4.5
+ * (texto chico) en vez de contra 3 (texto grande). */
 .ch3-roadmap-dot {
   width: 40px;
   height: 40px;
@@ -263,7 +279,7 @@ function onListKeydown(e) {
   color: var(--ch3-text-2, var(--c-fg));
   font-family: var(--font-body);
   font-weight: 800;
-  font-size: 0.82rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,23 +298,20 @@ function onListKeydown(e) {
   color: var(--c-surface);
 }
 
-/* TASK-024 ronda 2 de review (MEDIUM, contraste): el número del dot activo
- * es blanco sobre el fondo del estado — con `--c-accent` (#3498db) medía
- * 3.15:1 (preexistente de TASK-021; AC#2 "más visible" de este ticket lo
- * agrandó, lo cual ayuda pero no cierra el número). `--c-focus` (#2980b9,
- * YA en la paleta 2013 de la spec — es el hover de los ghost buttons, spec
- * 03 §4) sube el contraste a 4.301:1 (calculado con la fórmula de
- * luminancia relativa de WCAG, no aproximado) — mejora real y queda dentro
- * de la paleta sin inventar un tono nuevo, pero SIGUE sin alcanzar el 4.5:1
- * que exige AA para texto chico (bold no ayuda: el umbral de "texto grande"
- * de WCAG es 18pt/14pt-bold en PUNTOS, muy por encima del 0.82rem/13px de
- * este numeral). Ningún color de la paleta 2013 de acento azul llega a
- * 4.5:1 sobre --c-surface sin dejar de leerse como "azul" (--c-fg/--ch3-
- * text-2 sí llegan, pero son grises/marinos oscuros — cambiar a esos
- * perdería la distinción visual "activo=azul" que sí lee bien contra los
- * estados done/pendiente). Reportado tal cual en el hand-off de este
- * ticket para ticketear el resto (4.301 -> 4.5) en vez de forzar un cambio
- * de paleta no autorizado por la spec. */
+/* TASK-024 ronda 2 de review (MEDIUM, contraste), CERRADO en ronda 3: el
+ * número del dot activo es blanco sobre el fondo del estado — con
+ * `--c-accent` (#3498db) medía 3.15:1 (preexistente de TASK-021). `--c-focus`
+ * (#2980b9, YA en la paleta 2013 de la spec — es el hover de los ghost
+ * buttons, spec 03 §4) sube el contraste a 4.301:1 (fórmula de luminancia
+ * relativa de WCAG, verificado también en navegador — no estimado). En
+ * ronda 2 ese número seguía bajo el 4.5:1 de la ruta "texto chico". Ronda 3
+ * adopta la ruta de "texto grande" en vez de perseguir un color fuera de
+ * paleta: `.ch3-roadmap-dot` subió su `font-size` a 1.2rem (19.2px) — por
+ * encima del umbral real de "grande" para peso 800/bold (14pt = 18.66px),
+ * así que el umbral de contraste que aplica es 3:1, no 4.5:1, y 4.301
+ * pasa cómodo. Ver el comentario de `.ch3-roadmap-dot` (font-size) para el
+ * resto del razonamiento, incluida la rama compacta (mismo font-size, por
+ * el mismo motivo). */
 .ch3-roadmap-dot.is-current {
   background: var(--c-focus);
   border-color: var(--c-focus);
@@ -375,19 +388,22 @@ function onListKeydown(e) {
  * normales apenas bajas) NO estaba cubierta: el rail quedaba en tamaño
  * completo (~84-94px de alto) mientras Chapter3Content.vue tampoco
  * reservaba espacio (ver ese archivo) — el contenido de los slides se
- * solapaba con el rail. Sacar el gate de `orientation:landscape` (el
- * problema real es de ALTO absoluto, no de aspecto) y subir el umbral a
- * 767px (simétrico con el breakpoint de ANCHO de esta misma regla) cierra
- * la banda: un primer intento a 700px dejaba un hueco sin cubrir (medido
- * con CDP real: 720/740/760 seguían con solape — recién a partir de 780px
- * el layout SIN compactar deja de solaparse solo). 767px cubre con margen
- * todo el rango medido como roto (hasta 760) y no toca el rango ya
- * verificado sano (780+, y el propio 1366x768 de la suite de viewports de
- * prueba). Este umbral tiene que moverse JUNTO con el de
- * Chapter3Content.vue (el mismo bloque de media query
- * `.ch3-slide`/`.ch3-act1-decor`) — el 74px de reserva ahí asume el alto
- * COMPACTO de este rail (66px), no el completo; si sólo uno de los dos
- * archivos sube el umbral, vuelven a desalinearse. */
+ * solapaba con el rail. Sacar el gate de `orientation:landscape` y subir
+ * el umbral a 767px (simétrico con el breakpoint de ANCHO de esta misma
+ * regla) cierra la banda.
+ *
+ * TASK-024 ronda 3 de review (HIGH, en Chapter3Content.vue): este umbral
+ * de TAMAÑO del rail (767px) es DISTINTO del umbral de COMPACTACIÓN de
+ * contenido de Chapter3Content.vue (bajado a 620px en esa ronda — la
+ * compactación agresiva de tipografía no debe aplicar en todo 500-767, sólo
+ * donde hace falta de verdad). Lo que SÍ tiene que seguir acoplado 1:1 con
+ * este umbral (767px) es la RESERVA de clearance (`padding-top` + `align-
+ * items/justify-content:flex-start` en `.ch3-slide`/`.ch3-act1-decor`),
+ * que cubre el mismo 767px que este bloque — el rail está compacto (66px)
+ * en TODO ese rango, así que el 74px de reserva (66px + 8px) tiene que
+ * reservarse en todo ese rango también, no sólo bajo el umbral de
+ * compactación. Lockeado en tests/integration/ch3-roadmap-round3-locks.
+ * test.js (extrae el número literal de ambos archivos y compara). */
 @media (max-width: 767px), (max-height: 767px) {
   .ch3-roadmap {
     padding: 7px 10px;
@@ -400,11 +416,19 @@ function onListKeydown(e) {
     left: 13px;
     right: 13px;
   }
+  /* TASK-024 ronda 3 de review — mismo font-size que la rama completa
+   * (1.2rem, ver el comentario grande de `.ch3-roadmap-dot` más arriba):
+   * el umbral de "texto grande" de WCAG no depende del tamaño del dot, y
+   * si sólo esta rama se quedara en el tamaño chico anterior (0.64rem ≈
+   * 10.2px), el contraste 4.301:1 de `--c-focus` volvería a caer contra el
+   * umbral de 4.5:1 (texto chico) en vez de 3:1 (texto grande). Verificado
+   * con CDP real que un dígito a 19.2px entra sin desborde en el dot
+   * compacto de 30px (interior ~25px tras el borde de 2.5px). */
   .ch3-roadmap-dot {
     width: 30px;
     height: 30px;
     border-width: 2.5px;
-    font-size: 0.64rem;
+    font-size: 1.2rem;
   }
   .ch3-roadmap-count {
     font-size: 0.64rem;
@@ -440,13 +464,26 @@ function onListKeydown(e) {
  * `.ch3-roadmap-dot` (los botones reales): los clicks en el hueco/caption
  * del rail pasan de largo hacia el contenido real debajo; los botones
  * siguen siendo clickeables/tabulables sin cambios (no se toca el DOM ni
- * el tab order). */
+ * el tab order).
+ *
+ * TASK-024 ronda 3 de review (MEDIUM, contraste): a 55% de mezcla, sobre
+ * el escritorio oscuro del Acto 1 (`#2b2d31`, el único tramo del scroll
+ * bajo PRM donde el Acto 1 se ve — el resto del recorrido cae en el Acto 2
+ * claro) el compuesto da ≈`#a0a1a2`, y `--ch3-text-2` (el color del
+ * caption, ver `.ch3-roadmap-label`) mide 3.571:1 ahí — bajo AA. Subido a
+ * 70% (verificado con la fórmula de luminancia relativa de WCAG: 5.104:1
+ * sobre ese mismo fondo, con margen sobre el 4.5:1 mínimo) — sobre el Acto
+ * 2 claro el contraste ya era alto de sobra y sigue siéndolo. Sigue
+ * dejando ver el contenido detrás (no es opaco), sólo un poco menos que
+ * antes — el balance que pide la spec (translúcido, no invisible) contra
+ * el balance de accesibilidad (caption legible incluso en el tramo más
+ * oscuro). */
 @media (prefers-reduced-motion: reduce) {
   .ch3-roadmap-dot {
     transition: none;
   }
   .ch3-roadmap {
-    background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+    background: color-mix(in srgb, var(--c-surface) 70%, transparent);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     pointer-events: none;
