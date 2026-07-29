@@ -235,15 +235,19 @@ describe('Chapter2Content.vue', () => {
     expect(cards.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('T10 contact: panel CONTACT contiene botones CV apuntando a /Profile.pdf', async () => {
+  // TASK-023 — lock de PII invertido. Este test verificaba que el panel CONTACT
+  // ofreciera /Profile.pdf; ese PDF era un export de LinkedIn que incluía el número
+  // de móvil de Rafael, y el repositorio es público. Ahora el test protege lo
+  // contrario: que NADIE vuelva a linkear ese archivo desde ch2.
+  // Se restituye la descarga cuando exista un CV sin el dato personal.
+  it('T10 contact: el panel CONTACT no enlaza ningún PDF de CV (lock de PII)', async () => {
     const { wrapper } = mountCh2()
     const btns = wrapper.findAll('.flash-nav-btn')
     await btns[3].trigger('click')  // CONTACT
-    const cvLinks = wrapper.findAll('a.flash-cv-btn')
-    expect(cvLinks.length).toBe(2)  // ES + EN
-    cvLinks.forEach((link) => {
-      expect(link.attributes('href')).toBe('/Profile.pdf')
-      expect(link.attributes('download')).toBeDefined()
+    expect(wrapper.findAll('a.flash-cv-btn').length).toBe(0)
+    const anchors = wrapper.findAll('a')
+    anchors.forEach((a) => {
+      expect(a.attributes('href') || '').not.toMatch(/Profile\.pdf/i)
     })
   })
 

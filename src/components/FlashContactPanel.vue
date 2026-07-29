@@ -1,7 +1,7 @@
 <!--
   FlashContactPanel.vue — CONTACT panel for ch2 Y2K stage (Phase 04.1).
   Hardcoded contact data (Rafael 2026-05-17 — contact.js queda en placeholder global).
-  CV buttons ES/EN both point to /Profile.pdf temp (Y2K-09 decision).
+  Los botones de CV (decisión Y2K-09) se retiraron en TASK-023 junto con el PDF.
 -->
 <script setup>
 const links = [
@@ -64,28 +64,12 @@ const links = [
       </li>
     </ul>
 
-    <div class="flash-contact-cv">
-      <p class="flash-contact-cv-label">CV.DOWNLOAD</p>
-      <div class="flash-contact-cv-buttons">
-        <a
-          class="flash-cv-btn"
-          href="/Profile.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          download
-        >
-          <span aria-hidden="true">⬇</span> CV · ES
-        </a>
-        <a
-          class="flash-cv-btn"
-          href="/Profile.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          download
-        >
-          <span aria-hidden="true">⬇</span> CV · EN
-        </a>
-      </div>
-    </div>
+    <!--
+      TASK-023: el bloque CV.DOWNLOAD se retiró junto con el PDF que servía.
+      Ese archivo era un export de LinkedIn que incluía el número de móvil de
+      Rafael, y el repositorio es público. Se restituye cuando exista un CV sin
+      ese dato. No se nombra el archivo acá a propósito: los barridos de control
+      de PII buscan por literal y un comentario que lo cite genera falsos hits.
+    -->
   </div>
 </template>
