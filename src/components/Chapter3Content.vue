@@ -1268,22 +1268,54 @@ onBeforeUnmount(() => {
    * `overflow: hidden` de `.ch3-act1-scene`. `62vh` como tercer argumento de
    * `min()` agrega el límite que faltaba (a 390px de alto, 62vh≈242px →
    * stage de ~176px de alto, que sí entra junto al chrome del navegador). */
-  @media (max-height: 499px) and (orientation: landscape) {
+  /* TASK-024 ronda 2 de review (MEDIUM): umbral subido de `(max-height:
+   * 499px) and (orientation: landscape)` a `(max-height: 767px)` —
+   * sacando el gate de orientación, el problema real es de ALTO absoluto.
+   * Medido con CDP real: la banda 500-767px (1280x560, 1024x540, 1366x520,
+   * 1280x720/740/760 — ventanas normales apenas bajas, no "landscape
+   * corto") no estaba cubierta y el contenido de Acto 1/Acto 2 se solapaba
+   * con el rail (el mismo defecto que este bloque entero arregla para
+   * 844x390, sin cobertura). Un primer intento a 700px dejó un hueco:
+   * medido con CDP real que 720/740/760 seguían con solape sin el modo
+   * compacto (sólo a partir de ~780px el layout sin compactar deja de
+   * solaparse solo) — 767px (simétrico con el breakpoint de ANCHO,
+   * `max-width:767px`, unas líneas más abajo) cubre ese rango con margen
+   * sin tocar el rango ya verificado sano (780px+, incluido el propio
+   * 1366x768 de la suite de viewports de prueba, que queda JUSTO afuera).
+   * Este umbral tiene que moverse JUNTO con el de Ch3Roadmap.vue (mismo
+   * bloque de media query ahí) — el 74px de reserva de acá abajo asume el
+   * alto COMPACTO del rail (66px), no el completo. */
+  @media (max-height: 767px) {
     .ch3-phone { display: none; }
-    .ch3-flash-stage { width: min(550px, 78vw, 62vh); }
-    /* TASK-024, mismo hallazgo que el bloque de abajo para el Acto 2: con
-     * `.ch3-phone` oculto acá, `.ch3-browser` queda como único hijo flex de
-     * `.ch3-act1-decor` (`align-items:center`) — más alto que el espacio
-     * disponible en 390px de alto, así que se centra y desborda hacia
-     * arriba igual que el Acto 2 (mismo mecanismo, misma álgebra: cada +1px
-     * de `padding-top` sólo compra +0.5px real cuando el contenido
-     * desborda). Medido con CDP real: `.ch3-flash-stage` en y=[174,352]
-     * contra el rail en y=[120,186] (12px de solape). Mismo fix: arrancar
-     * en el borde del padding (`align-items:flex-start`, 1:1 con
-     * `padding-top`) + reservar el MISMO clearance que el Acto 2
-     * (`--inset-chapter-top` + `--sp-sm` + 74px del rail compacto, ver el
-     * comentario grande más abajo — reemplaza el `padding-top:8vh` base de
-     * `.ch3-act1-decor`, insuficiente para este breakpoint). */
+    /* TASK-024 ronda 2 de review (HIGH): con `.ch3-phone` oculto acá,
+     * `.ch3-browser` queda como único hijo flex de `.ch3-act1-decor`
+     * (`align-items:center`) — más alto que el espacio disponible en 390px
+     * de alto, así que se centra y desborda hacia arriba, igual que el
+     * Acto 2 (mismo mecanismo, misma álgebra: cada +1px de `padding-top`
+     * sólo compra +0.5px real cuando el contenido desborda). Fix de
+     * anclaje: `align-items:flex-start` (relación 1:1 con `padding-top`,
+     * ver el comentario grande del Acto 2 más abajo) + reservar el mismo
+     * clearance del rail (`--inset-chapter-top` + `--sp-sm` + 74px).
+     *
+     * ESO SOLO no alcanza (HIGH real de la ronda 2 de review, medido con
+     * CDP: `.ch3-flash-stage` quedaba en y=[323,501] contra un viewport de
+     * sólo 390px de alto — 111px de la parte de ABAJO del stage quedaban
+     * fuera de pantalla, y como el Acto 1 está PINEADO sin scroll interno
+     * (`.ch3-scene` es `overflow:clip`), esos 111px no estaban tapados,
+     * estaban INALCANZABLES — el mismo daño que TASK-025 vino a arreglar,
+     * con otra ropa). El presupuesto real disponible es 196px (390 menos
+     * los ~194px reservados arriba); el navegador+stage sin compactar
+     * mide ~307px. Se compacta el chrome del navegador (tabs/omnibox/
+     * infobar, paddings/alturas reducidas) y el propio stage (`62vh` a
+     * `40vh` del mismo `min()` — la restricción real acá es de ALTO, no de
+     * ancho, 844px de ancho sobra de sobra) hasta caber: medido con CDP
+     * tras el cambio, el navegador completo entra en el presupuesto sin
+     * recortarse (ver hand-off del ticket para el número final). */
+    .ch3-flash-stage { width: min(550px, 78vw, 40vh); margin: var(--sp-xs) auto; }
+    .ch3-browser-tabs { padding: var(--sp-xs) var(--sp-sm) 0; }
+    .ch3-browser-tab { height: 14px; }
+    .ch3-browser-omnibox { height: 14px; margin: 0 var(--sp-xs) var(--sp-xs); }
+    .ch3-browser-infobar { padding: var(--sp-xs) var(--sp-sm); }
     .ch3-act1-decor {
       gap: var(--sp-md);
       align-items: flex-start;
@@ -1312,23 +1344,52 @@ onBeforeUnmount(() => {
      * desbordamiento MITAD arriba/MITAD abajo del padding-box (álgebra
      * verificada con CDP real: cada +1px de `padding-top` sólo empuja el
      * contenido +0.5px hacia abajo cuando desborda), así que ningún
-     * padding finito alcanza a despejar el rail. Fix real: `align-items:
-     * flex-start` en este breakpoint — el contenido arranca EXACTO en el
-     * borde del padding-box (relación 1:1 con `padding-top`, no 0.5:1) en
-     * vez de centrarse y desbordar hacia arriba; si el contenido no entra
-     * completo, lo que se recorta es el BORDE INFERIOR (`.ch3-scene` ya usa
-     * `overflow:clip`), nunca el superior donde vive el rail — trade-off
-     * aceptado sólo en este breakpoint ya de por sí apretado (Acto 1 ya
-     * reduce su stage acá, ver arriba). `padding-top` reserva el MISMO
-     * clearance que ya usa `.ch3-hero` (`--inset-chapter-top`, despeja
-     * StickyAvatar) MÁS el alto real del rail compacto de Ch3Roadmap.vue en
-     * este breakpoint (medido: 66px, padding 7px×2 + dot 30px + gap
-     * vertical) MÁS `--sp-sm` de aire — aplicado a `.ch3-slide` (la clase
-     * compartida) para que hero/beats/cierre lo hereden con una sola regla,
-     * sin repetirla 7 veces. Si el alto real del rail compacto cambia
-     * (Ch3Roadmap.vue, mismo bloque de media query), este número (74px =
-     * 66px + 8px) hay que revisarlo junto con él — acoplados a propósito,
-     * documentado en ambos lados.
+     * padding finito alcanza a despejar el rail. Fix de anclaje:
+     * `align-items:flex-start` (relación 1:1 con `padding-top`, no 0.5:1).
+     *
+     * SEGUNDO HALLAZGO (HIGH, ronda 2 de review): anclar el contenido en el
+     * borde de arriba SIN compactarlo sólo trasladaba el solape del rail a
+     * RECORTE por abajo — medido con CDP real: los párrafos de un beat
+     * llegaban a y=497-524 y la tarjeta de proyecto del cierre (ProjectCard,
+     * `projects.js` SÍ tiene una entrada real para ch3, "Pink Parrot", no es
+     * un stub) a y=409-524, ambos muy por debajo del borde real del
+     * viewport (390px) — inalcanzables, mismo defecto que el navegador de
+     * arriba, con `.ch3-scene` en `overflow:clip` y sin scroll interno en
+     * el Acto 2 pineado. Se compacta tipografía/paddings/gaps de hero y
+     * beats (escala en VH, no VW — la restricción real es de ALTO) hasta
+     * caber en el presupuesto de 196px.
+     *
+     * DESCARTADO explícitamente: `overflow-y:auto` en `.ch3-close-slide`
+     * como red de seguridad (mismo patrón sancionado que
+     * `.ch4-panel-column`, ver tests/integration/ch4-layout-height-fix.
+     * test.js) para el caso de que `projects.js` crezca. Lo probé y
+     * funcionaba en aislamiento (no rompe `animation-timeline:scroll
+     * (nearest block)` del hero — subtrees distintos, sin ancestro común
+     * salvo `.ch3-scene`), pero `tests/integration/scroll-shell-no-nested-
+     * scroll.test.js` (TASK-009/014, lock explícito, NO un descubrimiento
+     * de esta ronda) prohíbe cualquier `overflow-y:auto` en este archivo
+     * específicamente — la razón documentada ahí: el bug original que
+     * TASK-009 pagó fue exactamente `.ch3-stage` con scroll interno propio
+     * compitiendo con el scroll-snap mandatory del shell, y este lock
+     * existe para que ese patrón nunca vuelva a colarse en NINGÚN
+     * selector de este archivo, no sólo en `.ch3-stage`. La compactación
+     * de arriba ya deja el cierre sin overflow real (medido con CDP:
+     * `scrollHeight === clientHeight` en los 3 viewports de prueba más
+     * apretados) — la red de seguridad no hacía falta para pasar la
+     * verificación de este ticket, así que se retira en vez de debilitar
+     * un lock ajeno. Si `projects.js` gana un segundo proyecto de ch3 y
+     * deja de entrar, es un ticket nuevo (con su propia decisión de
+     * diseño: compactar más, paginar, o replantear el lock).
+     *
+     * `padding-top` reserva el MISMO clearance que ya usa `.ch3-hero`
+     * (`--inset-chapter-top`, despeja StickyAvatar) MÁS el alto real del
+     * rail compacto de Ch3Roadmap.vue en este breakpoint (medido: 66px,
+     * padding 7px×2 + dot 30px + gap vertical) MÁS `--sp-sm` de aire —
+     * aplicado a `.ch3-slide` (la clase compartida) para que hero/beats/
+     * cierre lo hereden con una sola regla, sin repetirla 7 veces. Si el
+     * alto real del rail compacto cambia (Ch3Roadmap.vue, mismo bloque de
+     * media query), este número (74px = 66px + 8px) hay que revisarlo junto
+     * con él — acoplados a propósito, documentado en ambos lados.
      *
      * `.ch3-close-slide` necesita la propiedad "que empieza arriba"
      * DISTINTA: declara `flex-direction: column` (spec 03 §3.2.3, franja de
@@ -1349,6 +1410,42 @@ onBeforeUnmount(() => {
     .ch3-close-slide {
       justify-content: flex-start;
     }
+
+    /* Compactación tipográfica del hero — escala en VH (la restricción es
+     * de ALTO): título/subtítulo/botón + gaps reducidos, y se libera el
+     * padding-bottom (`--sp-2xl`, 48px) que `.ch3-hero` reserva siempre,
+     * insostenible acá. */
+    .ch3-hero { padding-bottom: var(--sp-xs); }
+    .ch3-hero-copy { gap: var(--sp-xs); }
+    .ch3-hero-title { font-size: clamp(1.1rem, 5vh, 1.6rem); line-height: 1.1; }
+    .ch3-hero-sub { font-size: clamp(0.7rem, 3vh, 0.85rem); }
+    .ch3-hero .ch3-ghost-btn { padding: 0.3em 0.9em; font-size: 0.62rem; }
+
+    /* Compactación de los 5 beats (Ch3StoryBeat.vue, estilado acá porque
+     * este <style> no es scoped — ver comentario junto a `.ch3-beat` más
+     * arriba): padding/gap/icono/numeral/kicker/lead reducidos, numeral en
+     * VH en vez de VW por el mismo motivo. */
+    .ch3-beat { padding: var(--sp-xs) var(--sp-lg); gap: var(--sp-md); }
+    .ch3-beat-icon { width: 40px; height: 40px; }
+    .ch3-beat-numeral { font-size: clamp(1.1rem, 4.5vh, 1.6rem); }
+    .ch3-beat-kicker { font-size: 0.58rem; margin-bottom: 2px; }
+    .ch3-beat-lead { font-size: 0.78rem; line-height: 1.3; }
+    .ch3-beat-more { margin-top: var(--sp-xs); }
+    .ch3-beat .ch3-ghost-btn { padding: 0.25em 0.7em; font-size: 0.58rem; }
+
+    /* Compactación del cierre — badge/línea/tarjeta de proyecto. El tech
+     * stack (`.project-card-tech`) se oculta: es decorativo/suplementario
+     * (spec §6 no lo exige visible), no narrativo — cae primero. */
+    .ch3-close-slide { gap: var(--sp-xs); }
+    .ch3-close { padding: var(--sp-xs) var(--sp-sm); gap: var(--sp-xs); }
+    .ch3-close-badge { width: 24px; height: 24px; }
+    .ch3-close-line { font-size: 0.78rem; line-height: 1.2; }
+    .ch3-projects { padding: 0 var(--sp-sm) var(--sp-xs); gap: var(--sp-xs); }
+    .ch3-projects .project-card { padding: var(--sp-xs); }
+    .ch3-projects .project-card-title { font-size: 0.78rem; }
+    .ch3-projects .project-card-desc,
+    .ch3-projects .project-card-role { font-size: 0.7rem; line-height: 1.25; }
+    .ch3-projects .project-card-tech { display: none; }
   }
 }
 </style>

@@ -282,9 +282,26 @@ function onListKeydown(e) {
   color: var(--c-surface);
 }
 
+/* TASK-024 ronda 2 de review (MEDIUM, contraste): el número del dot activo
+ * es blanco sobre el fondo del estado — con `--c-accent` (#3498db) medía
+ * 3.15:1 (preexistente de TASK-021; AC#2 "más visible" de este ticket lo
+ * agrandó, lo cual ayuda pero no cierra el número). `--c-focus` (#2980b9,
+ * YA en la paleta 2013 de la spec — es el hover de los ghost buttons, spec
+ * 03 §4) sube el contraste a 4.301:1 (calculado con la fórmula de
+ * luminancia relativa de WCAG, no aproximado) — mejora real y queda dentro
+ * de la paleta sin inventar un tono nuevo, pero SIGUE sin alcanzar el 4.5:1
+ * que exige AA para texto chico (bold no ayuda: el umbral de "texto grande"
+ * de WCAG es 18pt/14pt-bold en PUNTOS, muy por encima del 0.82rem/13px de
+ * este numeral). Ningún color de la paleta 2013 de acento azul llega a
+ * 4.5:1 sobre --c-surface sin dejar de leerse como "azul" (--c-fg/--ch3-
+ * text-2 sí llegan, pero son grises/marinos oscuros — cambiar a esos
+ * perdería la distinción visual "activo=azul" que sí lee bien contra los
+ * estados done/pendiente). Reportado tal cual en el hand-off de este
+ * ticket para ticketear el resto (4.301 -> 4.5) en vez de forzar un cambio
+ * de paleta no autorizado por la spec. */
 .ch3-roadmap-dot.is-current {
-  background: var(--c-accent);
-  border-color: var(--c-accent);
+  background: var(--c-focus);
+  border-color: var(--c-focus);
   color: #ffffff;
   transform: scale(1.15);
   /* Long-shadow 45° sutil — mismo motivo que los iconos de Ch3StoryBeat.vue
@@ -310,13 +327,22 @@ function onListKeydown(e) {
   font-variant-numeric: tabular-nums;
 }
 
+/* TASK-024 ronda 2 de review (MEDIUM, contraste): `--c-accent` (#3498db)
+ * sobre `--c-surface` (#ffffff) media 3.153:1 — bajo el 4.5:1 que AA exige
+ * para texto chico (0.68rem/0.58rem, muy por debajo del umbral de "texto
+ * grande" de WCAG). `--ch3-text-2` (#34495e, Wet Asphalt — YA en la paleta
+ * 2013 de la spec, es el mismo token que usa `.ch3-roadmap-count` al lado)
+ * mide 9.289:1, AAA de sobra, sin inventar ningún tono nuevo. Se pierde la
+ * distinción de color acento/neutro entre count y label (ambos quedan del
+ * mismo tono) — el peso 800 + mayúsculas + letter-spacing siguen marcando
+ * la diferencia tipográfica entre ambos sin depender del matiz. */
 .ch3-roadmap-label {
   font-family: var(--font-body);
   font-weight: 800;
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--c-accent);
+  color: var(--ch3-text-2, var(--c-fg));
 }
 
 /* .sr-only — patrón estándar WCAG (idéntico al de Chapter6Content.vue; no
@@ -336,11 +362,33 @@ function onListKeydown(e) {
 
 /* Mismo breakpoint compuesto que el resto de ch3 (spec §6 + `.ch3-flash-
  * stage`/`.ch3-phone` en Chapter3Content.vue): mobile <768px de ancho O
- * landscape corto (<500px de alto, ej. 844x390) — SÓLO reduce tamaño/gap
- * para dar más aire horizontal en pantallas angostas. La orientación
- * (horizontal), el anclaje (top) y el centrado NO cambian — ya no hace
- * falta una segunda geometría completa como en TASK-021. */
-@media (max-width: 767px), (max-height: 499px) and (orientation: landscape) {
+ * poca altura — SÓLO reduce tamaño/gap para dar más aire en pantallas
+ * angostas o bajas. La orientación (horizontal), el anclaje (top) y el
+ * centrado NO cambian — ya no hace falta una segunda geometría completa
+ * como en TASK-021.
+ *
+ * TASK-024 ronda 2 de review (MEDIUM): el umbral de alto era `(max-height:
+ * 499px) and (orientation: landscape)` — heredado de TASK-009/TASK-021,
+ * pensado sólo para el caso extremo 844x390. Verificado con CDP real que
+ * la banda 500-767px (ej. 1280x560, 1024x540, 1366x520, 1280x720/740/760 —
+ * ninguno es "landscape corto" en el sentido original, son ventanas
+ * normales apenas bajas) NO estaba cubierta: el rail quedaba en tamaño
+ * completo (~84-94px de alto) mientras Chapter3Content.vue tampoco
+ * reservaba espacio (ver ese archivo) — el contenido de los slides se
+ * solapaba con el rail. Sacar el gate de `orientation:landscape` (el
+ * problema real es de ALTO absoluto, no de aspecto) y subir el umbral a
+ * 767px (simétrico con el breakpoint de ANCHO de esta misma regla) cierra
+ * la banda: un primer intento a 700px dejaba un hueco sin cubrir (medido
+ * con CDP real: 720/740/760 seguían con solape — recién a partir de 780px
+ * el layout SIN compactar deja de solaparse solo). 767px cubre con margen
+ * todo el rango medido como roto (hasta 760) y no toca el rango ya
+ * verificado sano (780+, y el propio 1366x768 de la suite de viewports de
+ * prueba). Este umbral tiene que moverse JUNTO con el de
+ * Chapter3Content.vue (el mismo bloque de media query
+ * `.ch3-slide`/`.ch3-act1-decor`) — el 74px de reserva ahí asume el alto
+ * COMPACTO de este rail (66px), no el completo; si sólo uno de los dos
+ * archivos sube el umbral, vuelven a desalinearse. */
+@media (max-width: 767px), (max-height: 767px) {
   .ch3-roadmap {
     padding: 7px 10px;
     gap: 4px;
@@ -366,9 +414,45 @@ function onListKeydown(e) {
   }
 }
 
+/* TASK-024 ronda 2 de review (MEDIUM): bajo PRM, Chapter3Content.vue
+ * desancla `.ch3-stage` a flujo normal y el Acto 2 SCROLLEA de verdad (ver
+ * el comentario grande al inicio de ese archivo) — a diferencia del modo
+ * pineado (donde el rail flota sobre un frame fijo que NUNCA se mueve
+ * debajo de él), acá el rail sigue `position:fixed` arriba-centro mientras
+ * TODA la columna de contenido (beats, cierre, los links de ProjectCard)
+ * pasa por DEBAJO en cada scroll — con la tarjeta opaca (`--c-surface`,
+ * ver arriba) y `pointer-events:auto` heredado, el contenido queda oculto
+ * Y sus clicks interceptados en la huella del rail durante todo el
+ * recorrido, no sólo en los puntos de aterrizaje (que es lo único que
+ * medía la verificación original — hallazgo de la ronda 2 de review).
+ * Recuperable scrolleando un poco (por eso MEDIUM, no HIGH: nunca hay un
+ * punto donde el contenido sea IRRECUPERABLE, a diferencia del HIGH de
+ * arriba en el modo pineado sin scroll), pero es la misma familia de
+ * defecto que TASK-025 ("cuadrado naranja"): opaco + clickeable encima de
+ * contenido real.
+ *
+ * Fix, SOLO bajo PRM (el modo pineado no lo necesita — ahí no hay scroll
+ * real de contenido debajo, ver arriba): mismo material translúcido con
+ * blur que ya usa GlobalMantra.vue para el MISMO problema (un elemento
+ * fixed decorativo que flota sobre contenido que scrollea en los 7
+ * capítulos) — el contenido detrás queda legible en vez de tapado.
+ * `pointer-events:none` en el contenedor + `pointer-events:auto` sólo en
+ * `.ch3-roadmap-dot` (los botones reales): los clicks en el hueco/caption
+ * del rail pasan de largo hacia el contenido real debajo; los botones
+ * siguen siendo clickeables/tabulables sin cambios (no se toca el DOM ni
+ * el tab order). */
 @media (prefers-reduced-motion: reduce) {
   .ch3-roadmap-dot {
     transition: none;
+  }
+  .ch3-roadmap {
+    background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+  .ch3-roadmap-dot {
+    pointer-events: auto;
   }
 }
 </style>
