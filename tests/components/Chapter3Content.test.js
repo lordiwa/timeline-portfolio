@@ -263,21 +263,45 @@ describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2
     }
   })
 
-  // ── T15: REGRESSION LOCK (TASK-028) — el umbral 0.05 de pointer-events/
-  // inert vive en UNA sola constante importada, no como literal repetido.
-  // Plantado en rojo: revirtiendo en memoria `frame.act1LayerOp >
-  // INERT_OPACITY_THRESHOLD` (applyProgress(), línea del pointer-events de
-  // la capa del Acto 1) a `frame.act1LayerOp > 0.05` sin tocar el otro uso
-  // (`slide.opacity <= INERT_OPACITY_THRESHOLD`), la aserción
-  // `not.toMatch(/0\.05/)` fallaba porque el literal volvía a aparecer en
-  // el source — exactamente la clase de drift que este lock existe para
-  // atrapar (un cambio del umbral en un lado que el otro no ve). Restaurado
-  // antes de commitear.
-  it('T15 REGRESSION LOCK: el umbral 0.05 no queda como literal — ambos usos (pointer-events de la capa del Acto 1, inert de los slides) importan INERT_OPACITY_THRESHOLD desde ch3Progress.js', () => {
+  // ── T15: REGRESSION LOCK (TASK-028) — el umbral de pointer-events/inert
+  // vive en UNA sola constante importada, no como literal repetido.
+  //
+  // CORRECCIÓN (review de cierre de TASK-028): la versión anterior de este
+  // lock era `expect(CH3_SOURCE).not.toMatch(/0\.05/)` — un negativo GLOBAL
+  // sobre el SFC entero (script + template + CSS + comentarios). Dos
+  // problemas reales, no hipotéticos:
+  //   1. Falso positivo: "0.05" como substring es vocabulario normal de
+  //      este proyecto (letter-spacing: 0.05em en BootScreen.vue y
+  //      chapter-components.css, opacity 0.055/0.052 en Chapter5Content.vue,
+  //      delays 0.05s en Chapter2Content.vue) — cualquiera de esos idioms
+  //      aterrizando algún día en el CSS de ch3 pone este test rojo por la
+  //      razón EQUIVOCADA. (Señal de que ya molestaba: los comentarios de
+  //      esta sesión tuvieron que esquivar escribir el número literal.)
+  //   2. Sub-lockea el AC#6: si un call site se reemplaza por un literal
+  //      DISTINTO de 0.05 (ej. `slide.opacity <= 0.1`), el string "0.05"
+  //      nunca aparece y el test queda VERDE — exactamente el drift que el
+  //      AC#6 pide atrapar, sin atraparlo.
+  //
+  // Fix: aserciones POSITIVAS por call site, ancladas al comparador exacto
+  // (identificador + operador + INERT_OPACITY_THRESHOLD) — atrapan tanto
+  // "volvió el literal 0.05" como "lo reemplazaron por OTRO literal",
+  // porque en cualquiera de los dos casos el texto exacto del comparador
+  // deja de matchear. No hace falta compilar el `<style scoped>` real (la
+  // lección de LECCIONES-TECNICAS.md §4 aplica a contratos de CASCADA CSS,
+  // no a esto): el contrato acá es "qué identificador usa la expresión JS",
+  // visible directamente en el source sin resolver especificidad ninguna.
+  //
+  // Plantado en rojo: cambié el call site de `slide.opacity` a un literal
+  // DISTINTO (`slide.opacity <= 0.1`, dejando `act1LayerOp >
+  // INERT_OPACITY_THRESHOLD` intacto) — el segundo `toMatch` falló, sin
+  // tocar el import ni el string "0.05" (el escenario que la versión
+  // anterior del lock dejaba pasar en verde). Restaurado antes de commitear.
+  it('T15 REGRESSION LOCK: el umbral de pointer-events/inert usa INERT_OPACITY_THRESHOLD en AMBOS call sites, no un literal propio', () => {
     expect(CH3_SOURCE).toMatch(
       /import\s*\{[^}]*INERT_OPACITY_THRESHOLD[^}]*\}\s*from\s*['"]@\/utils\/ch3Progress['"]/
     )
-    expect(CH3_SOURCE).not.toMatch(/0\.05/)
+    expect(CH3_SOURCE).toMatch(/act1LayerOp\s*>\s*INERT_OPACITY_THRESHOLD/)
+    expect(CH3_SOURCE).toMatch(/slide\.opacity\s*<=\s*INERT_OPACITY_THRESHOLD/)
   })
 })
 

@@ -235,7 +235,15 @@ describe('ch3Progress — TASK-021: sensibilidad + roadmap', () => {
     expect(CH3_STEP_COUNT).toBe(1 + ACT2_SLIDE_COUNT)
   })
 
-  it('T11 currentStep: 0 durante todo el Acto 1, 1 al llegar el hero, 2..6 los beats, 7 el cierre', () => {
+  // Título corregido (review de cierre de TASK-028): "0 durante todo el
+  // Acto 1" ya NO es exacto desde TASK-028 — currentStep pasa a 1 en
+  // ACT1_FADE_END (2.84), ANTES de que termine el presupuesto físico del
+  // Acto 1 en ACT1_UNITS (3.0). Este test sigue verde porque sus muestras
+  // (0, ACT1_UNITS/2, ACT1_UNITS) esquivan esa banda a propósito — el
+  // comportamiento exacto en la banda [ACT1_FADE_END, ACT1_UNITS) lo
+  // lockea T16/T17 más abajo; acá sólo se corrige la descripción para que
+  // no contradiga a esos dos tests en el mismo archivo.
+  it('T11 currentStep: 0 en el grueso del Acto 1 (antes de ACT1_FADE_END), 1 al llegar el hero, 2..6 los beats, 7 el cierre', () => {
     expect(computeCh3Frame(0).currentStep).toBe(0)
     expect(computeCh3Frame(ACT1_UNITS / 2).currentStep).toBe(0)
     expect(computeCh3Frame(ACT1_UNITS).currentStep).toBe(1) // hero asentado
