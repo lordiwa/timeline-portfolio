@@ -118,9 +118,12 @@ describe('theme-tokens.test.js — per-era token completeness (THM-03)', () => {
     expect(block).toContain('--c-accent: #3498db')
   })
 
-  it('T12: ch5 section token block uses the real dark-cinema palette (exception resolved)', () => {
+  // T12 actualizado por TASK-011 (2026-07-29): la paleta "cine oscuro" de
+  // TASK-008 pasa a la paleta broadcast/streaming de
+  // .planning/design/05-ch5-pandemia-broadcast.md §5 (panel de transmisión).
+  it('T12: ch5 section token block uses the broadcast/streaming palette (TASK-011)', () => {
     const block = extractBlock(source, 5)
-    expect(block).toContain('--c-bg: #171009')
+    expect(block).toContain('--c-bg: #0b0910')
     expect(block).toContain('--c-accent: #818cf8')
   })
 })

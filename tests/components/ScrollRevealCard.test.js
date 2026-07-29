@@ -1,7 +1,7 @@
 // tests/components/ScrollRevealCard.test.js
 // Tests Plan 04-05 Task 3 — ScrollRevealCard.vue (IO-driven reveal animation).
 //
-// Cobertura T1-T9:
+// Cobertura T1-T7, T10:
 // - T1: slot renderiza dentro de div.scroll-reveal-card
 // - T2: class default sin --revealed (initial opacity:0 invisible)
 // - T3: PRM init=true → revealed desde mount (sin IO trigger)
@@ -9,8 +9,9 @@
 // - T5: delay staggered 200ms → revealed solo tras advanceTimers
 // - T6: source contiene useIntersectionObserver import (@vueuse/core)
 // - T7: source contiene inject('prm') + isRevealed init = prefersReduced.value
-// - T8: chapter-themes.css source contiene @media PRM block con opacity:1 transform:none
-// - T9: chapter-themes.css source contiene transition opacity 300ms + transform 300ms
+// - T8/T9: RETIRADOS por TASK-011 (ver comentario junto a T10) — el consumidor
+//   CSS que anclaban (ch5) fue retirado sin reemplazo, no migrado.
+// - T10: hallazgo incidental TASK-011 — ScrollRevealCard.vue sin consumidores hoy.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -20,11 +21,6 @@ import { resolve } from 'node:path'
 
 const SCROLL_REVEAL_SOURCE = readFileSync(
   resolve(process.cwd(), 'src/components/ScrollRevealCard.vue'),
-  'utf8'
-)
-// TASK-008: .scroll-reveal-card vive ahora en chapter-components.css.
-const CSS_SOURCE = readFileSync(
-  resolve(process.cwd(), 'src/styles/chapter-components.css'),
   'utf8'
 )
 
@@ -141,22 +137,28 @@ describe('ScrollRevealCard.vue', () => {
     expect(SCROLL_REVEAL_SOURCE).toMatch(/isRevealed\s*=\s*ref\(prefersReduced\.value\)/)
   })
 
-  it('T8 CSS: chapter-themes.css contiene @media PRM con opacity:1 transform:none (defensive double)', () => {
-    // El bloque @media (prefers-reduced-motion: reduce) [data-chapter="5"] .scroll-reveal-card debe contener opacity:1 + transform:none
-    const prmBlock = CSS_SOURCE.match(
-      /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\[data-chapter=["']5["']\]\s*\.scroll-reveal-card\s*\{[^}]*\}/
-    )
-    expect(prmBlock).toBeTruthy()
-    expect(prmBlock[0]).toMatch(/opacity:\s*1/)
-    expect(prmBlock[0]).toMatch(/transform:\s*none/)
-  })
-
-  it('T9 CSS: chapter-themes.css contiene transition opacity 300ms + transform 300ms (motion contract D-05)', () => {
-    const baseBlock = CSS_SOURCE.match(
-      /\[data-chapter=["']5["']\]\s+\.scroll-reveal-card\s*\{[^}]*\}/
-    )
-    expect(baseBlock).toBeTruthy()
-    expect(baseBlock[0]).toMatch(/transition:[\s\S]*?opacity\s+300ms/)
-    expect(baseBlock[0]).toMatch(/transition:[\s\S]*?transform\s+300ms/)
+  // T8/T9 RETIRADOS por TASK-011 (2026-07-29): ambos anclaban el `.scroll-reveal-card`
+  // de ch5 en chapter-components.css como EJEMPLO de consumidor con PRM defensive
+  // double. El rediseño "LA TRANSMISION" retira ese bloque sin reemplazo — el panel
+  // de transmisión no usa reveal-on-scroll, está siempre montado (spec
+  // .planning/design/05-ch5-pandemia-broadcast.md §4) — así que el ejemplo que
+  // estos tests verificaban ya no existe en el árbol. La lógica de componente que
+  // SÍ importa (T1-T7: IO callback, PRM defensive JS-side) sigue cubierta arriba y
+  // sigue en verde. T10 documenta el hallazgo incidental: ScrollRevealCard.vue no
+  // tiene NINGÚN consumidor hoy (ver punch list del hand-off de TASK-011) — no se
+  // borra el componente en este ticket porque eso excede su alcance (ch5 no ch3/ch4).
+  it('T10 (hallazgo incidental TASK-011): ScrollRevealCard.vue no tiene consumidores en src/components hoy', () => {
+    const { readdirSync } = require('node:fs')
+    const componentsDir = resolve(process.cwd(), 'src/components')
+    const offenders = []
+    for (const file of readdirSync(componentsDir)) {
+      if (file === 'ScrollRevealCard.vue' || !file.endsWith('.vue')) continue
+      const content = readFileSync(resolve(componentsDir, file), 'utf8')
+      if (/<ScrollRevealCard\b/.test(content)) offenders.push(file)
+    }
+    // Si esto empieza a fallar (offenders.length > 0), quiere decir que un capítulo
+    // volvió a consumir el componente — está BIEN, era el estado histórico; este
+    // test documenta el estado post-TASK-011, no lo prohíbe.
+    expect(offenders).toEqual([])
   })
 })

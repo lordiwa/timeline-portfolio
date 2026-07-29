@@ -78,18 +78,14 @@ describe('Layout shift ES vs EN — Phase 4 chapters (I18N-05)', () => {
     expect(Math.abs(diffPct)).toBeLessThan(100)
   })
 
-  // T5 adaptado 2026-07-09: Chapter5Content usa showText=false desde 2026-07-07 (layout cine).
-  // Con showText=false no se renderiza texto en ningún locale → lenEs=0 y lenEn=0.
-  // La verificación de text-length-parity no aplica cuando no hay texto visible.
-  // Test rediseñado: verificar que el componente monta sin errores en ES y EN
-  // y que el stage del cine existe en ambos locales.
-  it('T5 Chapter5Content: monta sin errores en ES y EN; stage cine visible (showText=false — 2026-07-07)', () => {
-    const wEs = mountChapter(Chapter5Content, 'es')
-    const wEn = mountChapter(Chapter5Content, 'en')
-    // Layout cine siempre presente independientemente del locale
-    expect(wEs.find('.ch5-layout').exists()).toBe(true)
-    expect(wEn.find('.ch5-layout').exists()).toBe(true)
-    expect(wEs.find('.cine-screen').exists()).toBe(true)
-    expect(wEn.find('.cine-screen').exists()).toBe(true)
+  // T5 actualizado por TASK-011 (2026-07-29): el panel de transmisión ("LA
+  // TRANSMISION") mata `showText = false` — el texto de bio.eras.5 (8 párrafos
+  // reales) vive siempre en el DOM, así que la comparación de longitud ES/EN
+  // vuelve a aplicar igual que en los otros capítulos.
+  it('T5 Chapter5Content: ES vs EN diferencia text length <100% (no extreme overflow)', () => {
+    const { lenEs, lenEn, diffPct } = compareTextLength(Chapter5Content)
+    expect(lenEs, 'ES text rendered').toBeGreaterThan(0)
+    expect(lenEn, 'EN text rendered').toBeGreaterThan(0)
+    expect(Math.abs(diffPct), `ES vs EN diff ${diffPct.toFixed(1)}% — overflow risk`).toBeLessThan(100)
   })
 })
