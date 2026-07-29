@@ -237,8 +237,11 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile) {
 }
 
 // Los 6 viewports de prueba estándar del proyecto (TASK-019/021/024) más
-// las fronteras conocidas de los umbrales de reserva/compactación de ch3
-// (735px compactación, 767px reserva — ver Chapter3Content.vue).
+// las fronteras conocidas de los TRES umbrales de ch3 (ronda 4: reserva
+// 767px, compactación Acto 1 735px, compactación Acto 2 525px — ver
+// Chapter3Content.vue). 800px de ancho es el peor caso para el wrap de
+// texto en fila de los beats (ronda 4), así que las fronteras del Acto 2
+// se prueban ahí en vez de a 1280.
 const DEFAULT_VIEWPORTS = [
   ['1440x900', 1440, 900, 1, false],
   ['1366x768', 1366, 768, 1, false],
@@ -246,8 +249,12 @@ const DEFAULT_VIEWPORTS = [
   ['768x1024-tablet', 768, 1024, 2, true],
   ['390x844-mobile-portrait', 390, 844, 3, true],
   ['844x390-mobile-landscape', 844, 390, 3, true],
-  ['1280x730-frontera-compactacion', 1280, 730, 1, false],
-  ['1280x735-frontera-compactacion', 1280, 735, 1, false],
+  ['1366x660-caso-original-BLOCK', 1366, 660, 1, false],
+  ['1280x700-caso-original-BLOCK', 1280, 700, 1, false],
+  ['1280x730-frontera-acto1', 1280, 730, 1, false],
+  ['1280x735-frontera-acto1', 1280, 735, 1, false],
+  ['800x520-frontera-acto2', 800, 520, 1, false],
+  ['800x525-frontera-acto2', 800, 525, 1, false],
   ['1280x767-frontera-reserva', 1280, 767, 1, false],
   ['1280x770-fuera-de-banda', 1280, 770, 1, false],
 ]

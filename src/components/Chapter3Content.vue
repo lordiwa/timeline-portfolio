@@ -1325,6 +1325,35 @@ onBeforeUnmount(() => {
       padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 74px);
     }
 
+    /* TASK-024 ronda 4 de review (HIGH, hallazgo propio al correr el
+     * harness con el nuevo umbral 800x525): `.ch3-act1-title` (el H1 "La
+     * muerte de Flash") NO es hijo de `.ch3-act1-decor` — es hermano
+     * suyo dentro de `.ch3-act1-scene`, el único hijo en flujo normal de
+     * esa escena (decor/white/accent son `position:absolute`, fuera del
+     * flujo). Reservar clearance en `.ch3-act1-decor` nunca tocaba la
+     * posición del título — lo sigue centrando `.ch3-act1-scene` con su
+     * propio `align-items:center`, sin ninguna reserva. Medido con CDP
+     * real: a 800x525 (ancho angosto para el wrap del título + alto bajo)
+     * el título quedaba en y=[127,179] contra el rail en y=[120,186] —
+     * solape real, no detectado en los sweeps anteriores porque siempre
+     * se probó a 1280px de ancho (título más grande, wrap distinto) o en
+     * 844x390 donde el margin-bottom del título ya lo empujaba lo
+     * suficiente arriba por otras razones. Mismo fix que el resto: `align-
+     * items:flex-start` (relación 1:1, no la mitad) + el mismo
+     * `padding-top` de reserva. No afecta a `.ch3-act1-decor` (que sigue
+     * siendo `position:absolute` dentro de la escena, ajeno al
+     * `align-items` del padre) ni a su propio `padding-top` (declaración
+     * separada, arriba). El `margin-bottom` grande del título
+     * (`clamp(220px,30vh,320px)`, spec §3) queda intacto — con
+     * `flex-start` ya no cumple su función original de "empujar centrado
+     * hacia arriba", pero tampoco rompe nada (el título es el único hijo
+     * en flujo normal de la escena; el margen sobrante simplemente no
+     * empuja a nada más). */
+    .ch3-act1-scene {
+      align-items: flex-start;
+      padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 74px);
+    }
+
     /* TASK-024, HALLAZGO geometrico (verificación CDP real, 844x390): el
      * Acto 2 (hero, los 5 beats, el cierre — todos comparten `.ch3-slide`,
      * la clase base) sólo el hero reservaba clearance de HUD arriba (via
@@ -1393,16 +1422,26 @@ onBeforeUnmount(() => {
     }
   }
 
-  /* TASK-024 ronda 3 — BLOQUE 2: COMPACTACIÓN, sólo por debajo del punto
-   * donde la reserva sola deja de alcanzar (medido con CDP real: recorta
-   * hasta 730px, limpio desde 732px — umbral final 735px con margen; ver
-   * el comentario grande de arriba para el método completo y por qué el
-   * driver es el stage de Flash del Acto 1, no el Acto 2). NO lleva el
-   * brazo `max-width`: el driver es exclusivamente altura, y cualquier
-   * combinación angosta+baja ya cae acá por el brazo de alto solo. */
+  /* TASK-024 ronda 4 de review (HIGH — la ronda 3 quedó a medio camino,
+   * otra vez): mi propio dato de la ronda 3 (Parte A del sweep: reserva
+   * sola nunca falló en los pasos del Acto 2 — hero/beats/cierre — hasta
+   * 560px, el punto más bajo que probé ahí) contradecía dejar la
+   * compactación tipográfica del Acto 2 atada al mismo umbral que el Acto
+   * 1 (735px, el driver REAL es el stage de Flash clavado en 550x400,
+   * nada del Acto 2). El caso que motivó el BLOCK original (laptop
+   * 1366x768 con barra ⇒ ~630-660px reales) caía DENTRO de 735 igual —
+   * el umbral bajó 32px pero el bug seguía intacto para ese caso concreto.
+   * Separado en DOS bloques por acto, cada uno con su propio umbral
+   * MEDIDO (mismo método de incrementos finos, reserva-sola con la
+   * compactación del acto en cuestión apagada):
+   *   - ACTO 1 (`.ch3-phone`, `.ch3-flash-stage`, chrome del navegador):
+   *     735px — el mismo de la ronda 3 (recorta hasta 730px, limpio desde
+   *     732px), sigue siendo el real.
+   *   - ACTO 2 (hero/beats/cierre): 525px — ver el bloque de abajo para
+   *     la tabla completa. */
   @media (max-height: 735px) {
     .ch3-phone { display: none; }
-    /* TASK-024 ronda 2 de review (HIGH), vigente tras la ronda 3: con
+    /* TASK-024 ronda 2 de review (HIGH), vigente tras las rondas 3 y 4: con
      * `.ch3-phone` oculto acá, `.ch3-browser` queda como único hijo flex de
      * `.ch3-act1-decor` — más alto que el espacio disponible en viewports
      * muy bajos, así que se compacta el chrome del navegador (tabs/
@@ -1416,7 +1455,22 @@ onBeforeUnmount(() => {
     .ch3-browser-tab { height: 14px; }
     .ch3-browser-omnibox { height: 14px; margin: 0 var(--sp-xs) var(--sp-xs); }
     .ch3-browser-infobar { padding: var(--sp-xs) var(--sp-sm); }
+  }
 
+  /* TASK-024 ronda 4 — ACTO 2, umbral PROPIO y MEDIDO. Método: mismo que el
+   * Acto 1 (incrementos finos, reserva sola con ESTA compactación apagada),
+   * en el ancho más desfavorable para el layout en fila de los beats (800px
+   * — justo arriba del breakpoint de columna a 767px; más angosto que eso
+   * ya cae en la compactación de `@media (max-width:767px)` existente, que
+   * apila a columna y es un mecanismo aparte). Barrido con CDP real:
+   * 560-520px de alto seguían recortando/solapando (los botones "Seguir
+   * leyendo" y párrafos de beat/cierre eran el elemento roto, no el hero);
+   * a 525px ya no. Umbral final: 525px (5px de margen sobre el 520 roto).
+   * Cross-check a ancho 1280: rompía hasta 500px (aún más margen ahí,
+   * consistente con que 800px es el peor caso real). NO lleva brazo
+   * `max-width` por el mismo motivo que el del Acto 1: el driver es
+   * exclusivamente altura. */
+  @media (max-height: 525px) {
     /* Compactación tipográfica del hero — escala en VH (la restricción es
      * de ALTO): título/subtítulo/botón + gaps reducidos, y se libera el
      * padding-bottom (`--sp-2xl`, 48px) que `.ch3-hero` reserva siempre,

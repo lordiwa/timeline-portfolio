@@ -99,36 +99,96 @@ describe('TASK-024 ronda 3 — lock del umbral 767px acoplado entre Ch3Roadmap.v
       reserveDecls.some((d) => d.prop === 'padding-top' && /calc\(/.test(d.value)),
       '.ch3-slide dentro del @media de reserva debe declarar padding-top con calc() — si desaparece, la reserva de clearance deja de existir'
     ).toBe(true)
+
+    // REGRESSION LOCK (HIGH ronda 4, hallazgo propio al correr el harness
+    // con el nuevo umbral 800x525): `.ch3-act1-title` es hermano de
+    // `.ch3-act1-decor` dentro de `.ch3-act1-scene`, no su hijo — reservar
+    // clearance sólo en `.ch3-act1-decor` nunca movía el título, que
+    // seguía centrado por `.ch3-act1-scene` sin ninguna reserva. Medido
+    // con CDP real: a 800x525 el título solapaba el rail (y=[127,179] vs
+    // rail y=[120,186]).
+    const sceneDecls = declsIn(ch3ReserveQuery[0], '.ch3-act1-scene')
+    expect(
+      sceneDecls.some((d) => d.prop === 'padding-top' && /calc\(/.test(d.value)),
+      'REGRESSION LOCK (HIGH ronda 4): .ch3-act1-scene dentro del @media de reserva debe declarar padding-top con calc() — sin esto, .ch3-act1-title (su único hijo en flujo normal) vuelve a centrarse sin reserva y puede solapar el rail en anchos angostos'
+    ).toBe(true)
+    expect(
+      sceneDecls.some((d) => d.prop === 'align-items' && d.value.trim() === 'flex-start'),
+      'REGRESSION LOCK (HIGH ronda 4): .ch3-act1-scene debe declarar align-items:flex-start — sin esto el padding-top sólo empuja el título la MITAD (misma álgebra que .ch3-act1-decor/.ch3-slide, ver esos comentarios)'
+    ).toBe(true)
   })
 
-  it('la COMPACTACIÓN (tipografía/padding agresivos) vive en un @media DISTINTO y más angosto que la RESERVA — no reintroduce el bloque único de la ronda 2', () => {
+  it('la compactación vive en TRES bandas distintas — reserva (767px) > compactación del Acto 1 (735px) > compactación del Acto 2 (525px) — ninguna igual ni invertida', () => {
     const ch3Root = styleRoot(CH3_PATH)
     const reserveQuery = mediaAtRules(ch3Root, (params) => params.includes('max-width') && params.includes('max-height'))[0]
-    // La compactación es SÓLO por altura (ver el comentario del código:
-    // "NO lleva el brazo max-width").
+    // Ambas compactaciones (Acto 1 y Acto 2) son SÓLO por altura (ver el
+    // comentario del código: "NO lleva el brazo max-width" en ambos casos).
     const compactQueries = mediaAtRules(ch3Root, (params) => /^\(max-height:\s*\d+px\)$/.test(params.trim()))
-    expect(compactQueries, 'debería existir exactamente un @media (max-height:...) de compactación, sin brazo max-width').toHaveLength(1)
-    const compactHeight = Number(compactQueries[0].params.match(/max-height:\s*(\d+)px/)[1])
-    const reserveHeight = Number(reserveQuery.params.match(/max-height:\s*(\d+)px/)[1])
     expect(
-      compactHeight,
-      'REGRESSION LOCK (HIGH ronda 3): el umbral de compactación debe ser ESTRICTAMENTE menor al de reserva — si vuelven a ser iguales (o la compactación no existe como bloque propio), la compactación completa (tipografía de teléfono) vuelve a aplicarse en toda la banda ≤767px, incluidos escritorios apenas bajos (el HIGH original de esta ronda).'
-    ).toBeLessThan(reserveHeight)
+      compactQueries,
+      'REGRESSION LOCK (HIGH ronda 4): debería haber exactamente DOS @media (max-height:...) de compactación sin brazo max-width — uno para el Acto 1, otro para el Acto 2. Si vuelve a haber sólo uno, la ronda 4 (desacoplar Acto 1 de Acto 2) se revirtió.'
+    ).toHaveLength(2)
 
-    // La compactación de verdad reduce tipografía (no es un bloque vacío).
-    const heroTitleDecls = declsIn(compactQueries[0], '.ch3-hero-title')
+    const heights = compactQueries
+      .map((q) => Number(q.params.match(/max-height:\s*(\d+)px/)[1]))
+      .sort((a, b) => a - b)
+    const [act2Height, act1Height] = heights // el menor es el del Acto 2
+    const reserveHeight = Number(reserveQuery.params.match(/max-height:\s*(\d+)px/)[1])
+
+    expect(
+      act1Height,
+      'REGRESSION LOCK (HIGH ronda 3): el umbral de compactación del Acto 1 debe ser ESTRICTAMENTE menor al de reserva'
+    ).toBeLessThan(reserveHeight)
+    expect(
+      act2Height,
+      'REGRESSION LOCK (HIGH ronda 4): el umbral de compactación del Acto 2 debe ser ESTRICTAMENTE menor al del Acto 1 — si vuelven a ser iguales, el Acto 2 vuelve a compactarse en todo el rango que sólo necesita el Acto 1 (el HIGH exacto de la ronda 4: el caso 1366x768-con-barra, ~630-660px reales, caía dentro de 735 igual).'
+    ).toBeLessThan(act1Height)
+
+    // Identificar cuál @media es cuál por su contenido (el del Acto 1 toca
+    // .ch3-flash-stage; el del Acto 2 toca .ch3-hero-title).
+    const act1Query = compactQueries.find((q) => declsIn(q, '.ch3-flash-stage').length > 0)
+    const act2Query = compactQueries.find((q) => declsIn(q, '.ch3-hero-title').length > 0)
+    expect(act1Query, 'no se encontró el @media de compactación del Acto 1 (debería tocar .ch3-flash-stage)').toBeDefined()
+    expect(act2Query, 'no se encontró el @media de compactación del Acto 2 (debería tocar .ch3-hero-title)').toBeDefined()
+    expect(
+      Number(act1Query.params.match(/max-height:\s*(\d+)px/)[1]),
+      'el @media que toca .ch3-flash-stage (Acto 1) debe ser el de umbral MAYOR — si el Acto 2 quedara con el umbral más alto, la tipografía del hero/beats se compactaría de más'
+    ).toBe(act1Height)
+
+    // La compactación de verdad reduce tipografía del Acto 2 (no es un
+    // bloque vacío).
+    const heroTitleDecls = declsIn(act2Query, '.ch3-hero-title')
     expect(
       heroTitleDecls.some((d) => d.prop === 'font-size'),
-      '.ch3-hero-title debería tener un font-size compactado dentro del @media angosto'
+      '.ch3-hero-title debería tener un font-size compactado dentro de su propio @media angosto'
     ).toBe(true)
 
-    // Y esas propiedades de compactación NO están también dentro del @media
-    // de reserva (si lo estuvieran, seguiríamos aplicando compactación en
-    // toda la banda ancha, aunque el bloque angosto exista por separado).
+    // REGRESSION LOCK explícito (ronda 4, pedido del reviewer): la
+    // tipografía del Acto 2 NO puede volver a aparecer dentro del @media
+    // del Acto 1 (735px) — es literalmente la regresión que este ticket
+    // vino a arreglar dos veces (rondas 3 y 4).
+    const act1HeroTitle = declsIn(act1Query, '.ch3-hero-title')
+    expect(
+      act1HeroTitle.some((d) => d.prop === 'font-size'),
+      'REGRESSION LOCK (HIGH ronda 4): .ch3-hero-title NO debe tener font-size dentro del @media del Acto 1 (735px) — si reaparece ahí, la tipografía del Acto 2 vuelve a compactarse en escritorios apenas bajos (1366x768 con barra ⇒ ~630-660px) que no lo necesitan.'
+    ).toBe(false)
+    const act1BeatLead = declsIn(act1Query, '.ch3-beat-lead')
+    expect(
+      act1BeatLead.some((d) => d.prop === 'font-size'),
+      'REGRESSION LOCK (HIGH ronda 4): .ch3-beat-lead NO debe tener font-size dentro del @media del Acto 1 — mismo motivo'
+    ).toBe(false)
+
+    // Y ninguna de las dos compactaciones está también dentro del @media de
+    // reserva (si lo estuvieran, seguiría aplicando en toda la banda ancha).
     const reserveHeroTitle = declsIn(reserveQuery, '.ch3-hero-title')
     expect(
       reserveHeroTitle.some((d) => d.prop === 'font-size'),
-      '.ch3-hero-title NO debería tener font-size dentro del @media de RESERVA — esa propiedad es de compactación y debe vivir sólo en el bloque angosto'
+      '.ch3-hero-title NO debería tener font-size dentro del @media de RESERVA'
+    ).toBe(false)
+    const reserveFlashStage = declsIn(reserveQuery, '.ch3-flash-stage')
+    expect(
+      reserveFlashStage.some((d) => d.prop === 'width'),
+      '.ch3-flash-stage NO debería tener su width compactado dentro del @media de RESERVA'
     ).toBe(false)
   })
 
@@ -139,19 +199,24 @@ describe('TASK-024 ronda 3 — lock del umbral 767px acoplado entre Ch3Roadmap.v
   })
 })
 
-describe('TASK-024 ronda 3 — lock del tap target de los ghost buttons compactos (WCAG 2.5.8)', () => {
-  it('los ghost buttons compactados (hero y beat) declaran min-height: 24px', () => {
+describe('TASK-024 ronda 3/4 — lock del tap target de los ghost buttons compactos (WCAG 2.5.8)', () => {
+  it('los ghost buttons compactados (hero y beat, dentro del @media del Acto 2 — ronda 4 los separó del Acto 1) declaran min-height: 24px', () => {
     const ch3Root = styleRoot(CH3_PATH)
-    const compactQuery = mediaAtRules(ch3Root, (params) => /^\(max-height:\s*\d+px\)$/.test(params.trim()))[0]
-    const heroBtn = declsIn(compactQuery, '.ch3-hero .ch3-ghost-btn')
-    const beatBtn = declsIn(compactQuery, '.ch3-beat .ch3-ghost-btn')
+    // El Acto 2 es el @media (max-height:...) que toca .ch3-hero-title —
+    // ver el lock de arriba, mismo criterio de identificación (no asumir
+    // orden ni cuál de los dos es cuál por posición).
+    const compactQueries = mediaAtRules(ch3Root, (params) => /^\(max-height:\s*\d+px\)$/.test(params.trim()))
+    const act2Query = compactQueries.find((q) => declsIn(q, '.ch3-hero-title').length > 0)
+    expect(act2Query, 'no se encontró el @media de compactación del Acto 2').toBeDefined()
+    const heroBtn = declsIn(act2Query, '.ch3-hero .ch3-ghost-btn')
+    const beatBtn = declsIn(act2Query, '.ch3-beat .ch3-ghost-btn')
     expect(
       heroBtn.some((d) => d.prop === 'min-height' && d.value.trim() === '24px'),
-      'REGRESSION LOCK (MEDIUM ronda 3): .ch3-hero .ch3-ghost-btn debe declarar min-height:24px dentro del bloque compacto — sin esto el target cae a ~16-20px, bajo el mínimo WCAG 2.5.8'
+      'REGRESSION LOCK (MEDIUM ronda 3): .ch3-hero .ch3-ghost-btn debe declarar min-height:24px dentro del bloque compacto del Acto 2 — sin esto el target cae a ~16-20px, bajo el mínimo WCAG 2.5.8'
     ).toBe(true)
     expect(
       beatBtn.some((d) => d.prop === 'min-height' && d.value.trim() === '24px'),
-      'REGRESSION LOCK (MEDIUM ronda 3): .ch3-beat .ch3-ghost-btn ("Seguir leyendo", destape de la narrativa spec §8) debe declarar min-height:24px dentro del bloque compacto'
+      'REGRESSION LOCK (MEDIUM ronda 3): .ch3-beat .ch3-ghost-btn ("Seguir leyendo", destape de la narrativa spec §8) debe declarar min-height:24px dentro del bloque compacto del Acto 2'
     ).toBe(true)
   })
 })
