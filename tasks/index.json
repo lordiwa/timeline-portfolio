@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T03:22:05.496Z",
+  "generated_at": "2026-07-29T09:45:15.214Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -142,7 +142,7 @@
     {
       "key": "TASK-024",
       "title": "ch3: el stepper va horizontal, arriba de todo, centrado y mas visible",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
     },
     {

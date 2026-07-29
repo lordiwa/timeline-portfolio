@@ -87,6 +87,26 @@ Dos bloqueadores encontrados el 2026-07-27, **no los redescubras**:
   **no existe**. Si un día un arnés de verificación parece colgado en el BootScreen sin
   ningún error, es esto y no un bug del sitio.
 
+**Dos trampas del instrumento, encontradas en TASK-024 (2026-07-29):**
+
+- **`Emulation.setDeviceMetricsOverride` cuantiza los altos impares hacia arriba.** Emular
+  841 produce `innerHeight` **842** y `matchMedia('(max-height: 841px)')` da **false**; los
+  pares mapean exacto. Un barrido píxel a píxel para encontrar un umbral de media query
+  mide, en los impares, un viewport distinto del que cree. Si el margen que buscás es del
+  orden de 1-2px, **medí sólo en altos pares** o confirmá con `innerHeight` real antes de
+  concluir.
+- **No pongas un `sleep` fijo después de un salto de scroll programático.** Un delay fijo
+  produce datos erráticos y alternantes que parecen ruido del sitio y son del arnés: hay que
+  **esperar a que `scrollTop` se estabilice** por polling. Costó una ronda entera de
+  mediciones inservibles antes de que se diagnosticara.
+
+**Y una regla sobre el arnés como producto:** si el instrumento no está en el repo, su verde
+no es auditable ni reproducible — un reviewer no puede evaluar sus puntos ciegos. El de ch3
+vive en `scripts/verify-ch3-roadmap-geometry.mjs`. Dos puntos ciegos reales que tuvo y que
+conviene revisar en cualquier arnés nuevo: **no ejercitaba los estados que se abren por
+click** (dejó pasar un HIGH durante cuatro rondas) y **no fijaba el locale** (medía en
+inglés, que es el texto corto, en un sitio bilingüe donde el español es más largo).
+
 ## 7. La estética la manda la spec; el límite es la navegación
 
 Rafael, 2026-07-27: *"lo que fable 5 recomiende estéticamente yo me acoto mientras no dañe

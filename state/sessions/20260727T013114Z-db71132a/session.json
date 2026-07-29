@@ -3,8 +3,8 @@
   "session_id": "20260727T013114Z-db71132a",
   "lifecycle_state": "active",
   "updated_at": "2026-07-28T06:13:25.876Z",
-  "active_task": "TASK-024",
-  "workflow_step": "implement",
+  "active_task": null,
+  "workflow_step": "plan",
   "mode": "loop",
   "loop_auth": {
     "auto_close_on_green_review": true,

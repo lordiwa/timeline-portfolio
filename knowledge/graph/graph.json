@@ -44,6 +44,12 @@
       "label": "El minijuego de ch2 corre un Phaser.Game permanente desde la carga de la pagina"
     },
     {
+      "id": "task-024",
+      "type": "task",
+      "ref": "tasks/TASK-024.json",
+      "label": "ch3: el stepper va horizontal, arriba de todo, centrado y mas visible"
+    },
+    {
       "id": "task-025",
       "type": "task",
       "ref": "tasks/TASK-025.json",

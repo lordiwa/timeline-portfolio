@@ -97,7 +97,7 @@ Rafael dé el ok (`git branch -D` + `git reflog expire --expire=now --all` +
 |---|---|---|
 | TASK-025 | Cuadrado naranja de ch3 | **CERRADO** 2026-07-28, review PASS (`7ca7d8a` + `79e2d47` + `de34b73`) |
 | TASK-028 | Caption ch3 desalineado + umbral 0.05 duplicado | **CERRADO** 2026-07-28, review PASS (`d8f5c0c` + `343951c`) |
-| TASK-024 | Stepper horizontal, arriba, centrado, más visible | in_progress — **en curso, es el pedido de Rafael** |
+| TASK-024 | Stepper horizontal, arriba, centrado, más visible | **CERRADO** 2026-07-29, review PASS tras 6 rondas — **falta que Rafael lo mire en el navegador** |
 | TASK-021 | ch3 scroll sensible + roadmap | in_progress — el HIGH ya se arregló en `c8fd6a7`, **falta re-review** |
 | TASK-023 | Sacar el teléfono | in_progress — código listo, **falta re-review**; los 2 HIGH ya se cerraron |
 | TASK-026 | Tarjetas era Flash | in_progress — **falta review** |
