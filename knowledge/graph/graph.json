@@ -48,6 +48,12 @@
       "type": "task",
       "ref": "tasks/TASK-025.json",
       "label": "ch3: al clickear un paso del roadmap queda un cuadrado naranja tapando el texto y el boton"
+    },
+    {
+      "id": "task-028",
+      "type": "task",
+      "ref": "tasks/TASK-028.json",
+      "label": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test"
     }
   ],
   "edges": []

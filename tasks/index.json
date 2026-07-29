@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T22:49:14.533Z",
+  "generated_at": "2026-07-29T03:22:05.496Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -166,7 +166,7 @@
     {
       "key": "TASK-028",
       "title": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test",
-      "status": "todo",
+      "status": "done",
       "priority": "low"
     }
   ]

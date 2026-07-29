@@ -11,7 +11,7 @@
     "Existe un lock que se pone ROJO si el umbral cambia en un lado y no en el otro, y se reporta la evidencia de haberlo plantado en rojo.",
     "La suite queda en verde."
   ],
-  "status": "todo",
+  "status": "done",
   "priority": "low",
   "labels": [
     "ch3",
@@ -21,11 +21,20 @@
   ],
   "assignee": null,
   "depends_on": [],
-  "linked_commits": [],
+  "linked_commits": [
+    "d8f5c0c",
+    "343951c"
+  ],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-29T03:22:05.496Z",
+      "body": "CERRADO con review independiente en PASS (Fable 5, contexto fresco), cero HIGH, y el unico MEDIUM corregido.\n\n## 1. El caption alineado con el apagado real\n\n`currentStep` comparaba contra `ACT1_UNITS` (3) mientras la capa del Acto 1 ya termina de apagarse en `ACT1_FADE_END` (2.84) desde TASK-025. Medido en Chrome headed: el caption se quedaba clavado en \"1/8 THE GOODBYE\" durante TODA la banda [2.84, 3.0) — incluso con `act1LayerOp=0` y `pointerEvents=none`, o sea con la capa ya invisible e inerte — y recien cambiaba a \"2/8 INTRO\" en 3.0116. Despues del fix cambia en ~2.856, junto con el apagado.\n\nEl reviewer verifico ademas algo que el ticket no pedia y vale la pena registrar: el estado malo \"el caption ya cambio pero la capa todavia intercepta\" es **imposible** en ambos sentidos de scroll, porque la funcion es monotona y sin histeresis. El desfase remanente entre el corte de pointer-events (2.8155) y el cambio de caption (2.84) es de 0.025 unidades ~2.5vh fisicos, es benigno y es por diseño: pointer-events corta antes por su margen de seguridad de 0.05, el caption cambia cuando la opacidad real toca 0.\n\nOJO, dato corregido: durante la sesion se reporto ese desfase como ~0.006vh. Estaba mal por dos ordenes de magnitud — 0.006 era la granularidad del muestreo CDP, no el ancho de la banda. Se verifico por grep que el numero equivocado nunca llego a ningun comentario del repo.\n\n## 2. El umbral 0.05, en una sola constante\n\n`INERT_OPACITY_THRESHOLD`, exportada desde `ch3Progress.js`, con tres consumidores: `pointer-events` de la capa del Acto 1, `inert` de los slides del Acto 2, y la tolerancia de los locks T-orange.\n\nSe evaluo explicitamente si eran DOS umbrales que hoy coinciden por casualidad o UNO solo. Decision: uno solo, porque es la misma regla de accesibilidad (\"por debajo de este opacity, no interceptar click ni foco\") aplicada a dos capas distintas. El reviewer coincidio de forma independiente y verifico que un split futuro es un cambio chico y explicito, documentado como escape hatch en `ch3Progress.js:154-158`, o sea el diseño actual no lo obstruye. Detalle de consistencia verificado: `>` en pointer-events y `<=` en inert tratan igual el caso exacto op==0.05 (ambos lo dan por inerte).\n\n## 3. El MEDIUM del review, corregido\n\nEl lock T15 original era `expect(CH3_SOURCE).not.toMatch(/0\\.05/)`, un negativo GLOBAL sobre el SFC entero. Fallaba en las dos direcciones:\n\n- **Falsos positivos:** `0.05` como substring es vocabulario normal del proyecto — `letter-spacing: 0.05em`, `opacity: 0.055`, delays `0.05s` existen hoy en otros componentes. Cualquiera aterrizando manana en el CSS de ch3 lo ponia rojo por la razon equivocada. Señal de que ya molestaba: el developer tuvo que redactar sus propios comentarios esquivando escribir el numero.\n- **Sub-lockeaba el AC#6:** si alguien cambiaba UN call site a un literal DISTINTO (`slide.opacity <= 0.1`), el lock quedaba VERDE — el import seguia vivo por el otro uso y \"0.05\" no aparecia. O sea el AC solo se cumplia cuando el literal nuevo era exactamente 0.05, el caso menos interesante.\n\nReemplazado por dos aserciones positivas ancladas al comparador de cada call site. El developer probo el hueco de forma DIFERENCIAL: cambio un call site a 0.1, confirmo que el lock nuevo se pone rojo, y confirmo por separado que el lock viejo habria quedado verde en ese mismo escenario. Eso prueba el hallazgo en vez de asumirlo.\n\nMas el titulo de T11, que habia quedado contradiciendo a T16 en el mismo archivo (decia \"currentStep 0 durante todo el Acto 1\", ya falso desde 2.84).\n\n## Nota sobre la leccion 4\n\nEl lock sigue siendo a nivel source y eso es legitimo aca: el contrato que afirma es \"que identificador usa la expresion JS\", no un resultado de cascada CSS, asi que no aplica la exigencia de compilar el `<style scoped>`. Lo que estaba mal era la precision del regex, no la tecnica.\n\n## Suite y no-regresion\n\n645/649 passed, 3 todo. El unico rojo es `chapter-overlap-ch6 > T4`, ajeno y ticketeado en TASK-027.\n\nNo-regresion verificada en Chrome headed: los 8 pasos siguen clickeables y aterrizando en el indice correcto, el hit-test en cada paso resuelve al contenido real y nunca a `.ch3-act1-white`/`.ch3-act1-accent`, y el paso 1 (hero) sigue con su CTA clickeable — o sea **el cuadrado naranja no volvio**. `ACT1_UNITS`, `ACT2_STEP_VH`, `TOTAL_UNITS` y `CH3_VIEWPORTS` intactos.\n\nRuta PRM verificada como no afectada: bajo `prefers-reduced-motion` el paso activo lo resuelve `initPRMStepObserver()` via IntersectionObserver, que no depende de `computeCh3Frame()` ni de `ACT1_FADE_END`."
+    }
+  ],
   "created_at": "2026-07-28T21:09:55.572Z",
-  "updated_at": "2026-07-28T21:09:55.572Z",
+  "updated_at": "2026-07-29T03:22:05.496Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"
