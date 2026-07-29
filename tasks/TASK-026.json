@@ -24,9 +24,15 @@
   "depends_on": [],
   "linked_commits": [],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "reviewer",
+      "at": "2026-07-29T15:22:38.727Z",
+      "body": "## Review de cierre — 2026-07-29 — VEREDICTO: BLOCK\n\nDiff revisado: `754e5df` (verificado alcanzable desde `master` HEAD tras el rewrite de historial). `review_depth: full`. Suite completa verde: 85 archivos, 664 passed, 3 todo, 0 fail.\n\n### Lo que quedó VERIFICADO CORRECTO\n\n- **Veracidad de la atribución.** El texto coincide **carácter por carácter**, tildes incluidas, con la dictación verbatim de Rafael registrada en este ticket, en ES y EN. Se validó contra esa dictación y NO contra coherencia interna del diff, porque la fuente de verdad original (`GUION-TEXTOS-FINAL.md`) era justamente la que estaba mal; su tabla quedó alineada con nota al pie fechada. Hechos confirmados: BlueLizard = tester→gameplay programmer + Lost Realms 2 / Megamind; Matte = advergames Coca-Cola/Sanofi/Marlboro 2D/3D/AR/VR; Joju = Bingo Blingo + primer remoto + Scrum. Los literales viejos sólo sobreviven dentro de este propio ticket, como historia.\n- **Bilingüe.** Ambos locales corregidos en el mismo commit; `tests/i18n/parity.test.js` verde.\n- **Zona sensible de ch2 intacta.** El commit toca exactamente 3 archivos (`src/i18n/es.json`, `src/i18n/en.json`, `.planning/GUION-TEXTOS-FINAL.md`). Cero contacto con `src/phaser/`, `Ch2MiniGame`, `Chapter2Content.vue`, `ScrollShell.vue` ni `projects.js` (13 ids intactos). Lista blanca respetada.\n\n### HIGH — bloqueante\n\n**AC5 sin evidencia: nadie midió en Chrome headed si la tarjeta de BlueLizard desborda o corta texto.** El AC lo exige explícitamente. No hay rastro en el commit, ni en los comentarios del ticket, ni en el bundle de sesión.\n\nEl riesgo no es teórico: **la descripción ES de BlueLizard pasó de ~104 a ~232 caracteres, ~2.2x**, que es exactamente el escenario que el AC quería medir. El verde de jsdom no prueba nada de layout.\n\nFix: correr la medición headed en los viewports de prueba y reportar números. Si desborda, se abre el ticket de diseño de tarjetas de ch2 que este mismo ticket prevé.\n\n### MEDIUM\n\n- **Tier `tests-after` sin ningún lock de regresión.** El AC6 resultó vacuo de forma legítima: ningún test asertaba los literales viejos (referencian sólo las *claves*), así que nada se puso rojo. Pero el ticket teme explícitamente que un futuro agente de carga de contenido reintroduzca la atribución cruzada, y hoy esa regresión no tiene guardia — la nota del guion protege un solo vector. Lock mínimo propuesto, dentro de la lista blanca `tests/**`: asertar en `tests/i18n/` que `projects.ch2-bluelizard.desc` contiene \"Lost Realms 2\", `ch2-matte.desc` contiene \"Sanofi\" y `ch2-joju.desc` contiene \"Bingo Blingo\".\n- **Sin hand-off del developer** con los outcomes del checklist previo. Al cerrar, adjuntarlo y registrar `754e5df` en `linked_commits`, que sigue vacío.\n\n### LOW\n\nNinguno. Diff mínimo y exactamente del tamaño del problema. Sin dependencias, APIs ni lógica nuevas. El contenido en sí está impecable; no se inflaron hallazgos.\n"
+    }
+  ],
   "created_at": "2026-07-28T17:32:45.010Z",
-  "updated_at": "2026-07-28T17:33:19.508Z",
+  "updated_at": "2026-07-29T15:22:38.727Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

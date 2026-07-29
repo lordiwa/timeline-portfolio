@@ -15,7 +15,7 @@
     "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch5.",
     "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si showText vuelve a apagarse o si el conteo de personajes de la multitud cambia."
   ],
-  "status": "todo",
+  "status": "in_progress",
   "priority": "critical",
   "labels": [
     "design",
@@ -40,10 +40,15 @@
       "author": "orchestrator",
       "at": "2026-07-27T15:55:59.971Z",
       "body": "## Hallazgo de diseno registrado desde TASK-009 (2026-07-27) — tipografia de ch5\n\nEl hook de diseno `impeccable` marco `overused-font` sobre Inter. La linea que senalo (`src/styles/eras.css:115`) es un falso positivo: esta dentro de un comentario donde el developer de TASK-009 documenta una correccion citando `chapter-components.css:1401-1402`, no es una declaracion de fuente.\n\nPero el hallazgo de fondo es real y cae dentro del alcance de ESTE ticket:\n\n- `src/styles/eras.css:179` declara `--font-body: 'Inter Variable', system-ui, sans-serif` como fuente de cuerpo de ch5.\n- `src/styles/chapter-components.css:1402` declara `[data-chapter=\"5\"] .project-card-title { font-family: 'Inter Variable', ... }`.\n- `src/styles/inter-variable-latin.css` carga el subset. En el bundle son 133.324 B (48.256 latin + 85.068 latin-ext), o sea el consumidor de fuente mas caro del sitio.\n\nNO se toco en TASK-009 por dos razones: `eras.css` estaba siendo editado en vivo por el developer de ese ticket, y la tipografia de ch5 pertenece a este ticket, cuya spec `.planning/design/05-ch5-pandemia-broadcast.md` dice explicitamente \"cero fuentes nuevas\". Tampoco se suprimio el hallazgo con ignore-value: la regla del proyecto es arreglar, no silenciar.\n\nCriterio del hook: Inter, Roboto, Fraunces, Geist, Plus Jakarta Sans y Space Grotesk aparecen en tantos sitios que ya no distinguen, y cada oleada de UI generada por IA converge en ese mismo punado de caras.\n\nLectura del orquestador para cuando se ejecute este ticket: Inter es de 2017, asi que para la era 2020-2022 NO es un anacronismo como si lo era en ch3. El problema no es de epoca sino de caracter: es la eleccion mas generica posible para un capitulo que Rafael quiere que se sienta un producto de streaming propio (VivoEnVivo), y el estandar declarado es que el sitio parezca de 50.000 dolares.\n\nDos caminos, a decidir con la spec en la mano:\n1. Cambiar la cara de ch5 por una con personalidad de broadcast. Si se hace, hay 133 KB de presupuesto de fuentes que se liberan, lo cual da margen real.\n2. Confirmar Inter como intencional si la spec lo sostiene, y en ese caso registrar la excepcion de forma explicita en vez de dejar el hallazgo abierto.\n\nLa decision final es de Rafael porque es de caracter visual, no tecnica."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-29T15:18:51.488Z",
+      "body": "## Corrección al AC#1 antes de despachar (2026-07-29)\n\nEl AC#1 y el cuerpo de este ticket hablan de **\"180 palabras\"**. Ese número quedó **viejo**: se escribió el 2026-07-27 a las 05:48, y Rafael entregó sus textos finales ese mismo día más tarde, en `.planning/GUION-TEXTOS-FINAL.md`. El texto de la era 5 **creció aproximadamente 4x** (de ~1013 a ~4188 caracteres según el registro de sesión).\n\nSe instruyó al developer a **medir el número real** él mismo sobre el guion y sobre `src/data/bio.js`, y a reportarlo.\n\nVale la decisión ya registrada del 2026-07-27: **el texto de Rafael NO se recorta para que entre; si no entra, el que cambia es el diseño.** Concretamente: si el panel lateral de stream de la §4 de la spec no aguanta ese volumen, el panel cambia (más viewports, scroll interno con fade, paginación por escena — lo que la spec habilite), no el texto.\n\nEste ticket se dejó deliberadamente para después de la entrega de textos por esta razón: se puede diseñar conociendo el largo real en vez de adivinando, lo que evita rehacerlo dos veces.\n\n## Decisión de tipografía\n\nEl segundo comentario de este ticket dejaba la elección de fuente de ch5 como \"decisión final de Rafael por ser de carácter visual\". Eso quedó **superado** por el criterio permanente que Rafael fijó el 2026-07-27 a las 20:15: *la estética la define la spec y no se le consultan decisiones de gusto*. Se instruyó al developer a resolverlo con la spec en la mano (que dice \"cero fuentes nuevas\"), decidir y justificar, no a devolverlo como pregunta abierta.\n\n## Alcance de sesión\n\nRafael recortó el alcance del proyecto el 2026-07-29 a lo visual y de contenido. Este ticket es la primera de las dos unidades grandes que quedan, junto con TASK-012 (ch6).\n"
     }
   ],
   "created_at": "2026-07-27T05:48:12.752Z",
-  "updated_at": "2026-07-27T15:55:59.971Z",
+  "updated_at": "2026-07-29T15:18:51.488Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"
