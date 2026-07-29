@@ -305,7 +305,17 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile, locale) {
         return false;
       })()
     `)
-    if (!clicked) continue // beat sin expansor en este layout (no debería pasar para índices 0-3)
+    if (!clicked) {
+      // TASK-024 ronda 6 (MEDIUM #2 de review): un `continue` silencioso acá
+      // reintroduce el mismo punto ciego de 4 rondas que este harness vino a
+      // cerrar — el expansor "Seguir leyendo" DEBE existir en los índices
+      // 0-3 (siempre lo tienen, ver Chapter3Content.vue) y si el click no lo
+      // encuentra, el viewport queda SIN medir pero el script seguía
+      // reportando exit 0. Ahora es un FALLO duro, no un salto silencioso.
+      vpClean = false
+      console.log(`${name} [${locale}] beat${b} expansor NO encontrado — FALLO SILENCIOSO EVITADO (ver ronda 6 de review)`)
+      continue
+    }
     await sleep(400) // transition grid-template-rows 0.35s
     const m = await evaluate(`window.__ch3MeasureExpanded(${b}, ${h})`)
     if (!m.ok) {

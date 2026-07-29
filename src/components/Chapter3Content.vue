@@ -1456,6 +1456,16 @@ onBeforeUnmount(() => {
    *    y=813-842). Confirma que POSICIÓN y TIPOGRAFÍA son necesarias
    *    JUNTAS, en TODO alto de viewport — ninguna de las dos sola alcanza.
    *
+   * Riesgo residual aceptado (documentado a pedido de la ronda 6 de
+   * review): en un navegador SIN soporte de `:has()`, TODAS las reglas de
+   * este bloque (posición Y tipografía) dejan de aplicarse — el estado de
+   * fallback es el DEFECTUOSO (vuelve al solape/recorte original), no el
+   * seguro. Se acepta este riesgo porque `:has()` es Baseline 2023 (todos
+   * los navegadores evergreen desde 2023) y porque `StickyTimeline.vue` ya
+   * usa el mismo patrón en este código base sin que se haya reportado
+   * ningún caso real de fallback — no es una mitigación "safe by default",
+   * es una apuesta ya tomada antes en este proyecto.
+   *
    * FIX final: `:has()` (ya usado en este proyecto — StickyTimeline.vue —
    * soporte aceptado) compacta la fila COMPLETA (posición + tipografía)
    * SÓLO cuando está REALMENTE expandida, nunca las filas colapsadas — la
@@ -1485,15 +1495,58 @@ onBeforeUnmount(() => {
    * CDP real, ES y EN, banda completa (390-900px de alto, anchos 768-1536,
    * 8 pasos colapsados + 4 beats expandidos por viewport/locale): cero
    * solape y cero recorte tras el fix — ver la tabla del hand-off. */
-  .ch3-beat-rest > p {
-    font-size: 0.64rem;
-    line-height: 1.15;
-    margin-top: var(--sp-xs);
-  }
   .ch3-slide:has(.ch3-beat-rest.is-open) {
     align-items: flex-start;
     padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 92px);
     box-sizing: border-box;
+  }
+  /* TASK-024 ronda 6 de review (HIGH — la ronda 5 dejó la compactación
+   * tipográfica GLOBAL, sin @media, junto con el anclaje de posición. El
+   * anclaje (arriba) es inofensivo en cualquier alto — un padding-top de
+   * más nunca causa solape — pero la compactación SÍ tiene costo: aplasta
+   * el párrafo revelado a 0.64rem/10.24px (bajo el piso más chico del
+   * sistema de diseño, --fs-100: 0.72rem, reservado para metadatos/ticks)
+   * incluso en desktop espacioso (1920x1080, 1440x900) donde nunca hizo
+   * falta — degradando el texto narrativo principal al más chico de todo
+   * el sitio, justo en el estado cuyo propósito es "leer más".
+   *
+   * Medido con CDP real (no estimado): con tipografía SPEC completa
+   * (1.0625rem/17px, sin compactar) y SÓLO el anclaje de posición activo,
+   * beat "RECONSTRUIR" (ES, el más corto) satura en bottom=813px fijo
+   * (top=212, no cambia con el alto de viewport — está anclado, no
+   * centrado); beat "REBUILD" (EN, el más largo — la traducción es más
+   * verbosa) satura en bottom=842px fijo. El barrido fino (paso de 1px,
+   * ancho 1280, EN) dio: 838px→4px de recorte, 839px→3px, 840px→2px,
+   * 841px→0px real (los 842-841=1px que mostraba clipAmount son ruido de
+   * redondeo del helper de medición, no recorte visible), 842px→0px limpio.
+   * Umbral real medido: la tipografía SPEC completa cabe, anclada, desde
+   * 842px de alto en adelante (peor caso EN); por debajo hace falta
+   * compactar. Se gatea en 841px (el último alto donde EN todavía no
+   * entra limpio) para no dejar ningún hueco entre bandas.
+   *
+   * Confirmado en los dos viewports que pidió la revisión: a 1920x1080 y
+   * 1440x900 (ES y EN), con la compactación ya gateada abajo, el párrafo
+   * revelado computa font-size:17px / line-height:28.9px — los valores de
+   * la spec (1.0625rem/1.7), no los compactos — porque ambos superan
+   * 841px de alto.
+   *
+   * Hallazgo propio corriendo el harness completo con este gate: a
+   * 390x844-mobile-portrait (ancho angosto, alto apenas por ENCIMA de
+   * 841px) la tipografía SPEC completa, sin compactar, se recortó igual
+   * — hasta 388px de exceso (beat1, y1=1232 contra 844 disponibles). La
+   * medición de 841px se hizo a ancho 1280 asumiendo (como en rondas
+   * anteriores) que `--measure` capea el ancho de columna y por eso el
+   * ancho no cambía el presupuesto — cierto para escritorio, FALSO en
+   * mobile portrait: por debajo de la columna `--measure`, un ancho más
+   * angosto envuelve el párrafo en más líneas y necesita mucho más alto.
+   * Se agrega el mismo brazo `max-width:767px` que ya usan la reserva y el
+   * rail (Ch3Roadmap.vue) para cubrir ese caso — mismo umbral ya
+   * establecido en este componente para "angosto", no uno nuevo inventado. */
+  @media (max-width: 767px), (max-height: 841px) {
+  .ch3-beat-rest > p {
+    font-size: 0.64rem;
+    line-height: 1.15;
+    margin-top: var(--sp-xs);
   }
   .ch3-beat:has(.ch3-beat-rest.is-open) {
     padding: var(--sp-xs) var(--sp-lg);
@@ -1517,6 +1570,7 @@ onBeforeUnmount(() => {
   }
   .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-more {
     margin-top: 2px;
+  }
   }
 
   /* TASK-024 ronda 4 de review (HIGH — la ronda 3 quedó a medio camino,
