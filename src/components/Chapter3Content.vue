@@ -1422,6 +1422,103 @@ onBeforeUnmount(() => {
     }
   }
 
+  /* TASK-024 ronda 5 de review (HIGH): el "Seguir leyendo" (destape de la
+   * narrativa, spec §8/TASK-007) revela `.ch3-beat-rest` con un párrafo
+   * ADICIONAL. Dos hallazgos, uno del review y uno propio corriendo el
+   * harness actualizado con el fix parcial del primero — por eso esta
+   * regla es GLOBAL (sin media query), no sólo de la banda de reserva:
+   *
+   * 1) DENTRO de la banda de reserva (≤767px): la reserva ancla cada slide
+   *    en y=194 con `align-items:flex-start`, así que el beat expandido
+   *    tiene altura FIJA, y con `.ch3-scene` en `overflow:clip` sin scroll
+   *    interno, cualquier alto por debajo de lo que esa altura fija
+   *    necesita RECORTA el final del párrafo de forma INALCANZABLE — el
+   *    mismo defecto de la ronda 1 (HIGH original), en el estado
+   *    expandido. Medido con CDP real, ES: el beat "RECONSTRUIR" (índice
+   *    1, el más largo de los 4 expandibles) sin compactar necesita ~602px
+   *    a 1280 de ancho — más que el TECHO de la banda entera (767px, sólo
+   *    573px disponibles tras los 194 de reserva).
+   * 2) FUERA de la banda de reserva (>767px, ej. 900/768/791 — los
+   *    "siempre limpios" de toda la verificación anterior): `.ch3-slide`
+   *    sigue con `align-items:center` normal (sin reserva), así que el
+   *    mismo beat expandido, al ser tan alto, empuja su PROPIO borde
+   *    superior hacia arriba al centrarse — y ese borde cae DENTRO de la
+   *    franja del rail (y=[120,204] a tamaño completo). Medido con CDP
+   *    real: a 1440x900, ES, "RECONSTRUIR" expandido midió y=[149,751] —
+   *    su tope (149) invade la franja del rail (120-204), solape real, sin
+   *    ningún recorte (751<900) — un problema de CENTRADO, no de
+   *    `overflow:clip`. Reproducido igual en 1366x768, 1536x791,
+   *    1280x767/770 — todos fuera de la banda, todos rotos.
+   * 3) Intento intermedio (sólo reposicionar, sin compactar tipografía,
+   *    fuera de la banda): resolvía (2) pero abría (1) de nuevo ahí mismo
+   *    — anclado en y≈212 sin compactar, "RECONSTRUIR" sigue necesitando
+   *    ~602-630px y 768/791px de alto no alcanzan (medido: recortaba hasta
+   *    y=813-842). Confirma que POSICIÓN y TIPOGRAFÍA son necesarias
+   *    JUNTAS, en TODO alto de viewport — ninguna de las dos sola alcanza.
+   *
+   * FIX final: `:has()` (ya usado en este proyecto — StickyTimeline.vue —
+   * soporte aceptado) compacta la fila COMPLETA (posición + tipografía)
+   * SÓLO cuando está REALMENTE expandida, nunca las filas colapsadas — la
+   * tipografía de la spec validada visualmente en la ronda 4 (AC#2,
+   * "cumple y se ve bien") queda intacta en el estado por defecto, en
+   * CUALQUIER alto de viewport. Sin media query: `:has()` por sí solo ya
+   * es la única condición que hace falta. `.ch3-beat-rest > p` se compacta
+   * SIEMPRE, sin `:has()` — mide 0 de alto mientras está colapsado
+   * (`grid-template-rows:0fr`), así que no cambia nada visible hasta que
+   * se expande, en cualquier viewport. El clearance de posición (92px en
+   * vez de 74px) usa el alto REAL del rail a tamaño COMPLETO (medido:
+   * 84px, `y=[120,204]` a 1440x900) + 8px de aire — más conservador que el
+   * 74px calibrado para el rail COMPACTO (66px), pero un exceso de reserva
+   * nunca causa solape, así que un solo número sirve para ambos tamaños de
+   * rail. Con especificidad de `:has()` (cuenta como pseudo-clase) esta
+   * regla le gana a `.ch3-slide { padding-top:...74px }` de la reserva de
+   * arriba cuando ambas aplican (dentro de ≤767px con un beat expandido).
+   *
+   * AJUSTE FINO (mismo hand-off): con la primera pasada de valores
+   * compactos (rest 0.75rem, lead 0.78rem, icono 40px) el barrido completo
+   * (ES+EN, 8 pasos + 4 beats expandidos, 16 viewports) dejó UN solo caso
+   * roto: 844x390 (el más apretado de la suite), beat "RECONSTRUIR", 8px
+   * de recorte en EN específicamente (ES entraba con 5px de margen). Se
+   * ajustó una vez más (rest 0.68→0.64rem/1.15lh, lead 0.7→0.68rem/1.15lh,
+   * icono 40→36px) hasta confirmar margen real en AMBOS locales (medido:
+   * bottom=376px contra 390px disponibles, 14px de margen). Verificado con
+   * CDP real, ES y EN, banda completa (390-900px de alto, anchos 768-1536,
+   * 8 pasos colapsados + 4 beats expandidos por viewport/locale): cero
+   * solape y cero recorte tras el fix — ver la tabla del hand-off. */
+  .ch3-beat-rest > p {
+    font-size: 0.64rem;
+    line-height: 1.15;
+    margin-top: var(--sp-xs);
+  }
+  .ch3-slide:has(.ch3-beat-rest.is-open) {
+    align-items: flex-start;
+    padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 92px);
+    box-sizing: border-box;
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) {
+    padding: var(--sp-xs) var(--sp-lg);
+    gap: var(--sp-xs);
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-numeral {
+    font-size: clamp(1.1rem, 4.5vh, 1.6rem);
+    margin-bottom: 0;
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-kicker {
+    font-size: 0.58rem;
+    margin-bottom: 0;
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-lead {
+    font-size: 0.68rem;
+    line-height: 1.15;
+  }
+  .ch3-beat:has(.ch3-beat-rest.is-open) .ch3-beat-more {
+    margin-top: 2px;
+  }
+
   /* TASK-024 ronda 4 de review (HIGH — la ronda 3 quedó a medio camino,
    * otra vez): mi propio dato de la ronda 3 (Parte A del sweep: reserva
    * sola nunca falló en los pasos del Acto 2 — hero/beats/cierre — hasta

@@ -6,21 +6,29 @@
 // repo... si commitearlo es barato, hacelo").
 //
 // POR QUÉ EXISTE: jsdom no hace layout (.planning/LECCIONES-TECNICAS.md
-// §2) y tampoco evalúa @media (confirmado con un sandbox real durante esta
-// ronda: getComputedStyle nunca resuelve una regla dentro de un @media
+// §2) y tampoco evalúa @media (confirmado con un sandbox real durante la
+// ronda 3: getComputedStyle nunca resuelve una regla dentro de un @media
 // aunque se fuerce window.innerHeight/matchMedia). La única prueba real de
 // que el stepper no tapa ni recorta contenido, en un viewport dado, es
 // geométrica en un navegador real. Este script es esa prueba, hecha
 // reproducible en vez de vivir sólo en la sesión que la corrió.
 //
-// QUÉ MIDE, por cada viewport y cada uno de los 8 pasos del roadmap:
-//   - anyOverlap: ¿algún elemento de texto/botón real del slide activo
-//     intersecta el rect del rail?
-//   - anyClipped: ¿algún elemento de texto/botón real del slide activo
-//     tiene su borde inferior por debajo del alto real del viewport? (el
-//     Acto 1/Acto 2 de ch3 están pineados sin scroll interno — `.ch3-scene`
-//     es `overflow:clip` — así que "recortado" acá significa INALCANZABLE,
-//     no sólo tapado).
+// QUÉ MIDE, por cada viewport:
+//   - Los 8 pasos del roadmap en su estado COLAPSADO: ¿algún elemento de
+//     texto/botón real del slide activo intersecta el rect del rail?
+//     ¿tiene su borde inferior por debajo del alto real del viewport, o su
+//     borde superior por encima de 0?
+//   - RONDA 5: los 4 beats CON expansor (I-IV), en su estado EXPANDIDO
+//     ("Seguir leyendo" clickeado) — el HIGH de la ronda 5 fue exactamente
+//     que nadie clickeaba el expansor, así que el recorte del estado
+//     expandido (altura fija por la reserva + `overflow:clip` sin scroll
+//     interno = inalcanzable) pasaba desapercibido en 4 rondas de barrido.
+//   - RONDA 5: en AMBOS locales (ES/EN) — con perfil fresco Chrome puede
+//     arrancar en `en-US` (texto corto); ES es más largo y es el caso que
+//     de verdad prueba los umbrales de wrap. Un solo locale esconde
+//     defecto según la máquina/perfil que corra el script.
+// "Recortado/inalcanzable" en `.ch3-scene` (`overflow:clip`, sin scroll
+// interno) — no sólo tapado.
 //
 // CÓMO CORRERLO (Windows/PowerShell, receta completa en
 // .planning/LECCIONES-TECNICAS.md §6):
@@ -43,8 +51,14 @@
 // Chrome abiertas, Windows puede negar el foco real: Page.setWebLifecycleState
 // + Emulation.setFocusEmulationEnabled lo fuerzan sin depender del z-order.
 //
-// Exit code 0 si TODOS los viewports quedan limpios en los 8 pasos; 1 si
-// alguno falla (imprime el detalle de qué elemento solapó/recortó).
+// LOW (ronda 5, corregidos): `connect()` ahora elige el target por URL, no
+// el primer target `page` de la lista (que puede ser una pestaña ajena —
+// ej. "Chrome Web Store Payments" — si el perfil de Chrome tiene otras
+// pestañas abiertas). `clipped` ahora también mira el borde superior
+// (`y0 < 0`), no sólo el inferior.
+//
+// Exit code 0 si TODOS los viewports quedan limpios (8 pasos colapsados +
+// 4 beats expandidos, en ES y EN); 1 si algo falla (imprime el detalle).
 
 import fs from 'node:fs'
 
@@ -63,10 +77,18 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-async function connect(cdpPort) {
+async function connect(cdpPort, url) {
   const targets = await (await fetch(`http://127.0.0.1:${cdpPort}/json`)).json()
-  const page = targets.find((t) => t.type === 'page')
-  if (!page) throw new Error(`No se encontró un target "page" en :${cdpPort} — ¿Chrome levantado con --remote-debugging-port?`)
+  // LOW (ronda 5): elegir por URL, no "el primer target page" — con otras
+  // pestañas abiertas en el mismo perfil de Chrome, el primer target puede
+  // ser una pestaña ajena (ej. "Chrome Web Store Payments") y el script la
+  // secuestraría navegándola. Se autocorrige en la práctica (el próximo
+  // Page.navigate la lleva al dev server), pero no hay motivo para tocar
+  // una pestaña que no es la nuestra.
+  const urlOrigin = new URL(url).origin
+  let page = targets.find((t) => t.type === 'page' && t.url.startsWith(urlOrigin))
+  if (!page) page = targets.find((t) => t.type === 'page')
+  if (!page) throw new Error(`No se encontró ningún target "page" en :${cdpPort} — ¿Chrome levantado con --remote-debugging-port?`)
   const ws = new WebSocket(page.webSocketDebuggerUrl)
   let msgId = 0
   const pending = new Map()
@@ -164,6 +186,15 @@ async function bootAndSkipToCh3(cx, url) {
   return ready
 }
 
+async function ensureLocale(cx, locale) {
+  const { evaluate } = cx
+  const current = await evaluate(`document.querySelector('.lang-active')?.textContent?.trim()`)
+  if (current !== locale.toUpperCase()) {
+    await evaluate(`document.querySelector('.lang-toggle')?.click()`)
+    await sleep(200)
+  }
+}
+
 async function clickStep(cx, step) {
   const { send, evaluate } = cx
   await evaluate(`document.querySelectorAll('.ch3-roadmap-dot')[${step}].click()`)
@@ -188,6 +219,10 @@ const MEASURE_ALL = `
   window.__ch3Measure = function(step, vpHeight) {
     function rect(el) { const r = el.getBoundingClientRect(); return { x0: Math.round(r.left), y0: Math.round(r.top), x1: Math.round(r.right), y1: Math.round(r.bottom) }; }
     function intersects(a, b) { if (!a || !b) return false; return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0; }
+    // LOW (ronda 5): clipped ahora mira los DOS bordes (y1 > vh Y y0 < 0),
+    // no sólo el inferior — con align-items:flex-start el caso real medido
+    // siempre fue el inferior, pero era un supuesto no verificado.
+    function clipped(r) { return r.y1 > vpHeight + 1 || r.y0 < -1; }
     const roadmapEl = document.querySelector('.ch3-roadmap');
     const roadmapRect = roadmapEl ? rect(roadmapEl) : null;
     let container = null, targets = [];
@@ -206,42 +241,100 @@ const MEASURE_ALL = `
     const results = targets.map(([label, el]) => {
       if (!el) return { label, rect: null, overlap: false, clipped: false };
       const r = rect(el);
-      return { label, rect: r, overlap: intersects(r, roadmapRect), clipped: r.y1 > vpHeight + 1 };
+      return { label, rect: r, overlap: intersects(r, roadmapRect), clipped: clipped(r) };
     });
     return { step, anyOverlap: results.some((r) => r.overlap), anyClipped: results.some((r) => r.clipped), bad: results.filter((r) => r.overlap || r.clipped).map((r) => r.label) };
+  };
+  window.__ch3MeasureExpanded = function(beatIndex, vpHeight) {
+    function rect(el) { const r = el.getBoundingClientRect(); return { x0: Math.round(r.left), y0: Math.round(r.top), x1: Math.round(r.right), y1: Math.round(r.bottom) }; }
+    function intersects(a, b) { if (!a || !b) return false; return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0; }
+    function clipped(r) { return r.y1 > vpHeight + 1 || r.y0 < -1; }
+    const roadmapEl = document.querySelector('.ch3-roadmap');
+    const roadmapRect = roadmapEl ? rect(roadmapEl) : null;
+    const slides = Array.from(document.querySelectorAll('.ch3-slide'));
+    let best = null, bestOp = -1;
+    for (const s of slides) { const op = parseFloat(getComputedStyle(s).opacity || '0'); if (op > bestOp) { bestOp = op; best = s; } }
+    if (!best) return { beatIndex, ok: false, reason: 'no active slide' };
+    const article = best.querySelector('.ch3-beat');
+    const restOpen = best.querySelector('.ch3-beat-rest.is-open');
+    if (!article || !restOpen) return { beatIndex, ok: false, reason: 'expander no abrió' };
+    const r = rect(article);
+    return {
+      beatIndex, ok: true, rect: r,
+      overlap: intersects(r, roadmapRect),
+      clipped: clipped(r),
+    };
   };
   'installed';
 `
 
-async function measureViewport(cx, url, name, w, h, dsf, mobile) {
+async function measureViewport(cx, url, name, w, h, dsf, mobile, locale) {
   const { send, evaluate } = cx
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: dsf, mobile })
   await sleep(300)
   const ready = await bootAndSkipToCh3(cx, url)
   if (!ready) {
-    console.log(`${name} => NO READY (ch3/roadmap nunca montaron)`)
+    console.log(`${name} [${locale}] => NO READY (ch3/roadmap nunca montaron)`)
     return false
   }
+  await ensureLocale(cx, locale)
   await evaluate(MEASURE_ALL)
   let vpClean = true
+
   for (let i = 0; i < 8; i++) {
     await clickStep(cx, i)
     const m = await evaluate(`window.__ch3Measure(${i}, ${h})`)
     if (m.anyOverlap || m.anyClipped) {
       vpClean = false
-      console.log(`${name} step ${i} ROTO:`, JSON.stringify(m.bad))
+      console.log(`${name} [${locale}] step ${i} (colapsado) ROTO:`, JSON.stringify(m.bad))
     }
   }
-  console.log(`${name} => ${vpClean ? 'LIMPIO (8/8 pasos)' : 'ROTO'}`)
+
+  // RONDA 5: los 4 beats con expansor (I-IV = índices 0-3, pasos 2-5) en
+  // su estado EXPANDIDO — el punto ciego que dejó pasar el HIGH de esta
+  // ronda.
+  for (let b = 0; b < 4; b++) {
+    await clickStep(cx, b + 2)
+    const clicked = await evaluate(`
+      (() => {
+        const slides = Array.from(document.querySelectorAll('.ch3-slide'));
+        let best = null, bestOp = -1;
+        for (const s of slides) { const op = parseFloat(getComputedStyle(s).opacity || '0'); if (op > bestOp) { bestOp = op; best = s; } }
+        const btn = best ? best.querySelector('.ch3-beat-more') : null;
+        if (btn) { btn.click(); return true; }
+        return false;
+      })()
+    `)
+    if (!clicked) continue // beat sin expansor en este layout (no debería pasar para índices 0-3)
+    await sleep(400) // transition grid-template-rows 0.35s
+    const m = await evaluate(`window.__ch3MeasureExpanded(${b}, ${h})`)
+    if (!m.ok) {
+      vpClean = false
+      console.log(`${name} [${locale}] beat${b} expandido ROTO: ${m.reason}`)
+      continue
+    }
+    if (m.overlap || m.clipped) {
+      vpClean = false
+      console.log(`${name} [${locale}] beat${b} expandido ROTO:`, JSON.stringify(m.rect))
+    }
+  }
+
+  console.log(`${name} [${locale}] => ${vpClean ? 'LIMPIO (8 pasos + 4 beats expandidos)' : 'ROTO'}`)
   return vpClean
 }
 
 // Los 6 viewports de prueba estándar del proyecto (TASK-019/021/024) más
 // las fronteras conocidas de los TRES umbrales de ch3 (ronda 4: reserva
 // 767px, compactación Acto 1 735px, compactación Acto 2 525px — ver
-// Chapter3Content.vue). 800px de ancho es el peor caso para el wrap de
-// texto en fila de los beats (ronda 4), así que las fronteras del Acto 2
-// se prueban ahí en vez de a 1280.
+// Chapter3Content.vue).
+//
+// RONDA 5 (MEDIUM del review): agregadas 800x530 y 768x530 — el lado
+// RESERVA-SOLA de la frontera del Acto 2 (525px es el umbral de
+// compactación; 520/525 sólo probaban el lado CON compactación, nunca el
+// lado sin ella que depende de que 525 sea el número correcto). 768px de
+// ancho también se agrega explícito: el layout en fila de los beats rige
+// desde 768px (no 800px como se asumió en la ronda 4) — 768-799 es más
+// angosto y wrapea más, así que 768 es el peor caso real, no 800.
 const DEFAULT_VIEWPORTS = [
   ['1440x900', 1440, 900, 1, false],
   ['1366x768', 1366, 768, 1, false],
@@ -253,15 +346,17 @@ const DEFAULT_VIEWPORTS = [
   ['1280x700-caso-original-BLOCK', 1280, 700, 1, false],
   ['1280x730-frontera-acto1', 1280, 730, 1, false],
   ['1280x735-frontera-acto1', 1280, 735, 1, false],
-  ['800x520-frontera-acto2', 800, 520, 1, false],
-  ['800x525-frontera-acto2', 800, 525, 1, false],
+  ['800x520-frontera-acto2-con-compactacion', 800, 520, 1, false],
+  ['800x525-frontera-acto2-con-compactacion', 800, 525, 1, false],
+  ['800x530-frontera-acto2-reserva-sola', 800, 530, 1, false],
+  ['768x530-frontera-acto2-reserva-sola-ancho-real', 768, 530, 1, false],
   ['1280x767-frontera-reserva', 1280, 767, 1, false],
   ['1280x770-fuera-de-banda', 1280, 770, 1, false],
 ]
 
 async function main() {
   const { cdpPort, url } = parseArgs(process.argv.slice(2))
-  const cx = await connect(cdpPort)
+  const cx = await connect(cdpPort, url)
   await cx.send('Page.enable')
   await cx.send('Runtime.enable')
   await cx.send('DOM.enable')
@@ -269,11 +364,16 @@ async function main() {
   await cx.send('Emulation.setFocusEmulationEnabled', { enabled: true })
 
   let allClean = true
-  for (const [name, w, h, dsf, mobile] of DEFAULT_VIEWPORTS) {
-    const clean = await measureViewport(cx, url, name, w, h, dsf, mobile)
-    if (!clean) allClean = false
+  // RONDA 5 (MEDIUM del review): barrer ES Y EN — un solo locale esconde
+  // defecto dependiendo del perfil/máquina que corra el script (perfil
+  // fresco de Chrome arranca en en-US, el texto corto).
+  for (const locale of ['es', 'en']) {
+    for (const [name, w, h, dsf, mobile] of DEFAULT_VIEWPORTS) {
+      const clean = await measureViewport(cx, url, name, w, h, dsf, mobile, locale)
+      if (!clean) allClean = false
+    }
   }
-  console.log(`\n=== RESULTADO: ${allClean ? 'todos los viewports limpios' : 'hay viewports rotos, ver detalle arriba'} ===`)
+  console.log(`\n=== RESULTADO: ${allClean ? 'todos los viewports limpios (ES+EN, colapsado+expandido)' : 'hay viewports rotos, ver detalle arriba'} ===`)
   cx.ws.close()
   process.exitCode = allClean ? 0 : 1
 }

@@ -291,3 +291,128 @@ describe('TASK-024 ronda 3 — lock del numeral en ruta de "texto grande" WCAG (
     ).toBeGreaterThanOrEqual(LARGE_TEXT_PX)
   })
 })
+
+// ─────────────────────────────────────────────────────────────────────────
+// TASK-024 ronda 5 — lock del HIGH del estado EXPANDIDO ("Seguir leyendo").
+// Dos hallazgos, uno del review (recorte DENTRO de la banda de reserva,
+// ≤767px) y uno propio corriendo el harness con el fix parcial del primero
+// (solape FUERA de la banda, en los viewports "siempre limpios" 900/768/
+// 791 — un beat expandido lo bastante alto empuja su propio borde superior
+// hacia el rail al centrarse, sin que medie ningún @media). Por eso el fix
+// final es GLOBAL — sin ningún @media — y estos locks verifican
+// explícitamente que NO vuelva a quedar anidado dentro de la banda de
+// reserva (esa fue justamente la primera versión insuficiente de este
+// mismo fix, medida y descartada en esta ronda).
+//
+// Fix: `:has(.ch3-beat-rest.is-open)` (mismo selector que ya usa
+// StickyTimeline.vue en este proyecto) compacta posición Y tipografía de
+// la fila SÓLO cuando está REALMENTE expandida — nunca las filas
+// colapsadas, que conservan la tipografía de la spec ya validada
+// visualmente (AC#2, ronda 4, "cumple y se ve bien") en CUALQUIER alto de
+// viewport. `.ch3-beat-rest > p` se compacta SIEMPRE (sin `:has()`, mide 0
+// de alto mientras está colapsado) — tampoco depende de ningún @media.
+// ─────────────────────────────────────────────────────────────────────────
+describe('TASK-024 ronda 5 — lock del estado expandido de los beats ("Seguir leyendo")', () => {
+  function insideMediaQuery(node) {
+    // Camina hacia arriba en el árbol buscando específicamente un @media
+    // ancestro — a diferencia de "cualquier atrule", porque TODO este
+    // archivo vive dentro de `@layer components { ... }` (una capa de
+    // cascada, no una condición de viewport/motion): una regla dentro de
+    // `@layer` pero fuera de cualquier `@media` sigue siendo GLOBAL en el
+    // sentido que importa acá (se aplica siempre, sin depender del alto/
+    // ancho/prefers-* del viewport).
+    let n = node.parent
+    while (n) {
+      if (n.type === 'atrule' && n.name === 'media') return true
+      n = n.parent
+    }
+    return false
+  }
+
+  function topLevelDecls(root, selectorSubstring) {
+    // A diferencia de declsIn() (que busca DENTRO de un @media dado), esto
+    // busca en TODO el árbol pero EXCLUYE explícitamente cualquier regla
+    // anidada dentro de un @media — exactamente lo que hace falta para
+    // lockear "es global, no está escondido en un breakpoint".
+    const out = []
+    root.walkDecls((decl) => {
+      const rule = decl.parent
+      if (!rule || rule.type !== 'rule') return
+      if (insideMediaQuery(rule)) return
+      if (!selectorSubstring || (rule.selector && rule.selector.includes(selectorSubstring))) {
+        out.push({ selector: rule.selector, prop: decl.prop, value: decl.value })
+      }
+    })
+    return out
+  }
+
+  it('.ch3-beat-rest > p se compacta a nivel GLOBAL (fuera de cualquier @media — invisible mientras está colapsado, en cualquier viewport)', () => {
+    const ch3Root = styleRoot(CH3_PATH)
+    const restDecls = topLevelDecls(ch3Root, '.ch3-beat-rest > p')
+    // Existe una regla BASE preexistente `.ch3-beat-rest > p { font-size:
+    // 1.0625rem; ... }` (la spec, siempre global, no toca esta ronda) — una
+    // aserción de mera EXISTENCIA de "algún font-size" pasaría igual
+    // aunque mi regla compacta desapareciera (confirmado plantando el rojo:
+    // sin esto el test seguía en verde). Se busca el valor COMPACTO
+    // específico (0.75rem), no cualquier font-size.
+    const fontSizeDecl = restDecls.find((d) => d.prop === 'font-size' && d.value.trim() === '0.64rem')
+    expect(
+      fontSizeDecl,
+      'REGRESSION LOCK (HIGH ronda 5): .ch3-beat-rest > p debe tener font-size:0.64rem (el valor COMPACTO, no el de la regla base 1.0625rem) declarado FUERA de cualquier @media — si sólo vive dentro de la banda de reserva (≤767px), el párrafo revelado por "Seguir leyendo" vuelve a exceder el presupuesto en viewports MÁS ALTOS (900/768/791 — medido con CDP real: el beat más largo, expandido y sin compactar, necesita ~602-630px, más que lo disponible incluso ahí)'
+    ).toBeDefined()
+  })
+
+  it('.ch3-slide:has(.ch3-beat-rest.is-open) ancla arriba a nivel GLOBAL — el hallazgo propio de esta ronda (solape por centrado en viewports altos)', () => {
+    const ch3Root = styleRoot(CH3_PATH)
+    const sceneDecls = topLevelDecls(ch3Root, '.ch3-slide:has(.ch3-beat-rest.is-open)')
+    expect(
+      sceneDecls.some((d) => d.prop === 'align-items' && d.value.trim() === 'flex-start'),
+      'REGRESSION LOCK (HIGH ronda 5, hallazgo propio): .ch3-slide:has(.ch3-beat-rest.is-open) debe declarar align-items:flex-start FUERA de cualquier @media — medido con CDP real: sin esto, un beat expandido en un viewport >767px (900/768/791, los "siempre limpios") se centra y su propio borde superior invade la franja del rail (y=[149,...] contra el rail en y=[120,204] a 1440x900)'
+    ).toBe(true)
+    expect(
+      sceneDecls.some((d) => d.prop === 'padding-top' && /calc\(/.test(d.value)),
+      'REGRESSION LOCK (HIGH ronda 5): .ch3-slide:has(.ch3-beat-rest.is-open) debe declarar padding-top con calc() a nivel global'
+    ).toBe(true)
+  })
+
+  it('.ch3-beat:has(.ch3-beat-rest.is-open) compacta icono/numeral/kicker/lead/padding a nivel GLOBAL, SÓLO cuando la fila está expandida', () => {
+    const ch3Root = styleRoot(CH3_PATH)
+
+    const hasOpenSelectors = []
+    ch3Root.walkRules((rule) => {
+      if (insideMediaQuery(rule)) return // debe ser global, no anidado dentro de un @media
+      if (rule.selector && rule.selector.includes(':has(.ch3-beat-rest.is-open)')) hasOpenSelectors.push(rule.selector)
+    })
+    expect(
+      hasOpenSelectors.length,
+      'REGRESSION LOCK (HIGH ronda 5): debe existir al menos una regla `:has(.ch3-beat-rest.is-open)` FUERA de cualquier @media — si vuelve a quedar anidada dentro de la banda de reserva, el estado expandido de un beat en viewports >767px vuelve a exceder el presupuesto (ver el test de arriba)'
+    ).toBeGreaterThan(0)
+
+    // Verificar que compacta las propiedades concretas que el presupuesto
+    // necesita (medido con CDP real: icono, numeral, kicker, lead, padding).
+    const expandedDecls = topLevelDecls(ch3Root, ':has(.ch3-beat-rest.is-open)')
+    const expectedTargets = [
+      ['.ch3-beat-icon', 'width'],
+      ['.ch3-beat-numeral', 'font-size'],
+      ['.ch3-beat-kicker', 'font-size'],
+      ['.ch3-beat-lead', 'font-size'],
+    ]
+    for (const [selectorSubstr, prop] of expectedTargets) {
+      const found = expandedDecls.some((d) => d.selector.includes(selectorSubstr) && d.prop === prop)
+      expect(
+        found,
+        `REGRESSION LOCK (HIGH ronda 5): falta compactar ${prop} de un selector que incluya "${selectorSubstr}" dentro de la regla :has(.ch3-beat-rest.is-open) — sin esto el presupuesto medido con CDP puede volver a no alcanzar`
+      ).toBe(true)
+    }
+  })
+
+  // NOTA: se evaluó un cuarto test ("el valor compacto del numeral nunca
+  // aparece sin el guard :has()") y se descartó — el valor compacto
+  // `clamp(1.1rem, 4.5vh, 1.6rem)` coincide, A PROPÓSITO, con el que ya usa
+  // la compactación profunda del Acto 2 (`@media (max-height:525px)`,
+  // ronda 4, legítima y colapsa TODO el acto por diseño ya validado) — un
+  // lock por VALOR ahí genera un falso positivo real, no hipotético
+  // (confirmado plantándolo). El test #3 de arriba (existencia + props de
+  // `.ch3-beat:has(...) .ch3-beat-numeral`) ya cubre el caso real: si el
+  // guard de ESTA regla se cae, esa aserción positiva deja de encontrarla.
+})
