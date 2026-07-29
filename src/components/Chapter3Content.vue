@@ -1271,7 +1271,84 @@ onBeforeUnmount(() => {
   @media (max-height: 499px) and (orientation: landscape) {
     .ch3-phone { display: none; }
     .ch3-flash-stage { width: min(550px, 78vw, 62vh); }
-    .ch3-act1-decor { gap: var(--sp-md); }
+    /* TASK-024, mismo hallazgo que el bloque de abajo para el Acto 2: con
+     * `.ch3-phone` oculto acá, `.ch3-browser` queda como único hijo flex de
+     * `.ch3-act1-decor` (`align-items:center`) — más alto que el espacio
+     * disponible en 390px de alto, así que se centra y desborda hacia
+     * arriba igual que el Acto 2 (mismo mecanismo, misma álgebra: cada +1px
+     * de `padding-top` sólo compra +0.5px real cuando el contenido
+     * desborda). Medido con CDP real: `.ch3-flash-stage` en y=[174,352]
+     * contra el rail en y=[120,186] (12px de solape). Mismo fix: arrancar
+     * en el borde del padding (`align-items:flex-start`, 1:1 con
+     * `padding-top`) + reservar el MISMO clearance que el Acto 2
+     * (`--inset-chapter-top` + `--sp-sm` + 74px del rail compacto, ver el
+     * comentario grande más abajo — reemplaza el `padding-top:8vh` base de
+     * `.ch3-act1-decor`, insuficiente para este breakpoint). */
+    .ch3-act1-decor {
+      gap: var(--sp-md);
+      align-items: flex-start;
+      padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 74px);
+    }
+
+    /* TASK-024, HALLAZGO geometrico (verificación CDP real, 844x390): el
+     * Acto 2 (hero, los 5 beats, el cierre — todos comparten `.ch3-slide`,
+     * la clase base) sólo el hero reservaba clearance de HUD arriba (via
+     * `padding: var(--inset-chapter-top) ...` en `.ch3-hero`); beats y
+     * cierre dependían pura y exclusivamente del centrado flex de
+     * `.ch3-slide` (`align-items:center; justify-content:center`) para no
+     * pisar la zona superior — funcionaba porque en la mayoría de viewports
+     * el contenido cabe centrado sin tocar el borde. En 844x390 (sólo 390px
+     * de alto, StickyAvatar SIGUE midiendo 96px porque su query es por
+     * ANCHO no por alto — ver el comentario grande de Ch3Roadmap.vue) el
+     * contenido de CADA slide es más alto que el espacio disponible, así
+     * que el centrado flex lo empuja contra el padding-top (0 en la mayoría
+     * de slides) y arranca pegado al borde superior — exactamente donde
+     * ahora vive `.ch3-roadmap` (TASK-024: horizontal, arriba, centrado).
+     * Medido con CDP real: el h2 del hero en y=[121,234] y los párrafos de
+     * cada beat desde y=69 intersectando el rail en y=[120,186] en los 8
+     * pasos. Primer intento (sólo subir `padding-top`, dejando
+     * `align-items:center` heredado): NO alcanzó — con contenido más alto
+     * que el espacio disponible, `align-items:center` reparte el
+     * desbordamiento MITAD arriba/MITAD abajo del padding-box (álgebra
+     * verificada con CDP real: cada +1px de `padding-top` sólo empuja el
+     * contenido +0.5px hacia abajo cuando desborda), así que ningún
+     * padding finito alcanza a despejar el rail. Fix real: `align-items:
+     * flex-start` en este breakpoint — el contenido arranca EXACTO en el
+     * borde del padding-box (relación 1:1 con `padding-top`, no 0.5:1) en
+     * vez de centrarse y desbordar hacia arriba; si el contenido no entra
+     * completo, lo que se recorta es el BORDE INFERIOR (`.ch3-scene` ya usa
+     * `overflow:clip`), nunca el superior donde vive el rail — trade-off
+     * aceptado sólo en este breakpoint ya de por sí apretado (Acto 1 ya
+     * reduce su stage acá, ver arriba). `padding-top` reserva el MISMO
+     * clearance que ya usa `.ch3-hero` (`--inset-chapter-top`, despeja
+     * StickyAvatar) MÁS el alto real del rail compacto de Ch3Roadmap.vue en
+     * este breakpoint (medido: 66px, padding 7px×2 + dot 30px + gap
+     * vertical) MÁS `--sp-sm` de aire — aplicado a `.ch3-slide` (la clase
+     * compartida) para que hero/beats/cierre lo hereden con una sola regla,
+     * sin repetirla 7 veces. Si el alto real del rail compacto cambia
+     * (Ch3Roadmap.vue, mismo bloque de media query), este número (74px =
+     * 66px + 8px) hay que revisarlo junto con él — acoplados a propósito,
+     * documentado en ambos lados.
+     *
+     * `.ch3-close-slide` necesita la propiedad "que empieza arriba"
+     * DISTINTA: declara `flex-direction: column` (spec 03 §3.2.3, franja de
+     * cierre apilada), así que su eje principal es VERTICAL — ahí quien
+     * gobierna el arranque vertical es `justify-content`, no `align-items`
+     * (que en column pasa a regir el eje horizontal: pisarlo con
+     * `flex-start` habría desalineado el cierre a la izquierda). Por eso va
+     * en una regla separada con la propiedad correcta para su eje, en vez
+     * de una sola regla que asumiera que todos los `.ch3-slide` comparten
+     * la misma dirección de flex (no la comparten). */
+    .ch3-slide {
+      padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 74px);
+      box-sizing: border-box;
+    }
+    .ch3-slide:not(.ch3-close-slide) {
+      align-items: flex-start;
+    }
+    .ch3-close-slide {
+      justify-content: flex-start;
+    }
   }
 }
 </style>

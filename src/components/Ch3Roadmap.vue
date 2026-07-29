@@ -4,6 +4,16 @@
   como road map de paso a paso" — ver tasks/TASK-021.json y el hand-off del
   ticket para la justificación completa de cada decisión de abajo.
 
+  TASK-024 (pedido textual de Rafael, calibración sobre lo entregado por
+  TASK-021, mirando el sitio en vivo: "el stepper de ch3 porfa horizontal
+  arriba de todo centrado que sea mas visible"): reemplaza el rail vertical
+  top-right (desktop) / barra horizontal bottom-center (mobile) por UNA sola
+  disposición: siempre horizontal, siempre anclada arriba, siempre centrada.
+  Ver el bloque POSICIONAMIENTO más abajo para la geometría medida contra los
+  4 ocupantes reales de la zona superior (ContactHUD, LangToggle,
+  GlobalMantra, StickyTimeline) y el hand-off del ticket para la tabla de
+  rects verificados en Chrome real.
+
   DECISIONES (todas justificadas en el hand-off, resumen aquí para quien lea
   el código):
   - Cobertura: 8 pasos = 1 para el Acto 1 completo (la muerte del plugin es
@@ -13,10 +23,17 @@
     verdad de "8".
   - Clickeable: sí (recomendado por el ticket) — cada punto es un <button>
     real, foco nativo, Enter/Space disparan su click sin JS de teclado propio.
-  - Forma: rail vertical de puntos numerados (desktop) / rail horizontal
-    (mobile <768px) — lenguaje visual 2013 Flat UI: círculos flat con borde,
-    numeral Open Sans, acento --c-accent en el paso activo, long-shadow sutil
-    (mismo motivo de los iconos de Ch3StoryBeat.vue) sólo en el punto activo.
+  - Forma: SIEMPRE rail horizontal de puntos numerados sobre una tarjeta flat
+    (mismo lenguaje "carta blanca, borde 1px --c-border, radius 3px" que
+    Ch3StoryBeat.vue usa para sus badges de icono, spec 03 §6) — círculos
+    flat con borde, numeral Open Sans, acento --c-accent en el paso activo,
+    long-shadow sutil (mismo motivo de los iconos de Ch3StoryBeat.vue) sólo
+    en el punto activo. "Más visible" (AC#2 de TASK-024) se resuelve por
+    CONTRASTE (tarjeta --c-surface opaca sobre el escritorio oscuro del Acto
+    1 Y sobre el flat claro del Acto 2), TAMAÑO (puntos 40px→30px según
+    breakpoint, antes 32px→26px) y PESO (borde 2px→3px/2.5px, texto
+    caption 700→800), nunca por animación nueva — cero curvas ni duraciones
+    añadidas a las que ya reprueba T6.
 
   POSICIONAMIENTO — position:fixed + v-if gateado por activeChapter===3
   (Chapter3Content.vue inyecta 'scrollState' y pasa isCh3Active como control
@@ -29,7 +46,31 @@
   y un position:fixed simple sigue funcionando sin ninguna gimnasia de
   containing-block — no hace falta un override PRM para este componente.
 
-  ACCESIBILIDAD (AC#5 del ticket, no negociable):
+  TASK-024 — "arriba de todo, centrado": la zona superior del chasis YA tiene
+  dos ocupantes globales fijos, StickyAvatar.vue (top-left, 16px/80×96
+  desktop, 8px/56×68 <600px) y LangToggle.vue (top-right, 16px, ~44px alto en
+  TODOS los breakpoints — su query <600px sólo reduce el padding interno, no
+  su `top`). El más alto de los dos es StickyAvatar: borde inferior real en
+  16+96=112px desktop/landscape-corto (su query de tamaño es por ANCHO
+  <600px, así que a 844×390 —landscape corto pero ancho— sigue midiendo
+  96px) y 8+68=76px en <600px de ancho. `--inset-chapter-top` (tokens.css)
+  ya vale `calc(96px + var(--sp-md))` = 112px EXACTOS — es el mismo número
+  que el borde inferior del avatar en desktop, y este archivo lo reutiliza
+  como ancla en vez de inventar un segundo cálculo (Ch3-hero, más abajo en
+  Chapter3Content.vue, ya usa el mismo token para el mismo propósito). Se le
+  suma `--sp-sm` (8px) de aire real: top final 120px, con margen medido
+  contra los 4 ocupantes en el hand-off del ticket (tabla de
+  getBoundingClientRect en Chrome real, 6 viewports).
+  Centrado: `left:0; right:0; width:fit-content; margin-inline:auto` —
+  matemática de caja pura, NO `transform: translateX(-50%)`. TASK-021 ya
+  documentó que ese transform dejaba de aplicarse bajo una media query
+  compuesta específica sin causa identificable en la cascada (ver el
+  comentario `HALLAZGO geometrico` que este ticket retira más abajo); esta
+  técnica evita reintroducir el mismo riesgo en cualquier breakpoint, no sólo
+  en el que lo disparó la vez pasada.
+
+  ACCESIBILIDAD (AC#5 del ticket original TASK-021 + AC#6 de TASK-024, no
+  negociable):
   - Cada punto: <button> nativo (foco de teclado + Enter/Space gratis),
     aria-current="step" en el activo, aria-label con el paso/total/label
     (screen reader entiende "paso 3 de 8: el método" sin ver los números).
@@ -44,6 +85,24 @@
     (trampa documentada en .planning/LECCIONES-TECNICAS.md: la regla scoped
     de ScrollShell.vue que apaga ese outline sólo alcanza a `.scroll-shell`
     mismo, no a este componente).
+  - TASK-024 AC#6: el rail SIEMPRE fue horizontal ahora, así que el eje de
+    flecha esperado es ←→, no ↑↓ (auditado: este componente nunca ató un
+    handler propio a ninguna flecha — el único comportamiento de flechas que
+    existía al llegar a un botón del roadmap era ↑↓ BURBUJEANDO hasta el
+    `@keydown.up/down` GLOBAL de ScrollShell.vue, que navega CAPÍTULOS
+    enteros, no pasos; eso es intencional, ajeno a este componente y
+    ScrollShell.vue está fuera de la lista blanca — no se toca). Se agrega
+    `onListKeydown`: ArrowLeft/ArrowRight mueven el foco DOM entre botones
+    adyacentes (con wrap), `preventDefault`+`stopPropagation` para que no
+    burbujee al handler global (irrelevante en la práctica — ScrollShell
+    sólo ata up/down/home/end/j/k, nunca left/right — pero explícito y sin
+    efecto secundario). Es "roving focus" SIN roving tabindex: cada botón
+    sigue siendo un tab-stop normal (ningún `tabindex` nuevo), así que Tab
+    conserva exactamente el mismo recorrido que antes (T1-T5 de
+    tests/components/Ch3Roadmap.test.js siguen midiendo lo mismo) — las
+    flechas son un atajo ADICIONAL para saltar entre pasos adyacentes sin
+    activar nada (mueven el foco, no navegan; Enter/Space sigue siendo quien
+    dispara el click, igual que siempre).
 -->
 <script setup>
 import { computed } from 'vue'
@@ -72,11 +131,28 @@ function stepAria(i) {
 // así el mensaje que recibe un lector de pantalla es idéntico venga el
 // cambio de un click en el punto o de scroll real.
 const announce = computed(() => stepAria(props.currentIndex))
+
+// onListKeydown (TASK-024 AC#6) — roving FOCUS (no roving tabindex, ver
+// comentario grande arriba): ←/→ mueven document.activeElement al botón
+// adyacente dentro de .ch3-roadmap-list, con wrap en ambos extremos. No
+// dispara 'navigate' — sólo mueve el foco, Enter/Space en el botón ya
+// enfocado sigue siendo la única forma de activarlo (sin cambios ahí).
+function onListKeydown(e) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  const buttons = Array.from(e.currentTarget.querySelectorAll('.ch3-roadmap-dot'))
+  const idx = buttons.indexOf(document.activeElement)
+  if (idx === -1) return
+  e.preventDefault()
+  e.stopPropagation()
+  const dir = e.key === 'ArrowRight' ? 1 : -1
+  const next = (idx + dir + buttons.length) % buttons.length
+  buttons[next].focus()
+}
 </script>
 
 <template>
   <nav class="ch3-roadmap" :aria-label="t('ch3.roadmap.navAria')">
-    <ol class="ch3-roadmap-list">
+    <ol class="ch3-roadmap-list" @keydown="onListKeydown">
       <li v-for="(step, i) in steps" :key="i" class="ch3-roadmap-item">
         <button
           type="button"
@@ -99,49 +175,74 @@ const announce = computed(() => stepAria(props.currentIndex))
 </template>
 
 <style scoped>
-/* HALLAZGO geometrico (verificacion CDP de TASK-021, getBoundingClientRect
- * real en 1440x900 y 1366x768): centrado en top:50% el rail de 8 puntos +
- * caption (~340px de alto) invadia el rango vertical de ContactHUD.vue
- * (bottom-right, ~244px de alto con 5 iconos, `bottom: env(safe-area-inset-
- * bottom,0)`) — interseccion real medida: y=[656,790] x=[1378,1416] en
- * 1440x900. Fix: anclar el rail DEBAJO de LangToggle.vue (top-right, termina
- * en ~60px) en vez de centrar contra el viewport completo — dependiendo de
- * `top` fijo en vez de `top:50%` garantiza que el rail nunca se acerca a la
- * franja inferior donde vive ContactHUD, sin necesidad de conocer su altura
- * exacta (que varia con la cantidad de iconos de contacto). */
+/* TASK-024 — geometría nueva: SIEMPRE horizontal, SIEMPRE arriba, SIEMPRE
+ * centrado (retira el rail vertical top-right + su variante horizontal
+ * bottom-center de TASK-021, ver el comentario grande del <script> arriba
+ * para la justificación completa de cada número).
+ *
+ * top: reutiliza --inset-chapter-top (tokens.css, calc(96px + var(--sp-md))
+ * = 112px) — el MISMO token que Ch3-hero usa más abajo en Chapter3Content.vue
+ * para despejar el borde inferior de StickyAvatar.vue (top:16px + 96px alto
+ * = 112px, en TODOS los breakpoints donde el avatar mide 96px: desktop Y
+ * landscape corto <600px de alto pero >=600px de ancho — su query de tamaño
+ * es por ANCHO, no por alto). Se le suma --sp-sm (8px) de aire real: 120px
+ * final. LangToggle.vue (top-right, top:16px, ~44px alto en TODOS los
+ * breakpoints — su query <600px sólo reduce padding interno, no `top`) queda
+ * despejado de sobra (borde inferior ~60px, 60px por debajo de nuestro top).
+ * Tabla completa de rects medidos en Chrome real (6 viewports) en el
+ * hand-off del ticket.
+ *
+ * Centrado: left:0; right:0; width:fit-content; margin-inline:auto — caja
+ * pura, nunca transform (ver comentario del <script> sobre el hallazgo de
+ * TASK-021 con `transform: translateX()` bajo una media query compuesta). */
 .ch3-roadmap {
   position: fixed;
-  top: calc(var(--sp-md) + 64px);
-  right: var(--sp-lg);
+  top: calc(var(--inset-chapter-top) + var(--sp-sm));
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
   z-index: 30; /* bajo el HUD global (avatar/timeline/lang/contact/sound, z:40) */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--sp-xs);
+  padding: 10px 16px;
+  /* Tarjeta flat 2013 — mismo lenguaje que los badges de icono de
+     Ch3StoryBeat.vue (spec 03 §6: "cartas blancas con borde 1px --c-border y
+     radius 3px"): --c-surface es opaco, así que el rail lee con el MISMO
+     contraste fuerte sobre el escritorio oscuro del Acto 1 (#2b2d31) y sobre
+     el flat claro del Acto 2 (#ecf0f1) — resuelve "más visible" (AC#2) sin
+     ninguna animación nueva. */
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); /* tope de sombra permitido, spec §6 */
   pointer-events: auto;
 }
 
 .ch3-roadmap-list {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 /* Espina fina conectando los puntos — mismo gesto que StickyTimeline.vue,
-   pero flat 2013 (línea sólida --c-border, sin gradiente ni glow). */
+   pero flat 2013 (línea sólida --c-border, sin gradiente ni glow). Ahora
+   horizontal (antes vertical): `top: calc(50% - 0.5px)` evita `transform`
+   por el mismo motivo documentado arriba para `.ch3-roadmap`. */
 .ch3-roadmap-list::before {
   content: '';
   position: absolute;
-  top: 14px;
-  bottom: 14px;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
+  left: 18px;
+  right: 18px;
+  top: calc(50% - 0.5px);
+  height: 1px;
   background: var(--c-border);
   z-index: -1;
 }
@@ -150,17 +251,19 @@ const announce = computed(() => stepAria(props.currentIndex))
   display: flex;
 }
 
+/* TASK-024 AC#2 "más visible" — tamaño 32px→40px, borde 2px→3px, peso
+   700→800: presencia por tamaño y peso, no por movimiento nuevo. */
 .ch3-roadmap-dot {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 2px solid var(--c-border);
+  border: 3px solid var(--c-border);
   background: var(--c-surface);
   color: var(--ch3-text-2, var(--c-fg));
   font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.7rem;
+  font-weight: 800;
+  font-size: 0.82rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,35 +286,34 @@ const announce = computed(() => stepAria(props.currentIndex))
   background: var(--c-accent);
   border-color: var(--c-accent);
   color: #ffffff;
-  transform: scale(1.1);
+  transform: scale(1.15);
   /* Long-shadow 45° sutil — mismo motivo que los iconos de Ch3StoryBeat.vue
      (spec 03 §6), sólo en el punto activo para no sobrecargar el rail. */
-  box-shadow: 3px 3px 0 var(--ch3-long-shadow, rgba(44, 62, 80, 0.15));
+  box-shadow: 4px 4px 0 var(--ch3-long-shadow, rgba(44, 62, 80, 0.15));
 }
 
 .ch3-roadmap-caption {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
   margin: 0;
-  padding: 4px 6px;
-  min-width: 72px;
+  padding: 2px 4px 0;
   text-align: center;
 }
 
 .ch3-roadmap-count {
   font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.65rem;
+  font-weight: 800;
+  font-size: 0.75rem;
   color: var(--ch3-text-2, var(--c-fg));
   font-variant-numeric: tabular-nums;
 }
 
 .ch3-roadmap-label {
   font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 0.6rem;
+  font-weight: 800;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--c-accent);
@@ -232,66 +334,35 @@ const announce = computed(() => stepAria(props.currentIndex))
   border: 0;
 }
 
-/* Mobile <768px (mismo breakpoint que el resto de ch3, spec §6) O landscape
- * corto (mismo criterio que `.ch3-flash-stage`/`.ch3-phone` más abajo en
- * Chapter3Content.vue, `@media (max-height: 499px) and (orientation:
- * landscape)`, ej. 844x390): rail vertical → barra horizontal centrada
- * abajo. HALLAZGO geometrico (verificacion CDP de TASK-021): a 844x390 el
- * ancho (844px) NO cruza el breakpoint de 767px así que sin esta segunda
- * condición el rail quedaba en el layout desktop (340px de alto) dentro de
- * un viewport de sólo 390px de alto — desbordaba por abajo y colisionaba
- * con ContactHUD.vue (interseccion real medida: y=[146,390] x=[782,820]). */
+/* Mismo breakpoint compuesto que el resto de ch3 (spec §6 + `.ch3-flash-
+ * stage`/`.ch3-phone` en Chapter3Content.vue): mobile <768px de ancho O
+ * landscape corto (<500px de alto, ej. 844x390) — SÓLO reduce tamaño/gap
+ * para dar más aire horizontal en pantallas angostas. La orientación
+ * (horizontal), el anclaje (top) y el centrado NO cambian — ya no hace
+ * falta una segunda geometría completa como en TASK-021. */
 @media (max-width: 767px), (max-height: 499px) and (orientation: landscape) {
-  /* Centrado horizontal SIN transform (deliberado — ver hand-off de
-   * TASK-021: `transform: translateX()` en `.ch3-roadmap` bajo este mismo
-   * media query no se aplicaba en la verificación CDP real, aislado con
-   * `getComputedStyle` + `CSS.getMatchedStylesForNode`: la regla matcheaba
-   * y el resto de sus propiedades — `flex-direction`, dimensiones de
-   * `.ch3-roadmap-dot` — SÍ tomaban efecto, sólo `transform` quedaba en la
-   * matriz identidad sin causa identificable en la cascada. `left:0; right:0;
-   * width:fit-content; margin-inline:auto` logra el mismo centrado con
-   * matemática de caja pura, sin depender de `transform` en absoluto). */
-  /* HALLAZGO geometrico #2 (misma verificacion CDP): `bottom: env(...) +
-   * var(--sp-sm)` — el MISMO anclaje que usa GlobalMantra.vue bajo <600px
-   * ("And always with a smile", bottom:env(...)+var(--sp-sm) también) —
-   * hacía que ambos compitieran por la misma franja horizontal inferior;
-   * interseccion real medida en 390x844: roadmap y=[768,836] x=[70,320] vs
-   * global-mantra y=[808,836] x=[102,288]. GlobalMantra mide ~27.6px de alto
-   * en mobile (font 0.75rem + padding 5px, `white-space:nowrap` — altura
-   * predecible, no varía con el locale) + sus 8px de offset propio = ~36px
-   * de piso ocupado; 56px de margen adicional deja el rail comodamente
-   * arriba de esa franja sin necesidad de leer su altura en tiempo real —
-   * en landscape corto (844x390, donde GlobalMantra usa su tamaño DESKTOP,
-   * ~30px, por no cruzar su propio breakpoint de 600px de ANCHO) el margen
-   * medido con 40px quedaba en sólo ~2px; 56px deja >=18px libres ahí. */
   .ch3-roadmap {
-    top: auto;
-    left: 0;
-    right: 0;
-    width: fit-content;
-    margin-inline: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-sm) + 56px);
-    flex-direction: column-reverse;
+    padding: 7px 10px;
+    gap: 4px;
   }
   .ch3-roadmap-list {
-    flex-direction: row;
+    gap: 6px;
   }
   .ch3-roadmap-list::before {
-    top: 50%;
-    bottom: auto;
-    left: 14px;
-    right: 14px;
-    width: auto;
-    height: 1px;
-    transform: translateY(-50%);
+    left: 13px;
+    right: 13px;
   }
   .ch3-roadmap-dot {
-    width: 26px;
-    height: 26px;
-    font-size: 0.62rem;
+    width: 30px;
+    height: 30px;
+    border-width: 2.5px;
+    font-size: 0.64rem;
   }
-  .ch3-roadmap-item {
-    gap: 0;
+  .ch3-roadmap-count {
+    font-size: 0.64rem;
+  }
+  .ch3-roadmap-label {
+    font-size: 0.58rem;
   }
 }
 
