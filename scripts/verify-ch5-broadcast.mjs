@@ -23,17 +23,28 @@
 //   D. Conteo de la multitud: seats renderizados (.cine-char-live +
 //      .cine-char) y CAST único (grep del SFC) — se imprimen para que el
 //      hand-off los reporte.
-//   E. Contraste real: Page.captureScreenshot + sampling del píxel detrás de
-//      un .ch5-feed-text contra su color de texto computado (nunca
-//      canvas.toDataURL — Lección #3).
+//   E. Contraste real: Page.captureScreenshot + sampling de VARIOS píxeles
+//      (no uno solo — ronda 2 de review, TASK-011) a lo largo del bloque
+//      .ch5-feed-text contra su color de texto computado (nunca
+//      canvas.toDataURL — Lección #3). Se reporta el PEOR de los puntos
+//      muestreados, no un solo punto arbitrario.
 //   F. prefers-reduced-motion: con `Emulation.setEmulatedMedia` a `reduce`,
-//      confirma que `.cine-screen` nunca gana `.is-glitch` durante una ventana
-//      de scene-advance (4.5s) y que los dots de pulso quedan con
-//      animation-name: none.
+//      hace POLLING cada 100ms (no una sola muestra — ronda 2 de review,
+//      TASK-011: el glitch dura 140ms dentro de un ciclo de 4500ms, una sola
+//      muestra a los 5200ms daba falso-verde el ~97% de las veces) durante
+//      una ventana >= 4.6s para confirmar que `.cine-screen` NUNCA gana
+//      `.is-glitch`, y que los dots de pulso quedan con animation-name: none.
 //   G. Sin em-dash en el innerText renderizado (regla editorial del sitio).
-//   H. Mobile portrait: `.ch5-scene` mide significativamente menos que el
-//      viewport completo (layout de streaming apilado) y `.ch5-stream-panel`
-//      no se solapa con ella.
+//   H. Mobile portrait (implementado, ronda 2 de review — la cabecera lo
+//      prometía pero el cuerpo no lo asertaba): `.ch5-scene` mide
+//      significativamente menos que el viewport completo (`sceneRect.h <
+//      0.6 * vh`, layout de streaming apilado) y `.ch5-stream-panel` no se
+//      solapa con ella (`panel.top >= scene.bottom`).
+//   I. NUEVO (ronda 2 de review, HIGH bloqueante): `.ch5-lower-third` no
+//      intersecta NINGÚN `.tick-button` de StickyTimeline en ningún viewport.
+//      El lower-third es contenido nuevo de este ticket; taparle las
+//      etiquetas de navegación a la timeline es una regresión real medida
+//      geométricamente por el reviewer en 390x844, 844x390 y 800x420.
 //
 // CÓMO CORRERLO (Windows/PowerShell, receta completa en
 // .planning/LECCIONES-TECNICAS.md §6):
@@ -204,12 +215,22 @@ async function bootAndJumpToCh5(cx, url) {
   return ready
 }
 
+// Ronda 2 de review (LOW): el punto ciego de ch3 era exactamente este —
+// togglear el locale y NUNCA confirmar que de verdad cambió. Si `.lang-toggle`
+// o `.lang-active` se renombraran, ambas pasadas medirían el mismo idioma en
+// silencio y el arnés seguiría verde. Ahora se reconfirma tras el click y
+// lanza si el locale efectivo no coincide con el esperado.
 async function ensureLocale(cx, locale) {
   const { evaluate } = cx
-  const current = await evaluate(`document.querySelector('.lang-active')?.textContent?.trim()`)
-  if (current !== locale.toUpperCase()) {
+  const wanted = locale.toUpperCase()
+  let current = await evaluate(`document.querySelector('.lang-active')?.textContent?.trim()`)
+  if (current !== wanted) {
     await evaluate(`document.querySelector('.lang-toggle')?.click()`)
     await sleep(200)
+    current = await evaluate(`document.querySelector('.lang-active')?.textContent?.trim()`)
+  }
+  if (current !== wanted) {
+    throw new Error(`ensureLocale: se pidió "${wanted}" pero .lang-active mide "${current}" tras el toggle — ¿se renombró .lang-toggle/.lang-active?`)
   }
 }
 
@@ -234,11 +255,19 @@ const MEASURE = `
       const el = document.querySelector('.cine-char-live');
       return el ? el.style.backgroundPositionX : null;
     })();
+    // Check I (NUEVO, ronda 2 de review — HIGH bloqueante): el lower-third no
+    // debe intersectar NINGÚN .tick-button de la timeline de navegación.
+    const lowerThird = document.querySelector('.ch5-lower-third');
+    const lowerThirdRect = lowerThird ? rect(lowerThird) : null;
+    const tickRects = Array.from(document.querySelectorAll('.tick-button')).map((el) => rect(el));
+    const overlappingTicks = tickRects.filter((tr) => intersects(lowerThirdRect, tr));
+    const tickOverlapCount = overlappingTicks.length;
     return {
       innerTextLen, hasEmDash, panelRect, screenRect, sceneRect,
       panelOverlapsScreen: intersects(panelRect, screenRect),
       panelWidthPct: panelRect ? (panelRect.w / vw) * 100 : null,
       feedItems, seatsLive, seatsFallback, activeSlide, firstLiveBgX,
+      lowerThirdRect, tickOverlapCount, overlappingTicks, tickRects,
     };
   };
   'installed';
@@ -305,6 +334,28 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile, locale, results
   }
   if (m0.feedItems !== 8) { ok = false; problems.push(`feedItems=${m0.feedItems} (esperado 8)`) }
 
+  // Check I (NUEVO, ronda 2 de review — HIGH bloqueante): el lower-third no
+  // debe intersectar NINGÚN .tick-button de la timeline. Geométrico, real,
+  // en los tres viewports donde el reviewer lo midió y también en el resto.
+  if (m0.tickOverlapCount > 0) {
+    ok = false
+    problems.push(`lower-third intersecta ${m0.tickOverlapCount} .tick-button(s) — lowerThird=${JSON.stringify(m0.lowerThirdRect)} ticks=${JSON.stringify(m0.overlappingTicks)}`)
+  }
+
+  // Check H (implementado en esta ronda — la cabecera lo prometía, el cuerpo
+  // no lo aserteaba): en mobile portrait (viewport más alto que ancho) la
+  // escena se comprime a "player" arriba, el panel queda debajo en flujo.
+  if (mobile && h > w) {
+    if (!(m0.sceneRect && m0.sceneRect.h < 0.6 * h)) {
+      ok = false
+      problems.push(`sceneRect.h=${m0.sceneRect?.h} no es < 0.6*vh=${(0.6 * h).toFixed(0)} (layout apilado roto)`)
+    }
+    if (!(m0.panelRect && m0.sceneRect && m0.panelRect.y0 >= m0.sceneRect.y1)) {
+      ok = false
+      problems.push(`panel.top=${m0.panelRect?.y0} < scene.bottom=${m0.sceneRect?.y1} (panel solapa la escena en mobile portrait)`)
+    }
+  }
+
   // Progresión real en DOS instantes (Lección #2): esperar el ciclo completo
   // del slideshow (4.5s) + margen y volver a medir.
   await sleep(5000)
@@ -317,21 +368,34 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile, locale, results
   // pero si NINGUNO avanza junto con el slide es señal real de rAF congelado.
   if (!slideProgressed && !crowdProgressed) { problems.push('multitud tampoco avanzó (posible rAF congelado)') }
 
-  // Contraste real (peor caso, AC#6 >= 8.9:1)
+  // Contraste real (peor caso, AC#6 >= 8.9:1). Ronda 2 de review (MEDIUM):
+  // un solo píxel medía "peor caso entre 10 puntos", no peor caso real —
+  // ahora se muestrean VARIOS puntos del bloque de texto y se reporta el
+  // mínimo de los que caen sobre FONDO real (el navegador ya descarta,
+  // dentro de sampleContrastInBrowserAwait, los puntos que aterrizan sobre
+  // tinta de una letra — comparar fg-contra-fg da ~1:1 espurio, no un
+  // contraste real bajo; ver comentario de esa función).
   const screenshot = await send('Page.captureScreenshot', { format: 'png' })
   let contrastRatioMeasured = null
   try {
     const sample = await sampleContrastInBrowserAwait(cx, screenshot.data)
-    if (sample.ok) {
-      const bg = sample.bg
-      const fg = parseRgb(sample.textColor)
-      if (fg) {
-        contrastRatioMeasured = contrastRatio(fg, bg)
+    if (sample.ok && sample.points.length > 0) {
+      let worst = Infinity
+      for (const p of sample.points) {
+        const fg = parseRgb(p.textColor)
+        if (!fg) continue
+        const cr = contrastRatio(fg, p.bg)
+        if (cr < worst) worst = cr
+      }
+      if (Number.isFinite(worst)) {
+        contrastRatioMeasured = worst
         if (contrastRatioMeasured < 8.9) {
           ok = false
-          problems.push(`contraste medido ${contrastRatioMeasured.toFixed(2)}:1 < 8.9:1`)
+          problems.push(`contraste medido (peor de ${sample.points.length} puntos de fondo) ${contrastRatioMeasured.toFixed(2)}:1 < 8.9:1`)
         }
       }
+    } else if (!sample.ok) {
+      problems.push(`contraste: ${sample.reason || 'sin puntos de fondo válidos'}`)
     }
   } catch (e) {
     problems.push(`contraste: no se pudo medir (${e.message})`)
@@ -340,6 +404,7 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile, locale, results
   console.log(
     `${name} [${locale}] innerText=${m0.innerTextLen} feedItems=${m0.feedItems} ` +
     `seats(live+fallback)=${m0.seatsLive + m0.seatsFallback} panelWidth%=${m0.panelWidthPct?.toFixed(1)} ` +
+    `tickOverlaps=${m0.tickOverlapCount} ` +
     `slideProgressed=${slideProgressed} crowdProgressed=${crowdProgressed} ` +
     `contrast=${contrastRatioMeasured ? contrastRatioMeasured.toFixed(2) + ':1' : 'n/a'} ` +
     `=> ${ok ? 'LIMPIO' : 'ROTO: ' + problems.join('; ')}`
@@ -348,6 +413,32 @@ async function measureViewport(cx, url, name, w, h, dsf, mobile, locale, results
   return ok
 }
 
+// Ronda 2 de review (MEDIUM): antes un único píxel (r.left+4, mitad de la
+// altura de UN SOLO .ch5-feed-text) — "peor caso" reportado era en realidad
+// peor-caso-entre-1-punto.
+//
+// Trampa encontrada implementando el reemplazo obvio (grilla de puntos
+// columna x fila DENTRO del bounding rect del texto): con texto denso a
+// 52ch/16px, una fracción relevante de esa grilla aterriza literalmente
+// sobre la TINTA de una letra (o su borde antialiaseado) en vez del fondo.
+// Un pixel de tinta comparado contra el color de texto (fg) da contraste
+// ~1:1 — un falso "peor caso" que mide texto contra sí mismo, no fondo real.
+// Intentar adivinar un offset-x "seguro" (p.ej. r.left+3) tampoco alcanza:
+// el side-bearing de la fuente a 16px es de 1-2px, así que ese margen
+// también cae sobre tinta en letras con trazo vertical pegado al borde
+// (E, L, R, ...) — confirmado empíricamente (lecturas de 1.0-3.9:1 en
+// desktop, donde el panel real mide >15:1).
+//
+// Fix real: NUNCA muestrear un punto cuyas coordenadas puedan solaparse con
+// un glifo. Se muestrea el propio FONDO DEL PANEL (`.ch5-stream-panel`) en
+// la franja de padding (izquierda del panel, `panelRect.x0 + 6`px — DENTRO
+// del padding de 28px declarado en el CSS, nunca alcanzado por ninguna
+// columna de texto) en VARIAS filas verticales que recorren todo el alto
+// del panel (header, entre párrafos del feed, sección de canales). Esa
+// franja recibe el MISMO glass + backdrop-blur que el fondo detrás de
+// cualquier texto del panel (el blur de 12px promedia sobre un radio mucho
+// mayor que los ~28px de separación), así que su color es el fondo real
+// que ve el texto, sin el riesgo de aterrizar sobre un glifo.
 async function sampleContrastInBrowserAwait(cx, base64Png) {
   const script = `
     (async () => {
@@ -358,20 +449,32 @@ async function sampleContrastInBrowserAwait(cx, base64Png) {
       canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-      const el = document.querySelector('.ch5-feed-text');
-      if (!el) return { ok: false, reason: 'no .ch5-feed-text' };
-      const r = el.getBoundingClientRect();
+      const panel = document.querySelector('.ch5-stream-panel');
+      const textEl = document.querySelector('.ch5-feed-text');
+      if (!panel || !textEl) return { ok: false, reason: 'no .ch5-stream-panel o .ch5-feed-text', points: [] };
+      const pr = panel.getBoundingClientRect();
+      const textColor = getComputedStyle(textEl).color;
       const dsf = img.naturalWidth / window.innerWidth;
-      const px = Math.max(0, Math.round((r.left + 4) * dsf));
-      const py = Math.max(0, Math.round((r.top + r.height / 2) * dsf));
-      const data = ctx.getImageData(px, py, 1, 1).data;
-      const textColor = getComputedStyle(el).color;
-      return { ok: true, bg: [data[0], data[1], data[2]], textColor };
+      const fracsY = [0.04, 0.18, 0.32, 0.46, 0.6, 0.74, 0.88, 0.97];
+      const points = [];
+      for (const fy of fracsY) {
+        const px = Math.max(0, Math.min(img.naturalWidth - 1, Math.round((pr.left + 6) * dsf)));
+        const py = Math.max(0, Math.min(img.naturalHeight - 1, Math.round((pr.top + pr.height * fy) * dsf)));
+        const data = ctx.getImageData(px, py, 1, 1).data;
+        points.push({ bg: [data[0], data[1], data[2]], textColor });
+      }
+      return { ok: true, points };
     })()
   `
   return evaluateAwaitPromise(cx, script)
 }
 
+// Ronda 2 de review (MEDIUM bloqueante): el sensor PRM muestreaba la clase
+// UNA sola vez tras sleep(5200) — el glitch dura 140ms dentro de un ciclo de
+// 4500ms, así que una muestra puntual daba verde el ~97% de las veces aunque
+// el gate de reduced-motion regresionara. Ahora hace POLLING cada 100ms
+// durante >= 1 ciclo completo (4.6s) y reporta si la clase apareció en
+// CUALQUIER muestra.
 async function measureReducedMotion(cx, url, results) {
   const { send, evaluate } = cx
   await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
@@ -383,12 +486,20 @@ async function measureReducedMotion(cx, url, results) {
     console.log('PRM check => NO READY')
     return
   }
-  await sleep(5200) // cubre un ciclo completo de scene-advance (4.5s)
-  const glitchEverAdded = await evaluate(`!!document.querySelector('.cine-screen.is-glitch')`)
+  let glitchEverAdded = false
+  let samples = 0
+  const pollWindowMs = 4600
+  const stepMs = 100
+  for (let elapsed = 0; elapsed < pollWindowMs; elapsed += stepMs) {
+    const seen = await evaluate(`!!document.querySelector('.cine-screen.is-glitch')`)
+    samples++
+    if (seen) { glitchEverAdded = true; break }
+    await sleep(stepMs)
+  }
   const dotAnim = await evaluate(`getComputedStyle(document.querySelector('.cine-screen-dot')).animationName`)
   const ok = !glitchEverAdded && (dotAnim === 'none')
-  console.log(`PRM check: is-glitch nunca visto=${!glitchEverAdded}, dot animation-name=${dotAnim} => ${ok ? 'LIMPIO' : 'ROTO'}`)
-  results.push({ name: 'PRM', ok })
+  console.log(`PRM check: is-glitch nunca visto=${!glitchEverAdded} (${samples} muestras @${stepMs}ms), dot animation-name=${dotAnim} => ${ok ? 'LIMPIO' : 'ROTO'}`)
+  results.push({ name: 'PRM', ok, samples })
   await send('Emulation.setEmulatedMedia', { features: [] })
 }
 

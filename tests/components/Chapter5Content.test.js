@@ -248,6 +248,9 @@ describe('Chapter5Content.vue', () => {
   // T13 (regression lock, AC#3/#11 TASK-011): la multitud sigue teniendo
   // EXACTAMENTE 125 personajes únicos (CAST.length). Plantado en rojo durante
   // el desarrollo quitando 3 entradas de CAST — ver hand-off del Developer.
+  // Ronda 2 de review (LOW): el nombre del test decía "únicos" pero solo
+  // asertaba el CONTEO — un slug duplicado (124 únicos + 1 repetido = 125
+  // items) habría quedado verde. Se agrega el chequeo de unicidad real.
   // ───────────────────────────────────────────────
   it('T13 (regression lock): CAST tiene exactamente 125 personajes únicos', () => {
     const { readFileSync } = require('node:fs')
@@ -260,6 +263,7 @@ describe('Chapter5Content.vue', () => {
     expect(match, 'no se encontró la declaración de CAST en el SFC').not.toBeNull()
     const items = match[1].match(/'[^']+'/g) || []
     expect(items.length).toBe(125)
+    expect(new Set(items).size, 'CAST tiene slugs duplicados').toBe(125)
   })
 
   // ───────────────────────────────────────────────

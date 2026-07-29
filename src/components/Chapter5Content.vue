@@ -244,7 +244,7 @@ function buildCrowd() {
       const yNorm = (y - 63) / 41 // 0 atrás .. 1 adelante
       const halfW = 24 + yNorm * 20 // semiancho: 24% atrás → 44% adelante
       x = Math.min(50 + halfW, Math.max(50 - halfW, x))
-      // TASK-011 spec §2 punto 3: jitter de tamaño contenido 0.85-1.30 (antes
+      // TASK-011 spec §2 punto 3: jitter de tamaño contenido 0.85-1.15 (antes
       // 0.66-1.30) — la perspectiva la dan los anillos (baseH ya crece con t), no el
       // random; menos "canguro gigante junto a hormiga".
       const sizeMul = 0.85 + rng() * 0.3
@@ -1285,6 +1285,22 @@ onBeforeUnmount(() => {
     border-left: none;
     border-top: 1px solid rgba(129, 140, 248, 0.25);
   }
+
+  /* Ronda 2 de review de TASK-011, HIGH bloqueante: el lower-third (left:4%,
+     bottom:6% en la regla base) intersecta los .tick-button de StickyTimeline
+     en este ancho — medido, con getBoundingClientRect(), en 390x844: el rail
+     (x 9-66) se solapa con el lower-third (x 16-208). La timeline es
+     navegación fija que vive vertical-centrada en TODO el viewport, no solo
+     en la escena; el límite del proyecto (Lección técnica #7) es que tapar
+     contenido/nav se arregla siempre, aunque la spec haya fijado left:4%. En
+     este ancho la escena ocupa el 100% (el panel queda DEBAJO en flujo, no al
+     costado — spec §4.3), así que mover el lower-third al lado derecho de la
+     escena lo aleja del rail sin acercarlo a ningún otro elemento: medido,
+     deja >100px de margen libre respecto al rail en 390px de ancho. */
+  .ch5-lower-third {
+    left: auto;
+    right: 4%;
+  }
 }
 
 /* DESVIACIÓN MEDIDA de la spec (Lección técnica #7, límite no-opinable): la
@@ -1299,6 +1315,28 @@ onBeforeUnmount(() => {
 @media (max-height: 480px) {
   .ch5-stream-panel {
     width: min(34vw, 300px);
+  }
+
+  /* Ronda 2 de review de TASK-011, HIGH bloqueante (segunda mitad): en este
+     breakpoint la escena SIGUE en absolute inset:0 (el ancho del viewport no
+     bajó de 600px, así que la regla de arriba no aplica) — el rail de
+     StickyTimeline usa su versión desktop con etiqueta de era (más ancho,
+     medido x1≈146px) y el panel ocupa el 34vw derecho. Medido con
+     getBoundingClientRect() en 844x390 y 800x420: el lower-third con
+     left:4% (regla base) intersecta 1 .tick-button en ambos.
+     `left: max(175px, 20%)` despeja el rail con margen (>=24px medido en
+     ambos viewports de referencia, y el suelo de 175px evita que un ancho más
+     angosto —p.ej. 667px, tamaño real de un teléfono en landscape— vuelva a
+     acercar demasiado el % al rail) y `max-width: 180px` deja libre >=100px
+     frente al borde del panel en los dos viewports medidos, incluso con el
+     texto más largo del lower-third (escena "covid", ES). Mismo límite no
+     opinable que la desviación de ancho del panel documentada abajo
+     (Lección técnica #7): se prioriza no tapar contenido/nav sobre el valor
+     literal de la spec (bottom:6%/left:4% fijos §3.3). */
+  .ch5-lower-third {
+    left: max(175px, 20%);
+    right: auto;
+    max-width: 180px;
   }
 }
 </style>

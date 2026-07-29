@@ -13,3 +13,14 @@ Profile.pdf
 # Vite las sirve en dev local pero NO deben commitearse al repo.
 # Phase 6 deploy gate añadirá exclusión en firebase.json para que no se deployen.
 public/references/
+
+# Artefactos de RESULTADOS de arneses de verificación CDP (TASK-011 ronda 2 de
+# review): el INSTRUMENTO (scripts/verify-ch5-broadcast.mjs, verify-ch3-*.mjs)
+# SÍ se commitea — sin eso su verde no sería auditable ni reproducible
+# (.planning/LECCIONES-TECNICAS.md §6). Pero el JSON de resultados que escribe
+# cada corrida es un snapshot de un punto en el tiempo que queda desactualizado
+# en la corrida siguiente — commitearlo generaría diff-noise en cada re-run sin
+# aportar auditabilidad real (la evidencia auditable es la salida de consola
+# capturada verbatim en el hand-off/PR, igual que ya hace verify-ch3-*.mjs, que
+# ni siquiera persiste un archivo). Ver decisión en el hand-off de TASK-011.
+.planning/*-verify-results.json
