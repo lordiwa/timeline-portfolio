@@ -5,7 +5,8 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
-      "**/assets/old/**"
+      "**/assets/old/**",
+      "**/references/**"
     ],
     "rewrites": [
       {
