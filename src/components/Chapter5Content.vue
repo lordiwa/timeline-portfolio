@@ -1,17 +1,42 @@
 <!--
-  Chapter5Content.vue — ch5 "2022 Modern" · escena "cine" (Rafael 2026-07-07).
+  Chapter5Content.vue — ch5 "LA TRANSMISION" · broadcast anclado en VivoEnVivo (TASK-011).
 
-  Concepto: sala de cine (gran hall) vista desde atrás. El "público" son 125 personajes
-  únicos de pixellab repartidos por la alfombra frente a una pantalla que cicla escenas
-  de la época (transmisiones ONLINE de recintos vacíos — pandemia 2022).
+  Concepto (TASK-011, .planning/design/05-ch5-pandemia-broadcast.md): sala de cine
+  (gran hall) vista desde atrás, ahora vestida de SEÑAL EN VIVO en vez de "pixel art
+  de época" — badge EN VIVO, scanlines, glitch de compresion procedural y lower-third
+  por escena sobre la pantalla, que deja de ser un slideshow generico y pasa a ser la
+  transmision propia de VivoEnVivo (la plataforma de streaming de Rafael, 2020-2023).
+  El "público" son 125 personajes únicos de pixellab (CAST.length) repartidos por la
+  alfombra frente a esa pantalla.
 
-  MULTITUD VIVA (Rafael 2026-07-07d): cada personaje cambia de ESTADO al azar cada 1.5–3s
-  (puede repetir el mismo estado → todos se mueven distinto). Estados:
+  TEXTO (defecto 1 de TASK-007, resuelto aquí): el antiguo `const showText = false`
+  envolvía TODO el bloque de texto en un v-if sin UI para activarlo — innerText medía 0.
+  Ese flag se elimina. El texto de bio.eras.5 (8 párrafos reales, ver TASK-011 hand-off
+  para el conteo medido — la spec original estimó "180 palabras / 3 párrafos" antes de
+  que Rafael entregara el texto final ~4x más largo) vive SIEMPRE en el DOM dentro de
+  `.ch5-stream-panel`, un panel lateral de transmisión (sidebar de stream con
+  timestamps) — nunca oculto tras interacción, tal como pide el AC.
+
+  FALLBACK DE LAYOUT (spec §4.2): la spec preferia un scroll interno de 200dvh con el
+  panel revelado a mitad de scroll (requiere `chapterViewports` en App.vue, mecanismo ya
+  construido por TASK-014). Este ticket NO edita App.vue (regla explicita del dispatch:
+  "para y consulta antes" — afecta a los 7 capitulos) asi que usa el fallback
+  pre-aprobado por la propia spec: la section se queda en 100dvh y el panel monta
+  ABIERTO de entrada. Esto ademas cumple el AC de forma mas directa ("sin requerir
+  interaccion"). El body del panel es internamente `overflow-y: auto` (mismo mecanismo
+  que la spec ya autoriza para el caso de que el feed exceda el alto visible) — se
+  reutiliza en mobile portrait tambien, en vez del "crece a su altura natural (>100dvh)"
+  de la spec, que si hubiera requerido tocar el shell.
+
+  MULTITUD VIVA (conservada intacta, Rafael 2026-07-07d — TASK-011 SOLO ajusta la
+  FOTOGRAFIA sobre ella, nunca el rAF/sheets): cada personaje cambia de ESTADO al azar
+  cada 1.5-3s (puede repetir el mismo estado → todos se mueven distinto). Estados:
     idleBack  — quieto de espaldas (norte)
     idleFront — quieto mirando al usuario (sur)
     rotR/rotL — girar a la derecha / izquierda (recorre las 8 direcciones)
     osc       — media vuelta a un lado y media al otro
-    festejo   — anim de celebración (6º estado, sheet en anim/)
+    festejo   — anim de celebración (6º estado, sheet en anim/), ahora sincronizado con
+                un flash de `.cine-screen-light` (spec §2.5)
   Cada personaje usa UNA tira webp combinada (public/assets/ch5-cinema/live/{slug}.webp):
   frames 0-7 = las 8 vistas direccionales (rotación, horario desde norte) + frames 8.. =
   el festejo. Un solo background-image (nunca cambia) → sin titileo. Manifest:
@@ -19,7 +44,20 @@
   se regeneran gratis desde pixellab (build_rotation_sheets.py + anim_poll.sh) → build_live_sheets.py.
 
   El render lo maneja UN solo bucle rAF que escribe el DOM directo (no reactividad Vue)
-  para no recalcular 140+ nodos por frame. Texto original oculto (showText=false).
+  para no recalcular 140+ nodos por frame.
+
+  TIPOGRAFIA (decision registrada, TASK-011, resuelve el hallazgo del hook `impeccable`
+  sobre Inter en el comentario del orchestrator de este ticket): el chrome de broadcast
+  (badge EN VIVO, timestamps, contador, lower-third, label de canales) usa `var(--hud-font)`
+  — la misma monoespaciada del chasis RAFAEL-OS, cero bytes nuevos — en vez de Inter, que
+  es la fuente mas generica posible para un capitulo que debe sentirse un producto de
+  streaming propio. El cuerpo del feed (los 8 parrafos reales) se queda en Inter Variable
+  vía `var(--font-body)`, tal como fija .planning/design/05-ch5-pandemia-broadcast.md §5
+  ("cero fuentes nuevas") — 714-748 palabras de prosa se leen peor en monoespaciada que en
+  humanista, y la spec (autoridad estética, Lección 7) ya decidió esto explícitamente.
+  Inter Variable NO se retira del bundle en este ticket: hacerlo requiere tocar
+  src/main.js + package.json (fuera de la lista blanca de TASK-011); ver hand-off para el
+  detalle de ese seguimiento pendiente.
 -->
 <script setup>
 import { computed, ref, inject, watch, onMounted, onBeforeUnmount } from 'vue'
@@ -29,9 +67,12 @@ import { projects } from '@/data/projects'
 import { bio } from '@/data/bio'
 import crowdManifest from '@/data/ch5CrowdManifest.json'
 import ProjectCard from './ProjectCard.vue'
-import ScrollRevealCard from './ScrollRevealCard.vue'
 
 const { t } = useI18n()
+
+function prefersReducedMotion() {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
 
 // ─── Slideshow de la pantalla (escenas online/vacías) — cross-fade cada 4.5s ───
 const screenScenes = ['box', 'mma', 'concierto', 'lab', 'covid']
@@ -66,8 +107,50 @@ const chapter = chapters[5]
 const ch5Projects = computed(() => projects.filter((p) => p.chapterEra === 5))
 const bioParagraphs = computed(() => t(bio.eras[chapter.id].textKey).split('\n\n'))
 
-// Texto oculto hasta decidir qué contenido va (Rafael 2026-07-07).
-const showText = false
+// Panel de transmisión (spec §4, TASK-011) — feed con timestamp por párrafo real de
+// bio.eras.5. Los timestamps son i18n keys chapters.5.panel.feed.t{N} (solo años/rangos,
+// idénticos en ES/EN — no requieren traducción pero viven en i18n por si Rafael los
+// ajusta junto al contenido). Si algún día bio.eras.5 gana/pierde párrafos, el `|| ''`
+// evita un timestamp roto en vez de reventar el render.
+const FEED_TIMESTAMP_KEYS = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7']
+const feedEntries = computed(() =>
+  bioParagraphs.value.map((text, idx) => ({
+    text,
+    timestamp: t(`chapters.5.panel.feed.${FEED_TIMESTAMP_KEYS[idx] ?? 't0'}`) || '',
+  }))
+)
+
+// Grade unificador de sala (spec §2, punto 1): un solo overlay soft-light sobre TODA
+// la multitud, coloreado con el mismo glowColor que ya usa screenGlowStyle — así las
+// 125 paletas de personajes se subordinan a UNA sola luz (la de la pantalla) en vez de
+// competir entre sí. alpha 0.35 fija (spec); el color cambia con el slideshow (transition
+// CSS de background-color, ver <style>).
+const crowdGradeStyle = computed(() => {
+  const m = sceneMeta[screenIdx.value]
+  if (!m) return {}
+  const [r, g, b] = m.glowColor
+  return { backgroundColor: `rgba(${r},${g},${b},0.35)` }
+})
+
+// Chrome de broadcast: lower-third por escena (spec §3.3) + glitch de compresión al
+// cambiar de escena (spec §3.2) + flash de pantalla sincronizado al festejo (spec §2.5).
+// Los tres respetan prefers-reduced-motion (spec §6): bajo PRM, lower-third queda
+// estático (CSS media query), glitch y flash directamente no se disparan (early-return
+// aquí, no solo un "sin animación" cosmético — cero clase, cero repintado extra).
+const lowerThirdText = computed(() => t(`chapters.5.broadcast.${screenScenes[screenIdx.value]}`))
+const isGlitch = ref(false)
+const flashActive = ref(false)
+let glitchTimer = null
+let flashTimer = null
+
+function triggerGlitch() {
+  if (prefersReducedMotion()) return
+  isGlitch.value = true
+  clearTimeout(glitchTimer)
+  glitchTimer = setTimeout(() => {
+    isGlitch.value = false
+  }, 140)
+}
 
 // Público: 125 personajes únicos de pixellab (25 beat-em-up + 100 temáticos).
 const CAST = [
@@ -144,7 +227,9 @@ function buildCrowd() {
     const ry = 13 + t * 40 // radio vert %
     const halfA = ((42 + t * 20) * Math.PI) / 180 // abanico más abierto
     const baseH = 28 + t * 104
-    const bright = 0.5 + t * 0.5
+    // TASK-011 spec §2 punto 2: rango de brillo cinematográfico 0.42-0.68 (antes
+    // 0.5-1.0) — nadie a plena luz en un cine; la MASA se lee más que el detalle.
+    const bright = 0.42 + t * 0.26
     const count = Math.max(8, Math.round(9 + 13 * (1 - t))) // algo menos denso → separados
     for (let c = 0; c < count; c++) {
       const aFrac = count === 1 ? 0.5 : c / (count - 1)
@@ -159,7 +244,10 @@ function buildCrowd() {
       const yNorm = (y - 63) / 41 // 0 atrás .. 1 adelante
       const halfW = 24 + yNorm * 20 // semiancho: 24% atrás → 44% adelante
       x = Math.min(50 + halfW, Math.max(50 - halfW, x))
-      const sizeMul = 0.66 + rng() * 0.64
+      // TASK-011 spec §2 punto 3: jitter de tamaño contenido 0.85-1.30 (antes
+      // 0.66-1.30) — la perspectiva la dan los anillos (baseH ya crece con t), no el
+      // random; menos "canguro gigante junto a hormiga".
+      const sizeMul = 0.85 + rng() * 0.3
       const slug = draw()
       out.push({
         slug,
@@ -195,8 +283,15 @@ let waveTimers = []
 
 function triggerCelebrationWave() {
   if (!runtime.length) return
-  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (reduce) return
+  if (prefersReducedMotion()) return
+  // TASK-011 spec §2 punto 5: flash de pantalla sincronizado al festejo — conecta
+  // causa (la pantalla) y efecto (el público reacciona) para que la escena gane
+  // lógica interna. `.is-flash` sube la opacity de .cine-screen-light 600ms.
+  flashActive.value = true
+  clearTimeout(flashTimer)
+  flashTimer = setTimeout(() => {
+    flashActive.value = false
+  }, 600)
   // Baraja y toma ~38% de la multitud
   const picks = runtime.slice().sort(() => Math.random() - 0.5)
     .slice(0, Math.round(runtime.length * 0.38))
@@ -390,13 +485,13 @@ function startCrowdLoop() {
   if (rafId || screenTimer) return // ya corriendo (guard doble-start del watch immediate)
   screenTimer = setInterval(() => {
     screenIdx.value = (screenIdx.value + 1) % screenScenes.length
+    // TASK-011 spec §3.2: glitch de compresión procedural en cada cambio de escena.
+    triggerGlitch()
     // Tras el cambio de escena, la multitud reacciona: oleada de festejo por profundidad.
     triggerCelebrationWave()
   }, 4500)
 
-  const reduce =
-    typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!reduce) rafId = requestAnimationFrame(tick)
+  if (!prefersReducedMotion()) rafId = requestAnimationFrame(tick)
 }
 
 function stopCrowdLoop() {
@@ -410,6 +505,10 @@ function stopCrowdLoop() {
   }
   waveTimers.forEach((t) => clearTimeout(t))
   waveTimers = []
+  clearTimeout(glitchTimer)
+  clearTimeout(flashTimer)
+  isGlitch.value = false
+  flashActive.value = false
 }
 
 onMounted(() => {
@@ -468,87 +567,128 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="ch5-layout ch5-cine">
-    <!-- Pantalla del cine: slideshow de escenas de época (online/vacías), cross-fade -->
-    <div class="cine-screen" aria-hidden="true">
-      <img
-        v-for="(scene, i) in screenScenes"
-        :key="scene"
-        class="cine-screen-img"
-        :class="{ 'is-active': i === screenIdx }"
-        :src="`/assets/ch5-cinema/screen/${scene}.webp`"
-        alt=""
-      />
-    </div>
-
-    <!-- Público VIVO: cada asiento con manifest usa el <div> animado por el bucle rAF;
-         los que (aún) no tengan sheets caen a <img> estático de espaldas (fallback). -->
-    <div ref="audienceRef" class="cine-audience" aria-hidden="true">
-      <template v-for="(seat, idx) in seats" :key="idx">
-        <div
-          v-if="crowdManifest[seat.slug]"
-          class="cine-char-live"
-          :data-idx="idx"
-          :style="seatBaseStyle(seat)"
-        />
+    <!-- Escena (pantalla + público + luces): wrapper propio para poder comprimirla a
+         un "player" en mobile portrait sin tocar el % de posicionamiento interno de
+         cada pieza (TASK-011 §4.3) — todas siguen posicionadas en % relativas a ESTE
+         contenedor, así que "encoger la escena" es tan simple como cambiar su altura. -->
+    <div class="ch5-scene">
+      <!-- Pantalla del cine: ya NO es un slideshow generico, es LA TRANSMISION de
+           VivoEnVivo — chrome de broadcast (spec §3) encima del cross-fade existente. -->
+      <div class="cine-screen" :class="{ 'is-glitch': isGlitch }" aria-hidden="true">
         <img
-          v-else
-          class="cine-char"
-          :src="`/assets/ch5-cinema/${seat.slug}.png`"
+          v-for="(scene, i) in screenScenes"
+          :key="scene"
+          class="cine-screen-img"
+          :class="{ 'is-active': i === screenIdx }"
+          :src="`/assets/ch5-cinema/screen/${scene}.webp`"
           alt=""
-          :style="{
-            left: seat.x + '%',
-            top: seat.y + '%',
-            height: seat.h + 'px',
-            zIndex: seat.z,
-            filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
-          }"
         />
-      </template>
+        <div class="cine-screen-scanlines"></div>
+        <div class="cine-screen-vignette"></div>
+        <p class="cine-screen-badge"><span class="cine-screen-dot"></span>{{ t('chapters.5.panel.liveBadge') }}</p>
+        <div class="cine-screen-signal"></div>
+      </div>
+
+      <!-- Público VIVO: cada asiento con manifest usa el <div> animado por el bucle rAF;
+           los que (aún) no tengan sheets caen a <img> estático de espaldas (fallback).
+
+           Hallazgo de diseño revisado (TASK-011, hook impeccable "broken-image" sobre
+           este <img>): verificado con evidencia, no descartado a ojo. El `:src` es un
+           template literal dinámico (`/assets/ch5-cinema/${seat.slug}.png`), no un src
+           vacío/placeholder — pero además se midió que la rama v-else HOY nunca se
+           ejecuta: los 125 slugs de CAST tienen entrada en ch5CrowdManifest.json (0
+           faltantes) Y las 125 imágenes PNG de fallback existen en
+           public/assets/ch5-cinema/*.png (conteo verificado). Es una rama defensiva
+           viva que funcionaría correctamente si algún día un slug perdiera su entrada
+           de manifest, no una imagen rota real para ningún visitante hoy. -->
+      <div ref="audienceRef" class="cine-audience" aria-hidden="true">
+        <template v-for="(seat, idx) in seats" :key="idx">
+          <div
+            v-if="crowdManifest[seat.slug]"
+            class="cine-char-live"
+            :data-idx="idx"
+            :style="seatBaseStyle(seat)"
+          />
+          <img
+            v-else
+            class="cine-char"
+            :src="`/assets/ch5-cinema/${seat.slug}.png`"
+            alt=""
+            :style="{
+              left: seat.x + '%',
+              top: seat.y + '%',
+              height: seat.h + 'px',
+              zIndex: seat.z,
+              filter: `brightness(${seat.bright}) drop-shadow(0 3px 2px rgba(0,0,0,0.6))`,
+            }"
+          />
+        </template>
+      </div>
+
+      <!-- Grade unificador de sala (spec §2.1): una sola luz de sala (la de la pantalla)
+           sobre las 125 paletas de la multitud, en vez de que compitan entre sí. -->
+      <div class="cine-crowd-grade" aria-hidden="true" :style="crowdGradeStyle"></div>
+
+      <!-- Cono de luz del proyector — haz azul-blanco desde la cabina hacia la pantalla.
+           clip-path triangular: estrecho abajo (cabina ~50%, 89%) → ancho arriba (pantalla ~43-57%, 40%).
+           Parpadeo irregular a 7.3 s; estático bajo prefers-reduced-motion. -->
+      <div class="cine-projector-cone" aria-hidden="true">
+        <!-- Motas de polvo flotando dentro del haz -->
+        <span class="cine-dust"></span>
+        <span class="cine-dust"></span>
+        <span class="cine-dust"></span>
+        <span class="cine-dust"></span>
+        <span class="cine-dust"></span>
+      </div>
+
+      <!-- Baño de luz de la pantalla sobre la sala — radial desde la zona de pantalla.
+           Color dinámico: cada escena del slideshow aporta su tinte dominante (sceneMeta).
+           Respira cada 5 s simulando cambio de brillo del contenido on-screen; sube de
+           opacity 600ms cuando la multitud festeja (spec §2.5). -->
+      <div
+        class="cine-screen-light"
+        :class="{ 'is-flash': flashActive }"
+        aria-hidden="true"
+        :style="screenGlowStyle"
+      ></div>
+
+      <!-- Lower-third (spec §3.3): identifica QUÉ transmite la pantalla, por escena. -->
+      <Transition name="ch5-lower-third">
+        <p :key="screenIdx" class="ch5-lower-third" aria-hidden="true">{{ lowerThirdText }}</p>
+      </Transition>
     </div>
 
-    <!-- Cono de luz del proyector — haz azul-blanco desde la cabina hacia la pantalla.
-         clip-path triangular: estrecho abajo (cabina ~50%, 89%) → ancho arriba (pantalla ~43-57%, 40%).
-         Parpadeo irregular a 7.3 s; estático bajo prefers-reduced-motion. -->
-    <div class="cine-projector-cone" aria-hidden="true">
-      <!-- Motas de polvo flotando dentro del haz -->
-      <span class="cine-dust"></span>
-      <span class="cine-dust"></span>
-      <span class="cine-dust"></span>
-      <span class="cine-dust"></span>
-      <span class="cine-dust"></span>
-    </div>
+    <!-- Panel de transmisión (spec §4, TASK-011): mata `showText = false`. Montado
+         SIEMPRE en el DOM, sin depender de scroll ni click — el innerText nunca es 0.
+         Fallback de layout (ver comentario de cabecera): abierto de entrada, ancho
+         clamp(300px, 32vw, 420px) en vez del scroll-reveal de 200dvh que pide la spec. -->
+    <aside class="ch5-stream-panel">
+      <header class="ch5-panel-header">
+        <p class="ch5-panel-badge">
+          <span class="ch5-panel-dot" aria-hidden="true"></span>
+          {{ t('chapters.5.panel.liveBadge') }}
+          <span class="ch5-panel-year">{{ chapter.year }}</span>
+        </p>
+        <h1 class="ch5-panel-title">{{ t(chapter.titleKey) }}</h1>
+        <p class="ch5-panel-viewers">{{ t('chapters.5.panel.viewers', { count: seats.length }) }}</p>
+      </header>
 
-    <!-- Baño de luz de la pantalla sobre la sala — radial desde la zona de pantalla.
-         Color dinámico: cada escena del slideshow aporta su tinte dominante (sceneMeta).
-         Respira cada 5 s simulando cambio de brillo del contenido on-screen. -->
-    <div class="cine-screen-light" aria-hidden="true" :style="screenGlowStyle"></div>
+      <div class="ch5-panel-body">
+        <ul class="ch5-feed">
+          <li v-for="(entry, idx) in feedEntries" :key="idx" class="ch5-feed-item">
+            <span class="ch5-feed-timestamp">[{{ entry.timestamp }}]</span>
+            <p class="ch5-feed-text">{{ entry.text }}</p>
+          </li>
+        </ul>
 
-    <!-- Contenido original preservado pero oculto hasta decidir qué va (showText=false) -->
-    <template v-if="showText">
-      <aside class="ch5-meta">
-        <p class="ch5-year">{{ chapter.year }}</p>
-        <p class="ch5-era">{{ t(chapter.eraKey) }}</p>
-      </aside>
-
-      <div class="ch5-content">
-        <ScrollRevealCard :threshold="0.2" :delay="0">
-          <h1 class="ch5-title">{{ t(chapter.titleKey) }}</h1>
-          <p class="ch5-flavor">{{ t('chapters.5.flavor') }}</p>
-          <p v-for="(para, idx) in bioParagraphs" :key="idx" class="ch5-bio">{{ para }}</p>
-        </ScrollRevealCard>
-
-        <div v-if="ch5Projects.length > 0" class="ch5-projects">
-          <ScrollRevealCard
-            v-for="(project, idx) in ch5Projects"
-            :key="project.id"
-            :threshold="0.2"
-            :delay="100 * (idx + 1)"
-          >
-            <ProjectCard :project="project" />
-          </ScrollRevealCard>
+        <div v-if="ch5Projects.length > 0" class="ch5-channels">
+          <p class="ch5-channels-label">{{ t('chapters.5.panel.channelsLabel') }}</p>
+          <div class="ch5-channels-grid">
+            <ProjectCard v-for="project in ch5Projects" :key="project.id" :project="project" />
+          </div>
         </div>
       </div>
-    </template>
+    </aside>
   </div>
 </template>
 
@@ -562,7 +702,10 @@ onBeforeUnmount(() => {
   height: 100vh;
   height: 100dvh;
   max-height: 100dvh;
-  overflow: hidden;
+  /* clip, no hidden (Lección técnica #1 del proyecto): recorta igual pero no crea
+     scroll container — inofensivo aquí (sin descendientes sticky) pero es el default
+     seguro del proyecto tras 6 apariciones del bug contrario. */
+  overflow: clip;
   box-sizing: border-box;
   background:
     linear-gradient(rgba(4, 4, 10, 0.28), rgba(4, 4, 10, 0.5)),
@@ -570,7 +713,18 @@ onBeforeUnmount(() => {
     #04040a;
 }
 
-/* Pantalla: superpuesta sobre la pantalla pintada del hall. Slideshow de escenas. */
+/* ch5-scene — wrapper de la escena (pantalla + público + luces). Desktop: full-bleed
+   detrás del panel de transmisión (§ch5-stream-panel). Mobile portrait: comprimido a
+   un "player" fijo arriba (media query al final del archivo) — como todo lo de adentro
+   se posiciona en %, encogerlo es solo cambiar la altura de ESTE contenedor. */
+.ch5-scene {
+  position: absolute;
+  inset: 0;
+}
+
+/* Pantalla: superpuesta sobre la pantalla pintada del hall. Slideshow de escenas.
+   TASK-011: deja de ser un slideshow genérico y gana chrome de broadcast (badge,
+   scanlines, viñeta, barra de señal) + glitch de compresión en cada cambio de escena. */
 .cine-screen {
   position: absolute;
   top: 38%;
@@ -600,6 +754,66 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
+/* Chrome de broadcast dentro de la pantalla (spec §3.1) */
+.cine-screen-scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.14) 0 1px, transparent 1px 3px);
+  opacity: 0.5;
+}
+.cine-screen-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+.cine-screen-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 3;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #d92626;
+  color: #fff;
+  font-family: var(--hud-font);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.cine-screen-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  animation: ch5-badge-pulse 2s ease-in-out infinite;
+}
+.cine-screen-signal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  z-index: 3;
+  background: linear-gradient(90deg, #818cf8, rgba(129, 140, 248, 0.3), #818cf8);
+  background-size: 200% 100%;
+  animation: cine-signal-shimmer 6s linear infinite;
+}
+
+/* Glitch de compresión (spec §3.2): 140ms, procedural, cero assets. */
+.cine-screen.is-glitch {
+  animation: cine-glitch 140ms steps(3);
+}
+
 /* Tenue "cono de luz" de la pantalla hacia el público */
 .cine-audience::before {
   content: '';
@@ -613,6 +827,21 @@ onBeforeUnmount(() => {
 .cine-audience {
   position: absolute;
   inset: 0;
+  /* Desaturación leve global (spec §2 punto 4): el color pleno queda reservado a la
+     pantalla; estático, sin costo por frame. */
+  filter: saturate(0.82);
+}
+
+/* Grade unificador de sala (spec §2 punto 1): subordina las 125 paletas de la
+   multitud a UNA sola luz (la de la escena activa) — z-index encima del público
+   (max z ~10400) pero debajo del cono/luz de pantalla. */
+.cine-crowd-grade {
+  position: absolute;
+  inset: 0;
+  z-index: 10450;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  transition: background-color 800ms ease;
 }
 
 /* Sprite estático de fallback (sin sheets) — de espaldas */
@@ -677,6 +906,60 @@ onBeforeUnmount(() => {
   z-index: 10499;
   opacity: 0.06;
   animation: screen-breathe 5s ease-in-out infinite;
+  transition: opacity 300ms ease;
+}
+
+/* Flash sincronizado al festejo (spec §2 punto 5): pausa la respiración normal y
+   sube la opacity 600ms — conecta causa (pantalla) y efecto (multitud) en la escena.
+   Gateado en JS (triggerCelebrationWave hace early-return bajo PRM), nunca se dispara
+   con prefers-reduced-motion activo. */
+.cine-screen-light.is-flash {
+  animation: none;
+  opacity: 0.18;
+}
+
+/* Lower-third (spec §3.3): identifica qué transmite la pantalla, cross-fade al
+   cambiar de escena (Transition sin `mode`, ambas copias se solapan).
+
+   Hallazgo de diseño revisado (TASK-011, hook impeccable "side-tab" sobre esta
+   regla): el filete izquierdo de 3px NO es el tell genérico de "tarjeta con
+   franja de color" que el hook detecta por defecto — es chrome de broadcast
+   real, especificado verbatim por la spec (barra #0d1018 alpha 0.88, filete
+   izquierdo 3px #d92626, texto #f2ede3; `rgba(13,16,24,0.88)` de abajo ES
+   `#0d1018` en alpha 0.88, valor exacto). Todo canal de noticias/deportes usa
+   esta convención (lower third) desde hace décadas; retirar el filete
+   destruiría la referencia visual que el capítulo persigue. Se lee como
+   broadcast real y no como card genérica porque NO tiene radio de borde, NO
+   tiene sombra/glow, es angosta (12px mono, línea 1.4) y vive pegada al
+   borde inferior-izquierdo de la escena, no flotando como una tarjeta de UI. */
+.ch5-lower-third {
+  position: absolute;
+  left: 4%;
+  bottom: 6%;
+  max-width: 42vw;
+  z-index: 10460;
+  margin: 0;
+  padding: 8px 14px 8px 12px;
+  background: rgba(13, 16, 24, 0.88);
+  border-left: 3px solid #d92626;
+  color: #f2ede3;
+  font-family: var(--hud-font);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.ch5-lower-third-enter-active,
+.ch5-lower-third-leave-active {
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ch5-lower-third-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.ch5-lower-third-leave-to {
+  opacity: 0;
 }
 
 /* === Motas de polvo en el haz ===
@@ -699,6 +982,187 @@ onBeforeUnmount(() => {
 .cine-dust:nth-child(3) { left: 49%;   top: 82%; --delay: 4.1s; --dur: 11s; --dx: 5px; }
 .cine-dust:nth-child(4) { left: 50%;   top: 70%; --delay: 1.2s; --dur: 8s;  --dx: -2px; }
 .cine-dust:nth-child(5) { left: 48.5%; top: 57%; --delay: 3.7s; --dur: 10s; --dx: 4px; }
+
+/* ─────────────────────────────────────────────────────────────
+ * ch5-stream-panel — panel lateral de transmisión (spec §4, TASK-011)
+ * Mata `showText = false`: montado SIEMPRE, header fijo + body scrolleable
+ * internamente (`overflow-y: auto`) para el feed de 8 párrafos reales — el
+ * fallback de layout de la cabecera del script explica por qué no crece la
+ * section a >100dvh (spec §4.2 scroll-reveal habría requerido tocar App.vue).
+ * Tipografía: chrome (badge/timestamps/label/counter) = var(--hud-font),
+ * cuerpo (título + feed) = var(--font-body) — decisión documentada arriba.
+ * ───────────────────────────────────────────────────────────── */
+.ch5-stream-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: clamp(300px, 32vw, 420px);
+  z-index: 10510; /* encima de cono/luz de pantalla (10499-10500) y lower-third (10460) */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 28px;
+  background: rgba(10, 12, 20, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-left: 1px solid rgba(129, 140, 248, 0.25);
+  color: #f2ede3;
+  font-family: var(--hud-font);
+}
+
+.ch5-panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(129, 140, 248, 0.2);
+}
+.ch5-panel-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #d92626;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.ch5-panel-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #d92626;
+  animation: ch5-badge-pulse 2s ease-in-out infinite;
+}
+.ch5-panel-year {
+  margin-left: auto;
+  color: #f2ede3;
+  font-weight: 400;
+  opacity: 0.7;
+}
+.ch5-panel-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.2;
+  color: #f2ede3;
+}
+.ch5-panel-viewers {
+  margin: 0;
+  color: #818cf8;
+  font-size: 13px;
+}
+
+.ch5-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(129, 140, 248, 0.3) transparent;
+}
+
+.ch5-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ch5-feed-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ch5-feed-timestamp {
+  flex: 0 0 auto;
+  color: #a89f92;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ch5-feed-text {
+  margin: 0;
+  max-width: 52ch;
+  color: #f2ede3;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.ch5-channels {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(129, 140, 248, 0.2);
+}
+.ch5-channels-label {
+  margin: 0;
+  color: #a89f92;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ch5-channels-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ProjectCard variant ch5 "canal" oscuro (spec §4.1) — la variante "modern flat"
+   migrada de chapter-components.css asumía fondo blanco; ver TASK-011 hand-off. */
+.ch5-channels-grid :deep(.project-card) {
+  background: #1a1626;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  border-radius: var(--r-card, 10px);
+  padding: 14px;
+  box-shadow: none;
+  transition: border-color 150ms ease;
+}
+.ch5-channels-grid :deep(.project-card:hover) {
+  border-color: #818cf8;
+}
+.ch5-channels-grid :deep(.project-card-title) {
+  display: block;
+  margin: 0 0 6px 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  color: #f2ede3;
+  font-family: var(--hud-font);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-shadow: none;
+}
+.ch5-channels-grid :deep(.project-card-desc),
+.ch5-channels-grid :deep(.project-card-role) {
+  color: #f2ede3;
+  opacity: 0.85;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ch5-channels-grid :deep(.project-card-tech) {
+  margin: 8px 0 0 0;
+}
+.ch5-channels-grid :deep(.project-card-tech li) {
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  color: #f2ede3;
+  font-family: var(--hud-font);
+  font-size: 11px;
+}
+.ch5-channels-grid :deep(.project-card-link) {
+  color: #818cf8;
+  font-family: var(--hud-font);
+}
 
 /* === Keyframes === */
 
@@ -730,9 +1194,32 @@ onBeforeUnmount(() => {
   100% { opacity: 0;    transform: translateY(-35px) translateX(var(--dx, 4px)); }
 }
 
+/* Glitch de compresión (spec §3.2): clip-path desplazado + saturate/hue-rotate +
+   translateX — procedural, cero assets, 140ms via steps(3). */
+@keyframes cine-glitch {
+  0%   { clip-path: inset(0 0 0 0);     filter: none;                       transform: translateX(0); }
+  33%  { clip-path: inset(10% 0 40% 0); filter: saturate(2) hue-rotate(12deg);  transform: translateX(2px); }
+  66%  { clip-path: inset(50% 0 5% 0);  filter: saturate(2) hue-rotate(-12deg); transform: translateX(-2px); }
+  100% { clip-path: inset(0 0 0 0);     filter: none;                       transform: translateX(0); }
+}
+
+/* Pulso del punto blanco del badge EN VIVO (pantalla y panel comparten el keyframe) */
+@keyframes ch5-badge-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* Shimmer sutil de la barra de señal inferior de la pantalla */
+@keyframes cine-signal-shimmer {
+  0%   { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* === prefers-reduced-motion ===
    Overlays de luz quedan estáticos en su opacity base (la luz existe, solo no parpadea).
-   El polvo desaparece (requiere movimiento para tener sentido visual). */
+   El polvo desaparece (requiere movimiento para tener sentido visual). TASK-011: se suma
+   el chrome de broadcast nuevo — cinturón de seguridad CSS-side aunque el JS (triggerGlitch/
+   triggerCelebrationWave) ya hace early-return bajo PRM y nunca dispara estas clases. */
 @media (prefers-reduced-motion: reduce) {
   .cine-projector-cone {
     animation: none;
@@ -741,9 +1228,77 @@ onBeforeUnmount(() => {
   .cine-screen-light {
     animation: none;
     opacity: 0.06;
+    transition: none;
   }
   .cine-dust {
     display: none;
+  }
+  .cine-screen.is-glitch {
+    animation: none;
+  }
+  .cine-screen-dot,
+  .ch5-panel-dot {
+    animation: none;
+    opacity: 1;
+  }
+  .cine-screen-signal {
+    animation: none;
+  }
+  .ch5-lower-third-enter-active,
+  .ch5-lower-third-leave-active {
+    transition: none;
+  }
+  .ch5-lower-third-enter-from,
+  .ch5-lower-third-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Responsive (spec §4.3): mobile portrait pasa a layout de app de streaming
+ * (player fijo arriba + feed en flujo debajo); landscape mobile corto conserva
+ * el layout desktop con panel más angosto. Breakpoints alineados con
+ * src/styles/chassis.css §6.4 (<600px portrait, <480px alto landscape) para
+ * consistencia cross-chapter.
+ * ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ch5-cine {
+    display: flex;
+    flex-direction: column;
+  }
+  .ch5-scene {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    height: 42dvh;
+  }
+  .ch5-stream-panel {
+    position: relative;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid rgba(129, 140, 248, 0.25);
+  }
+}
+
+/* DESVIACIÓN MEDIDA de la spec (Lección técnica #7, límite no-opinable): la
+   spec §4.3 pedía panel a `min(46vw, 400px)` en landscape mobile corto. El
+   arnés `scripts/verify-ch5-broadcast.mjs` midió que ese ancho SOLAPA
+   `.cine-screen` (screen centrada al 50% del ancho total, min(17vw,300px) de
+   ancho, nunca se movió al asumirse un panel más angosto) en 800x420 y
+   844x390 — hasta ~38px de solape real, no hipotético. `min(34vw, 300px)`
+   deja margen medido >= ~60px libres en ambos viewports de referencia; se
+   deja documentado en vez de tapado en silencio porque el límite de "si algo
+   tapa contenido se arregla igual" gana sobre el número literal de la spec. */
+@media (max-height: 480px) {
+  .ch5-stream-panel {
+    width: min(34vw, 300px);
   }
 }
 </style>

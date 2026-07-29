@@ -20,21 +20,22 @@
  *   - ch3 (.project-card base sin scope): TASK-009 (ch3 "la muerte de Flash")
  *     investigó esta migración y la DEJÓ AQUÍ a propósito — hallazgo: la base
  *     sin scope (líneas ~44-133) no es "de ch3", es el FALLBACK compartido que
- *     ch2 (`.project-card-link:active`) y ch5 (`.project-card` padding,
- *     `.project-card-title` font-size/margin, y TODO `.project-card-desc/
- *     -role/-tech/-tech li` — sus bloques `[data-chapter="5"]` no los
- *     redeclaran) siguen consumiendo hoy. Borrarla rompe ch2/ch5, ambos en la
- *     lista de PROHIBIDOS de TASK-009 y cubiertos por su AC bloqueante de
- *     no-regresión. ch3 ya no la necesita (define su propio
+ *     ch2 (`.project-card-link:active`) sigue consumiendo hoy. Borrarla rompe
+ *     ch2, en la lista de PROHIBIDOS de TASK-009 y cubierto por su AC bloqueante
+ *     de no-regresión. ch3 ya no la necesita (define su propio
  *     `.ch3-projects .project-card` en Chapter3Content.vue, con más
- *     especificidad — la base queda inerte para ch3). Migrarla de verdad
- *     requiere partirla en copias `[data-chapter="2"]`/`[data-chapter="5"]`
- *     explícitas primero, lo que excede la lista blanca de TASK-009 (solo
- *     autoriza "el bloque de ch3"). Follow-up ticket con ch2+ch5 en su lista
- *     blanca puede completar el retiro.
+ *     especificidad — la base queda inerte para ch3). ch5 TAMPOCO la necesita
+ *     desde TASK-011: `.ch5-channels-grid :deep(.project-card*)` en
+ *     Chapter5Content.vue (sin `@layer`, gana SIEMPRE sobre `@layer components`
+ *     sin importar especificidad) la reemplaza por completo. Migrarla de
+ *     verdad para ch2 requiere partirla en copia `[data-chapter="2"]` explícita,
+ *     lo que excede la lista blanca de TASK-009 (solo autoriza "el bloque de
+ *     ch3"). Follow-up ticket con ch2 en su lista blanca puede completar el
+ *     retiro.
  *   - ch4 (.floating-panel*) sale de aqui con TASK-010.
  *   - ch5 (.scroll-reveal-card*, override `[data-chapter="5"] .project-card`)
- *     sale de aqui con TASK-011.
+ *     SALIÓ de aqui con TASK-011 — ver `.ch5-stream-panel` y
+ *     `.ch5-channels-grid :deep(...)` en Chapter5Content.vue.
  *   - ch6 (.ch6-layout, .ch6-canvas-host, .ch6-mantra, .project-overlay*) sale
  *     de aqui con TASK-012.
  * Cada ticket de capitulo debe borrar SU porcion de este archivo al migrarla,
@@ -1304,69 +1305,14 @@
      reforzó el scrim (contraste, spec §9) — buscar ".floating-panel" en
      Chapter4Content.vue para la versión vigente. */
 
-  /* ─────────────────────────────────────────────────────────
-   * Phase 4 W4 — ch5 Modern 2022-23 (Plan 04-05)
-   * ScrollRevealCard reveal animation + .project-card modern flat variant
-   * Source: RESEARCH §Pattern 6 + UI-SPEC §6.7 + §6.9
-   * ───────────────────────────────────────────────────────── */
-
-  /* ScrollRevealCard — fade+slide-in al entrar viewport */
-  [data-chapter="5"] .scroll-reveal-card {
-    opacity: 0;
-    transform: translateY(24px);
-    transition:
-      opacity 300ms ease,
-      transform 300ms ease;
-    margin-bottom: var(--sp-md);
-  }
-
-  [data-chapter="5"] .scroll-reveal-card--revealed {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* PRM defensive CSS-side — instant render aunque JS no corra (D4-10d).
-     Pareja del PRM defensive JS-side en ScrollRevealCard.vue (isRevealed init). */
-  @media (prefers-reduced-motion: reduce) {
-    [data-chapter="5"] .scroll-reveal-card {
-      opacity: 1;
-      transform: none;
-      transition: none;
-    }
-  }
-
-  /* ProjectCard variant ch5 modern flat — light shadow, no skeumorphic gradient */
-  [data-chapter="5"] .project-card {
-    background: var(--c-surface, #ffffff);
-    border: 1px solid var(--c-border, #e2e8f0);
-    border-radius: 6px;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.06),
-      0 4px 12px rgba(0, 0, 0, 0.04);
-  }
-
-  [data-chapter="5"] .project-card-title {
-    font-family: 'Inter Variable', system-ui, sans-serif;
-    color: var(--c-fg);
-    border-bottom: 2px solid var(--c-accent);
-    padding-bottom: var(--sp-xs);
-    display: inline-block;
-    text-shadow: none;
-  }
-
-  [data-chapter="5"] .project-card-link {
-    background: none;
-    box-shadow: none;
-    color: var(--c-accent);
-    text-decoration: none;
-    text-shadow: none;
-    padding: 4px 0;
-    /* Modern minimal: text-only link, NO botón skeumorphic */
-  }
-
-  [data-chapter="5"] .project-card-link:hover {
-    text-decoration: underline;
-  }
+  /* ch5 broadcast (Phase 4 W4 stub) — MIGRADO a src/components/Chapter5Content.vue
+     por TASK-011 (retiro de la parada intermedia que TASK-008 dejó declarada; ver
+     comentario del orchestrator en tasks/TASK-011.json). El ch5 rediseñado ("LA
+     TRANSMISION") ya no usa ScrollRevealCard (el texto vive siempre montado en
+     `.ch5-stream-panel`, sin reveal-on-scroll) así que `.scroll-reveal-card*` para
+     ch5 se retira sin reemplazo, no se migra — buscar `.ch5-channels-grid
+     :deep(.project-card*)` en Chapter5Content.vue para la variante "canal" oscura
+     vigente del ProjectCard. */
 
   /* ─────────────────────────────────────────────────────────
    * Phase 5 W3 — ch6 canvas Phaser + mantra HTML (Plan 05-04)

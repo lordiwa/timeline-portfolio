@@ -77,7 +77,29 @@
     "5": {
       "title": "Modern: streaming, QA, frontend lead",
       "era": "Modern",
-      "flavor": "Era Modern 2022-23. Frontend lead, QA leadership, streaming, convergencia QA + AI."
+      "flavor": "Era Modern 2022-23. Frontend lead, QA leadership, streaming, convergencia QA + AI.",
+      "panel": {
+        "liveBadge": "EN VIVO",
+        "viewers": "{count} espectadores conectados",
+        "channelsLabel": "Canales de la era",
+        "feed": {
+          "t0": "2019",
+          "t1": "2020",
+          "t2": "2020",
+          "t3": "2020",
+          "t4": "2020-2023",
+          "t5": "2022",
+          "t6": "2023",
+          "t7": "2024"
+        }
+      },
+      "broadcast": {
+        "box": "EN VIVO · Velada de box, recinto sin público",
+        "mma": "EN VIVO · MMA, octágono a puerta cerrada",
+        "concierto": "EN VIVO · Concierto transmitido, butacas vacías",
+        "lab": "EN VIVO · Laboratorio, turno continuo",
+        "covid": "EN VIVO · Cadena nacional, quédate en casa"
+      }
     },
     "6": {
       "title": "Convergencia: QA + AI",

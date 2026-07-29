@@ -158,22 +158,22 @@
     --font-body: 'Audiowide', 'Eurostile', sans-serif;
   }
 
-  /* ── ch5 — Broadcast/cine (2021) — EXCEPCION resuelta + limpieza de asset ──
-   * Paleta real del cine oscuro (chapter-components.css .scroll-reveal-card,
-   * .project-card variant) pasa a ser LA paleta de la section — ya no hay stub
-   * white-SaaS separado. --bg-image RETIRADO: ch5-hero.webp pertenecia a esa
-   * premisa muerta (public/assets/old/ + CHANGELOG, ver hand-off de TASK-008);
-   * la escena de cine oscuro no usa foto de fondo. */
+  /* ── ch5 — LA TRANSMISION (broadcast, 2020-2023) — TASK-011 ──────────────
+   * Actualiza la paleta "cine oscuro" heredada de TASK-008 a la paleta
+   * broadcast/streaming de .planning/design/05-ch5-pandemia-broadcast.md §5
+   * (panel de transmisión vidrio-oscuro + acento indigo de señal). --bg-image
+   * sigue sin declararse: la escena no usa foto de fondo global (usa su propio
+   * bg-hall pintado dentro de Chapter5Content.vue). */
   [data-chapter="5"],
   :root[data-active-chapter="5"] {
     --era-progress: 5;
-    --c-bg: #171009;
-    --c-fg: #efe7db;
+    --c-bg: #0b0910;
+    --c-fg: #f2ede3;
     --c-accent: #818cf8;
-    --c-border: #3a2e22;
+    --c-border: #3a3247;
     --c-focus: #818cf8;
-    --c-surface: #221a12;
-    /* contrast(#efe7db, #171009) ≈ 13.6:1 — WCAG AAA sin tradeoff. */
+    --c-surface: #1a1626;
+    /* contrast(#f2ede3, #0b0910) ≈ 17:1 — WCAG AAA sin tradeoff. */
   }
   [data-chapter="5"] {
     --font-body: 'Inter Variable', system-ui, sans-serif;
