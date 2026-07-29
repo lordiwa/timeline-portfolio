@@ -15,7 +15,7 @@
     "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch5.",
     "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si showText vuelve a apagarse o si el conteo de personajes de la multitud cambia."
   ],
-  "status": "in_progress",
+  "status": "done",
   "priority": "critical",
   "labels": [
     "design",
@@ -28,7 +28,11 @@
   "depends_on": [
     "TASK-008"
   ],
-  "linked_commits": [],
+  "linked_commits": [
+    "be36e6f",
+    "24d2673",
+    "8baddd7"
+  ],
   "linked_prs": [],
   "comments": [
     {
@@ -55,10 +59,15 @@
       "author": "reviewer",
       "at": "2026-07-29T16:48:27.170Z",
       "body": "## Review de cierre ronda 1 — 2026-07-29 — VEREDICTO: BLOCK\n\nDiff: `be36e6f` + `24d2673`. `review_depth: full`. Suite 671/671 verde en 85 archivos (los 2 rojos preexistentes de CLAUDE.md §7.2 ya no existen).\n\n**El reviewer no confió en las declaraciones: reprodujo el arnés por su cuenta** (Chrome headed + Vite dev) → exit 0, 10/10 combos viewport×locale limpios + PRM. Regeneró `.planning/ch5-verify-results.json`, que no existía, y **reprodujo los números del developer uno por uno**. Las 9 lupas del dispatch se verificaron y **todas las afirmaciones resultaron ciertas**: multitud 125 únicos / 171 asientos con el gate de TASK-017 intacto; desviación del panel a `min(34vw,300px)` mínima, justificada y scopeada a `max-height:480px`; los dos hallazgos del hook resueltos con evidencia real (0 slugs sin manifest/PNG; el lower-third calca §3.3 verbatim, `rgba(13,16,24,0.88)` **es** `#0d1018` @0.88); fallback §4.2 literal con el texto completo en DOM sin interacción; texto ES 4088/714/8 sin recorte; contraste real 16.50–18.00:1 medido sobre píxel compuesto, no sobre tokens. `App.vue` intacto. Lista blanca respetada. No-regresión completa verificada en vivo, incluidos dial-up en ch1, canvas de ch2 y ch6.\n\n### HIGH — bloqueante\n\n**El lower-third nuevo pinta encima de las etiquetas del timeline de navegación en mobile.** `getBoundingClientRect`: en **390×844** su rect (x 15.6–208, y 283.6–333.2) intersecta los `.tick-button` de ch0 y ch1; en **844×390** y **800×420** intersecta 1 tick; en desktop 0. Captura confirma el orden de pintado: la caja con `z-index 10460` tapa \"1995\" y \"2001\".\n\nLos clicks pasan (`pointer-events: none`), así que la navegación no queda inalcanzable — pero **tapa contenido**, y ese límite del proyecto no es opinable. Regresión introducida por este ticket.\n\n**Causa de que nadie lo viera:** el arnés sólo comprueba panel-vs-pantalla. Falta el check tick-vs-lower-third.\n\n### MEDIUM\n\n1. **`verify-ch5-broadcast.mjs:386-389` — sensor PRM del glitch casi vacío.** La cabecera promete vigilar `.is-glitch` durante una ventana de scene-advance; el cuerpo muestrea **una sola vez** tras `sleep(5200)`. El glitch dura 140ms en un ciclo de 4500ms: si el gate PRM regresionara, **daría verde el ~97% de las veces**.\n2. **`verify-ch5-broadcast.mjs:34-36` — el check H declarado no está implementado.** La cabecera promete verificar el apilado en mobile portrait, pero ninguna aserción usa `sceneRect`. Si muriera la media query de 600px, el arnés seguiría verde.\n3. **Checklist pre-hand-off no entregado al reviewer** (omisión del orquestador, no del developer: su reporte sí lo incluía).\n\n### LOW\n\nComentario de jitter dice 1.30 cuando código y spec dan 1.15; T13 dice \"únicos\" pero sólo cuenta; `ensureLocale` no confirma el cambio de idioma (mismo punto ciego que tuvo el arnés de ch3); contraste muestreado en 1 píxel por combo; ~83% del feed queda bajo el fold interno en desktop con sólo una scrollbar fina como affordance (la spec lo autoriza; candidato a polish).\n\n### Regla que sale de los dos MEDIUM\n\n**Una cabecera que promete un check y un cuerpo que no lo hace es peor que no tener el check**, porque produce un verde que nadie audita.\n"
+    },
+    {
+      "author": "reviewer",
+      "at": "2026-07-29T18:01:06.674Z",
+      "body": "## Review ronda 2 — 2026-07-29 — VEREDICTO: PASS\n\nDiff: `8baddd7`. Suite 671/671 verde en 85 archivos. Arnés reproducido en frío por el reviewer (Chrome headed + Vite propios): exit 0, 10/10 combos viewport×locale limpios + PRM limpio con 46 muestras.\n\n**El reviewer no usó el arnés del developer para juzgarlo: montó su propia sonda CDP independiente.**\n\n### El HIGH — cerrado y verificado\n\n- **390×844:** lower-third x 182–374, rail x≤69 → **0 intersecciones**. **844×390:** panel a 173px libres, 0. **800×420:** 0.\n- **Desktop intacto al píxel:** 1440×900 `left=57px` (=4% literal de spec), 1366×768 ≈54px; inyectar la posición base produce el rect **idéntico** → las dos reglas nuevas no alcanzan desktop.\n- **Los anchos que nadie había medido:** 667×375 (14px libres del rail, 56px del panel, 0 intersecciones), 736×414 (0), y **568×320**, que cumple *ambas* media queries y gana el bloque `max-height` por cascada (0). El piso `max(175px, 20%)` hace exactamente lo que declara.\n\n### Los tres sensores, verificados por inyección y no por fe\n\n- **Check I (tick-vs-lower-third):** plant-red restaurando `left:4%` → **2 overlaps en 390×844** (los mismos 2 ticks de la ronda 1) y 1 en los otros cinco viewports.\n- **Check H:** sano scene.h=354 < 506; roto-inyectado (escena a `inset:0`) → **ambas aserciones disparan**.\n- **Sensor PRM:** con PRM 46 muestras sin `.is-glitch`; **sin PRM se ve en la muestra 33** → el selector es real y el paso de 100ms no puede perder un glitch de 140ms.\n\n### La lupa sobre el contraste: NO degradó\n\nSe auditó específicamente si el método nuevo medía fondo-contra-fondo. **No lo hace:** compara `getComputedStyle(textEl).color` — la tinta declarada del texto — contra el píxel **compuesto** del fondo del panel en 8 filas de la franja de padding. Es tinta-contra-fondo, válido. Los 15.64–16.53:1 son coherentes con los 16.5–18:1 de la ronda 1, y como el fondo del panel es `#0d1018@0.88` con blur, la escena subyacente pesa ≤12%. AC#6 cumplido.\n\n### No-regresión, completa en vivo\n\n7 secciones montan; canvas de ch2 presente; dial-up dispara al entrar a ch1 (el primer negativo del reviewer fue el guard preexistente de `sessionStorage`, no una regresión); avatar, 7 ticks y lang-toggle vivos; multitud 171 asientos con T13 reforzado a `Set.size`; el scroll interno alcanza las 5 tarjetas del final. `App.vue` intacto.\n\n### MEDIUM — no bloqueante, queda como TASK-029\n\n`verify-ch5-broadcast.mjs:397-402`: si `.ch5-feed-text` se renombra o falla la decodificación del screenshot, **se registra el problema pero `ok` queda `true`** → el combo imprime LIMPIO, exit 0, y el gate del AC#6 degrada a vacuo en silencio. Es la misma clase que esta ronda vino a arreglar, en un bloque reescrito esta ronda.\n\n### LOW — también a TASK-029\n\n1. La cabecera del Check E sigue describiendo el método viejo (\"muestrea a lo largo del bloque\", \"el navegador descarta los puntos sobre tinta\") cuando el cuerpo muestrea la franja de padding y evita la tinta por construcción. El cuerpo es más fuerte que la cabecera, pero es la misma deriva que dejó la lección de la ronda 1.\n2. `Chapter5Content.vue:1327` dice \"≥24px medido\" de margen al rail; medido ahora son **14px**. El invariante se cumple y el Check I lo custodia, pero el comentario sobrestima.\n"
     }
   ],
   "created_at": "2026-07-27T05:48:12.752Z",
-  "updated_at": "2026-07-29T16:48:27.170Z",
+  "updated_at": "2026-07-29T18:01:56.526Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

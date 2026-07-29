@@ -1,0 +1,31 @@
+{
+  "key": "TASK-029",
+  "title": "Arnés de ch5: cerrar la vía de degradación silenciosa del gate de contraste",
+  "description": "Sale del review en PASS de la ronda 2 de TASK-011 (2026-07-29). No bloqueó el cierre de ch5 — son defectos del INSTRUMENTO, no del capítulo, y ninguno es un defecto presente. Se registran para no perderlos.\n\n## 1. MEDIUM — el gate de contraste puede degradar a vacuo en silencio\n\n`scripts/verify-ch5-broadcast.mjs:397-402`: si `.ch5-feed-text` se renombra, o si falla el screenshot o su decodificación, el problema **se registra pero `ok` queda en `true`**. El combo imprime `LIMPIO`, el proceso sale con 0, y el gate del AC#6 de TASK-011 (contraste ≥ 8.9:1 medido) queda cumpliéndose de mentira.\n\nUn `.ch5-stream-panel` renombrado sí lo atrapa el ready-gate; `.ch5-feed-text` no lo atrapa nadie.\n\nLo incómodo del hallazgo: **es exactamente la clase de defecto que la ronda 2 vino a arreglar** (los dos MEDIUM del arnés eran checks que prometían más de lo que verificaban), y apareció en un bloque reescrito en esa misma ronda. La regla que dejó la ronda 1 sigue siendo la lente correcta: *una cabecera que promete un check y un cuerpo que no lo hace produce un verde que nadie audita*.\n\nFix: poner `ok = false` (o fallo explícito) cuando el contraste no se pudo medir, y lo mismo en el `catch`. Son dos líneas.\n\n## 2. LOW — deriva cabecera/cuerpo en el Check E\n\n`verify-ch5-broadcast.mjs:26-30` y `371-377`: la cabecera dice que se muestrea \"a lo largo del bloque `.ch5-feed-text`\" y que \"el navegador ya descarta los puntos que aterrizan sobre tinta\". El cuerpo real muestrea la franja de padding del **panel** y evita la tinta por construcción, sin descartar nada.\n\nAcá el cuerpo es MÁS fuerte que la cabecera, así que no hay riesgo hoy — pero es la misma deriva que costó un MEDIUM en la ronda 1. Actualizar ambos comentarios al mecanismo real.\n\n## 3. LOW — cifra de margen sobrestimada en un comentario\n\n`src/components/Chapter5Content.vue:1327` dice \"≥24px medido\" de margen al rail bajo `max-height:480px`. Medido con ch5 activo, el rail llega a x=161 y el margen real es de **14px**.\n\nEl invariante se cumple (0 intersecciones en los 6 viewports probados, y el Check I lo custodia), pero el número del comentario engaña a quien lo lea para decidir un cambio futuro. Corregir la cifra o citar la condición exacta de medición.\n\n## LISTA BLANCA\n\n`scripts/verify-ch5-broadcast.mjs`, el bloque de comentarios de `src/components/Chapter5Content.vue`, y `tests/**`.\n\nPROHIBIDO cambiar el comportamiento visual de ch5: este ticket es del instrumento y de comentarios. Si el fix del punto 1 pusiera en rojo alguna corrida, ESO ES UN HALLAZGO REAL — parar y reportar al orquestador, no ajustar el umbral para que pase.\n\n## Verificación\n\nCorrer el arnés en las 10 combinaciones viewport×locale + PRM y confirmar que sigue en verde por los motivos correctos. Para el punto 1, plantar la regresión (renombrar `.ch5-feed-text` en una copia) y confirmar que ahora el arnés se pone ROJO donde antes daba LIMPIO.",
+  "acceptance_criteria": [
+    "Si el contraste no se pudo medir (selector ausente, screenshot fallido, decodificación fallida), el arnés marca el combo como ROTO y sale con código distinto de 0. Se verifica plantando la regresión: renombrar .ch5-feed-text pone el arnés en rojo.",
+    "El bloque catch de la medición de contraste tampoco puede dejar ok en true.",
+    "La cabecera del Check E y el comentario de measureViewport describen el mecanismo REAL (muestreo de la franja de padding del panel, tinta evitada por construcción), no el viejo.",
+    "El comentario de Chapter5Content.vue:1327 refleja el margen real medido (14px) o cita la condición exacta bajo la que se midió 24px.",
+    "El arnés sigue en verde en las 10 combinaciones viewport×locale + PRM, por los motivos correctos y no por degradación silenciosa.",
+    "NO REGRESION: el comportamiento visual de ch5 no cambia. La suite sigue en verde."
+  ],
+  "status": "todo",
+  "priority": "low",
+  "labels": [
+    "ch5",
+    "instrumento",
+    "verificacion",
+    "tech-debt"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-29T18:01:40.463Z",
+  "updated_at": "2026-07-29T18:01:40.463Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

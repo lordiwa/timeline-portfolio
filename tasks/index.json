@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T16:48:27.170Z",
+  "generated_at": "2026-07-29T18:01:56.526Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -64,7 +64,7 @@
     {
       "key": "TASK-011",
       "title": "ch5 pandemia: LA TRANSMISION, broadcast anclado en VivoEnVivo",
-      "status": "in_progress",
+      "status": "done",
       "priority": "critical"
     },
     {
@@ -167,6 +167,12 @@
       "key": "TASK-028",
       "title": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test",
       "status": "done",
+      "priority": "low"
+    },
+    {
+      "key": "TASK-029",
+      "title": "Arnés de ch5: cerrar la vía de degradación silenciosa del gate de contraste",
+      "status": "todo",
       "priority": "low"
     }
   ]
