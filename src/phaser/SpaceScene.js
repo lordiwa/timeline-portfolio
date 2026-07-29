@@ -39,6 +39,7 @@
 import Phaser from 'phaser'
 import { i18n } from '@/i18n'
 import { projects } from '@/data/projects'
+import { AsciiPostFX } from './AsciiPostFX.js'
 
 // Constantes de layout hi-bit (HI-BIT-01) — 960×540 = 480×270 × doble densidad.
 const BASE_W = 960
@@ -50,14 +51,18 @@ const ARRIVAL_DESCENT = BASE_H * 3 // 1620
 // Cámara final: scrollY centra el postal (último planet en viewport).
 const CAMERA_FINAL_Y = ARRIVAL_DESCENT - BASE_H / 2 // 1350
 
-// Arrival duration default.
-const ARRIVAL_DURATION_MS = 3500
+// Arrival duration — TASK-012 RESCATE 2026-07-29 (spec §1.2): 3500 → 2200.
+// El arrival largo era parte del problema (3.5s de nada interactivo); se comprime
+// el mundo útil a la banda final en vez de alargar el tour de cámara. Ease intacto.
+const ARRIVAL_DURATION_MS = 2200
 
 // Ships timing — D5-05.
 const SHIP1_DURATION_MS = 12000 // LTR (banda superior, ~12s)
 const SHIP2_DURATION_MS = 18000 // RTL (banda inferior, ~18s — mayor profundidad)
 
 // Radio de planetas procedurales (ERA-AGNT-02) + hit area halo (D5-06).
+// PLANET_R (legacy) se mantiene como fallback de compat; el radio real por planeta
+// vive en PLANET_RADII (TASK-012 RESCATE — spec §1.2, por-planeta, no global).
 const PLANET_R = 90      // radio en world-px (equivale al 192/2 nativo)
 const PLANET_HALO_PX = 24
 
@@ -65,9 +70,17 @@ const PLANET_HALO_PX = 24
 const PRM_SHIP1_X = 240
 const PRM_SHIP2_X = 720
 
-// Zigzag de planetas (ERA-AGNT-01) — X indexada por orden cronológico (sort planetOrbit asc).
-// idx 0: orbit 0.2 (ar-vr, y≈594), idx 1: orbit 0.5 (remoose, y≈1080), idx 2: orbit 0.8 (software-mind, y≈1566).
-const PLANET_XS = [620, 300, 600]
+// TASK-012 RESCATE (2026-07-29, spec §1.2) — recomposición del mundo: los 3
+// planetas-proyecto pasan a vivir DENTRO de la banda de cámara final visible
+// [CAMERA_FINAL_Y, CAMERA_FINAL_Y + BASE_H] = [1350, 1890]. Antes, ar-vr (y=594)
+// y remoose (y=1080) quedaban fuera de encuadre porque su Y se derivaba de
+// `planetOrbit * ARRIVAL_DESCENT` (0.2 y 0.5 de 1620 = 324 / 810, muy por
+// encima de la banda visible). Ahora la Y es explícita, no derivada del orbit.
+// Arrays indexados por orden cronológico ascendente de planetOrbit (D5-01):
+// idx 0 = ar-vr (0.2), idx 1 = remoose (0.5), idx 2 = software-mind (0.8).
+const PLANET_XS = [170, 820, 600]
+const PLANET_YS = [1425, 1455, 1566] // software-mind ya era visible, no se mueve.
+const PLANET_RADII = [56, 62, 90]    // software-mind domina: es el presente (spec §1.2).
 
 // Ring wireframe holográfico (ERA-AGNT-02) — reemplaza ch6-structures-t.png.
 // Elipse en perspectiva; semi-ejes: OA/OB = exterior, IA/IB = interior.
@@ -78,11 +91,20 @@ const RING_OB = 52  // semi-eje menor exterior (vertical — perspectiva)
 const RING_IA = 150 // semi-eje mayor interior
 const RING_IB = 40  // semi-eje menor interior
 
-// Filamento neural (ERA-AGNT-02) — control points de la curva bezier Rafael↔robot.
-const FILAMENT_P0 = { x: 304, y: 1696 }
-const FILAMENT_P1 = { x: 272, y: 1638 }
-const FILAMENT_P2 = { x: 218, y: 1585 }
-const FILAMENT_P3 = { x: 190, y: 1560 }
+// Filamento neural (ERA-AGNT-02, extendido spec §6.2) — DOS curvas bezier que
+// convergen en el cursor-estrella compartido (x=247, y=1600), en vez de una sola
+// curva Rafael→robot. "Los dos escriben en el mismo cursor."
+const CURSOR_STAR = { x: 247, y: 1600 }
+const FILAMENT_HUMAN_P0 = { x: 304, y: 1696 }
+const FILAMENT_HUMAN_P1 = { x: 284, y: 1660 }
+const FILAMENT_HUMAN_P2 = { x: 262, y: 1626 }
+const FILAMENT_ROBOT_P0 = { x: 190, y: 1560 }
+const FILAMENT_ROBOT_P1 = { x: 208, y: 1573 }
+const FILAMENT_ROBOT_P2 = { x: 228, y: 1588 }
+
+// Haces de convergencia del unísono (spec §6.1) — origen robot y origen Rafael.
+const UNISON_ROBOT_PT = { x: 190, y: 1544 }
+const UNISON_RAFAEL_PT = { x: 304, y: 1710 }
 
 // Altura total del mundo — sincronizado en el shader para el parallax.
 const WORLD_BOTTOM = CAMERA_FINAL_Y + BASE_H // 1890
@@ -123,6 +145,9 @@ precision mediump float;
 uniform float time;
 uniform vec2  resolution;
 uniform float scrollY;
+// uOct (spec §8, tier B degradación) — 3.0 = octava completa (tier A), 2.0 = la
+// tercera octava (más cara) se apaga. Default 3.0 si el uniform no se setea.
+uniform float uOct;
 
 // ── Hash y noise utilitarios ──────────────────────────────────────────────────
 
@@ -145,13 +170,15 @@ float vnoise(vec2 p) {
   );
 }
 
-// Fractal Brownian Motion — 3 octavas (barato, adecuado para nebulosas GPU-pixel).
+// Fractal Brownian Motion — hasta 3 octavas (barato, adecuado para nebulosas GPU-pixel).
+// uOct degrada 3→2 octavas bajo tier B de performance (spec §8) — step() apaga la
+// tercera octava (la más cara) sin ramificar el shader.
 float fbm3(vec2 p) {
   float v  = 0.50 * vnoise(p);
   p = p * 2.1 + vec2(5.3, 2.7);
   v += 0.25 * vnoise(p);
   p = p * 2.1 + vec2(5.3, 2.7);
-  v += 0.125 * vnoise(p);
+  v += 0.125 * vnoise(p) * step(2.5, uOct);
   return v;
 }
 
@@ -263,12 +290,17 @@ export class SpaceScene extends Phaser.Scene {
     this.planets = []
     this.projectsData = []
     this._filamentGfx = null
-    this._filamentCurve = null
+    this._filamentCurveHuman = null
+    this._filamentCurveRobot = null
     this._filamentParticles = []
     this._lastSynapseTime = 0
     this._prefersReduced = false
     this._spaceShader = null
-    this._glitchRect = null
+    this._asciiPipeline = null
+    this._cursorStar = null
+    this._perfTier = 'A'
+    this._perfLowStreak = 0
+    this._lastTokenFlash = 0
   }
 
   preload() {
@@ -312,12 +344,17 @@ export class SpaceScene extends Phaser.Scene {
     this.planets = []
     this.projectsData = []
     this._filamentGfx = null
-    this._filamentCurve = null
+    this._filamentCurveHuman = null
+    this._filamentCurveRobot = null
     this._filamentParticles = []
     this._lastSynapseTime = 0
     this._prefersReduced = false
     this._spaceShader = null
-    this._glitchRect = null
+    this._asciiPipeline = null
+    this._cursorStar = null
+    this._perfTier = 'A'
+    this._perfLowStreak = 0
+    this._lastTokenFlash = 0
 
     const prefersReduced = this.registry.get('prefersReduced')
     this._prefersReduced = prefersReduced
@@ -349,17 +386,21 @@ export class SpaceScene extends Phaser.Scene {
     this.projectsData.forEach((proj, idx) => {
       const textureKey = `ch6-planet-${proj.id.replace('ch6-', '')}`
       const planetX = PLANET_XS[idx] ?? BASE_W / 2
-      const planetY = proj.planetOrbit * ARRIVAL_DESCENT + BASE_H / 2
+      // TASK-012 RESCATE: Y explícita por planeta (spec §1.2), ya NO derivada de
+      // planetOrbit * ARRIVAL_DESCENT — esa fórmula dejaba a ar-vr y remoose fuera
+      // de la banda de cámara final [1350, 1890].
+      const planetY = PLANET_YS[idx] ?? CAMERA_FINAL_Y + BASE_H / 2
+      const planetR = PLANET_RADII[idx] ?? PLANET_R
 
       // Sprite PNG invisible — satisface el contrato de tests (T2/T3) sin renderizar.
       const planet = this.add.sprite(planetX, planetY, textureKey)
       planet.setScrollFactor(1.0).setDepth(20).setAlpha(0)
 
       // Dibujo procedural del planeta encima del sprite invisible.
-      this._renderProceduralPlanet(proj.id, planetX, planetY)
+      this._renderProceduralPlanet(proj.id, planetX, planetY, planetR)
 
       // Hit area circular (radio generoso sobre sprite alpha=0).
-      const hitRadius = PLANET_R + PLANET_HALO_PX
+      const hitRadius = planetR + PLANET_HALO_PX
       planet.setInteractive(
         new Phaser.Geom.Circle(planet.width / 2, planet.height / 2, hitRadius),
         Phaser.Geom.Circle.Contains
@@ -384,10 +425,10 @@ export class SpaceScene extends Phaser.Scene {
         tooltip.setText(i18n.global.t(proj.titleKey))
         if (planet.x > BASE_W / 2) {
           tooltip.setOrigin(1, 0.5)
-          tooltip.setPosition(planet.x - PLANET_R - 4, planet.y)
+          tooltip.setPosition(planet.x - planetR - 4, planet.y)
         } else {
           tooltip.setOrigin(0, 0.5)
-          tooltip.setPosition(planet.x + PLANET_R + 4, planet.y)
+          tooltip.setPosition(planet.x + planetR + 4, planet.y)
         }
         tooltip.setVisible(true)
       })
@@ -497,12 +538,15 @@ export class SpaceScene extends Phaser.Scene {
     // Drones (ERA-AGNT-01) — depth 25. setScale(2).
     // ─────────────────────────────────────────────────────────────────────
 
+    // TASK-012 RESCATE (spec §1.2) — drones 4 y 5 vivían en y=1040 e y=580,
+    // AMBOS fuera de la banda de cámara final [1350, 1890]. Reubicados a
+    // y=1418 (x=260) e y=1512 (x=340): los 5 drones quedan en cuadro.
     const DRONE_DEFS = [
       { key: 'ch6-drone-b', x: 400, y: 1700, yA: 16, yD: 1800, xA: 80,  xD: 5000, aA: 4, aD: 4000 },
       { key: 'ch6-drone-a', x: 530, y: 1600, yA: 12, yD: 2200, xA: 60,  xD: 6000, aA: 0, aD: 0    },
       { key: 'ch6-drone-b', x: 660, y: 1680, yA: 20, yD: 1600, xA: 100, xD: 4500, aA: 4, aD: 5500 },
-      { key: 'ch6-drone-a', x: 340, y: 1040, yA: 14, yD: 2400, xA: 50,  xD: 7000, aA: 0, aD: 0    },
-      { key: 'ch6-drone-b', x: 260, y: 580,  yA: 18, yD: 1400, xA: 120, xD: 3800, aA: 4, aD: 6000 },
+      { key: 'ch6-drone-a', x: 260, y: 1418, yA: 14, yD: 2400, xA: 50,  xD: 7000, aA: 0, aD: 0    },
+      { key: 'ch6-drone-b', x: 340, y: 1512, yA: 18, yD: 1400, xA: 120, xD: 3800, aA: 4, aD: 6000 },
     ]
 
     DRONE_DEFS.forEach((def) => {
@@ -552,41 +596,26 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    // Láseres de construcción (ERA-AGNT-02) — depth 9.
+    // TASK-012 (spec §6) — Struts del anillo a cuatro manos + cursor-estrella
+    // compartido. REEMPLAZA _buildConstructionBeams (láseres dron→anillo
+    // unidireccionales): el unísono ahora lo completan Rafael Y el robot
+    // JUNTOS sobre los mismos struts pendientes, no un tercero (drones).
     // ─────────────────────────────────────────────────────────────────────
 
-    this._buildConstructionBeams(prefersReduced)
+    this._buildUnisonStruts(prefersReduced)
 
     // ─────────────────────────────────────────────────────────────────────
-    // Filamento neural Rafael ↔ robot (ERA-AGNT-02) — depth 36.
+    // Filamento neural Rafael ↔ robot (ERA-AGNT-02) — depth 36. Extendido
+    // (spec §6.2) con el cursor-estrella compartido en (247, 1600): ambos
+    // tramos convergen a un único punto en vez de Rafael→robot directo.
     // ─────────────────────────────────────────────────────────────────────
 
     this._initNeuralFilament(prefersReduced)
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Paneles Asimov (ERA-AGNT-02) — depth 32.
-    // ─────────────────────────────────────────────────────────────────────
-
-    if (!prefersReduced) {
-      this._buildAsimovPanels()
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // Glitch de horizonte (ERA-AGNT-02) — screen-flash rect magenta/cian.
-    // Rectangle scrollFactor 0 depth 95 sustituye camera.setTint (API
-    // ausente en Phaser 3.90 — TypeErrors mataban el game loop, bug fix).
-    // ─────────────────────────────────────────────────────────────────────
-
-    if (!prefersReduced) {
-      this._glitchRect = this.add
-        .rectangle(480, 270, 960, 540, 0xff3ca6)
-        .setScrollFactor(0)
-        .setDepth(95)
-        .setVisible(false)
-        .setAlpha(0.12)
-        .setBlendMode(Phaser.BlendModes.ADD)
-      this._scheduleHorizonGlitch()
-    }
+    // Paneles Asimov y glitch de horizonte RETIRADOS (spec §1.3 tabla de
+    // rescate): texto dentro de Phaser es borroso/no accesible/no i18n
+    // (sustituido por la conversación DOM), y el glitch era ruido sin
+    // significado que competía con el takeover ASCII.
 
     // ─────────────────────────────────────────────────────────────────────
     // Arrival camera descent (D5-02).
@@ -597,6 +626,8 @@ export class SpaceScene extends Phaser.Scene {
     if (prefersReduced) {
       this.cameras.main.setScroll(0, CAMERA_FINAL_Y)
       this.game.events.emit('arrival-complete')
+      // PRM (spec §6.1): struts ya completos, sin timeline — _buildUnisonStruts
+      // ya los dibujó en cian estático + haces al 0.22 fijo. Nada más que hacer.
     } else {
       this.tweens.add({
         targets: this.cameras.main,
@@ -605,6 +636,8 @@ export class SpaceScene extends Phaser.Scene {
         ease: 'Power2.easeOut',
         onComplete: () => {
           this.game.events.emit('arrival-complete')
+          // Acto 2 (spec §3): 300ms después de arrival arranca el unísono.
+          this.time.addEvent({ delay: 300, callback: () => this._startUnisonTimeline() })
         },
       })
     }
@@ -617,6 +650,60 @@ export class SpaceScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.game.events.off('locale-changed', this.handleLocaleChange, this)
     })
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Bridge DOM → Phaser (spec §4.2 + §6.2) — el DOM manda, Phaser obedece.
+    //   'ascii-progress' : { mix, mode, tint } avanza el takeover del PostFX.
+    //   'token-tick'      : flash de 80ms en el cursor-estrella, cada token.
+    // ─────────────────────────────────────────────────────────────────────
+    this._lastTokenFlash = 0
+    this.game.events.on('ascii-progress', this.handleAsciiProgress, this)
+    this.game.events.on('token-tick', this.handleTokenTick, this)
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.game.events.off('ascii-progress', this.handleAsciiProgress, this)
+      this.game.events.off('token-tick', this.handleTokenTick, this)
+    })
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ASCII PostFX pipeline (spec §4) — telón final: la escena se disuelve
+    // en texto. Solo si hay WebGL (renderer.gl); Canvas2D fallback ya no
+    // tiene pipelines post-proceso — el DOM ya carga el cierre narrativo
+    // completo de todos modos (tier "Sin WebGL", spec §8).
+    // ─────────────────────────────────────────────────────────────────────
+    this._asciiPipeline = null
+    if (this.game.renderer && this.game.renderer.gl) {
+      try {
+        this.game.renderer.pipelines.addPostPipeline('AsciiPostFX', AsciiPostFX)
+        this.cameras.main.setPostPipeline('AsciiPostFX')
+        this._asciiPipeline = this.cameras.main.getPostPipeline('AsciiPostFX')
+        if (Array.isArray(this._asciiPipeline)) {
+          this._asciiPipeline = this._asciiPipeline[0]
+        }
+        if (prefersReduced && this._asciiPipeline) {
+          // PRM (spec §8): uMix fijo 0.35, modo rampa, sin wipe animado.
+          this._asciiPipeline.uMix = 0.35
+          this._asciiPipeline.uMode = 2
+          this._asciiPipeline.uTint = 0.2
+          this._asciiPipeline.frozenTime = 0.5
+        }
+      } catch (_) {
+        this._asciiPipeline = null
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Escalera de performance (spec §8) — probe cada 5s sobre game.loop.actualFps.
+    // Tier A (>=50fps): ascii cell 8, bg 3 octavas. Tier B (35-50): cell 12,
+    // bg 2 octavas. Tier C (<35 dos ventanas seguidas): PostFX OFF (el cierre
+    // narrativo ya vive en DOM — spec §8, "la degradación solo recorta
+    // espectáculo, nunca significado").
+    // ─────────────────────────────────────────────────────────────────────
+    this._perfTier = 'A'
+    this._perfLowStreak = 0
+    if (!prefersReduced) {
+      this.time.addEvent({ delay: 3000, callback: () => this._evaluatePerfTier() })
+      this.time.addEvent({ delay: 5000, callback: () => this._evaluatePerfTier(), loop: true })
+    }
 
     // ─────────────────────────────────────────────────────────────────────
     // PRM safety net (D5-08) — aborta cualquier tween no-guardado.
@@ -646,29 +733,41 @@ export class SpaceScene extends Phaser.Scene {
       }
     }
 
-    // Filamento neural.
+    // ASCII PostFX: uTime vivo (para el wipe fBm y el jitter binario), salvo PRM
+    // (que congela el shader en un estado estático, spec §8).
+    if (this._asciiPipeline && !this._prefersReduced) {
+      this._asciiPipeline.uTime = this.time.now / 1000
+    }
+
+    // Filamento neural (spec §6.2) — cursor-estrella compartido.
     if (this._prefersReduced || !this._filamentGfx) return
 
     const now = this.time.now
     const g   = this._filamentGfx
     g.clear()
 
-    // Traza base tenue de la curva bezier.
-    const pts = this._filamentCurve.getPoints(24)
+    // Trazas base tenues de AMBAS curvas (Rafael→cursor, robot→cursor).
     g.lineStyle(1, 0x4dffff, 0.12)
-    g.beginPath()
-    g.moveTo(pts[0].x, pts[0].y)
-    for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y)
-    g.strokePath()
+    ;[this._filamentCurveHuman, this._filamentCurveRobot].forEach((curve) => {
+      const pts = curve.getPoints(24)
+      g.beginPath()
+      g.moveTo(pts[0].x, pts[0].y)
+      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y)
+      g.strokePath()
+    })
 
-    // Generar nueva partícula cada ~280ms (bidireccional, max 10 simultáneas).
-    if (now - this._lastSynapseTime > 280 && this._filamentParticles.length < 10) {
+    // Generar nueva partícula cada ~280ms (bidireccional, max 12 simultáneas,
+    // alternando el origen entre Rafael y el robot — "los dos escriben en el
+    // mismo cursor", spec §6.2).
+    if (now - this._lastSynapseTime > 280 && this._filamentParticles.length < 12) {
       this._lastSynapseTime = now
       const forward = Math.random() > 0.45
+      const fromRobot = Math.random() > 0.5
       this._filamentParticles.push({
         t: forward ? 0 : 1,
         dir: forward ? 1 : -1,
         speed: 0.006 + Math.random() * 0.004,
+        curve: fromRobot ? this._filamentCurveRobot : this._filamentCurveHuman,
       })
     }
 
@@ -676,12 +775,84 @@ export class SpaceScene extends Phaser.Scene {
     this._filamentParticles = this._filamentParticles.filter((p) => {
       p.t += p.dir * p.speed
       if (p.t < 0 || p.t > 1) return false
-      const pos  = this._filamentCurve.getPoint(p.t)
+      const pos  = p.curve.getPoint(p.t)
       const fade = Math.min(p.t / 0.1, (1 - p.t) / 0.1, 1)
       g.fillStyle(0x4dffff, Math.min(fade * 0.85, 0.85))
       g.fillRect(Math.round(pos.x) - 1, Math.round(pos.y) - 1, 3, 3)
       return true
     })
+  }
+
+  /**
+   * Bridge DOM → Phaser (spec §4.2/§4.4) — el timeline de la conversación DOM
+   * emite el progreso del takeover ASCII. El DOM manda; Phaser solo aplica los
+   * uniforms al pipeline si existe (null-guard PHA-06).
+   * @param {{mix?: number, mode?: number, tint?: number}} progress
+   */
+  handleAsciiProgress(progress = {}) {
+    if (!this._asciiPipeline || this._prefersReduced) return
+    if (typeof progress.mix === 'number') this._asciiPipeline.uMix = progress.mix
+    if (typeof progress.mode === 'number') this._asciiPipeline.uMode = progress.mode
+    if (typeof progress.tint === 'number') this._asciiPipeline.uTint = progress.tint
+  }
+
+  /**
+   * Bridge DOM → Phaser (spec §6.2) — cada token de la respuesta IA dispara un
+   * destello de 80ms en el cursor-estrella. Throttled a max 6/s para no saturar
+   * tweens durante bursts de streaming.
+   */
+  handleTokenTick() {
+    if (!this._cursorStar || this._prefersReduced) return
+    const now = this.time.now
+    if (now - this._lastTokenFlash < 1000 / 6) return
+    this._lastTokenFlash = now
+    this.tweens.add({
+      targets: this._cursorStar,
+      alpha: 1,
+      scale: 1.6,
+      duration: 80,
+      yoyo: true,
+      ease: 'Sine.easeOut',
+    })
+  }
+
+  /**
+   * Escalera de performance (spec §8) — promedio de game.loop.actualFps.
+   * Tier A→B→C solo degrada espectáculo (ascii cell size + bg octaves); el
+   * cierre narrativo vive en DOM así que nunca se pierde significado.
+   */
+  _evaluatePerfTier() {
+    const fps = this.game?.loop?.actualFps ?? 60
+    if (fps < 35) {
+      this._perfLowStreak += 1
+    } else {
+      this._perfLowStreak = 0
+    }
+
+    let nextTier = this._perfTier
+    if (this._perfLowStreak >= 2) {
+      nextTier = 'C'
+    } else if (fps < 50) {
+      nextTier = 'B'
+    } else {
+      nextTier = 'A'
+    }
+    if (nextTier === this._perfTier) return
+    this._perfTier = nextTier
+
+    if (this._spaceShader) {
+      try {
+        this._spaceShader.setUniform('uOct', nextTier === 'A' ? 3.0 : 2.0)
+      } catch (_) { /* shader destruido, no-op */ }
+    }
+    if (this._asciiPipeline) {
+      if (nextTier === 'C') {
+        this.cameras.main.resetPostPipeline()
+        this._asciiPipeline = null
+      } else {
+        this._asciiPipeline.uCell = nextTier === 'A' ? 8 : 12
+      }
+    }
   }
 
   handleLocaleChange(_locale) {
@@ -707,7 +878,7 @@ export class SpaceScene extends Phaser.Scene {
         'spaceBg',
         SPACE_BG_FRAG,
         null,
-        { scrollY: { type: '1f', value: 0.0 } }
+        { scrollY: { type: '1f', value: 0.0 }, uOct: { type: '1f', value: 3.0 } }
       )
       // Shader en camera-space (scrollFactor 0), depth 2, blend NORMAL.
       // NORMAL = el shader ES el fondo completo, no un ADD overlay sobre raster.
@@ -763,6 +934,10 @@ export class SpaceScene extends Phaser.Scene {
     ring.lineStyle(1, 0x4dffff, 0.52)
     ring.strokeEllipse(RING_CX, RING_CY, RING_IA * 2, RING_IB * 2)
     const strutCount = 16
+    // Struts pendientes (rosa, i%4==0) — spec §6.1: el unísono los completa a
+    // cuatro manos. Se guardan los ángulos para que _buildUnisonStruts() dibuje
+    // los overlays cian + haces de convergencia sobre las mismas coordenadas.
+    this._pendingStrutAngles = []
     for (let i = 0; i < strutCount; i++) {
       const angle = (i / strutCount) * Math.PI * 2
       const built = i % 4 !== 0
@@ -771,6 +946,7 @@ export class SpaceScene extends Phaser.Scene {
         RING_CX + Math.cos(angle) * RING_OA, RING_CY + Math.sin(angle) * RING_OB,
         RING_CX + Math.cos(angle) * RING_IA, RING_CY + Math.sin(angle) * RING_IB
       )
+      if (!built) this._pendingStrutAngles.push(angle)
     }
     ring.lineStyle(1, 0xffd95c, 0.20)
     ring.lineBetween(RING_CX, RING_CY - RING_OB - 30, RING_CX, RING_CY + RING_OB + 30)
@@ -789,117 +965,147 @@ export class SpaceScene extends Phaser.Scene {
     }
   }
 
-  _buildConstructionBeams(prefersReduced) {
-    const targets = [
-      { droneX: 400, droneY: 1700, angle: 0.85 },
-      { droneX: 530, droneY: 1600, angle: 2.10 },
-      { droneX: 660, droneY: 1680, angle: 4.50 },
-    ]
-    targets.forEach((t, i) => {
-      const b = this.add.graphics().setDepth(9).setScrollFactor(1.0)
-      b.lineStyle(1, 0xff3ca6, 1)
-      b.lineBetween(
-        t.droneX, t.droneY,
-        RING_CX + Math.cos(t.angle) * RING_OA,
-        RING_CY + Math.sin(t.angle) * RING_OB
-      )
-      if (prefersReduced) {
-        b.setAlpha(0.22)
-      } else {
-        b.setAlpha(0.14)
-        this.tweens.add({ targets: b, alpha: 0.52, duration: 720 + i * 380, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 })
+  /**
+   * TASK-012 (spec §6.1) — struts del anillo a cuatro manos. Reemplaza
+   * _buildConstructionBeams (láseres dron→anillo unidireccionales, retirado):
+   * ahora cada strut PENDIENTE (rosa) se completa con DOS haces simultáneos,
+   * uno desde el robot y uno desde Rafael, convergiendo sobre el mismo punto.
+   * Este método solo construye los objetos gráficos (overlay + haces, todos
+   * en alpha 0 salvo PRM); _startUnisonTimeline() los anima 300ms después
+   * del arrival (spec §3, Acto 2).
+   */
+  _buildUnisonStruts(prefersReduced) {
+    this._unisonStruts = (this._pendingStrutAngles || []).map((angle) => {
+      const outer = {
+        x: RING_CX + Math.cos(angle) * RING_OA,
+        y: RING_CY + Math.sin(angle) * RING_OB,
       }
-    })
-  }
+      const inner = {
+        x: RING_CX + Math.cos(angle) * RING_IA,
+        y: RING_CY + Math.sin(angle) * RING_IB,
+      }
+      const drawOverlay = (gfx, lineWidth) => {
+        gfx.clear()
+        gfx.lineStyle(lineWidth, 0x4dffff, 0.9)
+        gfx.lineBetween(outer.x, outer.y, inner.x, inner.y)
+      }
+      const overlay = this.add.graphics().setDepth(8.5).setScrollFactor(1.0).setAlpha(0)
+      drawOverlay(overlay, 1)
 
-  _initNeuralFilament(prefersReduced) {
-    this._filamentCurve = new Phaser.Curves.CubicBezier(
-      new Phaser.Math.Vector2(FILAMENT_P0.x, FILAMENT_P0.y),
-      new Phaser.Math.Vector2(FILAMENT_P1.x, FILAMENT_P1.y),
-      new Phaser.Math.Vector2(FILAMENT_P2.x, FILAMENT_P2.y),
-      new Phaser.Math.Vector2(FILAMENT_P3.x, FILAMENT_P3.y)
-    )
-    this._filamentGfx = this.add.graphics().setDepth(36).setScrollFactor(1.0)
+      const beamRobot = this.add.graphics().setDepth(9).setScrollFactor(1.0).setAlpha(0)
+      beamRobot.lineStyle(1, 0x4dffff, 1)
+      beamRobot.lineBetween(UNISON_ROBOT_PT.x, UNISON_ROBOT_PT.y, outer.x, outer.y)
+
+      const beamRafael = this.add.graphics().setDepth(9).setScrollFactor(1.0).setAlpha(0)
+      beamRafael.lineStyle(1, 0x4dffff, 1)
+      beamRafael.lineBetween(UNISON_RAFAEL_PT.x, UNISON_RAFAEL_PT.y, outer.x, outer.y)
+
+      return { overlay, beamRobot, beamRafael, drawOverlay }
+    })
+
     if (prefersReduced) {
-      const pts = this._filamentCurve.getPoints(24)
-      this._filamentGfx.lineStyle(1, 0x4dffff, 0.18)
-      this._filamentGfx.beginPath()
-      this._filamentGfx.moveTo(pts[0].x, pts[0].y)
-      for (let i = 1; i < pts.length; i++) this._filamentGfx.lineTo(pts[i].x, pts[i].y)
-      this._filamentGfx.strokePath()
+      // PRM (spec §6.1): "todos los struts ya en cian desde create, haces
+      // estáticos al 0.22" — sin timeline, resultado final ya presente.
+      this._unisonStruts.forEach(({ overlay, beamRobot, beamRafael }) => {
+        overlay.setAlpha(1)
+        beamRobot.setAlpha(0.22)
+        beamRafael.setAlpha(0.22)
+      })
     }
   }
 
-  _buildAsimovPanels() {
-    const lines = [
-      'LAW I: A robot may not\ninjure a human being—',
-      'LAW II: A robot must obey\norders given by humans—',
-      'Ψ(Ω) = Σ sₙ · e^{iλₙt}',
-    ]
-    lines.forEach((line, i) => {
-      const panel = this.add
-        .text(52, 1455 + i * 82, '', {
-          fontFamily: '"Courier New", Courier, monospace',
-          fontSize: '10px',
-          color: '#4dffff',
-          backgroundColor: '#080412',
-          padding: { x: 5, y: 3 },
-          wordWrap: { width: 160 },
-        })
-        .setDepth(32)
-        .setScrollFactor(1.0)
-        .setAlpha(0.72)
-      let charIdx = 0
-      const tickIn = () => {
-        if (charIdx < line.length) {
-          panel.setText(line.slice(0, charIdx + 1))
-          charIdx++
-          this.time.addEvent({ delay: 55, callback: tickIn })
-        }
-      }
-      this.time.addEvent({ delay: 900 + i * 1800, callback: tickIn })
-    })
-  }
-
-  _scheduleHorizonGlitch() {
-    const doGlitch = () => {
-      if (document.hidden) {
-        this.time.addEvent({ delay: 3000, callback: doGlitch })
-        return
-      }
-      if (!this._glitchRect) return
-      // Fase 1: flash magenta 55ms
-      this._glitchRect.setFillStyle(0xff3ca6).setVisible(true)
+  /**
+   * Acto 2 del unísono (spec §3 + §6.1) — arranca 300ms tras arrival-complete.
+   * Cadencia: un strut cada 1.4s, 4 struts, ~6s total. Cuando ambos haces
+   * (robot + Rafael) tocan el strut, éste pasa de rosa a cian con un pulso
+   * breve de 2px extra de grosor.
+   */
+  _startUnisonTimeline() {
+    if (this._prefersReduced || !this._unisonStruts) return
+    this._unisonStruts.forEach(({ overlay, beamRobot, beamRafael, drawOverlay }, idx) => {
       this.time.addEvent({
-        delay: 55,
+        delay: idx * 1400,
         callback: () => {
-          if (!this._glitchRect) return
-          this._glitchRect.setVisible(false)
-          // Pausa 35ms entre colores
-          this.time.addEvent({
-            delay: 35,
-            callback: () => {
-              if (!this._glitchRect) return
-              // Fase 2: flash cian 70ms
-              this._glitchRect.setFillStyle(0x4dffff).setVisible(true)
+          this.tweens.add({
+            targets: [beamRobot, beamRafael],
+            alpha: 0.6,
+            duration: 600,
+            ease: 'Sine.easeOut',
+            onComplete: () => {
+              // El strut cambia rosa → cian con un pulso de 2px extra de grosor.
+              drawOverlay(overlay, 3)
+              overlay.setAlpha(1)
               this.time.addEvent({
-                delay: 70,
-                callback: () => {
-                  if (!this._glitchRect) return
-                  this._glitchRect.setVisible(false)
-                  // Programar próximo glitch en 8-15s (cadencia 8000-15000ms)
-                  this.time.addEvent({
-                    delay: 8000 + Math.floor(Math.random() * 7000),
-                    callback: doGlitch,
-                  })
-                },
+                delay: 150,
+                callback: () => drawOverlay(overlay, 1),
+              })
+              // Los haces decantan en una oscilación tenue persistente — "vida
+              // de fondo" del trabajo ya terminado (rima con el patrón retirado
+              // de _buildConstructionBeams).
+              this.tweens.add({
+                targets: [beamRobot, beamRafael],
+                alpha: 0.3,
+                duration: 1400,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
               })
             },
           })
         },
       })
+    })
+  }
+
+  /**
+   * Filamento neural (spec §6.2) — DOS curvas bezier (Rafael→cursor,
+   * robot→cursor) convergiendo en el cursor-estrella compartido: "los dos
+   * escriben en el mismo cursor". Reemplaza la curva única Rafael→robot.
+   */
+  _initNeuralFilament(prefersReduced) {
+    this._filamentCurveHuman = new Phaser.Curves.CubicBezier(
+      new Phaser.Math.Vector2(FILAMENT_HUMAN_P0.x, FILAMENT_HUMAN_P0.y),
+      new Phaser.Math.Vector2(FILAMENT_HUMAN_P1.x, FILAMENT_HUMAN_P1.y),
+      new Phaser.Math.Vector2(FILAMENT_HUMAN_P2.x, FILAMENT_HUMAN_P2.y),
+      new Phaser.Math.Vector2(CURSOR_STAR.x, CURSOR_STAR.y)
+    )
+    this._filamentCurveRobot = new Phaser.Curves.CubicBezier(
+      new Phaser.Math.Vector2(FILAMENT_ROBOT_P0.x, FILAMENT_ROBOT_P0.y),
+      new Phaser.Math.Vector2(FILAMENT_ROBOT_P1.x, FILAMENT_ROBOT_P1.y),
+      new Phaser.Math.Vector2(FILAMENT_ROBOT_P2.x, FILAMENT_ROBOT_P2.y),
+      new Phaser.Math.Vector2(CURSOR_STAR.x, CURSOR_STAR.y)
+    )
+    this._filamentGfx = this.add.graphics().setDepth(36).setScrollFactor(1.0)
+    if (prefersReduced) {
+      this._filamentGfx.lineStyle(1, 0x4dffff, 0.18)
+      ;[this._filamentCurveHuman, this._filamentCurveRobot].forEach((curve) => {
+        const pts = curve.getPoints(24)
+        this._filamentGfx.beginPath()
+        this._filamentGfx.moveTo(pts[0].x, pts[0].y)
+        for (let i = 1; i < pts.length; i++) this._filamentGfx.lineTo(pts[i].x, pts[i].y)
+        this._filamentGfx.strokePath()
+      })
     }
-    this.time.addEvent({ delay: 12000 + Math.floor(Math.random() * 5000), callback: doGlitch })
+
+    // Cursor-estrella compartido (spec §6.2) — cuadrado 6x6 cian, depth 37.
+    this._cursorStar = this.add
+      .rectangle(CURSOR_STAR.x, CURSOR_STAR.y, 6, 6, 0x4dffff)
+      .setDepth(37)
+      .setScrollFactor(1.0)
+    if (prefersReduced) {
+      this._cursorStar.setAlpha(0.9)
+    } else {
+      this._cursorStar.setAlpha(0.7)
+      this.tweens.add({
+        targets: this._cursorStar,
+        alpha: 1,
+        scale: 1.3,
+        duration: 900,
+        ease: 'Sine.easeInOut',
+        yoyo: true,
+        repeat: -1,
+      })
+    }
   }
 
   _buildDeliveryBots(prefersReduced) {
@@ -1001,38 +1207,39 @@ export class SpaceScene extends Phaser.Scene {
     })
   }
 
-  _renderProceduralPlanet(projId, cx, cy) {
+  _renderProceduralPlanet(projId, cx, cy, radius = PLANET_R) {
     const g = this.add.graphics().setScrollFactor(1.0).setDepth(21)
+    const r = radius
 
     if (projId.includes('ar-vr')) {
       g.fillStyle(0x031318, 1)
-      g.fillCircle(cx, cy, PLANET_R)
+      g.fillCircle(cx, cy, r)
       for (let k = -2; k <= 2; k++) {
-        const dy = k * (PLANET_R / 2.6)
-        const rx = Math.sqrt(Math.max(0, PLANET_R * PLANET_R - dy * dy))
+        const dy = k * (r / 2.6)
+        const rx = Math.sqrt(Math.max(0, r * r - dy * dy))
         if (rx > 4) {
           g.lineStyle(1, 0x4dffff, 0.48 - Math.abs(k) * 0.06)
           g.strokeEllipse(cx, cy + dy, rx * 2, rx * 0.35)
         }
       }
       for (let k = -2; k <= 2; k++) {
-        const dx = k * (PLANET_R / 2.6)
-        const ry = Math.sqrt(Math.max(0, PLANET_R * PLANET_R - dx * dx))
+        const dx = k * (r / 2.6)
+        const ry = Math.sqrt(Math.max(0, r * r - dx * dx))
         if (ry > 4) {
           g.lineStyle(1, 0x4dffff, 0.20)
           g.strokeEllipse(cx + dx * 0.28, cy, Math.abs(dx) * 0.22 + 3, ry * 2)
         }
       }
       g.fillStyle(0xffd95c, 0.92)
-      g.fillRect(cx - 2, cy - PLANET_R + 7, 4, 4)
+      g.fillRect(cx - 2, cy - r + 7, 4, 4)
       g.lineStyle(1, 0xffd95c, 0.52)
-      g.strokeEllipse(cx, cy - PLANET_R + 14, 24, 6)
+      g.strokeEllipse(cx, cy - r + 14, 24, 6)
       g.lineStyle(3, 0x4dffff, 0.07)
-      g.strokeCircle(cx, cy, PLANET_R + 8)
+      g.strokeCircle(cx, cy, r + 8)
 
     } else if (projId.includes('remoose')) {
       g.fillStyle(0x0d0318, 1)
-      g.fillCircle(cx, cy, PLANET_R)
+      g.fillCircle(cx, cy, r)
       g.fillStyle(0x5c0e45, 0.68)
       g.fillCircle(cx - 15, cy - 9, 25)
       g.fillStyle(0x3c0828, 0.54)
@@ -1040,25 +1247,25 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x6c185a, 0.40)
       g.fillCircle(cx + 4, cy - 31, 14)
       g.lineStyle(1, 0x8a2068, 0.48)
-      g.strokeEllipse(cx - 7, cy, 16, PLANET_R * 2)
+      g.strokeEllipse(cx - 7, cy, 16, r * 2)
       const cityLights = [[cx - 14, cy - 8], [cx + 17, cy + 6], [cx + 2, cy - 30]]
       cityLights.forEach(([lx, ly]) => {
         g.fillStyle(0xffd95c, 1)
         g.fillRect(lx - 1, ly - 1, 2, 2)
       })
       g.lineStyle(3, 0x8a2068, 0.09)
-      g.strokeCircle(cx, cy, PLANET_R + 7)
+      g.strokeCircle(cx, cy, r + 7)
 
     } else {
       g.fillStyle(0x011010, 1)
-      g.fillCircle(cx, cy, PLANET_R)
+      g.fillCircle(cx, cy, r)
       const nodes = [
         [cx - 26, cy - 16], [cx + 16, cy - 36],
         [cx + 30, cy + 7],  [cx - 7,  cy + 30],
         [cx - 34, cy + 14], [cx + 3,  cy + 2],
         [cx - 12, cy - 44], [cx + 0,  cy - 14],
       ]
-      const maxD2 = (PLANET_R * 0.56) * (PLANET_R * 0.56)
+      const maxD2 = (r * 0.56) * (r * 0.56)
       g.lineStyle(1, 0x4dffff, 0.36)
       for (let a = 0; a < nodes.length; a++) {
         for (let b = a + 1; b < nodes.length; b++) {
@@ -1068,7 +1275,7 @@ export class SpaceScene extends Phaser.Scene {
         }
       }
       nodes.forEach(([nx, ny]) => {
-        if ((nx - cx) * (nx - cx) + (ny - cy) * (ny - cy) <= PLANET_R * PLANET_R * 0.9) {
+        if ((nx - cx) * (nx - cx) + (ny - cy) * (ny - cy) <= r * r * 0.9) {
           g.fillStyle(0x4dffff, 0.92)
           g.fillRect(nx - 2, ny - 2, 4, 4)
         }
@@ -1076,7 +1283,7 @@ export class SpaceScene extends Phaser.Scene {
       g.fillStyle(0x18e8e8, 0.10)
       g.fillCircle(cx, cy, 22)
       g.lineStyle(3, 0x4dffff, 0.07)
-      g.strokeCircle(cx, cy, PLANET_R + 8)
+      g.strokeCircle(cx, cy, r + 8)
     }
   }
 }

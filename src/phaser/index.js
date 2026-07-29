@@ -30,25 +30,31 @@ const BASE_H = 540
 /**
  * Compute zoom COVER fraccional para el canvas Phaser display size.
  *
- * Fórmula: max(1, vw/960, vh/540)
+ * TASK-012 RESCATE (2026-07-29): computeZoom calculaba contra `window` en vez
+ * del rect del host. Medido en vivo: canvas 1536×864 dentro de un host
+ * 1521×791 con offset vertical de -72.8px — el host puede ser más chico que
+ * el viewport (sidebar del chasis, padding, etc.), así que `window` sobre-
+ * estima el tamaño real disponible. Fórmula sin cambios (COVER: el lado
+ * MAYOR manda), pero la fuente de la medida ahora es `hostEl.getBoundingClientRect()`.
+ *
+ * Fórmula: max(1, hostW/960, hostH/540)
  *   - `Math.max` con los dos ratios = comportamiento COVER: el lado MAYOR manda.
- *     El canvas llena el viewport completo; el exceso se recorta (overflow:hidden en host).
+ *     El canvas llena el host completo; el exceso se recorta (overflow:hidden en host).
  *   - Reemplaza prior Math.min (CONTAIN) que dejaba pillarbox strips de ~150px en
  *     viewports no exactamente 16:9, dejando asomar el bg CSS duplicado detrás.
- *   - `Math.max(1, ...)` defensive — si viewport < 960×540 el canvas downscalea
+ *   - `Math.max(1, ...)` defensive — si el host < 960×540 el canvas downscalea
  *     a zoom 1 en vez de producir un canvas submínimo.
  *   - Sin `Math.floor`: arte a doble densidad absorbe el sub-pixel sin blur perceptible.
  *
  * Posicionamiento post-zoom: applyCanvasAnchor() en Chapter6Content.vue maneja
  *   el anclaje bottom (clip cielo, no héroes) y focal horizontal portrait (<600px).
  *
+ * @param {HTMLElement} hostEl - el nodo host real donde vive el canvas (nunca `window`).
  * @returns {number} zoom COVER fraccional >= 1
  */
-function computeZoom() {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  // COVER: max(vw-ratio, vh-ratio) → canvas fills viewport completely, excess cropped.
-  return Math.max(1, vw / BASE_W, vh / BASE_H)
+export function computeZoom(hostEl) {
+  const r = hostEl.getBoundingClientRect()
+  return Math.max(1, r.width / BASE_W, r.height / BASE_H)
 }
 
 /**
@@ -67,7 +73,7 @@ export function createGame(parentEl, { prefersReduced } = {}) {
     parent: parentEl, // DOM node directo — NO string id (Pitfall race-condition mount).
     width: BASE_W,
     height: BASE_H,
-    zoom: computeZoom(), // COVER fraccional — canvas llena el viewport completamente.
+    zoom: computeZoom(parentEl), // COVER fraccional contra el rect del HOST, no window (TASK-012 rescate).
     pixelArt: true, // disable texture interpolation (nearest-neighbor filtering).
     roundPixels: true, // snap tween positions a integer pixels (anti-blur).
     backgroundColor: '#1a0e3d', // deep purple synthwave D5-04 — visible durante preload.

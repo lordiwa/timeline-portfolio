@@ -30,6 +30,7 @@ vi.mock('@/phaser', () => ({
     scale: { zoom: 3, setZoom: vi.fn() },
     destroy: vi.fn(),
   })),
+  computeZoom: vi.fn(() => 1),
 }))
 
 vi.mock('@/data/projects', () => ({
@@ -84,44 +85,53 @@ describe('Chapter6Content.vue bridge events (PHA-07) — RED W0 → verde W3/W4'
     r.wrapper.unmount()
   })
 
-  it('T2: emit `arrival-complete` → .ch6-mantra v-if visible', async () => {
+  it('T2 (TASK-012): .ch6-mantra vive SIEMPRE en el DOM — YA NO depende de arrival-complete', async () => {
+    // Contrato roto DELIBERADAMENTE por TASK-012 (spec §5.4: "el v-if se
+    // elimina"): el mantra ahora vive dentro de Ch6Terminal.vue, montado
+    // incondicionalmente desde que Chapter6Content.vue monta — TASK-007
+    // defectos 2/3 exigen que NADA de contenido dependa de arrival-complete.
     const r = await mountCh6()
     if (r.importFailed) {
-      expect.fail('Chapter6Content.vue no existe — W3 lo crea. RED esperado W0.')
+      expect.fail('Chapter6Content.vue no existe.')
     }
-    // Antes del emit, mantra no debería estar visible.
+    // Presente ANTES de cualquier emit — la prueba central de TASK-012.
     expect(
       r.wrapper.find('.ch6-mantra').exists(),
-      'Mantra NO debe renderear hasta arrival-complete event.'
-    ).toBe(false)
+      '.ch6-mantra debe existir desde el mount, SIN esperar arrival-complete (spec §5.4 + TASK-007).'
+    ).toBe(true)
     r.mockGame?.events.emit('arrival-complete')
     await flushPromises()
-    expect(
-      r.wrapper.find('.ch6-mantra').exists(),
-      '.ch6-mantra debe renderear (v-if arrivalDone) tras emit arrival-complete. D5-03.'
-    ).toBe(true)
+    // Sigue presente tras el emit (compat estructural — el evento ya no
+    // gatea nada, pero seguir emitiéndolo no debe romper nada).
+    expect(r.wrapper.find('.ch6-mantra').exists()).toBe(true)
     r.wrapper.unmount()
   })
 
-  it('T3: activeChapter 6→5 resetea activeProject (null) y arrivalDone (false)', async () => {
+  it('T3: activeChapter 6→5 resetea activeProject (null); el mantra NO desaparece (vive fuera del ciclo de Phaser)', async () => {
     const r = await mountCh6()
     if (r.importFailed) {
-      expect.fail('Chapter6Content.vue no existe — W3 lo crea. RED esperado W0.')
+      expect.fail('Chapter6Content.vue no existe.')
     }
     r.mockGame?.events.emit('arrival-complete')
     r.mockGame?.events.emit('show-project', 'ch6-ar-vr')
     await flushPromises()
-    // Cambiar chapter — debería disparar destroy + reset
+    // Cambiar chapter — debería disparar destroy + reset del overlay.
     r.activeChapter.value = 5
     await flushPromises()
     expect(
       r.wrapper.find('.overlay-stub').exists(),
       'activeProject debe resetearse a null tras leave ch6 → ProjectOverlay desaparece.'
     ).toBe(false)
+    // TASK-012: el mantra (dentro de Ch6Terminal.vue) NO depende del ciclo de
+    // vida de Phaser — sigue en el DOM aunque activeChapter deje de ser 6,
+    // porque Chapter6Content.vue (y su hijo Ch6Terminal) permanece SIEMPRE
+    // montado (ScrollShell mantiene los 7 capítulos montados). Que desaparezca
+    // sería reintroducir exactamente la dependencia que TASK-007/TASK-012
+    // eliminaron.
     expect(
       r.wrapper.find('.ch6-mantra').exists(),
-      'arrivalDone debe resetearse a false tras leave ch6 → mantra desaparece.'
-    ).toBe(false)
+      'El mantra NO debe depender del ciclo de vida de Phaser (spec §5.4 + TASK-007).'
+    ).toBe(true)
     r.wrapper.unmount()
   })
 })

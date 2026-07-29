@@ -1,33 +1,45 @@
 // tests/phaser/scale.test.js
 //
-// Phase 5 W0 — RED scaffold para zoom formula (PHA-03).
+// TASK-012 RESCATE (2026-07-29) — computeZoom() calculaba contra `window` en vez del
+// rect del host. Medido en vivo: canvas 1536×864 dentro de host 1521×791, offset
+// vertical -72.8px. Fix: computeZoom(hostEl) usa hostEl.getBoundingClientRect().
 //
-// Cobertura (3 tests):
+// Cobertura (4 tests):
 //   T1: BASE_W = 960 (resolución virtual hi-bit horizontal — HI-BIT-01 2026-07-09b)
 //   T2: BASE_H = 540 (resolución virtual hi-bit vertical — 16:9 ratio)
-//   T3: computeZoom() usa Math.max(1, vw/BASE_W, vh/BASE_H) — zoom COVER fraccional
+//   T3: computeZoom(hostEl) usa Math.max(1, r.width/BASE_W, r.height/BASE_H) — zoom
+//       COVER fraccional contra getBoundingClientRect(), NO contra window.
+//   T4: valor numérico — host mockeado 1521×791 produce zoom 1.584375 (COVER-01 +
+//       TASK-012 rescate), replicando la medición real reportada en la spec.
 //
-// CAMBIO de contrato 2026-07-09b (HI-BIT-01):
-//   Antes: BASE_W=480, BASE_H=270, formula Math.min(Math.floor,...) || 1 (PHA-03 integer).
-//   Ahora: BASE_W=960, BASE_H=540, formula Math.max(1, Math.min(...)) sin Math.floor.
-//   Razón: con arte a doble densidad el zoom fraccional fill ya no produce blur perceptible.
-//   PHA-03 integer-zoom mandate superseded por mandato hi-bit de Rafael 2026-07-09b.
-//
-// CAMBIO 2026-07-10 (COVER-01 — fix pillarbox ch6):
-//   Antes: formula CONTAIN Math.max(1, Math.min(vw/BASE_W, vh/BASE_H)) — el lado menor mandaba,
-//     dejando pillarbox strips en viewports no 16:9 (ej. 1920×911: 151px por lado), por las
-//     cuales asomaba el bg CSS duplicado (ch6-bg.webp vía BackgroundLayers) → "fondo roto".
-//   Ahora: formula COVER Math.max(1, vw/BASE_W, vh/BASE_H) — el ratio MAYOR manda.
-//     El canvas llena el viewport completamente; el exceso se recorta (overflow:hidden en host).
-//     Anclaje bottom en CSS + applyCanvasAnchor() en Chapter6Content.vue clip cielo, no héroes.
-//
-// Source-of-truth: 05-RESEARCH.md §Pattern 1 (computeZoom signature).
-// Analog: tests/styles/themes-file.test.js.
-// RED scaffold W0 — verde tras W2 crea src/phaser/index.js.
+// Historia previa (superseded): antes computeZoom() no tomaba parámetros y leía
+// window.innerWidth/innerHeight directamente — eso es exactamente el bug de TASK-012.
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+
+// T4 importa el módulo real para invocar computeZoom() como función pura. El módulo
+// real hace `import Phaser from 'phaser'` a nivel de módulo, y el paquete 'phaser'
+// dispara side-effects de CanvasFeatures contra un <canvas> real al cargar — jsdom no
+// implementa getContext() (sin el paquete `canvas` nativo), así que se mockea 'phaser'
+// con un stub mínimo suficiente para que SpaceScene.js (importado transitivamente por
+// src/phaser/index.js) evalúe sin crashear. computeZoom() en sí no toca Phaser.
+vi.mock('phaser', () => ({
+  default: {
+    Scene: class Scene {},
+    Game: class Game {},
+    AUTO: 'AUTO',
+    Scale: { NONE: 'NONE', NO_CENTER: 'NO_CENTER' },
+    BlendModes: { NORMAL: 'NORMAL', ADD: 'ADD' },
+    Scenes: { Events: { SHUTDOWN: 'shutdown' } },
+    Display: { Shaders: { BaseShader: class BaseShader {} } },
+    Curves: { CubicBezier: class CubicBezier {} },
+    Math: { Vector2: class Vector2 {} },
+    Geom: { Circle: class Circle {}, },
+    Renderer: { WebGL: { Pipelines: { PostFXPipeline: class PostFXPipeline {} } } },
+  },
+}))
 
 const FACTORY_PATH = resolve(process.cwd(), 'src/phaser/index.js')
 
@@ -38,36 +50,40 @@ try {
   src = ''
 }
 
-describe('phaser scale formula (PHA-03 → HI-BIT-01) — RED W0 → verde W2', () => {
+describe('phaser scale formula (PHA-03 → HI-BIT-01 → TASK-012 rescate) — computeZoom(hostEl)', () => {
   it('T1: BASE_W = 960 declarado (resolución virtual hi-bit horizontal)', () => {
     expect(
       src,
-      'src/phaser/index.js debe declarar `BASE_W = 960` (HI-BIT-01: doble densidad 480×2). W2 crea este archivo.'
+      'src/phaser/index.js debe declarar `BASE_W = 960` (HI-BIT-01: doble densidad 480×2).'
     ).toMatch(/BASE_W\s*=\s*960/)
   })
 
   it('T2: BASE_H = 540 declarado (resolución virtual hi-bit vertical, 16:9)', () => {
     expect(
       src,
-      'src/phaser/index.js debe declarar `BASE_H = 540` (HI-BIT-01: doble densidad 270×2). W2 crea este archivo.'
+      'src/phaser/index.js debe declarar `BASE_H = 540` (HI-BIT-01: doble densidad 270×2).'
     ).toMatch(/BASE_H\s*=\s*540/)
   })
 
-  it('T3: computeZoom() usa Math.max(1, vw/BASE_W, vh/BASE_H) — zoom COVER (COVER-01 2026-07-10)', () => {
-    // COVER-01 2026-07-10: fórmula cambiada de CONTAIN (Math.min) a COVER (Math.max 3-args).
-    // Motivo: Math.min (contain) dejaba pillarbox strips en viewports no 16:9, por las cuales
-    // asomaba el bg CSS duplicado de ch6-bg.webp — "escena cortada con fondo roto".
-    // Math.max(1, vw/BASE_W, vh/BASE_H): el ratio MAYOR manda; canvas >= viewport en ambas dim.
-    // El exceso se recorta via overflow:hidden + bottom-anchor (applyCanvasAnchor en Vue).
+  it('T3: computeZoom(hostEl) usa getBoundingClientRect() — NUNCA window.innerWidth/innerHeight', () => {
     expect(
       src,
-      'computeZoom() debe usar COVER: Math.max(1, vw/BASE_W, vh/BASE_H). ' +
-        'CONTAIN (Math.min) producia pillarbox con bg duplicado (COVER-01). W2 crea este archivo.'
-    ).toMatch(/Math\.max\s*\(\s*1,\s*vw\s*\/\s*BASE_W/)
-    // Anti-pattern guard: no debe haber Math.min en la fórmula de computeZoom (sería contain).
+      'computeZoom debe recibir un parámetro hostEl y llamar `hostEl.getBoundingClientRect()`. ' +
+        'TASK-012: calcular contra `window` producía offset fantasma cuando el host es más chico ' +
+        'que el viewport.'
+    ).toMatch(/function\s+computeZoom\s*\(\s*hostEl\s*\)/)
+    expect(src).toMatch(/hostEl\.getBoundingClientRect\s*\(\s*\)/)
     expect(
       src,
-      'computeZoom() NO debe usar Math.min (eso sería CONTAIN que produce pillarbox).'
-    ).not.toMatch(/Math\.max\s*\(\s*1[\s\S]{0,20}Math\.min/)
+      'computeZoom() NO debe leer window.innerWidth/innerHeight (ese es el bug de TASK-012).'
+    ).not.toMatch(/computeZoom[\s\S]{0,10}\([\s\S]{0,10}\)\s*\{[\s\S]{0,200}window\.innerWidth/)
+  })
+
+  it('T4: host mockeado 1521×791 → zoom 1.584375 (medición real reportada en la spec ch6)', async () => {
+    const { computeZoom } = await import('@/phaser/index.js')
+    const hostEl = { getBoundingClientRect: () => ({ width: 1521, height: 791 }) }
+    const zoom = computeZoom(hostEl)
+    expect(zoom).toBeCloseTo(Math.max(1, 1521 / 960, 791 / 540), 6)
+    expect(zoom).toBeCloseTo(1.584375, 6)
   })
 })

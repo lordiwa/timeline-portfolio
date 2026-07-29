@@ -105,7 +105,19 @@
       "title": "Convergence: QA + AI",
       "era": "Convergence",
       "flavor": "2026. Convergence: dev + QA + AI in a single space. The ship lands.",
-      "mantra": "And always with a smile. 😄"
+      "mantra": "And always with a smile. 😄",
+      "convo": {
+        "boot1": "MATOVELLE AGENT SHELL Version 31.0",
+        "boot2": "(C) 1995-2026 one single line",
+        "boot3": " ",
+        "boot4": ">",
+        "prompt": "tell me how you got here",
+        "thinking": "thinking...",
+        "skipHint": "tap to complete",
+        "aria": "Conversation with the AI: Rafael's story",
+        "closing": "Every stage felt like a leap. Seen from far enough away, it was a single line.",
+        "credit": "This site was built by Rafael and a fleet of AI agents."
+      }
     }
   },
   "ui": {

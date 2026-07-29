@@ -1,43 +1,54 @@
 <!--
-  Chapter6Content.vue — Vue shell del chapter 6 Phaser scene (Phase 5 W3 / Plan 05-04).
+  Chapter6Content.vue — Vue shell del clímax ch6 (TASK-012 + TASK-022, 2026-07-29).
 
   Responsabilidades:
     - Lifecycle Phaser: watch(activeChapter) lazy import + mount + destroy idempotent
       + HMR dispose. shallowRef(null) — PHA-01 mandatory.
-    - Bridge Phaser ↔ Vue (PHA-06 + PHA-07 + D5-10 RESOLVED — sin prefijo `vue:`):
+    - TASK-022 (misma carrera que TASK-020 en ch2, ORIGEN del patrón — ver
+      tasks/TASK-022.json): guard de entrada `!game.value && !loading.value` +
+      re-chequeo de `activeChapter.value === 6` DESPUÉS del `await import`. Sin
+      esto: salir de ch6 antes de que el chunk resuelva deja un Phaser.Game
+      zombie corriendo su rAF en background para siempre; y un segundo
+      disparo concurrente con el import en vuelo crea una segunda instancia
+      huérfana. Réplica fiel de src/components/Ch2MiniGame.vue (commit 9ed80dc).
+    - TASK-012 rescate: computeZoom ahora se importa del mismo chunk lazy de
+      Phaser (ya NO hay copia local calculando contra `window` — ver
+      src/phaser/index.js computeZoom(hostEl), que usa getBoundingClientRect()
+      del HOST real, no del viewport).
+    - Bridge Phaser ↔ Vue (D5-10 — sin prefijo `vue:`):
         IN  : game.events.on('show-project', id) → activeProject.value = id
               game.events.on('arrival-complete') → arrivalDone.value = true
+              (compat estructural — spec §3: nada de contenido depende ya de
+              esto; el texto vive en Ch6Terminal.vue desde el mount)
         OUT : watch(locale) → game.value?.events.emit('locale-changed', l)
-              ← null-guard defensive (PHA-06; nombre EXACTO match con SpaceScene listener
-              per Threat T-05-W0-05).
-    - ResizeObserver (PHA-09 + extends MOB-03 Phase 1 pattern): document.documentElement,
-      recalcula zoom integer + game.value.scale.setZoom(newZoom) sólo si difiere
-      (Pitfall 8 anti-thrash guard).
-    - A11Y: 3 sr-only buttons keyboard-navigable (D5-06 + extends A11Y-02 Phase 1)
-      replicando los planet clicks dentro de Phaser. Tab order cronológico
-      ar-vr → remoose → software-mind (D5-01).
-    - Mantra HTML/Vue (D5-03 + CON-04): v-if=arrivalDone, NO render dentro de Phaser
-      (mejor crispness + i18n directo + screen-reader accessible).
-    - ProjectOverlay v-if=activeProject (D5-07): W4 reemplaza el stub.
+              Ch6Terminal @ascii-progress / @token-tick → game.value?.events.emit(...)
+              (bridge DOM → Phaser, spec §4.2: "el DOM manda, Phaser obedece")
+    - ResizeObserver (PHA-09): recalcula zoom vía computeZoom(hostEl) del chunk
+      lazy + game.value.scale.setZoom(newZoom) sólo si difiere (anti-thrash).
+    - A11Y: 3 sr-only buttons keyboard-navigable (D5-06), replicando los planet
+      clicks dentro de Phaser. Tab order cronológico ar-vr → remoose → software-mind.
+    - Ch6Terminal.vue (TASK-012): la conversación con la IA, DOM-first, SIEMPRE
+      montada (no depende de activeChapter ni de Phaser en absoluto) — es el
+      corazón narrativo del capítulo y vive independientemente del canvas.
+    - ProjectOverlay v-if=activeProject.
 
-  CSS owned por src/styles/chapter-themes.css @layer components (Task 2 del Plan).
-  Sólo declaraciones mínimas locales en <style scoped> (.sr-only utility).
-
-  Layout decisions (D5-09 Pattern 12 mitigation chapter-overlap bug):
-    - .ch6-layout: position:relative, NO overflow:hidden (creaba stacking context
-      problemático en ch4 — bug Phase 4 deferred). Canvas full-bleed sin contenedor
-      restrictivo.
-    - .ch6-canvas-host: position:absolute, inset:0.
+  CSS: .ch6-layout / .ch6-canvas-host migrados a este <style scoped> por
+  TASK-012 (criterio adicional heredado de TASK-008 — ver comentario del
+  orquestador en tasks/TASK-012.json). El bloque .project-overlay* vive ahora
+  en ProjectOverlay.vue (mismo motivo). La porción de ch2 en
+  chapter-components.css NO se migra nunca (decisión TASK-008 registrada).
 
   Verified contracts:
-    - tests/components/Chapter6Content.test.js (T1-T4 PHA-01..04 + bridge listeners)
-    - tests/components/Chapter6Content-lazy.test.js (T1-T2 PHA-04 string literal)
-    - tests/components/Chapter6Content-bridge.test.js (T1-T3 bridge integration)
-    - tests/components/Chapter6Content-resize.test.js (T1-T2 PHA-09 Pitfall 8 guard)
-    - tests/components/Chapter6Content-prm.test.js (T1 createGame opt)
-    - tests/a11y/keyboard-planet-buttons.test.js (T1-T3 D5-06)
-    - tests/phaser/locale-bridge.test.js (T4-T5 emit name match)
-    - tests/integration/chapter-overlap-ch6.test.js (T4 mount wire)
+    - tests/components/Chapter6Content.test.js
+    - tests/components/Chapter6Content-lazy.test.js
+    - tests/components/Chapter6Content-bridge.test.js
+    - tests/components/Chapter6Content-resize.test.js
+    - tests/components/Chapter6Content-prm.test.js
+    - tests/components/Chapter6Content.raceZombie.test.js (TASK-022)
+    - tests/components/Chapter6Content.raceDoubleInstance.test.js (TASK-022)
+    - tests/a11y/keyboard-planet-buttons.test.js
+    - tests/phaser/locale-bridge.test.js
+    - tests/integration/chapter-overlap-ch6.test.js
 -->
 <script setup>
 import {
@@ -54,195 +65,187 @@ import { useI18n } from 'vue-i18n'
 import { useResizeObserver } from '@vueuse/core'
 import { projects } from '@/data/projects'
 import ProjectOverlay from './ProjectOverlay.vue'
+import Ch6Terminal from './Ch6Terminal.vue'
 
-// Resolución virtual hi-bit — debe matchear src/phaser/index.js (BASE_W/BASE_H).
-// Duplicada localmente para evitar importar el factory top-level (rompería PHA-04 lazy).
-// HI-BIT-01 (2026-07-09b): 960×540 = doble densidad, zoom fraccional fill.
-const BASE_W = 960
-const BASE_H = 540
-
-// Composables — inject de App.vue (provistos en Phase 1).
+// Composables — inject de App.vue.
 const { activeChapter } = inject('scrollState')
 const { prefersReduced } = inject('prm')
 const { t, locale } = useI18n()
 
 // PHA-01: shallowRef — Phaser.Game NUNCA debe ser Vue-reactive-tracked.
-// reactive()/ref() en el game tree rompe internals (event emitter recursion,
-// scene plugin proxying, etc.). shallowRef solo reactivisa .value top-level.
 const game = shallowRef(null)
 const canvasHostRef = useTemplateRef('canvasHost')
 
+// TASK-022 — flag de carga en vuelo (mismo patrón Ch2MiniGame.vue): un
+// segundo disparo del watch mientras el import original sigue pendiente NO
+// debe arrancar una segunda descarga/instancia.
+const loading = ref(false)
+
+// computeZoom real del factory — se resuelve DENTRO del chunk lazy (import
+// dinámico) la primera vez que se monta, y se reutiliza en el ResizeObserver
+// sin volver a importar top-level (rompería PHA-04). TASK-012: ya NO hay una
+// copia local que calcule contra `window` — computeZoom(hostEl) vive en
+// src/phaser/index.js y usa hostEl.getBoundingClientRect().
+let computeZoomFn = null
+
 // Bridge state Vue-side.
-// arrivalDone: mantra HTML fade-in trigger (D5-03 + CON-04).
-// activeProject: overlay v-if + sr-only button click handler.
 const arrivalDone = ref(false)
 const activeProject = ref(null)
 
 // 3 proyectos ch6 — usado por v-for de los sr-only buttons (D5-06).
-// Orden cronológico ascendente (planetOrbit 0.2 → 0.5 → 0.8) — D5-01.
 const ch6Projects = computed(() => projects.filter((p) => p.chapterEra === 6))
-
-/**
- * Compute zoom COVER fraccional — duplicado de src/phaser/index.js computeZoom.
- * Local copy para evitar importar el factory top-level (PHA-04 lazy mandate).
- * Fórmula COVER: max(1, vw/960, vh/540) — el ratio MAYOR manda; canvas llena el viewport,
- * el exceso se recorta con overflow:hidden en .ch6-canvas-host.
- * Reemplaza prior Math.min (CONTAIN) que dejaba pillarbox con bg CSS duplicado.
- */
-function computeZoom() {
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  // COVER: max(vw-ratio, vh-ratio) → canvas fills viewport completely.
-  return Math.max(1, vw / BASE_W, vh / BASE_H)
-}
 
 /**
  * Aplica el anclaje del canvas en el host: bottom-aligned (clip cielo, no héroes)
  * y focal horizontal (center desktop, 30% world-left en portrait <600px).
- *
- * Debe llamarse tras createGame (en 'ready' event) y tras cada setZoom.
- * Con Phaser autoCenter:NO_CENTER, Phaser NO toca margin-top/margin-left;
- * esta función controla el CSS position:absolute directamente.
- *
- * Anclaje bottom: canvas taller que host → exceso queda en la parte superior (cielo),
- * recortado por overflow:hidden del host. Héroes (y≈1654-1730 del mundo) permanecen visibles.
- *
- * Focal horizontal:
- *   - Desktop (hostW >= 600): canvas centrado. 1920×911 → canvas 1920×1080, sin crop horizontal.
- *   - Portrait (<600px): focal al 30% del mundo (x=288). 400×800 → canvas 1422×800,
- *     muestra x=153-423 del mundo: robot (x=190) y Rafael (x=304) ambos visibles.
- *
- * @param {number} zoomValue — zoom actual (puede diferir de game.value.scale.zoom si se llama
- *   inmediatamente tras setZoom y Phaser aún no actualizó la propiedad).
+ * (sin cambios funcionales — ver comentarios extensos en versiones previas)
  */
 function applyCanvasAnchor(zoomValue) {
   if (!canvasHostRef.value) return
   const canvasEl = canvasHostRef.value.querySelector('canvas')
   if (!canvasEl) return
 
-  // Limpiar margins que Phaser pudiera haber dejado de un estado anterior.
   canvasEl.style.marginLeft = '0'
   canvasEl.style.marginTop = '0'
 
   const hostW = canvasHostRef.value.offsetWidth
+  const BASE_W = 960
   const canvasW = BASE_W * zoomValue
   const horizontalOverflow = canvasW - hostW
 
   let leftPx
   if (horizontalOverflow <= 0) {
-    // Canvas más angosto que el host (no debería ocurrir con cover, pero defensivo).
-    leftPx = -horizontalOverflow / 2 // centrar
+    leftPx = -horizontalOverflow / 2
   } else {
-    // Canvas desborda en horizontal → decidir punto focal.
-    const isNarrow = hostW < 600 // portrait / mobile angosto
-    // 30% (x=288): mantiene robot (x=190) y Rafael (x=304) dentro de la vista.
-    // 50% (x=480): centro del mundo — desktop tiene crop simétrico, héroes en x<480 visibles.
+    const isNarrow = hostW < 600
     const focalWorldX = isNarrow ? BASE_W * 0.30 : BASE_W * 0.50
-    const focalCanvasX = focalWorldX * zoomValue // px desde borde izq del canvas al foco
-    const rawLeft = hostW / 2 - focalCanvasX // offset canvas izq para centrar el foco
-    // Clamp: canvas nunca debe dejar hueco negro en ningún borde del host.
-    const minLeft = hostW - canvasW // shift máx hacia izquierda (borde derecho alineado)
+    const focalCanvasX = focalWorldX * zoomValue
+    const rawLeft = hostW / 2 - focalCanvasX
+    const minLeft = hostW - canvasW
     leftPx = Math.max(minLeft, Math.min(0, rawLeft))
   }
   canvasEl.style.left = `${leftPx}px`
 }
 
-// D5-11 / PHA-04 — watch immediate maneja:
-//   - mount inicial si activeChapter ya es 6 (deep-link ?ch=6 hipotético)
-//   - mount al entrar a ch6 desde ch5
-//   - destroy + reset state al salir de ch6
-//
-// flush:'post' garantiza que el DOM ya tiene el <div ref="canvasHost"> renderizado
-// cuando el watcher dispara (parent v-else-if="ch.id === 6" en ScrollShell).
+/**
+ * TASK-022 — mountGame() con guard de entrada + re-chequeo post-await.
+ * Réplica fiel de Ch2MiniGame.vue mountGame() (commit 9ed80dc, referencia
+ * explícita del ticket). Dos escenarios que este guard cierra:
+ *   1. Zombie: el visitante sale de ch6 antes de que el chunk resuelva → sin
+ *      el re-chequeo, createGame() se invocaría igual y el rAF correría en
+ *      background para siempre (destroy() en el watch de salida es no-op
+ *      porque game.value seguía null).
+ *   2. Doble instancia: salir y volver mientras el import original sigue en
+ *      vuelo dispara un segundo mountGame() concurrente; sin `loading.value`
+ *      en el guard de entrada, arrancaría una segunda descarga/instancia.
+ */
+async function mountGame() {
+  if (game.value || loading.value) return
+  if (!canvasHostRef.value) {
+    await nextTick()
+    if (!canvasHostRef.value) return
+  }
+  loading.value = true
+  try {
+    // PHA-04: lazy import string-literal — Vite separa el chunk Phaser.
+    const { createGame, computeZoom } = await import('@/phaser')
+    computeZoomFn = computeZoom
+
+    // Re-chequeo post-await (TASK-022): si el capítulo activo ya no es ch6
+    // mientras el chunk descargaba, NO se crea nada — evita el zombie.
+    if (activeChapter.value !== 6 || !canvasHostRef.value) {
+      return
+    }
+
+    game.value = createGame(canvasHostRef.value, { prefersReduced: prefersReduced.value })
+
+    // Bridge IN — Phaser → Vue (D5-10 — sin prefijo `vue:`).
+    game.value.events.on('show-project', (projectId) => {
+      activeProject.value = projectId
+    })
+    game.value.events.on('arrival-complete', () => {
+      arrivalDone.value = true
+    })
+
+    // Canvas anchor inicial — se aplica cuando Phaser terminó boot.
+    const capturedGame = game.value
+    capturedGame.events.once?.('ready', () => {
+      applyCanvasAnchor(capturedGame.scale.zoom)
+    })
+  } catch (err) {
+    console.error('[Chapter6Content] Failed to load Phaser:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+function destroyGame() {
+  if (game.value) {
+    // PHA-02: destroy(true, false) — canvas removed, plugins preserved para re-entry.
+    game.value.destroy(true, false)
+    game.value = null
+    // Reset state — al volver a entrar a ch6 la animación arrival re-ejecuta.
+    arrivalDone.value = false
+    activeProject.value = null
+  }
+}
+
+// D5-11 / PHA-04 — watch immediate maneja mount inicial + destroy al salir.
+// flush:'post' garantiza que el DOM ya tiene <div ref="canvasHost"> renderizado.
 watch(
   activeChapter,
-  async (v) => {
-    if (v === 6 && !game.value) {
-      // Defensive — si el ref aún no está cableado (raro con flush:'post'), esperar tick.
-      if (!canvasHostRef.value) {
-        await nextTick()
-      }
-      // PHA-04: lazy import string-literal — Vite separa el chunk Phaser (~150KB gzip).
-      // Sin esto, Phaser entraría al bundle inicial penalizando a usuarios que nunca
-      // llegan a ch6.
-      const { createGame } = await import('@/phaser')
-      game.value = createGame(canvasHostRef.value, { prefersReduced: prefersReduced.value })
-
-      // Bridge IN — Phaser → Vue (D5-10 RESOLVED — sin prefijo `vue:`).
-      // Los nombres deben coincidir EXACTO con los emit() de SpaceScene.js.
-      game.value.events.on('show-project', (projectId) => {
-        activeProject.value = projectId
-      })
-      game.value.events.on('arrival-complete', () => {
-        arrivalDone.value = true
-      })
-
-      // Canvas anchor inicial — se aplica cuando Phaser terminó boot y creó el <canvas>.
-      // 'ready' es el evento de Phaser.Game que indica boot completo (canvas existe en DOM).
-      // Con autoCenter:NO_CENTER Phaser no aplica margins; applyCanvasAnchor controla position.
-      // events.once?.() guard: los mocks de tests proveen events.on pero no once — sin el
-      // guard cada mount emitía un unhandled rejection que ponía la suite en exit 1.
-      const capturedGame = game.value
-      capturedGame.events.once?.('ready', () => {
-        applyCanvasAnchor(capturedGame.scale.zoom)
-      })
-    } else if (v !== 6 && game.value) {
-      // PHA-02: destroy(true, false) — canvas removed, plugins preserved para re-entry.
-      game.value.destroy(true, false)
-      game.value = null
-      // Reset state — al volver a entrar a ch6 la animación arrival re-ejecuta (D5-02).
-      arrivalDone.value = false
-      activeProject.value = null
+  (v) => {
+    if (v === 6) {
+      mountGame()
+    } else {
+      destroyGame()
     }
   },
   { immediate: true, flush: 'post' },
 )
 
-// PHA-06: Vue → Phaser locale bridge (D5-10 RESOLVED — sin prefijo `vue:`).
-// optional chaining defensive: el watch de locale dispara en cualquier momento;
-// si game.value es null (PRE-mount o POST-destroy) emit() crashearía sin el guard.
-// El nombre 'locale-changed' DEBE coincidir EXACTO con el listener registrado en
-// SpaceScene.js (verificado por locale-bridge.test.js T5 — Threat T-05-W0-05).
+// PHA-06: Vue → Phaser locale bridge (D5-10 — sin prefijo `vue:`).
 watch(locale, (newLocale) => {
   game.value?.events.emit('locale-changed', newLocale)
 })
 
-// PHA-09 + extends MOB-03 (Phase 1 ResizeObserver pattern):
-// Recalcula zoom COVER cuando el viewport cambia + invoca setZoom solo si
-// difiere del actual (Pitfall 8 — anti-thrash guard, epsilon 0.01 para floats).
-// Tras setZoom (o sin cambio de zoom), reaplica el anchor para actualizar left
-// (el host puede cambiar de ancho sin cambiar el zoom, e.g. sidebar aparece).
-//
-// document.documentElement NO window — ResizeObserver requiere Element observable;
-// window no es Element (CSSOM spec).
+/**
+ * Bridge DOM → Phaser (TASK-012 spec §4.2/§6.2): Ch6Terminal.vue emite estos
+ * eventos Vue puros (no conoce Phaser); este componente los reenvía al
+ * `game.events` real si existe. "El DOM manda, Phaser obedece" — si el game
+ * aún no montó (o ya se destruyó), el null-guard hace que la emisión sea un
+ * no-op silencioso; la conversación DOM sigue funcionando igual (spec §3: el
+ * corazón del capítulo no depende de Phaser).
+ */
+function onAsciiProgress(progress) {
+  game.value?.events.emit('ascii-progress', progress)
+}
+function onTokenTick() {
+  game.value?.events.emit('token-tick')
+}
+
+// PHA-09 — Recalcula zoom cuando el viewport cambia + invoca setZoom solo si
+// difiere del actual (anti-thrash). TASK-012: computeZoomFn(canvasHostRef.value)
+// contra el rect del HOST, nunca contra `window`.
 useResizeObserver(document.documentElement, () => {
-  if (!game.value) return
-  const newZoom = Math.max(1, window.innerWidth / BASE_W, window.innerHeight / BASE_H)
+  if (!game.value || !computeZoomFn || !canvasHostRef.value) return
+  const newZoom = computeZoomFn(canvasHostRef.value)
   if (Math.abs(newZoom - game.value.scale.zoom) > 0.01) {
     game.value.scale.setZoom(newZoom)
   }
-  // Siempre reaplica el anchor: el hostW puede cambiar sin cambio de zoom.
   applyCanvasAnchor(newZoom)
 })
 
-// Pitfall 3 + Open Q8 RESOLVED — HMR guard.
-// Owner del HMR guard es ESTE componente (NO `src/phaser/index.js` factory — by design).
-// El factory no mantiene state, este componente sí (game ref + arrivalDone + activeProject).
-// Sin esto, cada save en dev acumularía Phaser.Game instances → memory leak progresivo.
+// HMR guard — owner de este guard es ESTE componente.
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    game.value?.destroy(true, false)
-    game.value = null
-    arrivalDone.value = false
-    activeProject.value = null
+    destroyGame()
   })
 }
 
-// Defensive cleanup — si el componente se desmonta sin pasar por el watch
-// (e.g. parent v-if=false abrupto, o teardown de tests), aún destruir el game.
+// Defensive cleanup — si el componente se desmonta sin pasar por el watch.
 onBeforeUnmount(() => {
-  game.value?.destroy(true, false)
-  game.value = null
+  destroyGame()
 })
 </script>
 
@@ -254,12 +257,6 @@ onBeforeUnmount(() => {
 
     <!--
       D5-06 — 3 sr-only buttons keyboard-navegables.
-      Replican los planet clicks dentro de Phaser para usuarios screen-reader +
-      keyboard-only. Visualmente invisibles (.sr-only) pero focusables por Tab.
-      aria-label combina t('ui.openProject') (= "Ver proyecto →") con el title
-      i18nificado del proyecto para que el screen-reader anuncie cada destino.
-      Click handler setea activeProject directamente — mismo state que recibe el
-      'show-project' bridge event desde Phaser.
     -->
     <button
       v-for="p in ch6Projects"
@@ -271,19 +268,17 @@ onBeforeUnmount(() => {
     />
 
     <!--
-      D5-03 + CON-04 — mantra HTML/Vue (NO render dentro de Phaser).
-      v-if=arrivalDone enseña el texto al fin del arrival cinematográfico (emit
-      desde SpaceScene). CSS animation mantra-fade-in 400ms; bajo PRM
-      @media override desactiva animation (opacity:1 desde mount) — D5-08 + A11Y-05.
+      TASK-012 — la conversación con la IA, DOM-first, SIEMPRE montada. No
+      depende de activeChapter ni de arrivalDone: el texto completo (bio +
+      mantra) vive en el DOM desde que Chapter6Content.vue monta, que ocurre
+      al arrancar el sitio (ScrollShell mantiene los 7 capítulos siempre
+      montados). El bridge hacia Phaser es unidireccional DOM → Phaser.
     -->
-    <p v-if="arrivalDone" class="ch6-mantra">
-      {{ t('chapters.6.mantra') }}
-    </p>
+    <Ch6Terminal @ascii-progress="onAsciiProgress" @token-tick="onTokenTick" />
 
     <!--
-      D5-07 — ProjectOverlay synthwave (W3 stub minimal; W4 reemplaza completo).
-      Render condicional sobre activeProject ref (setado por bridge event o
-      sr-only button click). @close emit resetea el ref → overlay desaparece.
+      ProjectOverlay synthwave. Render condicional sobre activeProject ref
+      (setado por bridge event o sr-only button click).
     -->
     <ProjectOverlay
       v-if="activeProject"
@@ -295,12 +290,34 @@ onBeforeUnmount(() => {
 
 <style scoped>
 /*
- * Estilo mínimo local — el resto vive en src/styles/chapter-themes.css
- * @layer components (Task 2 del Plan 05-04). Aquí sólo la utility .sr-only
- * porque NO existe global en el proyecto (verificado 2026-05-14).
- *
- * .sr-only — patrón estándar WCAG: visually hidden pero readable by screen
- * readers + focusable. clip-path moderno + width/height 1px + overflow hidden.
+ * TASK-012 — migrado desde src/styles/chapter-components.css (criterio
+ * adicional heredado de TASK-008, comentario del orquestador en
+ * tasks/TASK-012.json). D5-09 Pattern 12 mitigation intacto: .ch6-layout SIN
+ * overflow:hidden (creaba stacking context problemático en ch4 — bug Phase 4
+ * deferred). Canvas full-bleed sin contenedor restrictivo.
+ */
+.ch6-layout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.ch6-canvas-host {
+  position: absolute;
+  inset: 0;
+  /* overflow:hidden aquí (NO en .ch6-layout) clipea el exceso del canvas cover. */
+  overflow: hidden;
+}
+
+.ch6-canvas-host :deep(canvas) {
+  display: block;
+  /* Anclaje bottom: `left` es manejado programáticamente por applyCanvasAnchor(). */
+  position: absolute;
+  bottom: 0;
+}
+
+/*
+ * Estilo mínimo local — .sr-only utility (no existe global en el proyecto).
  */
 .sr-only {
   position: absolute;
@@ -314,8 +331,6 @@ onBeforeUnmount(() => {
   border: 0;
 }
 
-/* Focus visible — cuando el usuario tabula a un button sr-only, hacerlo
-   visualmente perceptible para sighted-keyboard users (no solo screen-readers). */
 .sr-only:focus,
 .sr-only:focus-visible {
   position: absolute;

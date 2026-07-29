@@ -85,7 +85,8 @@
       "Bash(node *)",
       "Bash(start \"\" \"C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe\" --remote-debugging-port=9333 --user-data-dir=\"C:/Users/RAFAEL~1/AppData/Local/Temp/claude/C--Users-RafaelMatovelle-Documents-mato-new-portfolio/42028a60-9a3b-46e8-9121-a8acd3aebbfb/scratchpad/chrome-profile-task025b\" --no-first-run --no-default-browser-check \"http://127.0.0.1:5173/\")",
       "Bash(curl -s -m 1 http://127.0.0.1:9333/json/version)",
-      "Bash(grep -oE '[+0-9][0-9 .\\(\\)+-]{6,}[0-9]')"
+      "Bash(grep -oE '[+0-9][0-9 .\\(\\)+-]{6,}[0-9]')",
+      "Bash(npm test *)"
     ]
   },
   "enabledMcpjsonServers": [

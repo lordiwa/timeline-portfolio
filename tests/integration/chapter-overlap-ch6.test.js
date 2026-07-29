@@ -30,14 +30,15 @@ import { resolve } from 'node:path'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 const SCROLL_SHELL_PATH = resolve(process.cwd(), 'src/components/ScrollShell.vue')
-// TASK-008: .ch6-layout vive ahora en chapter-components.css (chapter-themes.css
-// fue reemplazado por tokens.css + eras.css + chassis.css + chapter-components.css).
-const THEMES_PATH = resolve(process.cwd(), 'src/styles/chapter-components.css')
+// TASK-012 (2026-07-29): .ch6-layout MIGRÓ de chapter-components.css al
+// <style scoped> de Chapter6Content.vue (criterio adicional heredado de
+// TASK-008 — ver comentario del orquestador en tasks/TASK-012.json).
+const CH6_CONTENT_PATH = resolve(process.cwd(), 'src/components/Chapter6Content.vue')
 
 let scrollShellSrc = ''
 let themesSrc = ''
 try { scrollShellSrc = readFileSync(SCROLL_SHELL_PATH, 'utf8') } catch (_) { scrollShellSrc = '' }
-try { themesSrc = readFileSync(THEMES_PATH, 'utf8') } catch (_) { themesSrc = '' }
+try { themesSrc = readFileSync(CH6_CONTENT_PATH, 'utf8') } catch (_) { themesSrc = '' }
 
 describe('chapter-overlap-ch6 defensive (D5-09 + CORE-04) — RED W0 → verde W3', () => {
   it('T1: ScrollShell.vue contiene `scroll-snap-stop: always` (Warning 5 target verified)', () => {
@@ -49,16 +50,14 @@ describe('chapter-overlap-ch6 defensive (D5-09 + CORE-04) — RED W0 → verde W
     ).toMatch(/scroll-snap-stop:\s*always/)
   })
 
-  it('T2: bloque `.ch6-layout` en chapter-themes.css NO declara `overflow: hidden`', () => {
-    // Buscar bloque .ch6-layout (W3 lo declarará en @layer components)
+  it('T2: bloque `.ch6-layout` en Chapter6Content.vue NO declara `overflow: hidden`', () => {
+    // TASK-012: .ch6-layout vive en el <style scoped> de Chapter6Content.vue.
     const ch6BlockMatch = themesSrc.match(/\.ch6-layout\s*\{[^}]*\}/s)
     if (!ch6BlockMatch) {
-      // W0: bloque aún no existe → test pasa trivialmente (no overlap riesgo).
-      // W3 crea el bloque; este test re-evalúa.
       expect(
         ch6BlockMatch,
-        'En W0 .ch6-layout no existe (W3 lo añade). Re-eval test post-W3.'
-      ).toBeNull()
+        '.ch6-layout debe existir en Chapter6Content.vue.'
+      ).not.toBeNull()
       return
     }
     expect(
@@ -85,6 +84,7 @@ describe('chapter-overlap-ch6 defensive (D5-09 + CORE-04) — RED W0 → verde W
         scale: { zoom: 3, setZoom: vi.fn() },
         destroy: vi.fn(),
       })),
+      computeZoom: vi.fn(() => 1),
     }))
 
     let ScrollShell

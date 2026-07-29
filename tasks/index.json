@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T18:01:56.526Z",
+  "generated_at": "2026-07-29T18:48:06.652Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -70,7 +70,7 @@
     {
       "key": "TASK-012",
       "title": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "critical"
     },
     {

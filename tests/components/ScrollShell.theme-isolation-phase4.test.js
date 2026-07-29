@@ -17,6 +17,7 @@ vi.mock('@/phaser', () => ({
     scale: { zoom: 3, setZoom: vi.fn() },
     destroy: vi.fn(),
   })),
+  computeZoom: vi.fn(() => 1),
 }))
 
 function mountShell({ initialChapter = 3 } = {}) {

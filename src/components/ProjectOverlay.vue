@@ -214,13 +214,188 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style scoped>
+<style>
 /*
- * Estilo mínimo local — el resto vive en src/styles/chapter-themes.css
- * @layer components (Task 2 del Plan 05-05): backdrop blur + card glow doble +
- * mobile fullscreen + PRM no-animation + close/title/tech/link variants.
+ * TASK-012 (2026-07-29) — migrado VERBATIM desde src/styles/chapter-components.css
+ * @layer components (donde vivía como parada intermedia de TASK-008, criterio
+ * adicional heredado en el comentario del orquestador de tasks/TASK-012.json:
+ * "la porcion de ch6 sale de chapter-components.css"). ProjectOverlay.vue es
+ * el ÚNICO consumidor de estas clases (grep confirmado), así que el bloque
+ * migra completo, no se parte.
  *
- * Aquí sólo dejamos vacío para mantener la separación de concerns
- * (component = behavior + structure; theme CSS = visual styling).
+ * Deliberadamente SIN `scoped`: el modal vive fixed inset:0 ENCIMA del shell
+ * completo (z-index 50), fuera del árbol de scroll-snap de cualquier capítulo.
+ * `scoped` de Vue solo añade un atributo `data-v-*` a los selectores (no
+ * afecta el cálculo de posición/stacking), así que esta migración no cambia
+ * el comportamiento respecto a cuando vivía en el archivo global — la razón
+ * original para NO prefijar con `[data-chapter="6"]` (evitar heredar
+ * posición/transform de la section durante scroll-snap) sigue aplicando
+ * igual de bien con o sin `scoped`.
+ *
+ * Glow doble (cyan #4dffff + hot pink #ff3ca6) = signature visual D5-04.
+ * Progressive enhancement @supports backdrop-filter. Mobile fullscreen
+ * @max-width:599px. PRM @media — animation:none para instant open.
  */
+.project-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 14, 61, 0.7); /* deep purple translúcido — fallback */
+}
+
+/* Progressive enhancement: navegadores con backdrop-filter ven blur 8px
+   + bg menos opaco (0.5) para dejar pasar el blur del canvas Phaser debajo. */
+@supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+  .project-overlay {
+    background: rgba(26, 14, 61, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+.project-overlay__card {
+  position: relative; /* anchor para .project-overlay__close absolute */
+  max-width: min(90vw, 560px);
+  width: 100%;
+  background: #1a0e3d;
+  border: 1px solid #4dffff;
+  border-radius: 8px;
+  padding: var(--sp-lg);
+  color: #c0e0ff;
+  /* Glow doble — D5-04 signature: cyan inner + pink secundario más difuso. */
+  box-shadow:
+    0 0 24px rgba(77, 255, 255, 0.4),    /* glow cyan */
+    0 0 48px rgba(255, 60, 166, 0.2);    /* glow pink secundario */
+  animation: overlay-enter 200ms ease-out;
+}
+
+@keyframes overlay-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Mobile fullscreen: el card ocupa el viewport completo + sin border-radius
+   para sentirse como pantalla. 100dvh evita el iOS notch issue de 100vh. */
+@media (max-width: 599px) {
+  .project-overlay__card {
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+/* PRM: instant open — la animación scale es perceptible como motion para
+   usuarios sensibles. Animation:none equivale a "ya está en estado final"
+   desde el primer frame. */
+@media (prefers-reduced-motion: reduce) {
+  .project-overlay__card {
+    animation: none;
+  }
+}
+
+.project-overlay__close {
+  position: absolute;
+  top: var(--sp-sm);
+  right: var(--sp-sm);
+  background: transparent;
+  border: 1px solid #4dffff;
+  color: #4dffff;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-overlay__close:focus-visible {
+  outline: 2px solid #ffd95c;
+  outline-offset: 2px;
+}
+
+.project-overlay__title {
+  font-family: 'Audiowide', sans-serif;
+  color: #4dffff;
+  text-shadow: 0 0 8px rgba(77, 255, 255, 0.5);
+  margin: 0 0 var(--sp-xs) 0;
+  font-size: clamp(1.2rem, 4vw, 1.6rem);
+  /* padding-right reserva espacio para el close button absoluto top-right
+     y evita que el título se solape con la X. */
+  padding-right: 48px;
+}
+
+.project-overlay__year {
+  font-size: 0.85rem;
+  color: #ffd95c; /* amber accent — secondary metadata */
+  margin: 0 0 var(--sp-xs) 0;
+  opacity: 0.9;
+}
+
+.project-overlay__role {
+  font-size: 0.95rem;
+  color: #c0e0ff;
+  margin: 0 0 var(--sp-sm) 0;
+  font-style: italic;
+}
+
+.project-overlay__tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--sp-md) 0;
+}
+
+.project-overlay__tech li {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border: 1px solid #4dffff;
+  border-radius: 12px;
+  color: #c0e0ff;
+  background: rgba(77, 255, 255, 0.08);
+}
+
+.project-overlay__desc {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #c0e0ff;
+  margin: 0 0 var(--sp-md) 0;
+}
+
+.project-overlay__link {
+  display: inline-block;
+  padding: 8px 18px;
+  background: #ff3ca6;
+  color: #1a0e3d;
+  text-shadow: 0 0 8px rgba(255, 60, 166, 0.6);
+  border-radius: 4px;
+  text-decoration: none;
+  font-family: 'Audiowide', sans-serif;
+  font-size: 0.9rem;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+
+.project-overlay__link:hover {
+  box-shadow: 0 0 16px rgba(255, 60, 166, 0.6);
+}
+
+.project-overlay__link:focus-visible {
+  outline: 2px solid #4dffff;
+  outline-offset: 2px;
+}
+
+.project-overlay__link:active {
+  transform: translateY(1px);
+}
 </style>

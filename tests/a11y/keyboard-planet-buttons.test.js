@@ -31,6 +31,7 @@ vi.mock('@/phaser', () => ({
     scale: { zoom: 3, setZoom: vi.fn() },
     destroy: vi.fn(),
   })),
+  computeZoom: vi.fn(() => 1),
 }))
 
 vi.mock('@/data/projects', () => ({

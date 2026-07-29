@@ -31,6 +31,7 @@ const mockGameFactory = () => ({
 
 vi.mock('@/phaser', () => ({
   createGame: vi.fn(mockGameFactory),
+  computeZoom: vi.fn(() => 1),
 }))
 
 vi.mock('@/data/projects', () => ({
@@ -138,5 +139,42 @@ describe('Chapter6Content.vue lifecycle (PHA-01..04) — RED W0 → verde W3', (
       CH6_SOURCE,
       'Chapter6Content.vue debe registrar `game.value.events.on(\'arrival-complete\', ...)` (D5-10). W3 crea.'
     ).toMatch(/events\.on\s*\(\s*['"]arrival-complete['"]/)
+  })
+
+  it('T5 (TASK-022 AC5, re-entrada): 2 ciclos completos salir/volver crean y destruyen limpio, sin quedar en estado muerto', async () => {
+    const { createGame } = await import('@/phaser')
+    createGame.mockClear() // aísla el conteo de los tests T1/T2/T4 previos en este archivo.
+
+    const { wrapper, activeChapter, importFailed } = await mountCh6({ activeChapter: 6 })
+    if (importFailed) {
+      expect.fail('src/components/Chapter6Content.vue no existe.')
+    }
+    await flushPromises()
+
+    expect(createGame).toHaveBeenCalledTimes(1)
+
+    // Ciclo 1 — salir y volver.
+    activeChapter.value = 0
+    await flushPromises()
+    let mockGame = createGame.mock.results[createGame.mock.results.length - 1]?.value
+    expect(mockGame.destroy).toHaveBeenCalledWith(true, false)
+
+    activeChapter.value = 6
+    await flushPromises()
+    expect(createGame).toHaveBeenCalledTimes(2)
+
+    // Ciclo 2 — un destroy mal escrito a veces sobrevive el primer ciclo y
+    // falla recién en el segundo (lección documentada en TASK-021) — por eso
+    // se repite.
+    activeChapter.value = 3
+    await flushPromises()
+    mockGame = createGame.mock.results[createGame.mock.results.length - 1]?.value
+    expect(mockGame.destroy).toHaveBeenCalledWith(true, false)
+
+    activeChapter.value = 6
+    await flushPromises()
+    expect(createGame).toHaveBeenCalledTimes(3)
+
+    wrapper?.unmount()
   })
 })

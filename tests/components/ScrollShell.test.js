@@ -42,6 +42,7 @@ vi.mock('@/phaser', () => ({
     scale: { zoom: 3, setZoom: vi.fn() },
     destroy: vi.fn(),
   })),
+  computeZoom: vi.fn(() => 1),
 }))
 
 // Helper para los tests de keyboard navigation: monta ScrollShell con provides

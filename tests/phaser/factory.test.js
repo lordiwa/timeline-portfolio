@@ -36,15 +36,15 @@ describe('phaser factory (PHA-01..03) — RED W0 → verde W2', () => {
     ).toMatch(/Phaser\.Scale\.NONE/)
   })
 
-  it('T2: zoom COVER hi-bit — Math.max(1, vw/BASE_W, vh/BASE_H) sin Math.floor (COVER-01 2026-07-10)', () => {
+  it('T2: zoom COVER hi-bit — computeZoom(parentEl) contra getBoundingClientRect (TASK-012 rescate)', () => {
     // COVER-01 2026-07-10: fórmula cambiada de CONTAIN Math.min a COVER Math.max 3-args.
-    // Motivo: Math.min (contain) dejaba pillarbox ~150px en 1920×911, asomando bg CSS ch6.
-    // PHA-03 integer-zoom superseded por HI-BIT-01 (zoom fraccional) y COVER-01 (no contain).
+    // TASK-012 (2026-07-29): la fuente de la medida pasa de `window` al rect del host
+    // (parentEl) — computeZoom(parentEl) en vez de computeZoom() sin argumentos.
     expect(
       src,
-      'computeZoom() debe usar COVER: Math.max(1, vw/BASE_W, vh/BASE_H) ' +
-        '— zoom fraccional COVER sin Math.floor (COVER-01). W2 crea este archivo.'
-    ).toMatch(/Math\.max\s*\(\s*1,\s*vw\s*\/\s*BASE_W/)
+      'createGame debe llamar `computeZoom(parentEl)` — zoom fraccional COVER contra el ' +
+        'rect del host, NO contra window (TASK-012 rescate).'
+    ).toMatch(/computeZoom\s*\(\s*parentEl\s*\)/)
   })
 
   it('T3: pixelArt: true presente — PHA-03 pixel-art rendering', () => {
