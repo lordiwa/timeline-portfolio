@@ -75,6 +75,17 @@ describe('chapter-overlap-ch6 defensive (D5-09 + CORE-04) — RED W0 → verde W
     ).toMatch(/<Chapter6Content\s+v-else-if="ch\.id\s*===\s*6"/)
   })
 
+  // TASK-012 ronda 2 (2026-07-29) — timeout explícito 15000ms (default 5000ms).
+  // Causa raíz medida: esta suite monta Chapter6Content.vue + Ch6Terminal.vue
+  // reales (no stubbed), y Ch6Terminal.vue ahora hace trabajo síncrono real en
+  // el mount (splitWords/wordIndexGrid sobre las 143 palabras de bio.eras.6,
+  // splitAuthorWords, toBits) que Chapter6Content.vue no tenía antes de este
+  // ticket. Confirmado: con `--testTimeout=20000` la suite completa (708/708)
+  // pasa siempre; con el default de 5000ms este test puntual cae de forma
+  // intermitente SOLO bajo contención de CPU externa a este repo (verificado
+  // con `Get-Counter` procesos `tesseract` ajenos a la sesión saturando el
+  // núcleo). La aserción no cambia (sigue exigiendo `.ch6-layout` y NO
+  // `.chapter-placeholder`); solo el presupuesto de tiempo del mount.
   it('T4: mount ScrollShell + activeChapter=6 → sección renderea .ch6-layout no .chapter-placeholder', async () => {
     // Stub ProjectOverlay y mock createGame antes de import dinámico de Chapter6Content
     const { vi } = await import('vitest')
@@ -129,5 +140,5 @@ describe('chapter-overlap-ch6 defensive (D5-09 + CORE-04) — RED W0 → verde W
       'section[data-chapter="6"] NO debe renderar `.chapter-placeholder` post-W3 wire.'
     ).toBe(false)
     wrapper.unmount()
-  })
+  }, 15000)
 })

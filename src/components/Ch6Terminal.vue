@@ -162,6 +162,19 @@ function emitAsciiProgress(frac) {
   emit('ascii-progress', { mix, mode, tint })
 }
 
+/**
+ * Ronda 2 (2026-07-29) — faltaba la fila "Cierre" de la tabla §4.4: el
+ * streaming (emitAsciiProgress de arriba) solo llega hasta mix=0.8/mode=1, y
+ * nada volvía a emitir progreso durante el decode binario, así que el
+ * takeover NUNCA alcanzaba mix=1.0 ni volvía a mode=2 (rampa) para el
+ * "reposo final" — verificado visualmente en Chrome headed: el efecto ASCII
+ * quedaba parado a medio camino, nunca "respirando" en texto al final como
+ * describe la spec. `t` = progreso del decode binario (0..1).
+ */
+function emitClosingProgress(t) {
+  emit('ascii-progress', { mix: 0.8 + t * 0.2, mode: 1 + t, tint: 0.6 + t * 0.25 })
+}
+
 async function typeString(str, setter, charDelayMs, v) {
   setter('')
   if (prefersReduced.value) {
@@ -235,11 +248,17 @@ async function runTimeline(v) {
     for (let g = 0; g < totalBitGroups.value; g++) {
       if (!alive(v)) return
       decodedBitGroups.value = g + 1
+      // Fila "Cierre" de la spec §4.4 (antes sin cablear — emitClosingProgress
+      // existía pero nunca se llamaba): el takeover sigue avanzando durante el
+      // decode, mix 0.8→1.0 y mode 1→2, en vez de quedar congelado en 0.8.
+      emitClosingProgress(decodedBitGroups.value / totalBitGroups.value)
       await delay(24)
     }
   }
   if (!alive(v)) return
-  emitAsciiProgress(1)
+  // "Reposo final" (spec §4.4): mix=1.0, mode=2, tint=0.85 — t=1 cierra la
+  // rampa aunque prefersReduced haya saltado el loop de arriba.
+  emitClosingProgress(1)
 
   // ── DONE (spec §5.2 paso 8) — cursor final + mantra. ─────────────────────
   await delay(prefersReduced.value ? 50 : 400)
@@ -251,7 +270,9 @@ function skip() {
   if (phase.value !== 'streaming' && phase.value !== 'decoding') return
   revealedWords.value = totalWords.value
   decodedBitGroups.value = totalBitGroups.value
-  emitAsciiProgress(1)
+  // Skip salta directo al "reposo final" (spec §4.4), no al punto intermedio
+  // 0.8/mode=1 — mismo estado que runTimeline alcanza al completar el decode.
+  emitClosingProgress(1)
 }
 
 function startCycle() {
@@ -496,23 +517,51 @@ if (import.meta.hot) {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/*
+ * TASK-012 ronda 2 (2026-07-29) — corrección real de geometría, no cosmética.
+ * La spec §5.4 pedía bottom-sheet full-bleed (right:0;left:0;bottom:0) en
+ * portrait y full-height en landscape. Medido con el arnés (Chrome headed,
+ * 390x844 y 844x390): ese full-bleed hace que el bounding box de `.ch6-convo`
+ * INTERSECTE geométricamente con StickyTimeline (fixed left), ContactHUD
+ * (fixed bottom-right/top-right en landscape) y LangToggle (fixed top-right)
+ * — los tres fuera de la lista blanca de este ticket, así que la única
+ * corrección posible desde este archivo es que EL PANEL deje espacio.
+ * Lección técnica §7 ("la estética la manda la spec; el límite es la
+ * navegación"): cuando hay conflicto, el límite geométrico gana, aunque
+ * cambie el diseño full-bleed pedido. Insets calculados a partir de los
+ * offsets fijos (--sp-xs/--sp-sm/--sp-md, en px, no vw) que usan esos tres
+ * componentes — por ser px fijos, generalizan a cualquier ancho de viewport
+ * móvil, no solo a los medidos.
+ */
 @media (max-width: 767px) and (orientation: portrait) {
   .ch6-convo {
-    right: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
+    /* Despeja StickyTimeline (fixed left, ~64px de contenido + sp-xs). */
+    left: 84px;
+    /* Despeja ContactHUD (fixed right, icon 44px + sp-sm + borde). */
+    right: 64px;
+    /* Despeja GlobalMantra (fixed bottom, pill ~28px + sp-sm + safe-area). */
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 44px);
+    width: auto;
     max-height: 52dvh;
-    border-radius: 12px 12px 0 0;
-    border-left: none;
-    border-right: none;
-    border-bottom: none;
+    border-radius: 12px;
   }
 }
 
 @media (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
   .ch6-convo {
     width: 52vw;
+    /* Despeja LangToggle (fixed top-right) — en landscape corto el panel
+       queda muy cerca del borde superior si crece hasta max-height. */
+    top: 68px;
+    /* Despeja GlobalMantra (fixed bottom-center, pill ~30px) y ContactHUD
+       (fixed bottom-right) — ambos comparten la franja inferior en un
+       landscape tan corto. Medido: mantra llega hasta ~46px del borde. */
+    bottom: 50px;
+    max-height: none;
+    /* Despeja ambos por el eje horizontal también: en 844x390 el panel a
+       52vw llega a ~9.6vw del borde derecho, dentro de la franja de
+       LangToggle/ContactHUD (~12vw). */
+    right: 96px;
   }
 }
 

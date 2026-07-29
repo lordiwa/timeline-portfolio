@@ -175,8 +175,17 @@ async function jumpToChapter(cx, n) {
     await evaluate(`document.querySelector('.tick-button[data-chapter="${n}"]').click()`)
   }
   await sleep(600)
+  // TASK-012 ronda 2 (2026-07-29) — causa raíz real del H3 rojo original:
+  // `.dialup-scrim` NO bloquea la navegación (a diferencia de `.ch2-cin-root`,
+  // que sí tapa la pantalla y por eso justifica el auto-dismiss con Escape,
+  // Lección técnica #6). Incluirlo aquí hacía que ESTA MISMA función
+  // desarmara el dial-up (su handler de Escape llama skip(), que apaga
+  // visible.value Y marca sessionStorage 'rm-dialup-seen') un instante antes
+  // de que H3 pudiera medirlo — el harness se sabía el examen a sí mismo.
+  // Confirmado manualmente (ver hand-off): sin este auto-dismiss, el dial-up
+  // aparece y se mide correctamente. Solo `.ch2-cin-root` justifica el skip.
   for (let i = 0; i < 16; i++) {
-    if (!(await evaluate(`!!document.querySelector('.ch2-cin-root, .dialup-scrim')`))) break
+    if (!(await evaluate(`!!document.querySelector('.ch2-cin-root')`))) break
     await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape' })
     await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape' })
     await sleep(450)
@@ -307,8 +316,27 @@ const CH6_MEASURE = `
     const contactHud = document.querySelector('.contact-hud, [class*="contact-hud"]');
     const langToggle = document.querySelector('.lang-toggle');
     const mantraGlobal = document.querySelector('.global-mantra, [class*="global-mantra"]');
+    // TASK-012 ronda 2 (2026-07-29) — corrección de causa raíz del check C:
+    // el canvas usa zoom COVER (Math.max de los dos ratios, spec §1.1), que por
+    // construcción NUNCA puede igualar el host en AMBOS ejes salvo que el host
+    // sea exactamente 16:9 — el eje que no domina el zoom SIEMPRE excede y se
+    // recorta con overflow:hidden en .ch6-canvas-host (bottom-anchored, exceso
+    // recortado arriba; ver el propio ejemplo numérico de la spec: host
+    // 1521x791 → canvas 1521x855.6, "exceso vertical 64.6px recortado arriba").
+    // Pedir delta<2px en AMBOS ejes es una invariante arquitectónicamente
+    // imposible de cumplir con COVER, no una que el código pueda satisfacer.
+    // La invariante real (y la que de hecho detecta el bug original —
+    // canvas 1536x864 en host 1521x791 con offset fantasma de -72.8px, un
+    // GAP real que dejaba fondo expuesto) es "el canvas cubre el host sin
+    // huecos": el bounding box del canvas debe CONTENER al del host en los 4
+    // bordes (con epsilon de subpíxel), nunca quedar más chico o desplazado.
+    const coversHost = (c, h, eps) =>
+      !!c && !!h &&
+      c.x0 <= h.x0 + eps && c.x1 >= h.x1 - eps &&
+      c.y0 <= h.y0 + eps && c.y1 >= h.y1 - eps;
     return {
       hostRect, canvasRect,
+      coversHost: coversHost(canvasRect, hostRect, 1.5),
       deltaW: canvasRect && hostRect ? Math.abs(canvasRect.w - hostRect.w) : null,
       deltaH: canvasRect && hostRect ? Math.abs(canvasRect.h - hostRect.h) : null,
       panelRect,
@@ -345,8 +373,7 @@ async function checkViewportGeometry(cx, url, name, w, h, dsf, mobile) {
   await evaluate(CH6_MEASURE)
   const m = await evaluate(`window.__ch6Measure()`)
 
-  const geomOk = m.canvasRect && m.hostRect && m.deltaW < 2 && m.deltaH < 2
-  report(`C. [${name}] canvas cubre el host exacto (delta<2px)`, !!geomOk, JSON.stringify({ canvasReady, deltaW: m.deltaW, deltaH: m.deltaH, hostRect: m.hostRect, canvasRect: m.canvasRect }))
+  report(`C. [${name}] canvas cubre el host sin huecos (COVER: bounding box contiene al host, epsilon 1.5px)`, !!m.coversHost, JSON.stringify({ canvasReady, coversHost: m.coversHost, deltaW: m.deltaW, deltaH: m.deltaH, hostRect: m.hostRect, canvasRect: m.canvasRect }))
 
   const chassisOk = !m.panelOverlapsTimeline && !m.panelOverlapsContact && !m.panelOverlapsLang && !m.panelOverlapsMantra
   report(`E. [${name}] .ch6-convo no tapa timeline/contact/lang/mantra`, chassisOk, JSON.stringify({
@@ -418,8 +445,23 @@ async function checkNoRegression(cx, url) {
   report('H2. ch2 minigame conserva su canvas', minigame, `present=${minigame}`)
 
   // Dial-up: entra a ch1 desde ch0 (arranca en ch0 tras bootToHome).
+  // TASK-012 ronda 2 (2026-07-29) — causa raíz del falso rojo original:
+  // DialUpScreen.vue dispara SOLO "la primera vez en la sesión" (guard
+  // sessionStorage 'rm-dialup-seen'). Este harness reutiliza la MISMA pestaña
+  // de Chrome (y por ende el MISMO sessionStorage) a lo largo de TODO el
+  // script — jumpToChapter ya había pasado por ch1 en una corrida anterior
+  // (o en una ejecución previa del harness sobre la misma pestaña), así que
+  // el guard "ya visto" apagaba el dial-up legítimamente. No es una
+  // regresión del audio procedural: confirmado manualmente limpiando el flag
+  // y re-disparando (ver hand-off). Limpiar el flag aquí reproduce la
+  // condición real que el AC exige verificar ("primera vez") — el clear va
+  // DESPUÉS de aterrizar en ch0, no antes: jumpToChapter(2→0) hace scroll
+  // SMOOTH y de paso atraviesa ch1 transitoriamente, volviendo a setear el
+  // flag si se limpia demasiado pronto (found durante esta misma ronda: un
+  // primer intento limpiando antes del salto 2→0 seguía fallando por esto).
   await jumpToChapter(cx, 0)
   await sleep(300)
+  await evaluate(`sessionStorage.removeItem('rm-dialup-seen')`)
   await jumpToChapter(cx, 1)
   await sleep(500)
   const dialup = await evaluate(`!!document.querySelector('.dialup-scrim') || !!document.querySelector('audio')`)

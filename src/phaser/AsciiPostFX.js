@@ -103,7 +103,15 @@ float rampBitmask(float idx) {
 }
 
 float glyphForLuma(float l, float mode, vec2 p, vec2 cellHash) {
-  if (mode < 0.5) {
+  // Umbral en 1.5 (no 0.5): uMode viaja en {1: binario, 2: rampa} — nunca en
+  // 0 (el driver DOM, Ch6Terminal.vue, no emite "imagen" como estado propio
+  // del glifo; "imagen" ya ocurre fuera de esta función, vía uMix=0 en
+  // takeover()). Bug encontrado en ronda 2 (2026-07-29, verificación visual
+  // en Chrome headed real): con el umbral en 0.5, mode=1 ("binario" según el
+  // driver) NO es < 0.5, así que caía siempre en la rama de rampa — la fase
+  // binaria del takeover nunca se veía, pese a que el binario en el DOM
+  // (.ch6-bits, AC4) funcionaba bien de forma independiente.
+  if (mode < 1.5) {
     float bit = step(0.5, l);
     // Hormigueo temporal — algunas celdas oscilan 0<->1 (sensación de datos vivos).
     bit = abs(bit - step(0.985, fract(cellHash.x * 337.0 + uTime * 0.6)));

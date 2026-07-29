@@ -214,21 +214,27 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
-<style>
+<style scoped>
 /*
  * TASK-012 (2026-07-29) — migrado VERBATIM desde src/styles/chapter-components.css
  * @layer components (donde vivía como parada intermedia de TASK-008, criterio
  * adicional heredado en el comentario del orquestador de tasks/TASK-012.json:
  * "la porcion de ch6 sale de chapter-components.css"). ProjectOverlay.vue es
- * el ÚNICO consumidor de estas clases (grep confirmado), así que el bloque
- * migra completo, no se parte.
+ * el ÚNICO consumidor de estas clases (grep confirmado sobre src/), así que el
+ * bloque migra completo, no se parte.
  *
- * Deliberadamente SIN `scoped`: el modal vive fixed inset:0 ENCIMA del shell
- * completo (z-index 50), fuera del árbol de scroll-snap de cualquier capítulo.
- * `scoped` de Vue solo añade un atributo `data-v-*` a los selectores (no
- * afecta el cálculo de posición/stacking), así que esta migración no cambia
- * el comportamiento respecto a cuando vivía en el archivo global — la razón
- * original para NO prefijar con `[data-chapter="6"]` (evitar heredar
+ * CON `scoped` (ronda de revisión de TASK-012, revierte el `<style>` sin scoped
+ * del pase anterior): la justificación registrada para sacar `scoped` era que
+ * "solo añade un atributo data-v-* a los selectores, no afecta el cálculo de
+ * posición/stacking" — cierto, pero es exactamente POR ESO que quitarlo no
+ * aportaba nada: el fixed/inset:0/z-index:50 funciona idéntico con o sin
+ * scoped. Lo que sí cambiaba era el riesgo: con `<style>` sin scoped, estas
+ * clases (nombres genéricos: __card, __close, __title...) quedan disponibles
+ * globalmente para cualquier componente futuro que las reutilice sin darse
+ * cuenta del acoplamiento. Todas sus reglas viven en el propio template de
+ * este componente, así que `scoped` es el único bloque correcto: mismo
+ * comportamiento, cero superficie de fuga. La razón original para NO
+ * prefijar con `[data-chapter="6"]` (evitar heredar
  * posición/transform de la section durante scroll-snap) sigue aplicando
  * igual de bien con o sin `scoped`.
  *
