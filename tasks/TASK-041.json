@@ -1,0 +1,33 @@
+{
+  "key": "TASK-041",
+  "title": "Residuales del chasis: excepcion acotada para tocar la columna de contenido de ch2, ch3, ch4 y ch5",
+  "description": "DECISION DE RAFAEL del 2026-07-30: se LEVANTA la prohibicion de tocar los Chapter*Content.vue, pero con lista blanca acotada. Es la excepcion a la regla que el mismo establecio tras el incidente del 2026-07-27, en el que agentes sin restriccion rompieron el minijuego de ch2, el audio del modem, la multitud de ch5 y la escena de ch6.\n\nQUE SE PUEDE TOCAR, y NADA MAS: el padding y el margin de la COLUMNA DE CONTENIDO de Chapter2Content.vue, Chapter3Content.vue, Chapter4Content.vue y Chapter5Content.vue.\n\nQUE SIGUE ABSOLUTAMENTE PROHIBIDO, aunque el archivo este permitido: la logica de esos componentes, el minijuego match-3 y su MatchScene.js, el audio procedural del dial-up, DialUpScreen.vue, la multitud de 125 personajes de ch5 y su loop, las animaciones, los shaders, y cualquier cosa que no sea padding o margin de la columna de contenido. Si el arreglo parece necesitar algo mas, se PARA y se reporta.\n\nPOR QUE SE LEVANTA: dos rondas de TASK-019 demostraron con numeros que los residuales son matematicamente imposibles desde el chasis. Los paddings izquierdos en mobile son ch4 = 8px (var(--sp-sm)), ch2 = 16px (var(--sp-md)) y ch3 = 24px (var(--sp-lg)), todos por debajo de los 44px que mide el tap target obligatorio, lockeado por Test 8 y la UI-SPEC 3. Reducir el tap target viola el contrato de accesibilidad en botones que SI son interactivos; colapsar a un toggle seguiria ocupando 44px en el borde. El reviewer verifico esa aritmetica en fuente y la declaro estructural, no alcance recortado.\n\nEL CASO MAS CLARO, con numeros de la ronda 2: LangToggle cubre por completo el anio \"2022\" del panel de ch5 en TODOS los viewports, y nunca queda limpio. Para no tocar el anio, LangToggle tendria que medir 27px o menos en desktop y 12px o menos en mobile, contra un minimo de accesibilidad de 44px. El developer intento un modo compacto solo para ch5, lo midio en Chrome dos veces (82px, 61px, 53px de ancho) y en ninguna se limpio el anio; revirtio el intento en vez de dejar una mejora cosmetica del 0 al 21% de los glifos, que no vuelve legible nada. Esa honestidad ahorra que alguien repita la investigacion: quedo documentada en un comentario de LangToggle.vue.\n\nMAPA COMPLETO DE RESIDUALES A ATACAR, todos con cobertura REAL de glifos (glyphHitCount > 0) medida en ES y EN:\n- ch2 mobile portrait: la timeline tapa el aviso \"MOBILE DETECTED\" y 14 lineas de parrafo. En landscape y tablet, contactHud y stickyAvatar tapan el flavor y el anio \"2009\".\n- ch3 mobile portrait y tablet: la timeline tapa hero-sub, varios beat-lead, los kickers y el boton \"Seguir leyendo\".\n- ch4 mobile portrait y landscape: timeline, contactHud, soundToggle, globalMantra y stickyAvatar tapan hasta 15 hits de la bio mas el titulo. En ambos desktops, globalMantra tapa bio y project-desc.\n- ch5 mobile portrait: la timeline tapa badge, title, viewers y timestamp, y el titulo pierde 30px reales. En todos los viewports, contactHud tapa .ch5-feed-text y langToggle tapa .ch5-panel-year y .ch5-panel-title.\n\nNO ENTRA ch0 ni ch1: sus residuales tambien existen (ver la tabla del hand-off de la ronda 2 de TASK-019) pero Rafael acoto la excepcion a ch2, ch3, ch4 y ch5. ch0 y ch1 son parte de lo que dijo explicitamente que le gusta y quedan fuera de esta autorizacion.\n\nTAMPOCO ENTRA ch6: sus residuales (contactHud y globalMantra contra .ch6-convo-word) se midieron mientras TASK-034 corria en paralelo sobre esos archivos, asi que son indicativos y no imputables. Re-medirlos cuando ch6 este quieto.\n\nMETODO OBLIGATORIO: cada cambio con prueba geometrica antes y despues usando scripts/verify-chassis-overlap.mjs, que desde la ronda 2 mide a nivel de GLIFOS con Range.getClientRects() y exige --locale=es|en. Correr ambos idiomas: el espaniol es el caso largo y da peor. Review de cierre obligatorio, sin excepcion.\n\nHIGIENE DE PROCESOS: Chrome con --user-data-dir propio de nombre unico, y al matar procesos filtrar SIEMPRE por ese perfil. Esta prohibido Stop-Process sin filtro: ya mato todas las ventanas de Chrome de la maquina de Rafael una vez.",
+  "acceptance_criteria": [
+    "Los residuales con cobertura real de glifos de ch2, ch3, ch4 y ch5 listados en la descripcion quedan resueltos, verificados con scripts/verify-chassis-overlap.mjs a nivel de glifos en ES y en EN.",
+    "El tap target de 44px se conserva intacto en todos los elementos interactivos del chasis: la solucion es dar espacio en la columna de contenido, no encoger los botones.",
+    "Solo se modificaron padding y margin de la columna de contenido en los 4 componentes autorizados. El diff no toca logica, minijuego, audio, multitud, animaciones ni shaders.",
+    "NO REGRESION, bloqueante: el minijuego de ch2 sigue con su canvas presente y jugable, el audio del dial-up de ch1 sigue disparandose, la multitud de ch5 sigue viva y la escena de ch6 sigue instanciando.",
+    "La composicion de desktop no se degrada: se aporta medicion antes y despues en 1536x791 dpr1.25 y 1440x900.",
+    "npm test sigue verde y el conteo de PASS del arnes de chasis mejora respecto de la linea base de la ronda 2 (ES 47/74, EN 48/74), sin introducir rojos nuevos."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "responsive",
+    "mobile",
+    "chasis",
+    "a11y"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-019"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T14:37:19.125Z",
+  "updated_at": "2026-07-30T14:37:19.125Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

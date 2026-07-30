@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T05:15:39.324Z",
+  "generated_at": "2026-07-30T14:37:19.125Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -240,6 +240,12 @@
       "title": "Busts: revision visual lado a lado con Rafael antes de decidir si se regenera alguno",
       "status": "todo",
       "priority": "medium"
+    },
+    {
+      "key": "TASK-041",
+      "title": "Residuales del chasis: excepcion acotada para tocar la columna de contenido de ch2, ch3, ch4 y ch5",
+      "status": "todo",
+      "priority": "high"
     }
   ]
 }
