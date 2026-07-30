@@ -119,3 +119,33 @@ scroll interno" pero la spec §8 diseñó scroll interno con fade a propósito.
 El límite es medible y no es opinable: si un elemento tapa contenido, corta texto a mitad
 de frase o vuelve algo inalcanzable, **se arregla igual**, aunque la spec lo haya pedido así.
 La prueba es geométrica (`getBoundingClientRect()` que no intersecte cajas de texto), no a ojo.
+
+## 8. Un arnés de solapamiento premia esconder texto — hace falta el contra-sensor
+
+Encontrado en TASK-041 (2026-07-30), y es la trampa más cara del proyecto hasta ahora porque
+**no se manifiesta como un rojo, sino como un verde legítimo**.
+
+`verify-chassis-overlap.mjs` mide la intersección del chasis flotante contra los glifos
+visibles. Su métrica mejora de dos maneras distintas que el arnés no distingue:
+
+1. **Dar espacio** para que el texto no quede debajo del chasis — lo que se quiere.
+2. **Achicar la ventana del texto** para que haya menos glifos que intersectar — lo contrario
+   de lo que se quiere.
+
+En TASK-041 el fix de ch4 redujo el `max-height` de `.ch4-panel-column`. El arnés reportó
+**cero fallos nuevos** y el reviewer lo reprodujo de forma independiente check por check —
+ambos correctos— mientras en mobile landscape (844×390) el panel colapsaba a **12px de alto**
+con el **100% del texto, título incluido, detrás del scroll interno**. Aritmética: el bloque
+nuevo `@media (min-width:600px) and (max-height:520px)` sumó `padding-top:128px` a
+`.ch4-layout`, y la columna heredó el `max-height: calc(100% - … - 120px)` de la regla base:
+390 − 128 ≈ 238 de caja, − 226 de reservas = **12px**.
+
+**Regla:** cuando un arreglo de solapamiento toque `max-height`, `height`, `overflow` o
+cualquier cosa que recorte la ventana del contenido, el verde del arnés **no alcanza**. Hay
+que medir en el mismo paso el **contenido alcanzable**: `clientHeight` vs `scrollHeight` de la
+caja que scrollea, y el conteo de palabras cuyo rect cae fuera del rect visible. Un fix que
+mejora el solapamiento y empeora ese segundo número no es un fix.
+
+Corolario para el diseño de arneses en general: **toda métrica que se puede mejorar quitando
+lo que se mide necesita un contra-sensor en la misma corrida.** No es un problema de este
+arnés en particular; es la forma del problema.

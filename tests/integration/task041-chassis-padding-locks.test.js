@@ -157,7 +157,7 @@ describe('TASK-041 — Chapter4Content.vue: reserva de espacio contra GlobalMant
     ).toBe('10px')
   })
 
-  it('.ch4-layout dentro de @media(max-width:599px) reserva 64px/60px (left/right) contra StickyTimeline/ContactHUD, y .ch4-panel-column reserva 210px extra al fondo', () => {
+  it('.ch4-layout dentro de @media(max-width:599px) reserva 64px/60px (left/right) contra StickyTimeline/ContactHUD, y .ch4-panel-column NO reserva un extra fijo al fondo (ronda 2: revertido)', () => {
     const root = styleRoot(CH4_PATH)
     const query = mediaAtRules(root, (p) => p.trim() === '(max-width: 599px)')
       .find((q) => declsIn(q, '.ch4-layout').some((d) => d.prop === 'padding'))
@@ -168,14 +168,19 @@ describe('TASK-041 — Chapter4Content.vue: reserva de espacio contra GlobalMant
       'REGRESSION LOCK (TASK-041): .ch4-layout en mobile debe reservar padding: calc(64px + var(--sp-sm)) 60px var(--sp-sm) 64px (top right bottom left) — left/right por debajo tapan con StickyTimeline (~58px) y ContactHUD (~53px desde el borde) en 390x844'
     ).toBe('calc(64px + var(--sp-sm)) 60px var(--sp-sm) 64px')
 
+    // TASK-041 RONDA 2 — el HIGH de la ronda 1 (LECCIONES-TECNICAS.md §8):
+    // el +210px extra que este lock exigía antes colapsaba el contenido
+    // alcanzable (42%->77% de palabras ocultas en 390x844 ES, ver hand-off).
+    // Rafael ordenó revertirlo; el lock ahora congela la fórmula SIN ese
+    // término y falla si alguien lo vuelve a agregar en silencio.
     const panelMaxHeight = declsIn(query, '.ch4-panel-column').find((d) => d.prop === 'max-height')
     expect(
-      panelMaxHeight && panelMaxHeight.value.includes('210px'),
-      'REGRESSION LOCK (TASK-041): .ch4-panel-column en mobile debe reservar 210px extra en max-height contra ContactHUD/SoundToggle/GlobalMantra'
-    ).toBe(true)
+      panelMaxHeight && panelMaxHeight.value.replace(/\s+/g, ''),
+      'REGRESSION LOCK (TASK-041 ronda 2): .ch4-panel-column en mobile portrait NO debe reservar un extra fijo (ej. 210px) al fondo de su max-height — ese extra esconde contenido alcanzable en vez de resolver el residual (LECCIONES-TECNICAS.md §8); la fórmula correcta es calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm))'
+    ).toBe('calc(100%-var(--sp-sm)-var(--ch4-title-h,56px)-var(--sp-sm))')
   })
 
-  it('existe un @media(min-width:600px)/(max-height:520px) — landscape de teléfono — que empuja el título/columna lejos de StickyAvatar/ContactHUD', () => {
+  it('existe un @media(min-width:600px)/(max-height:520px) — landscape de teléfono — que empuja el título/columna lejos de StickyAvatar/ContactHUD sin heredar la resta de 120px pensada para desktop', () => {
     const root = styleRoot(CH4_PATH)
     const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-height: 520px'))[0]
     expect(query, 'REGRESSION LOCK (TASK-041): falta el @media(min-width:600px)/(max-height:520px) de mobile landscape').toBeDefined()
@@ -184,6 +189,26 @@ describe('TASK-041 — Chapter4Content.vue: reserva de espacio contra GlobalMant
     expect(layoutDecls.some((d) => d.prop === 'padding-right' && d.value === '70px')).toBe(true)
     const panelDecls = declsIn(query, '.ch4-panel-column')
     expect(panelDecls.some((d) => d.prop === 'margin-left' && d.value === '0')).toBe(true)
+
+    // TASK-041 RONDA 2 — defecto encontrado por el review de cierre de la
+    // ronda 1 (LECCIONES-TECNICAS.md §8): sin este override, `.ch4-panel-column`
+    // heredaba la resta de 120px de la regla base (pensada para GlobalMantra
+    // en desktops de 791-900px de alto) y, sumada al padding-top:128px de
+    // este mismo breakpoint, colapsaba la columna a clientHeight=12px con el
+    // 100% del texto (título incluido) detrás del scroll interno. El override
+    // debe existir y NO debe contener el término de 120px.
+    const panelMaxHeight = panelDecls.find((d) => d.prop === 'max-height')
+    expect(
+      panelMaxHeight,
+      'REGRESSION LOCK (TASK-041 ronda 2): falta el override de max-height de .ch4-panel-column dentro de @media(min-width:600px)/(max-height:520px) — sin él la columna colapsa a 12px en 844x390 (ver LECCIONES-TECNICAS.md §8)'
+    ).toBeDefined()
+    expect(
+      panelMaxHeight.value.includes('120px'),
+      'REGRESSION LOCK (TASK-041 ronda 2): el override de max-height de .ch4-panel-column en mobile landscape NO debe incluir la resta de 120px de la regla base (desktop) — eso es lo que colapsaba la columna a 12px en 844x390'
+    ).toBe(false)
+    expect(panelMaxHeight.value.replace(/\s+/g, '')).toBe(
+      'calc(100%-clamp(18px,10vh,18px)-var(--ch4-title-h,72px)-var(--sp-md))'
+    )
   })
 
   it('existe un @media(min-width:768px)/(max-width:1023px) — tablet portrait — que empuja .ch4-title bajo StickyAvatar', () => {

@@ -1253,6 +1253,24 @@ onBeforeUnmount(() => {
        content-box real de `.ch4-layout`, que ya reserva padding-right en la
        regla de abajo) sea la única fuente de ancho. */
     margin-left: 0;
+    /* TASK-041 RONDA 2 (defecto encontrado por el review de cierre de la
+     * ronda 1, LECCIONES-TECNICAS.md §8): la regla base de `.ch4-panel-column`
+     * (arriba) resta 120px extra del `max-height`, pensados para despejar
+     * GlobalMantra en los DOS DESKTOPS (791/900px de alto). Heredado sin
+     * cambios acá, con el `padding-top:128px` de este mismo breakpoint
+     * comiéndose la mayor parte del viewport de 390px de alto, el cálculo
+     * colapsaba la columna a clientHeight=12px — el 100% del texto, título
+     * incluido, quedaba detrás del scroll interno (verificado con CDP real,
+     * capturas en el hand-off de la ronda 1).
+     * En ESTE viewport esa resta de 120px no hace falta: sin ella la columna
+     * cierra en max-height=132px (238 de content-box - 18 margin-top - 72
+     * title-h - 16 sp-md), y GlobalMantra en su variante compacta
+     * (`@media (max-height:500px)` de GlobalMantra.vue, activa acá) arranca
+     * recién en y≈358px del viewport — ~80px de aire de sobra respecto al
+     * borde inferior de la columna (y≈146+132=278). Se recalcula SIN el
+     * término de 120px, específico para el escenario desktop que este
+     * breakpoint no comparte. */
+    max-height: calc(100% - clamp(18px, 10vh, 18px) - var(--ch4-title-h, 72px) - var(--sp-md));
   }
 }
 
@@ -1318,14 +1336,18 @@ onBeforeUnmount(() => {
     margin: var(--sp-sm) 0 0 0;
     /* Recalculada con el margin-top real de mobile (var(--sp-sm), no el
        clamp() de desktop) — mismo fix §8, cota de altura consistente.
-       TASK-041 (residuales de chasis): +210px extra de reserva al fondo —
-       medido con CDP real en 390x844, ContactHUD (46x194, la más alta de
-       las tres) empieza a ~202px del borde inferior del viewport; sin esta
-       reserva, .ch4-bio (un solo párrafo largo) quedaba con glifos bajo
-       ContactHUD/SoundToggle/GlobalMantra. El panel ya scrollea internamente
-       (overflow-y:auto + fade existentes), así que el texto que ya no entra
-       sigue accesible con scroll, no se pierde. */
-    max-height: calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm) - 210px);
+       TASK-041 RONDA 2 — revertido el +210px de reserva que la ronda 1 había
+       sumado acá. Medido con CDP real en 390x844 (ES, caso largo): esa
+       reserva subía las palabras ocultas de .ch4-bio de 162/386 (42%) a
+       296/386 (77%), y el corte se movía hacia arriba hasta caer DENTRO de
+       la reflexión central del capítulo ("el mundo por fin está llegando
+       adonde yo estaba parado hace una década, esperando") en vez de en la
+       cola — cruza el límite de Rafael de no esconder el argumento del
+       capítulo para limpiar una métrica. Decisión de Rafael 2026-07-30:
+       revertir y, si no hay forma de resolver el residual sin ese costo,
+       dejarlo declarado y abierto (ver hand-off de la ronda 2 para el número
+       final del residual con esta reserva revertida). */
+    max-height: calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm));
     animation: none;
   }
 

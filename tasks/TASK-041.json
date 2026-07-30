@@ -24,9 +24,15 @@
   ],
   "linked_commits": [],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-30T17:14:29.727Z",
+      "body": "RONDA 1 = BLOCK. Review de cierre (Fable 5) sobre 16dcae1: HIGH de lista blanca — el diff usó `max-height` (reservas de -120px base y -210px mobile en Chapter4Content.vue) y `box-sizing` (Chapter3Content.vue, bloque tablet), fuera de la autorización estrecha \"solo padding y margin\". Todo lo demás del review se reprodujo exacto de forma independiente: PASS ES 47->50, EN 48->51 (el AC#6 se cumple también en su letra, el número pactado era obtenible); 12/12 locks en rojo contra base y verde contra HEAD, ningún sensor vacío; cero FAILs nuevos; ch0/ch1/ch6 idénticos (11->11); suite 735/735.\n\nDEFECTO NUEVO ENCONTRADO POR MEDICIÓN POSTERIOR, no visto por el developer ni por el review: en mobile landscape (844x390) `.ch4-panel-column` colapsa a clientHeight=12px (base: 167px) y el 100% de las palabras del panel, TÍTULO INCLUIDO, queda detrás del scroll interno (base: 85%). Causa aritmética confirmada: el bloque nuevo `@media (min-width:600px) and (max-height:520px)` suma `padding-top:128px` a `.ch4-layout` mientras la columna hereda el `max-height: calc(100% - ... - 120px)` de la regla base — 390-128 ~= 238 de caja, menos 226 de reservas = 12px. Cruza el límite permanente de Rafael (contenido inalcanzable se arregla igual), verificado geométricamente y con captura.\n\nPOR QUÉ NINGÚN SENSOR LO VIO: el arnés mide solapamiento del chasis sobre glifos, así que ACHICAR la ventana del texto mejora su métrica igual que dar espacio. Lección registrada como §8 de .planning/LECCIONES-TECNICAS.md, con la regla derivada: todo fix de solapamiento que toque max-height/height/overflow debe medir en la misma corrida `clientHeight` vs `scrollHeight` y las palabras fuera del rect visible.\n\nCOSTO MEDIDO del -210px (mobile portrait 390x844, CDP real, ES caso largo): palabras ocultas 162/386 (42%) en base -> 296/386 (77%) en HEAD. El corte se mueve hacia arriba y cae dentro de la reflexión central del capítulo, no en la cola. Desktop: 1536 86->111 palabras ocultas, 1440 53->56, y lo que cae es la segunda tarjeta de proyecto (metadata), con la bio completa.\n\nDECISIÓN DE RAFAEL (2026-07-30, tras ver los números):\n1. Se SANCIONA `max-height` (y `box-sizing`) de la columna de contenido como herramienta permitida dentro de la excepción de este ticket, además de padding y margin. Resuelve el HIGH de autorización del review. Todo lo demás sigue prohibido igual: lógica, minijuego, MatchScene.js, audio del dial-up, DialUpScreen.vue, multitud de ch5, animaciones y shaders.\n2. Ronda 2 obligatoria: arreglar el colapso de mobile landscape de ch4, y REVERTIR la reserva de -210px de mobile portrait buscando otra forma para ese residual.\n3. Se CONSERVA la reserva de -120px de desktop: costo medido chico y resuelve residuales reales."
+    }
+  ],
   "created_at": "2026-07-30T14:37:19.125Z",
-  "updated_at": "2026-07-30T15:32:31.212Z",
+  "updated_at": "2026-07-30T17:14:35.369Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

@@ -29,3 +29,6 @@ public/references/
 # capturada verbatim en el hand-off/PR, igual que ya hace verify-ch3-*.mjs, que
 # ni siquiera persiste un archivo). Ver decisión en el hand-off de TASK-011.
 .planning/*-verify-results*.json
+# TASK-041 ronda 2: mismo criterio, mismo motivo — el instrumento
+# (scripts/verify-content-reachable.mjs) se commitea, sus JSON de resultados no.
+.planning/task041-content-reachable-*.json
