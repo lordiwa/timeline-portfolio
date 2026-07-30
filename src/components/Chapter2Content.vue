@@ -572,13 +572,66 @@ onBeforeUnmount(() => {
  * teléfono") reduce el margin a 40px — medido con CDP real en 844x390: sigue
  * despejando `.ch2-year` de StickyAvatar (year y0=122, avatar y1=112, 10px de
  * margen) y deja CONTACT completo dentro del viewport (y1=376 < 390, 14px de
- * margen) y WORK sin cortes (y1=328 < 390). */
+ * margen) y WORK sin cortes (y1=328 < 390).
+ *
+ * RONDA 4 — HIGH bloqueante del review de la ronda 3: el brazo de 40px de
+ * arriba usa posiciones FIJAS (no escala con la altura), así que NO sobrevive
+ * a las alturas cortas del propio brazo. Medido con CDP real, mismo ancho
+ * (844), todas las alturas con margin=40px: CONTACT es SIEMPRE y0=336/y1=376
+ * porque su posición depende del margin-top de `.ch2-meta`, no del alto del
+ * viewport. Eso da, con m=40: y1(CONTACT) = 336 + m constante y
+ * y0(.ch2-year) = 82 + m constante — dos rectas en función de m, no de H.
+ * En 844x360 (Androids landscape 800x360, ubicuos) CONTACT queda cortado 16px
+ * (y1=376 > 360, área tappable reducida a 24px) y el label corta glifos; en
+ * x375 (iPhone SE/X landscape) corta 1px (y1=376 > 375). Es regresión contra
+ * la base 0125e57, donde CONTACT cabía completo hasta H=336.
+ *
+ * Conflicto aritmético real en H<=~375, verificado con CDP: despejar el año
+ * de StickyAvatar exige margin >= 30 (year.y0 = 82+m >= 112, avatar.y1=112);
+ * CONTACT exige margin <= H-336. En H=360 eso es simultáneamente <=24 y >=30
+ * — NO existe un margin único que sirva. Resolución (LECCIONES-TECNICAS.md
+ * §7 — la navegación manda sobre el solapamiento): se prioriza CONTACT
+ * completo y se declara el año como residual estructural en este brazo.
+ *
+ * Tercer brazo: max-height:376px con margin-top:24px — el máximo margin que
+ * mantiene CONTACT.y1=360<=H incluso en el piso barrido (H=360), y por eso
+ * también el que MINIMIZA el residual del año en este rango: year.y0=106,
+ * avatar.y1=112 → año tapado ~6px arriba (estructural, declarado). Verificado
+ * con CDP real en 844x{360,374,375}: CONTACT 320-360 (dentro en las 3),
+ * WORK 273-312 (dentro), año y0=106 (6px bajo el avatar, residual aceptado).
+ * El brazo de 40px sube su piso a min-height:376px (antes sin piso) porque a
+ * H=375 con m=40 CONTACT.y1=376 corta 1px.
+ *
+ * TRAMPA DE INSTRUMENTO nueva en el umbral 375/376 (emparentada con la de
+ * §6 de LECCIONES-TECNICAS.md): con `Emulation.setDeviceMetricsOverride` en
+ * dsf=3, `devicePixelRatio` real resultó `3.0000001192092896` — el redondeo
+ * de punto flotante empuja el alto CSS reportado ligeramente POR ENCIMA del
+ * valor pedido. Con el umbral original `max-height:375px` pedido a H=375
+ * exacto, esa micro-diferencia hacía FALLAR la condición `<=375` — y como
+ * `min-height:376px` del brazo de 40px también es falsa ahí (375 < 376), NI
+ * UN brazo aplicaba: `.ch2-meta` caía a `margin-top` por defecto (0), peor
+ * que ambos brazos (año tapado 30px). Medido con CDP real, confirmado con
+ * `matchMedia` directo. Fix: mover el límite superior del tercer brazo a
+ * `max-height:376px` (comparte el valor exacto 376 con el `min-height:376px`
+ * del brazo de 40px) y declarar el brazo de 40px DESPUÉS en el CSS — un
+ * `min-height` evaluado en su propio valor límite es inmune a este epsilon
+ * (el redondeo hacia arriba solo puede favorecer `>=`, nunca romperlo), así
+ * que en el único punto de posible empate real (H=376 exacto, sin epsilon)
+ * el brazo de 40px gana por orden de cascada, y en cualquier altura por
+ * debajo el brazo de 24px es el único que puede matchear. Verificado con CDP
+ * real en 359/360/361/374/375/376/377/430/500/520/521/522: ninguna altura
+ * cae sin brazo. */
 @media (min-width: 600px) and (max-width: 1023px) and (min-height: 521px) {
   .ch2-meta {
     margin-top: 104px;
   }
 }
-@media (min-width: 600px) and (max-width: 1023px) and (max-height: 520px) {
+@media (min-width: 600px) and (max-width: 1023px) and (max-height: 376px) {
+  .ch2-meta {
+    margin-top: 24px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1023px) and (min-height: 376px) and (max-height: 520px) {
   .ch2-meta {
     margin-top: 40px;
   }

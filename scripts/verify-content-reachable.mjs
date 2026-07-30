@@ -23,6 +23,12 @@
 //     cuántas caen aunque sea parcialmente afuera — esas son "ocultas": o
 //     bien alcanzables con scroll (aceptable, el usuario puede llegar) o bien
 //     genuinamente perdidas si la caja colapsó (inaceptable, ver arriba).
+//   - `clippedAwayWords`, SOLO cuando `el` no tiene scroll interno propio
+//     (ver RONDA 4 más abajo): palabras cuyo rect cae completamente fuera
+//     del frame acumulado de ancestros con overflow hidden/clip — estas sí
+//     son inalcanzables sin importar ningún scroll. Cuando `el` SÍ scrollea
+//     por su cuenta, el campo viene `null` con `clippedAwayNote`: para esos
+//     targets la métrica correcta de alcanzabilidad es `hiddenWords` (arriba).
 //
 // Un fix que mejora el solapamiento del otro arnés y EMPEORA (clientHeight
 // más chico, % de palabras ocultas más alto, o el corte cae dentro de
@@ -37,20 +43,41 @@
 // 100dvh + overflow:hidden, ScrollShell.vue) le recorta la mitad de abajo sin
 // que exista NINGÚN mecanismo de scroll para llegar a esa mitad — eso es
 // PEOR que un scroll container propio, porque lo recortado es inalcanzable,
-// no diferido. Con los TARGETS actuales (`.ch4-panel-column`, `.ch5-panel-body`,
-// ambos con su propio overflow-y interno) esto no cambia el resultado, pero
-// cualquier target nuevo que NO tenga su propio scroll interno sí lo
-// necesita. Mitigado en esta ronda (no eliminado del todo, ver más abajo):
-// `__reachable()` ahora acumula la intersección de `el` con el rect de CADA
+// no diferido. Mitigado en esta ronda (no eliminado del todo, ver más abajo):
+// `__reachable()` acumula la intersección de `el` con el rect de CADA
 // ancestro cuyo overflow computado (x o y) sea hidden/clip, y reporta
-// `clipRect` + `clippedAwayWords` (palabras cuyo rect cae completamente fuera
-// de ese frame acumulado — inalcanzables sin importar scroll) por separado de
-// `hiddenWords` (fuera de la caja propia, puede ser alcanzable con scroll
-// interno si `el` mismo scrollea). Sigue siendo una heurística de DOM, no un
-// motor de pintado real (no modela `clip-path`, `mask`, ni transforms que
-// muevan contenido fuera de su propio rect) — para ese caso, la prueba
-// definitiva sigue siendo medición manual con CDP real como la de este
-// mismo ticket (ver hand-off de la ronda 3).
+// `clipRect` + `clippedAwayWords` por separado de `hiddenWords` (fuera de la
+// caja propia).
+//
+// RONDA 4 — MEDIUM del review de la ronda 3: la semántica documentada de
+// `clippedAwayWords` ("palabras inalcanzables sin importar scroll") es FALSA
+// quando `el` mismo tiene scroll interno propio — que son justo los dos
+// TARGETS declarados (`.ch4-panel-column`, `.ch5-panel-body`). El cálculo
+// compara el rect ACTUAL de cada palabra (en la posición de scroll vigente
+// de `el`) contra el frame acumulado de ancestros, pero al scrollear `el`
+// esas palabras se mueven dentro de su propio rect — que ya está contenido
+// en el frame de los ancestros (si no, `el` mismo estaría clippeado, caso no
+// aplicable aquí) — y por lo tanto entran al frame. Dato que lo demostró:
+// ch5 390x844 reportó `clippedAway=794/843` sobre un feed perfectamente
+// scrolleable — un número etiquetado como inalcanzabilidad que no la mide.
+// No es un falso verde de gate (el exit code de este script depende solo de
+// `anySkipped`, nunca de `clippedAwayWords`), pero es la misma clase de
+// trampa de instrumento que costó tres rondas antes: medir sin más un rótulo
+// que promete algo que el cálculo no garantiza.
+//
+// Fix: `__reachable()` ahora detecta si `el` mismo es scrolleable
+// (`overflow-y` computado es `auto`/`scroll` Y `scrollHeight > clientHeight`)
+// y, si lo es, OMITE `clippedAwayWords` (queda `null`, con
+// `clippedAwayNote` explicando por qué) en vez de reportar un número que
+// mide otra cosa. La métrica sigue siendo válida y se sigue calculando tal
+// cual para el caso que la motivó — un target SIN scroll interno propio
+// recortado por un ancestro (la clase del botón CONTACT de ch2, aunque ese
+// caso vive en verify-chassis-overlap.mjs/CDP manual, no en este script) —
+// porque ahí el rect de la palabra no puede "entrar" al frame por ningún
+// mecanismo propio de `el`. Sigue siendo una heurística de DOM, no un motor
+// de pintado real (no modela `clip-path`, `mask`, ni transforms que muevan
+// contenido fuera de su propio rect) — para ese caso, la prueba definitiva
+// sigue siendo medición manual con CDP real como la de este mismo ticket.
 //
 // CÓMO CORRERLO (misma receta que verify-chassis-overlap.mjs, LECCIONES-
 // TECNICAS.md §6):
@@ -232,6 +259,14 @@ window.__reachable = function(selector) {
   // acumulado es lo más cerca que se puede llegar, sin un motor de pintado
   // real, a "lo que efectivamente puede pintar \`el\`" — a diferencia de \`box\`
   // (el rect propio de \`el\`, ciego a cualquier recorte de un ancestro).
+  // TASK-041 RONDA 4 — MEDIUM del review de la ronda 3 (ver encabezado del
+  // archivo): si \`el\` mismo scrollea (overflow-y auto/scroll con contenido
+  // real de sobra), comparar la posición ACTUAL de sus palabras contra el
+  // frame de sus ancestros no mide inalcanzabilidad — el usuario llega
+  // scrolleando \`el\`. \`clippedAwayWords\` solo es honesto para targets sin
+  // scroll interno propio.
+  const elCs = getComputedStyle(el);
+  const elScrollable = (elCs.overflowY === 'auto' || elCs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 1;
   let clip = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
   let hasClippingAncestor = false;
   for (let anc = el.parentElement; anc; anc = anc.parentElement) {
@@ -256,7 +291,9 @@ window.__reachable = function(selector) {
   });
   let totalWords = 0;
   let hiddenWords = 0;
-  let clippedAwayWords = 0;
+  // null cuando \`el\` scrollea por su cuenta — ver elScrollable arriba; el
+  // conteo quedaría midiendo posición de scroll actual, no alcanzabilidad.
+  let clippedAwayWords = elScrollable ? null : 0;
   let node;
   while ((node = walker.nextNode())) {
     const text = node.textContent;
@@ -285,9 +322,9 @@ window.__reachable = function(selector) {
       if (!visible) hiddenWords++;
       // "recortada por ancestro" = ningún rect de la palabra intersecta el
       // frame acumulado de ancestros con overflow:hidden/clip — inalcanzable
-      // aunque \`el\` mismo scrollee, porque el recorte lo hace un padre sin
-      // mecanismo de scroll propio (el caso del bloqueante de ronda 2).
-      if (hasClippingAncestor) {
+      // SOLO tiene ese significado cuando \`el\` no scrollea por su cuenta
+      // (elScrollable === false); si scrollea, se omite (ver arriba).
+      if (hasClippingAncestor && !elScrollable) {
         const withinClip = rects.some((rr) =>
           rr.width > 0 && rr.height > 0 &&
           rr.left < clip.right && rr.right > clip.left &&
@@ -301,6 +338,7 @@ window.__reachable = function(selector) {
     clientHeight: el.clientHeight,
     scrollHeight: el.scrollHeight,
     boxRect: { x0: Math.round(box.left), y0: Math.round(box.top), x1: Math.round(box.right), y1: Math.round(box.bottom) },
+    elScrollable,
     hasClippingAncestor,
     clipRect: hasClippingAncestor
       ? { x0: Math.round(clip.left), y0: Math.round(clip.top), x1: Math.round(clip.right), y1: Math.round(clip.bottom) }
@@ -308,6 +346,9 @@ window.__reachable = function(selector) {
     totalWords,
     hiddenWords,
     clippedAwayWords,
+    clippedAwayNote: elScrollable
+      ? 'omitido — el target scrollea internamente (overflow-y + scrollHeight>clientHeight); comparar su posición actual contra el frame de ancestros no mide inalcanzabilidad, ver hiddenWords'
+      : null,
   };
 };
 'installed';
@@ -318,7 +359,12 @@ let anySkipped = false
 function report(name, detail) {
   RESULTS.push({ name, detail })
   const pct = detail && detail.totalWords ? Math.round((detail.hiddenWords / detail.totalWords) * 100) : null
-  const clipInfo = detail && detail.hasClippingAncestor ? ` clippedAway=${detail.clippedAwayWords}` : ''
+  // TASK-041 RONDA 4 — clippedAwayWords viene null cuando el target scrollea
+  // por su cuenta (ver MEASURE_REACHABLE); reportarlo como número ahí sería
+  // repetir el mismo error que motivó este fix.
+  const clipInfo = detail && detail.hasClippingAncestor
+    ? (detail.clippedAwayWords === null ? ' clippedAway=n/a(target scrollable)' : ` clippedAway=${detail.clippedAwayWords}`)
+    : ''
   console.log(
     `MEASURE — ${name} :: clientHeight=${detail?.clientHeight} scrollHeight=${detail?.scrollHeight} palabras=${detail?.totalWords} ocultas=${detail?.hiddenWords}${pct !== null ? ` (${pct}%)` : ''}${clipInfo}`
   )

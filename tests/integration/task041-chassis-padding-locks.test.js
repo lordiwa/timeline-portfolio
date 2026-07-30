@@ -83,16 +83,45 @@ describe('TASK-041 — Chapter2Content.vue: reserva de espacio contra StickyTime
     ).toBe('104px')
   })
 
-  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(max-height:520px) reserva margin-top:40px (ronda 3 — brazo corto para no sacar CONTACT del viewport en landscape de teléfono)', () => {
+  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(min-height:376px)/(max-height:520px) reserva margin-top:40px (brazo medio, 844x390 y alturas similares)', () => {
     const root = styleRoot(CH2_PATH)
-    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 520px'))
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('min-height: 376px') && p.includes('max-height: 520px'))
       .find((q) => declsIn(q, '.ch2-meta').length > 0)
-    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(max-height:520px) tocando .ch2-meta').toBeDefined()
+    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(min-height:376px)/(max-height:520px) tocando .ch2-meta').toBeDefined()
     const decl = declsIn(query, '.ch2-meta').find((d) => d.prop === 'margin-top')
     expect(
       decl && decl.value,
-      'REGRESSION LOCK (TASK-041 ronda 3): .ch2-meta debe declarar margin-top:40px en 844x390 (max-height:520px) — un valor de 104px en esta rama (heredado sin filtrar por altura) empuja la fila "nav" del grid ese mismo tanto y saca el botón CONTACT del sidebar Y2K por debajo del borde de .chapter-section (100dvh + overflow:hidden, sin scroll posible); medido con verify-chassis-overlap.mjs, 40px despeja .ch2-year de StickyAvatar (10px de margen) y deja CONTACT (y1=376) y WORK (y1=328) completos dentro de un viewport de 390px de alto'
+      'REGRESSION LOCK (TASK-041 ronda 3/4): .ch2-meta debe declarar margin-top:40px en 844x390 y alturas 376-520 — un valor de 104px en esta rama (heredado sin filtrar por altura) empuja la fila "nav" del grid ese mismo tanto y saca el botón CONTACT del sidebar Y2K por debajo del borde de .chapter-section (100dvh + overflow:hidden, sin scroll posible); medido con verify-chassis-overlap.mjs, 40px despeja .ch2-year de StickyAvatar (10px de margen) y deja CONTACT (y1=376) y WORK (y1=328) completos dentro de un viewport de 390px de alto. El piso min-height:376px es RONDA 4: sin él, este brazo aplicaba también a H=375 y cortaba CONTACT 1px (y1=376 > 375)'
     ).toBe('40px')
+  })
+
+  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(max-height:376px) reserva margin-top:24px (ronda 4 — tercer brazo para alturas <=375, ej. 844x360 Android landscape)', () => {
+    const root = styleRoot(CH2_PATH)
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && !p.includes('min-height'))
+      .find((q) => declsIn(q, '.ch2-meta').length > 0)
+    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(max-height:376px) (sin min-height) tocando .ch2-meta').toBeDefined()
+    const decl = declsIn(query, '.ch2-meta').find((d) => d.prop === 'margin-top')
+    expect(
+      decl && decl.value,
+      'REGRESSION LOCK (TASK-041 ronda 4): .ch2-meta debe declarar margin-top:24px en alturas <=375/376 (ej. 844x360, Android landscape 800x360 ubicuo) — el brazo de 40px usa posiciones fijas (CONTACT.y1 = 336+margin, no depende de H) y NO sobrevive a H=360 (CONTACT cortado 16px, área tappable 24px, glifos del label cortados); 24px es el máximo margin que mantiene CONTACT.y1=360<=H incluso en H=360 y por eso también el que minimiza el residual del año (year.y0=106 vs avatar.y1=112, ~6px de solape declarado estructural — conflicto aritmético real: despejar el año exige margin>=30 pero CONTACT en H=360 exige margin<=24, no existe un margin único que sirva ambos; la navegación manda sobre el solapamiento, LECCIONES-TECNICAS.md §7)'
+    ).toBe('24px')
+  })
+
+  it('ronda 4 — el brazo de margin-top:24px (alturas cortas) está declarado ANTES que el de margin-top:40px en el CSS fuente, para que el de 40px gane cualquier empate exacto en H=376', () => {
+    const root = styleRoot(CH2_PATH)
+    const shortArm = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && !p.includes('min-height'))
+      .find((q) => declsIn(q, '.ch2-meta').length > 0)
+    const midArm = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('min-height: 376px') && p.includes('max-height: 520px'))
+      .find((q) => declsIn(q, '.ch2-meta').length > 0)
+    expect(shortArm, 'falta el brazo corto (max-height:376px, margin 24px)').toBeDefined()
+    expect(midArm, 'falta el brazo medio (min-height:376px/max-height:520px, margin 40px)').toBeDefined()
+    const root_ = root
+    const shortIdx = root_.nodes.indexOf(shortArm)
+    const midIdx = root_.nodes.indexOf(midArm)
+    expect(
+      shortIdx,
+      'REGRESSION LOCK (TASK-041 ronda 4): el @media de margin-top:24px debe declararse ANTES que el de margin-top:40px en el <style> fuente — ambos comparten el valor límite 376 (uno con max-height:376px, el otro con min-height:376px); con Emulation.setDeviceMetricsOverride en dsf fraccional (ej. dsf=3 -> devicePixelRatio real 3.0000001192092896, ver comentario en Chapter2Content.vue) una consulta max-height evaluada EXACTAMENTE en su propio límite puede fallar por epsilon de punto flotante, pero una min-height evaluada en su propio límite es inmune (el epsilon-hacia-arriba solo puede favorecer >=). Declarar el brazo de 40px DESPUÉS asegura que gane cualquier empate real en H=376 exacto sin depender de ese epsilon'
+    ).toBeLessThan(midIdx)
   })
 })
 
