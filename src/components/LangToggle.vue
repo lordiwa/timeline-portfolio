@@ -17,6 +17,27 @@
 //
 // Pitfall 7 evitado: NO se declara outline: propio en .lang-toggle. El focus-visible
 // universal de App.vue (líneas 125-128: outline 3px solid var(--c-focus)) lo cubre.
+//
+// TASK-019 ronda 2 (HIGH 2 del review) — INVESTIGADO, NO ARREGLABLE SOLO ACÁ,
+// no repetir el intento: medido en Chrome real que este HUD cubre el año
+// "2022" de `.ch5-panel-year` (ambos desktops, tablet portrait, mobile
+// landscape). Se probó reducir el ancho de la píldora a un modo compacto
+// SOLO en ch5 (inject('scrollState').activeChapter === 5, mismo patrón que
+// StickyTimeline usa para su "popping"). Resultado medido: la matemática lo
+// hace IMPOSIBLE sin violar el tap target de 44px. El borde derecho de este
+// botón está fijado por `right: var(--sp-md)` = ancho_viewport − 16, y para
+// no tocar el año hace falta que el borde IZQUIERDO llegue a
+// ancho_viewport − 43 (desktop) o − 28 (mobile/tablet) — es decir un ancho
+// de ≤27px (desktop) o ≤12px (mobile/tablet), muy por debajo del mínimo de
+// 44px de accesibilidad (bloqueado por el Test 7 de este mismo componente).
+// Incluso en el modo icon-only más angosto medido (44-53px) la cobertura
+// del año se mantiene esencialmente completa (0-21% de alivio real, no
+// legible). Es la MISMA clase estructural que los residuales de ch2/ch3/ch4
+// (contrato de tap target vs. margen disponible) — la diferencia es que acá
+// se demostró con números, no se asumió. Arreglo real: reservar el espacio
+// del chasis en el padding-top de `.ch5-stream-panel` o mover
+// `.ch5-panel-year`, y ambos requieren tocar Chapter5Content.vue (fuera de
+// la lista blanca de este ticket). Ver hand-off de TASK-019 ronda 2.
 
 import { useI18n } from 'vue-i18n'
 import { persistLocale } from '@/i18n'

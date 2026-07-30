@@ -32,8 +32,9 @@
 //   1. `npm run dev` (deja el server en :5173 o el siguiente puerto libre).
 //   2. Chrome HEADED con --remote-debugging-port=9333 (headless degrada
 //      compositor/backdrop-filter y además ignora --window-size chico).
-//   3. `node scripts/verify-chassis-overlap.mjs --url=http://127.0.0.1:PORT/`
-//      (opcional: --cdp-port=NNNN --chapters=0,1,2,3,4,5,6)
+//   3. `node scripts/verify-chassis-overlap.mjs --url=http://127.0.0.1:PORT/ --locale=es`
+//      (--locale=es|en es OBLIGATORIO; correr dos veces, una por idioma.
+//      opcional: --cdp-port=NNNN --chapters=0,1,2,3,4,5,6)
 //
 // Bloqueadores ya resueltos, no los redescubras: BootScreen exige
 // Input.dispatchMouseEvent real; la cinemática ch2→ch3 (~5.9s) se saltea con
@@ -43,6 +44,30 @@
 // salvo los que el propio ticket pide en impar, ver comentario en VIEWPORTS);
 // nunca sleep fijo tras un salto de scroll — se espera a que scrollTop se
 // estabilice.
+//
+// RONDA 2 (review 2026-07-30, HIGH 3): el arnes NO fijaba locale y media solo
+// en ingles (default de navigator.language en el entorno CDP). Espanol es el
+// caso de texto largo (~4x, LECCIONES-TECNICAS.md 6) y varios residuales
+// dependen del ancho de linea. `--locale=es|en` fija
+// localStorage['portfolio.locale'] ANTES de que main.js resuelva el locale
+// inicial (via Page.addScriptToEvaluateOnNewDocument, corre antes que
+// cualquier script de la pagina en cada navegacion). Correr el arnes DOS
+// VECES (una por locale) -- no hay default silencioso: si no se pasa
+// --locale, revienta con error en vez de medir un solo idioma sin decirlo.
+//
+// RONDA 2 (HIGH 1 + AC4 landscape): las cajas de texto por
+// getBoundingClientRect() dan falsos positivos cuando el texto no llega a los
+// bordes de su caja (padding, centrado, line-height). Se agrega medicion a
+// nivel de GLIFOS con Range.getClientRects() sobre los nodos de texto propios
+// de cada caja -- la interseccion real (la que decide PASS/FAIL) es
+// glifo x chasis, no caja x chasis. La interseccion de cajas se conserva en
+// el JSON como contexto/debug (`boxIntersects`) pero ya no decide el
+// resultado.
+//
+// HUECO CONOCIDO DEL ARNES, declarado y NO resuelto en esta ronda (MEDIUM 7,
+// mismo punto ciego de LECCIONES-TECNICAS.md 6): no ejercita estados que se
+// abren por click (ej. "Keep reading" de ch3, overlays). Solo mide el DOM tal
+// como carga + scroll, nunca tras una interaccion de click.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -51,13 +76,19 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function parseArgs(argv) {
-  const out = { cdpPort: 9333, url: 'http://127.0.0.1:5173/', chapters: [0, 1, 2, 3, 4, 5, 6] }
+  const out = { cdpPort: 9333, url: 'http://127.0.0.1:5173/', chapters: [0, 1, 2, 3, 4, 5, 6], locale: null }
   for (const arg of argv) {
     const m = arg.match(/^--([\w-]+)=(.+)$/)
     if (!m) continue
     if (m[1] === 'cdp-port') out.cdpPort = Number(m[2])
     if (m[1] === 'url') out.url = m[2]
     if (m[1] === 'chapters') out.chapters = m[2].split(',').map(Number)
+    if (m[1] === 'locale') out.locale = m[2]
+  }
+  // RONDA 2 HIGH 3 — sin default silencioso: correr sin --locale medía
+  // siempre en inglés sin que nadie lo supiera (LECCIONES-TECNICAS.md §6).
+  if (out.locale !== 'es' && out.locale !== 'en') {
+    throw new Error(`--locale=es|en es obligatorio (recibido: ${JSON.stringify(out.locale)}). Correr el arnés dos veces, una por locale.`)
   }
   return out
 }
@@ -207,6 +238,50 @@ window.__intersects = function(a, b) {
   if (!a || !b) return false;
   return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 };
+// RONDA 2 (HIGH 1 + AC4 landscape) — rects de los GLIFOS reales via Range,
+// no de la caja del elemento. Una caja puede intersectar sin que el texto
+// llegue a ese borde (padding, centrado); esto lo distingue.
+window.__glyphRectsOwn = function(el) {
+  const rects = [];
+  for (const child of el.childNodes) {
+    if (child.nodeType === 3 && child.textContent.trim()) {
+      try {
+        const r = document.createRange();
+        r.selectNodeContents(child);
+        for (const rect of r.getClientRects()) {
+          if (rect.width > 0 && rect.height > 0) {
+            rects.push({ x0: Math.round(rect.left), y0: Math.round(rect.top), x1: Math.round(rect.right), y1: Math.round(rect.bottom) });
+          }
+        }
+      } catch {}
+    }
+  }
+  return rects;
+};
+// Igual pero recursivo (para el <h1>/título, que puede tener spans internos).
+window.__glyphRectsDeep = function(el) {
+  const rects = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
+      if (node.parentElement && node.parentElement.closest('svg, script, style, noscript, [aria-hidden="true"]')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  let node;
+  while ((node = walker.nextNode())) {
+    try {
+      const r = document.createRange();
+      r.selectNodeContents(node);
+      for (const rect of r.getClientRects()) {
+        if (rect.width > 0 && rect.height > 0) {
+          rects.push({ x0: Math.round(rect.left), y0: Math.round(rect.top), x1: Math.round(rect.right), y1: Math.round(rect.bottom) });
+        }
+      }
+    } catch {}
+  }
+  return rects;
+};
 // Los 7 candidatos "flotantes del chasis" enumerados (ticket: "no asumas que
 // son tres, puede haber más" — StickyAvatar y SkipLink se miden también).
 window.__CHASSIS_SELECTORS = {
@@ -259,7 +334,13 @@ window.__textBoxesInSection = function(sectionSelector) {
     if (el.offsetParent === null && cs.position !== 'fixed') continue;
     const r = el.getBoundingClientRect();
     if (r.width <= 0 || r.height <= 0) continue;
-    boxes.push({ tag: el.tagName, cls: (el.className && el.className.baseVal) || el.className || '', text: ownText.slice(0, 60), rect: window.__rect(el) });
+    boxes.push({
+      tag: el.tagName,
+      cls: (el.className && el.className.baseVal) || el.className || '',
+      text: ownText.slice(0, 60),
+      rect: window.__rect(el),
+      glyphRects: window.__glyphRectsOwn(el),
+    });
   }
   return boxes;
 };
@@ -267,7 +348,8 @@ window.__titleRect = function(sectionSelector) {
   const section = document.querySelector(sectionSelector);
   if (!section) return null;
   const h = section.querySelector('h1, h2, [class*="title"]');
-  return h ? window.__rect(h) : null;
+  if (!h) return null;
+  return { rect: window.__rect(h), glyphRects: window.__glyphRectsDeep(h) };
 };
 'installed';
 `
@@ -277,6 +359,14 @@ function report(name, ok, detail) {
   RESULTS.push({ name, ok, detail })
   console.log(`${ok ? 'PASS' : 'FAIL'} — ${name}${detail ? ' :: ' + detail : ''}`)
   return ok
+}
+
+// RONDA 2 (HIGH 1) — intersección de RECTS, calculada en Node sobre los
+// objetos ya serializados que vuelven de evaluate(). Se usa tanto para
+// chasis×caja (contexto/debug) como para chasis×glifo (la que decide).
+function rectsIntersect(a, b) {
+  if (!a || !b) return false
+  return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
 }
 
 async function measureChapterAtViewport(cx, viewportName, chapterN) {
@@ -291,39 +381,58 @@ async function measureChapterAtViewport(cx, viewportName, chapterN) {
   const textBoxes = await evaluate(`window.__textBoxesInSection('section[data-chapter="${chapterN}"]')`)
   const titleRect = await evaluate(`window.__titleRect('section[data-chapter="${chapterN}"]')`)
 
+  // offenders: intersección de RECTS *y* de al menos un glifo real (esto es
+  // lo que decide PASS/FAIL). boxOnlyOffenders: intersección de rects SIN
+  // ningún glifo cubierto — falso positivo de caja, se declara pero no falla
+  // (HIGH 1: "si no hay glifos cubiertos, declararlo con el número").
   const offenders = []
+  const boxOnlyOffenders = []
   for (const [chassisKey, chassisRect] of Object.entries(chassis)) {
     if (!chassisRect) continue
     for (const box of textBoxes) {
-      const a = chassisRect
-      const b = box.rect
-      const intersects = a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0
-      if (intersects) {
-        offenders.push({ chassisKey, chassisRect, box })
+      if (!rectsIntersect(chassisRect, box.rect)) continue
+      const glyphHits = (box.glyphRects || []).filter((g) => rectsIntersect(chassisRect, g))
+      if (glyphHits.length > 0) {
+        offenders.push({ chassisKey, chassisRect, box, glyphHitCount: glyphHits.length })
+      } else {
+        boxOnlyOffenders.push({ chassisKey, chassisRect, box })
       }
     }
   }
 
   const ok = offenders.length === 0
   report(
-    `[${viewportName}] ch${chapterN} — ningún elemento flotante del chasis intersecta texto de contenido`,
+    `[${viewportName}] ch${chapterN} — ningún elemento flotante del chasis cubre GLIFOS de contenido`,
     ok,
     ok ? `chassisFound=${Object.entries(chassis).filter(([, v]) => v).map(([k]) => k).join(',')}` : JSON.stringify(offenders.slice(0, 8))
   )
-
-  // AC4 — título legible completo (chequeo específico contra StickyTimeline).
-  if (titleRect && chassis.timeline) {
-    const t = titleRect
-    const tl = chassis.timeline
-    const titleIntersects = tl.x0 < t.x1 && tl.x1 > t.x0 && tl.y0 < t.y1 && tl.y1 > t.y0
+  if (boxOnlyOffenders.length > 0) {
+    // Informativo, NUNCA decide ok — caja intersecta pero ningún glifo cae
+    // dentro (padding/centrado). Se deja declarado y auditable en el JSON.
     report(
-      `[${viewportName}] ch${chapterN} — título NO tapado por StickyTimeline`,
-      !titleIntersects,
-      JSON.stringify({ titleRect: t, timelineRect: tl })
+      `[${viewportName}] ch${chapterN} — cajas con solape de RECT sin cobertura de glifos (falso positivo de caja, no cuenta como defecto)`,
+      true,
+      JSON.stringify(boxOnlyOffenders.slice(0, 8).map((o) => ({ chassisKey: o.chassisKey, tag: o.box.tag, cls: o.box.cls, text: o.box.text })))
     )
   }
 
-  return { chassis, textBoxes: textBoxes.length, offenders, titleRect }
+  // AC4 — título legible completo (chequeo específico contra StickyTimeline,
+  // a nivel de glifos: RONDA 2, el reviewer notó que .ch4-title mide
+  // x0=0,x1=844 como caja en landscape pero el texto está CENTRADO).
+  if (titleRect && chassis.timeline) {
+    const t = titleRect.rect
+    const tl = chassis.timeline
+    const boxIntersects = rectsIntersect(tl, t)
+    const glyphHits = (titleRect.glyphRects || []).filter((g) => rectsIntersect(tl, g))
+    const titleGlyphCovered = glyphHits.length > 0
+    report(
+      `[${viewportName}] ch${chapterN} — título NO tapado por StickyTimeline (nivel de glifos)`,
+      !titleGlyphCovered,
+      JSON.stringify({ titleRect: t, timelineRect: tl, boxIntersects, glyphHitCount: glyphHits.length })
+    )
+  }
+
+  return { chassis, textBoxes: textBoxes.length, offenders, boxOnlyOffenders, titleRect }
 }
 
 // Viewports del ticket:
@@ -344,11 +453,20 @@ const VIEWPORTS = [
 ]
 
 async function main() {
-  const { cdpPort, url, chapters } = parseArgs(process.argv.slice(2))
+  const { cdpPort, url, chapters, locale } = parseArgs(process.argv.slice(2))
   const cx = await connect(cdpPort, url)
   await cx.send('Page.enable')
   await cx.send('Runtime.enable')
   await cx.send('DOM.enable')
+  // RONDA 2 HIGH 3 — fija localStorage['portfolio.locale'] ANTES de que
+  // main.js corra en CADA navegación futura (Page.navigate re-carga el
+  // documento por cada viewport en el loop de abajo). resolveInitialLocale()
+  // en src/i18n/index.js lee este key de forma síncrona al importar el
+  // módulo, así que esto tiene que llegar antes que cualquier script de la
+  // página, no después del load.
+  await cx.send('Page.addScriptToEvaluateOnNewDocument', {
+    source: `try { localStorage.setItem('portfolio.locale', ${JSON.stringify(locale)}); } catch {}`,
+  })
 
   const allResults = {}
   for (const [name, w, h, dsf, mobile] of VIEWPORTS) {
@@ -362,9 +480,12 @@ async function main() {
   }
 
   const allClean = RESULTS.every((r) => r.ok)
-  const outPath = path.resolve(__dirname, '..', '.planning', 'task019-chassis-verify-results.json')
+  // RONDA 2 HIGH 3 — un archivo por locale (nunca se pisan entre sí; el
+  // MEDIUM 6 de la ronda 1 ya señaló que el JSON de una corrida sin locale
+  // fijado no era auditable).
+  const outPath = path.resolve(__dirname, '..', '.planning', `task019-chassis-verify-results-${locale}.json`)
   try {
-    fs.writeFileSync(outPath, JSON.stringify({ summary: RESULTS, detail: allResults }, null, 2))
+    fs.writeFileSync(outPath, JSON.stringify({ locale, summary: RESULTS, detail: allResults }, null, 2))
     console.log(`\nResultados detallados escritos en ${outPath}`)
   } catch {
     // best-effort

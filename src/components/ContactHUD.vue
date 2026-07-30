@@ -220,11 +220,21 @@ const locationDisabled = computed(() => !contact.location || contact.location ==
  * colapso-a-toggle re-verificado también contra ch6, o ampliar el margen del
  * propio capítulo — ninguno de los dos es seguro dentro del alcance/lista
  * blanca de este ticket).
+ *
+ * RONDA 2 (MEDIUM 5 de review): este comentario decía "mobile conserva su
+ * propio inset sin cambios" y el `bottom` de abajo NO lo hacía — había
+ * quedado en `env(safe-area-inset-bottom, 0)` (sin el `+ var(--sp-sm)` que
+ * el bloque tenía antes de TASK-019, efecto colateral del intento de fila
+ * horizontal revertido arriba). Corregido: se restaura el `+ var(--sp-sm)`
+ * (el margen que existía por la barra de navegación del navegador) para que
+ * el comentario y el código digan lo mismo, y de paso la columna sube 8px
+ * en mobile — reduce, no agrava, el solapamiento vertical residual descrito
+ * arriba.
  * ───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 599px), (max-height: 500px) {
   .contact-hud {
     right: var(--sp-sm);
-    bottom: env(safe-area-inset-bottom, 0);
+    bottom: calc(env(safe-area-inset-bottom, 0) + var(--sp-sm));
   }
 }
 </style>

@@ -176,14 +176,18 @@ describe('ContactHUD.vue', () => {
     expect(baseMatch[0]).toMatch(/bottom:\s*calc\(env\(safe-area-inset-bottom,\s*0\)\s*\+\s*60px\)/)
   })
 
-  // T10 (TASK-019): el mismo inset mobile (right: var(--sp-sm), bottom sin
-  // lift) que ya regía sólo en portrait (<600px de ancho) ahora también
-  // dispara en mobile landscape corto (max-height: 500px) — antes ese
-  // breakpoint (ej. 844×390) quedaba con el ancho DESKTOP completo. Se
-  // conserva `flex-direction: column` (columna vertical, SIN cambios de
-  // forma): una versión anterior de este fix la convertía en fila horizontal,
-  // pero eso regresionaba `.ch6-convo` (TASK-012) — revertido, ver comentario
-  // largo en el componente.
+  // T10 (TASK-019, corregido ronda 2 / MEDIUM 5): el mismo inset mobile
+  // (right: var(--sp-sm), bottom con el margen `+ var(--sp-sm)` que ya regía
+  // antes de TASK-019 por la barra de navegación) que ya regía sólo en
+  // portrait (<600px de ancho) ahora también dispara en mobile landscape
+  // corto (max-height: 500px) — antes ese breakpoint (ej. 844×390) quedaba
+  // con el ancho DESKTOP completo. Se conserva `flex-direction: column`
+  // (columna vertical, SIN cambios de forma): una versión anterior de este
+  // fix la convertía en fila horizontal, pero eso regresionaba `.ch6-convo`
+  // (TASK-012) — revertido, ver comentario largo en el componente. Ronda 2:
+  // el `bottom` había quedado sin el `+ var(--sp-sm)` (efecto colateral del
+  // intento de fila revertido) mientras el comentario decía "sin cambios" —
+  // corregido para que ambos coincidan (MEDIUM 5 de review).
   it('T10 (TASK-019): @media (max-width:599px), (max-height:500px) aplica right/bottom compactos SIN cambiar flex-direction', () => {
     const mobileMatch = CONTACT_HUD_SOURCE.match(
       /@media \(max-width: 599px\), \(max-height: 500px\) \{\s*\.contact-hud\s*\{[\s\S]*?\}/
@@ -191,7 +195,7 @@ describe('ContactHUD.vue', () => {
     expect(mobileMatch).not.toBeNull()
     expect(mobileMatch[0]).not.toMatch(/flex-direction/)
     expect(mobileMatch[0]).toMatch(/right:\s*var\(--sp-sm\)/)
-    expect(mobileMatch[0]).toMatch(/bottom:\s*env\(safe-area-inset-bottom,\s*0\)/)
+    expect(mobileMatch[0]).toMatch(/bottom:\s*calc\(env\(safe-area-inset-bottom,\s*0\)\s*\+\s*var\(--sp-sm\)\)/)
   })
 
   // ─────────────────────────────────────────────────────────────────────────
