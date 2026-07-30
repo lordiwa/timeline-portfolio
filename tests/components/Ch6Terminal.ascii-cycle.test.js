@@ -35,16 +35,17 @@ async function mountTerminal({ locale = 'es', prefersReduced = false, activeChap
   const Ch6Terminal = (await import('@/components/Ch6Terminal.vue')).default
   const i18n = createTestI18n({ locale })
   const activeChapterRef = ref(activeChapter)
+  const prefersReducedRef = ref(prefersReduced)
   const wrapper = mount(Ch6Terminal, {
     global: {
       plugins: [i18n],
       provide: {
         scrollState: { activeChapter: activeChapterRef },
-        prm: { prefersReduced: ref(prefersReduced) },
+        prm: { prefersReduced: prefersReducedRef },
       },
     },
   })
-  return { wrapper, i18n, activeChapterRef }
+  return { wrapper, i18n, activeChapterRef, prefersReducedRef }
 }
 
 // Tiempo total que tarda skip() alcanzar 'done' desde el mount — boot fijo +
@@ -250,6 +251,55 @@ describe('Ch6Terminal.vue — ciclo ASCII tras el reposo final (TASK-034)', () =
       for (let i = 1; i < mixesInReturnWindow.length; i++) {
         expect(mixesInReturnWindow[i]).toBeLessThanOrEqual(mixesInReturnWindow[i - 1] + 1e-9)
       }
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('T6 (LOW, ronda 2): activar reduce-motion en caliente durante el ciclo detiene el arranque de la SIGUIENTE vuelta (runAsciiCycle re-chequea prefersReduced por vuelta, no solo al entrar)', async () => {
+    vi.useFakeTimers()
+    try {
+      const { wrapper, prefersReducedRef } = await mountTerminal({ prefersReduced: false, activeChapter: 6 })
+      await reachDoneViaSkip(wrapper)
+
+      // Cronograma exacto de la 1ra vuelta desde t=0 (justo tras
+      // reachDoneViaSkip): dwell ASCII 4000ms → retorno 24×50ms (termina en
+      // t=5200) → dwell normal 3000ms (termina en t=8200) → takeover
+      // 24×60ms, cuyo ÚLTIMO emit (i=24, mix=0.8 — emitAsciiProgress(1) cae
+      // en la rama "else", no en emitClosingProgress) ocurre en t=9580;
+      // el `delay(60)` que lo sigue recién resuelve en t=9640, y es AHÍ
+      // —en el mismo tick síncrono— donde corren `emitClosingProgress(1)`
+      // (mix→1, "reposo final") Y el re-chequeo del `while` que decide si
+      // arranca una 2da vuelta. Avanzamos hasta t=9600: después del último
+      // emit de la 1ra vuelta pero ANTES de ese tick de decisión.
+      await vi.advanceTimersByTimeAsync(9600)
+      await flushPromises()
+
+      const countBeforeLastTick = wrapper.emitted('ascii-progress').length
+
+      // Reduce-motion se activa a nivel OS mientras el visitante sigue
+      // parqueado en ch6, ANTES de que el while-loop reevalúe su condición.
+      prefersReducedRef.value = true
+
+      // Cruza t=9640: la vuelta YA en curso corre hasta su próximo
+      // checkpoint como siempre (emitClosingProgress(1) NO chequea PRM) —
+      // debe seguir emitiendo el cierre mix≈1 de esta 1ra vuelta.
+      await vi.advanceTimersByTimeAsync(200)
+      await flushPromises()
+      const emittedAfterClose = wrapper.emitted('ascii-progress')
+      const countAfterClose = emittedAfterClose.length
+      expect(countAfterClose).toBeGreaterThan(countBeforeLastTick)
+      expect(emittedAfterClose[countAfterClose - 1][0].mix).toBeCloseTo(1, 5)
+
+      // Sin el fix, el `while (alive(v))` original solo chequeaba PRM al
+      // ENTRAR al ciclo (antes de reachDoneViaSkip) y nunca lo re-evalúa, así
+      // que una 2da vuelta completa arrancaría igual pese al toggle. Avanza
+      // muy por encima de una vuelta completa (≈9.6s nominal) y confirma
+      // CERO emisiones nuevas — el while-check en t=9640 ya vio
+      // prefersReduced=true y no arrancó la 2da vuelta.
+      await vi.advanceTimersByTimeAsync(20000)
+      await flushPromises()
+      expect(wrapper.emitted('ascii-progress').length).toBe(countAfterClose)
     } finally {
       vi.useRealTimers()
     }

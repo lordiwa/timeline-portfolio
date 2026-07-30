@@ -811,6 +811,22 @@ export class SpaceScene extends Phaser.Scene {
     if (typeof progress.mix === 'number') this._asciiPipeline.uMix = progress.mix
     if (typeof progress.mode === 'number') this._asciiPipeline.uMode = progress.mode
     if (typeof progress.tint === 'number') this._asciiPipeline.uTint = progress.tint
+    // TASK-034 ronda 2 (HIGH de review) — hook de test: buffer con timestamps
+    // de la TRAYECTORIA REAL de `mix`, para que scripts/verify-ch6-climax.mjs
+    // (check J2) afirme "1 → <0.05 → 1" directamente sobre el valor que este
+    // método aplica al pipeline, en vez de inferir "el ciclo corre" muestreando
+    // luma de un punto de pantalla — señal contaminada por el twinkle del
+    // fondo (uTime vivo salvo PRM) y por los tweens Sine yoyo/repeat de los
+    // drones, ambos ajenos al ciclo. src/phaser/SpaceScene.js SÍ está en la
+    // lista blanca de tasks/TASK-034.json (el comentario previo en el harness
+    // que decía lo contrario era un error factual, corregido en esta ronda).
+    // Cap a 500 entradas (shift del más viejo) — descarta memoria acumulada
+    // en sesiones largas sin afectar la ventana de ~12s que audita el harness.
+    if (typeof window !== 'undefined' && typeof progress.mix === 'number') {
+      const buf = window.__ch6AsciiMix || (window.__ch6AsciiMix = [])
+      buf.push({ t: Date.now(), mix: progress.mix })
+      if (buf.length > 500) buf.shift()
+    }
   }
 
   /**

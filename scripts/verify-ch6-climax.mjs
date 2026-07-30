@@ -38,14 +38,19 @@
 //      su canvas, el audio del dial-up dispara al entrar a ch1.
 //   I. Em-dash ausente en el innerText renderizado de ch6.
 //   J. TASK-034 — el ciclo ASCII no queda asentado en el reposo final: tras
-//      alcanzarlo, una franja de fondo samplada VARÍA a lo largo de una
-//      ventana de ~12s (contraste con F3, que bajo PRM da el mismo valor
-//      byte a byte en la misma ventana — cero ruido de medición cuando el
-//      frame no cambia de verdad). El texto de cierre (AC2) se verifica
-//      legible durante toda la ventana. F3 (dentro de checkPRM) confirma
-//      que bajo PRM el ciclo NO arranca (AC5). La prueba visual de QUÉ
-//      cambia (vuelve a la vista normal, no cualquier otra cosa) vive en
-//      las capturas Chrome headed manuales del hand-off, no en este número.
+//      alcanzarlo, la TRAYECTORIA REAL de `mix` (leída del hook de test
+//      window.__ch6AsciiMix, buffer {t,mix} expuesto por
+//      SpaceScene.handleAsciiProgress — RONDA 2, 2026-07-30) hace
+//      1 → <0.05 → 1 dentro de una ventana de ~12s. Ronda 1 usaba una franja
+//      de luma sampleada, que el review demostró contaminada por el twinkle
+//      del fondo y los tweens de los drones (falso verde con el ciclo roto).
+//      El texto de cierre (AC2) se verifica legible durante toda la ventana.
+//      F3 (dentro de checkPRM) confirma que bajo PRM el ciclo NO arranca
+//      (AC5), midiendo la franja de luma — ahí SÍ es válido porque bajo PRM
+//      no hay otra fuente de variación (uTime y tweens congelados). La
+//      prueba visual de QUÉ cambia (vuelve a la vista normal, no cualquier
+//      otra cosa) vive en las capturas Chrome headed manuales del hand-off,
+//      no en este número.
 //
 // CÓMO CORRERLO (Windows/PowerShell, receta completa en
 // .planning/LECCIONES-TECNICAS.md §6):
@@ -523,31 +528,30 @@ async function checkPlanetsAndDronesInFrame(cx, viewportName, canvasRect) {
 // ─────────────────────────────────────────────────────────────────────────
 // J: TASK-034 — el ciclo ASCII vuelve a la vista normal y se repite.
 //
-// No hay hook de debug expuesto para leer `uMix` directamente (fuera de la
-// lista blanca del ticket agregarlo), así que la prueba automatizada NO
-// intenta clasificar "es ASCII" / "es vista normal" contra un umbral
-// absoluto de contraste local — se intentó (rango de luma > umbral fijo,
-// misma técnica que el check D) y falló por calibración: en el punto de
-// muestreo elegido, la escena en vista NORMAL ya tiene contraste local alto
-// por sí misma (líneas del anillo holográfico / naves cruzando), así que
-// ningún umbral fijo distingue de forma confiable "ASCII" de "normal" ahí,
-// y desplazar el punto no lo resuelve en general porque casi toda la banda
-// de cámara final tiene algún elemento de detalle (planetas, anillo, naves,
-// héroes, drones). Ver hand-off de TASK-034 para el detalle de la
-// calibración descartada.
+// RONDA 2 (2026-07-30) — HIGH de review sobre la versión anterior de este
+// check: J2 afirmaba "variación temporal en la franja ⇒ el ciclo anima" con
+// criterio distinctValues > 1. Premisa falsa, y el propio código la
+// contradice: bajo no-PRM, SpaceScene.update() avanza uTime cada frame
+// alimentando el twinkle del fondo, y los drones (CH6_WORLD_POINTS más
+// arriba) tienen tweens Sine.easeInOut yoyo/repeat:-1 que oscilan su
+// posición REAL en pantalla sin parar. El reviewer lo demostró MIDIENDO: con
+// el ciclo en silencio de diseño (dwell de 4s, lock T1 de TASK-012 sin
+// emisiones), la franja igual variaba (3 valores distintos, delta ~57) — un
+// sensor que da verde con el ciclo roto.
 //
-// Señal que SÍ es robusta y no depende de calibrar nada: VARIACIÓN
-// TEMPORAL del mismo punto. F3 (más abajo) ya demuestra que, bajo PRM
-// (donde el ciclo no corre y uTime del pipeline ASCII queda congelado), dos
-// muestras separadas 10s dan el número EXACTO, byte a byte — cero ruido de
-// medición cuando el frame realmente no cambia. Por lo tanto, si fuera de
-// PRM el mismo punto SÍ varía a lo largo de una ventana equivalente, la
-// única explicación posible es que algo lo está animando — el ciclo ASCII
-// (no hay otra fuente: el filamento neural y los struts del unísono ya
-// terminaron su timeline mucho antes de llegar al reposo final). La prueba
-// visual de qué es lo que cambia (el ciclo vuelve a la vista normal, no
-// cualquier otra cosa) queda en las capturas Chrome headed del AC1 (ver
-// hand-off), no en este número.
+// El comentario anterior en este archivo decía que exponer un hook de `uMix`
+// estaría "fuera de la lista blanca del ticket". Eso era FALSO — la lista
+// blanca de tasks/TASK-034.json incluye explícitamente
+// src/phaser/SpaceScene.js. Fix real: SpaceScene.handleAsciiProgress ahora
+// expone `window.__ch6AsciiMix`, un buffer {t, mix} con la trayectoria REAL
+// que el bridge aplica al pipeline — cero inferencia visual, cero ruido de
+// twinkle/drones. J2 abajo afirma la trayectoria "1 → <0.05 → 1" leyendo ese
+// buffer directamente.
+//
+// F3 (más abajo, dentro de checkPRM) sigue siendo válido pero prueba OTRA
+// cosa: que bajo PRM (tweens.timeScale=0, uTime congelado) no hay ruido de
+// medición. Eso no implica que en no-PRM "la franja varía" ⇒ "el ciclo
+// corre" — ese fue el razonamiento inválido de la ronda 1.
 async function sampleAsciiRegionRange(cx, canvasRect) {
   const screenX = canvasRect.x0 + canvasRect.w * 0.5
   const screenY = canvasRect.y0 + canvasRect.h * 0.30
@@ -579,6 +583,20 @@ async function checkAsciiCycle(cx, url) {
     reachedDone = await evaluate(`!!document.querySelector('.ch6-bits--settled')`)
     if (reachedDone) break
   }
+  // Ancla J2 al ÚLTIMO timestamp que el propio buffer del bridge registró en
+  // el momento de detectar el reposo (NO "Date.now() del navegador menos un
+  // margen fijo" — bajo la máquina cargada de esta ronda los timers reales
+  // llegaron a atrasarse >1s entre pasos de 50/60ms nominales, así que un
+  // margen fijo de 1000ms restado a Date.now() perdía la propia entrada
+  // mix=1 del reposo. Leer el ÚLTIMO elemento del buffer es inmune a ese
+  // atraso: sea cual sea el reloj real, `buf.at(-1).t` ES el instante exacto
+  // en que el bridge escribió mix=1 — el dwell de 4s en silencio (T1 de
+  // TASK-012) garantiza que ninguna escritura nueva ocurre antes de que
+  // detectemos `.ch6-bits--settled`, así que ese último elemento SIGUE
+  // siendo el de reposo aunque la detección tarde varios segundos en llegar.
+  const doneAt = reachedDone
+    ? await evaluate(`(window.__ch6AsciiMix || []).slice(-1)[0]?.t ?? Date.now()`)
+    : null
   // Margen de asentamiento tras detectar el marcador (mismo patrón que
   // checkViewportGeometry) — evita leer opacity a mitad de un repaint.
   if (reachedDone) await sleep(300)
@@ -594,21 +612,46 @@ async function checkAsciiCycle(cx, url) {
     const r = document.querySelector('.ch6-canvas-host canvas')?.getBoundingClientRect();
     return r ? { x0: r.left, y0: r.top, w: r.width, h: r.height } : null;
   })()`)
-  if (!report('J0b. canvas de Phaser presente para samplear', !!canvasRect)) return
+  if (!report('J0b. canvas de Phaser presente (sanity de infraestructura, ya no alimenta J2)', !!canvasRect)) return
 
   // Ventana de ~12s (> una vuelta de ciclo completa nominal, ~9.6s) —
   // suficiente para atravesar dwell-ASCII + retorno + dwell-normal +
-  // re-takeover al menos una vez. Muestrea cada 1s.
-  const samples = []
-  for (let i = 0; i < 12; i++) {
-    samples.push((await sampleAsciiRegionRange(cx, canvasRect)).range)
-    await sleep(1000)
+  // re-takeover al menos una vez.
+  await sleep(12000)
+
+  // J2 — RONDA 2: lee window.__ch6AsciiMix (buffer expuesto por
+  // SpaceScene.handleAsciiProgress, ver comentario arriba) y afirma la
+  // TRAYECTORIA REAL del bridge: un valor alto (reposo, >=0.95) seguido —
+  // dentro de la ventana post-reposo — de un valor bajo (vista normal,
+  // <0.05) seguido a su vez de OTRO valor alto (re-takeover, >=0.95). Si el
+  // ciclo se quedara asentado, el buffer no tendría NINGUNA entrada después
+  // de doneAt (handleAsciiProgress ya no se llamaría nunca más), así que
+  // "bajo" y "alto-después-de-bajo" son imposibles de satisfacer por
+  // casualidad — es la regresión exacta que este ticket arregla.
+  const trajectory = doneAt
+    ? await evaluate(`(window.__ch6AsciiMix || []).filter((e) => e.t >= ${doneAt})`)
+    : []
+  let sawHighBefore = false
+  let sawLowAfterHigh = false
+  let sawHighAfterLow = false
+  for (const e of trajectory) {
+    if (!sawHighBefore) {
+      if (e.mix >= 0.95) sawHighBefore = true
+      continue
+    }
+    if (!sawLowAfterHigh) {
+      if (e.mix < 0.05) sawLowAfterHigh = true
+      continue
+    }
+    if (e.mix >= 0.95) {
+      sawHighAfterLow = true
+      break
+    }
   }
-  const distinctValues = new Set(samples.map((r) => r.toFixed(3))).size
   report(
-    'J2 (AC1: "el ciclo se repite" — nunca queda asentado). la franja muestrada VARÍA a lo largo de ~12s tras el reposo final (contraste con F3 bajo PRM, que da el MISMO valor byte a byte)',
-    distinctValues > 1,
-    JSON.stringify({ samples, distinctValues }),
+    'J2 (AC1: "el ciclo se repite" — nunca queda asentado). trayectoria REAL de mix (window.__ch6AsciiMix) hace 1 → <0.05 → 1 dentro de la ventana post-reposo (~12s)',
+    sawHighBefore && sawLowAfterHigh && sawHighAfterLow,
+    JSON.stringify({ entries: trajectory.length, sawHighBefore, sawLowAfterHigh, sawHighAfterLow, sample: trajectory.slice(0, 60) }),
   )
   report('J3 (AC2). texto de cierre sigue legible tras la ventana de muestreo del ciclo (~12s)', await closingLegible())
 }

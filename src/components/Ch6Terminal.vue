@@ -354,7 +354,15 @@ async function runAsciiCycle(v) {
   // AC5 (TASK-034): bajo PRM el reposo final es el ÚNICO estado, para
   // siempre — el ciclo ni siquiera arranca una vuelta.
   if (prefersReduced.value) return
-  while (alive(v)) {
+  // LOW de review (ronda 2, 2026-07-30): re-chequea prefersReduced en CADA
+  // vuelta (no solo al entrar), igual que runTimeline()/typeString() re-
+  // chequean por fase — si el usuario activa reduce-motion a nivel OS
+  // estando parqueado en ch6 post-`done`, el ciclo deja de arrancar vueltas
+  // nuevas en vez de parpadear indefinidamente. La vuelta YA en curso corre
+  // hasta su próximo checkpoint de `alive(v)` como siempre (límite
+  // pre-existente, comparte el mismo alcance que _prefersReduced del lado
+  // Phaser, fijado en create() y tampoco reactivo a un toggle en caliente).
+  while (alive(v) && !prefersReduced.value) {
     await delay(CYCLE_REST_ASCII_MS)
     if (!alive(v)) return
     // Retorno a la vista normal — mismo wipe fBm en reversa (mix 1→0).
