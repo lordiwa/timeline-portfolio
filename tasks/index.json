@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T01:53:38.366Z",
+  "generated_at": "2026-07-30T02:41:40.626Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -70,7 +70,7 @@
     {
       "key": "TASK-012",
       "title": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA",
-      "status": "in_review",
+      "status": "done",
       "priority": "critical"
     },
     {
@@ -208,8 +208,38 @@
     {
       "key": "TASK-035",
       "title": "Auditoria medida de todas las imagenes de los 7 capitulos en el sitio en produccion",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
+    },
+    {
+      "key": "TASK-036",
+      "title": "ch6 tier C: el fallback de takeover por CSS que pide la spec no existe, la escena queda sin disolucion",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-037",
+      "title": "ch1: los 4 GIFs de GeoCities estan estirados y tapados por el contenido",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-038",
+      "title": "Upscale no entero en pixel art: 3 layers de parallax de ch4 y el showcase de terminal de ch0",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-039",
+      "title": "ch0 mobile: el showcase de terminal scrollea internamente pero nada lo indica",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-040",
+      "title": "Busts: revision visual lado a lado con Rafael antes de decidir si se regenera alguno",
+      "status": "todo",
+      "priority": "medium"
     }
   ]
 }

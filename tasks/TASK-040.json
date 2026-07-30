@@ -1,0 +1,31 @@
+{
+  "key": "TASK-040",
+  "title": "Busts: revision visual lado a lado con Rafael antes de decidir si se regenera alguno",
+  "description": "Resultado del AC6 de la auditoria de imagenes (TASK-035, 2026-07-29). Este ticket NO es de implementacion: es la sesion de decision que tiene que dar Rafael antes de que nadie toque arte.\n\nQUE SE MIDIO, con pixel-sampling real via Page.captureScreenshot (nunca canvas.toDataURL, por la Leccion tecnica 3), contra ch3 como referencia visual buena:\n- PIEL: el delta contra ch3 es modesto. De 6.5 (ch2) a 34.7 (ch6), sobre una escala euclidea RGB con maximo teorico ~441.\n- PELO y OJOS: deltas mucho mayores, de 13 a 177.\n\nLO IMPORTANTE, Y EL DEVELOPER FUE HONESTO EN DECIRLO: el arnes NO puede discriminar automaticamente si esos deltas son drift accidental o diferencia de estilo artistico INTENCIONAL entre eras. ch0 es pixel art muy temprano de paleta limitada a proposito, asi que un delta grande ahi puede ser exactamente lo correcto.\n\nDATO QUE CAMBIA LA HISTORIA DEL PROYECTO: el drift de piel calificado de \"pesimo\" en la memoria del proyecto (bust-rework-failure-2026-06-01) NO es medible hoy en el punto de muestra, despues de la reversion a 610df6d. O sea que el estado actual puede ser mejor de lo que dice la nota vieja.\n\nCALIBRACION DEL INSTRUMENTO, para que se pueda confiar en el numero: el primer punto de muestra del arnes (mejillas en fx=0.26/0.74) caia sistematicamente FUERA de la cara, sobre el fondo del marco, y medía \"piel\" casi blanca en ch3 y azul oscuro en ch0. El developer lo detecto inspeccionando visualmente los recortes reales antes de confiar en el dato, y recalibro a un punto de frente en la linea media vertical, verificado contra 4 bustos. Los hex completos estan en la consola capturada del arnes.\n\nPOR QUE PARA ACA Y NO SIGUE: la regla del proyecto es que el pixel-sampling es obligatorio y no se sustituye por apreciacion visual, precisamente porque el drift se declaro OK a ojo dos veces y Rafael se enojo con razon. Pero el reverso tambien vale: regenerar arte a ciegas apoyandose en un numero que no distingue drift de estilo es como se produjo el fracaso de busts del 2026-06-01, que hubo que revertir entero. Hace falta el ojo de Rafael sobre los 7 bustos lado a lado.\n\nQUE HAY QUE PREPARARLE: una comparacion lado a lado de los 7 bustos, con los hex medidos de piel, pelo y ojos de cada uno y el delta contra ch3, para que decida cual (si alguno) se regenera. Si decide regenerar, aplica el proceso old/ + CHANGELOG.md del CLAUDE.md 6.5 y la validacion de color obligatoria contra ch3 post-generacion.",
+  "acceptance_criteria": [
+    "Se le presenta a Rafael una comparacion lado a lado de los 7 bustos con los hex medidos de piel, pelo y ojos y el delta contra ch3 de cada uno.",
+    "Rafael decide, busto por busto, si esta bien o si se regenera. Su veredicto queda registrado en el ticket.",
+    "Queda documentado que deltas corresponden a estilo intencional de era y cuales serian drift accidental, para que futuras auditorias no vuelvan a levantar los mismos como defecto.",
+    "No se regenera ningun busto antes de esa decision.",
+    "Si Rafael decide regenerar alguno, se abre el ticket de arte correspondiente con el proceso old/ + CHANGELOG.md del CLAUDE.md 6.5 y la validacion de color obligatoria contra ch3 como criterio de cierre."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "art",
+    "design",
+    "busts"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-035"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T02:41:06.112Z",
+  "updated_at": "2026-07-30T02:41:06.112Z",
+  "jira_key": null,
+  "verification_tier": "uat-only",
+  "marker": "[EXPLICIT]"
+}

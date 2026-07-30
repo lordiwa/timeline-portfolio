@@ -1,0 +1,33 @@
+{
+  "key": "TASK-038",
+  "title": "Upscale no entero en pixel art: 3 layers de parallax de ch4 y el showcase de terminal de ch0",
+  "description": "MEDIUM de la auditoria medida de imagenes (TASK-035, 2026-07-29), con el arnes scripts/verify-image-audit.mjs en Chrome headed.\n\nEl sitio declara pixel art con image-rendering: pixelated. Escalar pixel art por un factor ENTERO conserva los bordes nitidos y es el uso correcto; escalarlo por un factor NO entero produce bordes irregulares y filas de pixeles de grosor desigual, que es justo lo que la estetica pixel art no tolera.\n\nCASOS MEDIDOS:\n- ch4-portal.webp, ch4-matrix.webp y ch4-near.webp (layers de parallax, background-size: cover, image-rendering: pixelated): escalas de 1.095x a 2.302x segun viewport. Ninguna entera.\n- Assets ch0-* (screenshots del showcase de terminal, object-fit: contain): escalas de 2.27x a 2.79x segun viewport.\n- Tambien skull.gif y cornholio.gif de ch1 dan upscale no entero (1.77x y 1.42x en desktop), pero esos dos ya tienen su propio ticket por estiramiento: TASK-037. No duplicar el trabajo; si TASK-037 arregla la geometria, revisar si el upscale queda resuelto de paso.\n\nPOR QUE ES MEDIUM Y NO HIGH: no rompe navegacion ni oculta contenido. Es degradacion de craft, y el craft es exactamente el objetivo del redisenio signature (Rafael puso la belleza en 0/10 y el estandar es que parezca un sitio de 50.000 dolares).\n\nTENSION REAL QUE HAY QUE RESOLVER, no ignorar: con background-size: cover y un viewport arbitrario, la escala entera es imposible de garantizar por definicion, porque el factor lo dicta el tamano de la ventana. Las salidas posibles son: (a) generar los assets a una resolucion que caiga en factor entero en los viewports mas probables, (b) cambiar el modo de escalado en esos layers, (c) aceptar el no-entero en los layers de parallax de fondo (donde el desenfoque de movimiento y la profundidad lo disimulan) y arreglar solo el showcase de ch0, que es contenido que el visitante LEE. La opcion (c) es la mas defendible a priori, pero la decide quien implemente midiendo, no a ojo.\n\nNO REGENERAR ARTE A CIEGAS. Si hace falta regenerar un asset, aplica el proceso del CLAUDE.md 6.5: mover el actual a public/assets/old/{stem}-{fecha}-iter{N}.{ext} y agregar entry al CHANGELOG.md antes de sobrescribir.\n\nCONTEXTO: ch0 y ch4 tambien tienen desbordes de texto pendientes en TASK-018. Coordinar si se tocan los mismos archivos.",
+  "acceptance_criteria": [
+    "Queda decidido y documentado, con mediciones, cual de las salidas se toma para los layers de parallax de ch4 y cual para el showcase de ch0.",
+    "El showcase de terminal de ch0, que es contenido legible, deja de escalarse por un factor que produzca bordes irregulares visibles, verificado con captura ampliada y no solo con el numero.",
+    "Si se acepta deliberadamente el upscale no entero en algun layer, queda documentado en el codigo por que ahi no degrada la percepcion, para que el arnes no lo reporte como defecto abierto para siempre.",
+    "El arnes de imagenes refleja el criterio nuevo: lo aceptado deja de contarse como defecto y lo no aceptado sigue vigilado.",
+    "Si se regenera algun asset, se cumplio el proceso old/ + CHANGELOG.md del CLAUDE.md 6.5.",
+    "npm test sigue verde y no hay regresion visual en los otros capitulos."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "ch0",
+    "ch4",
+    "design",
+    "art"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-035"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T02:40:07.685Z",
+  "updated_at": "2026-07-30T02:40:07.685Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

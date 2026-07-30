@@ -1,0 +1,31 @@
+{
+  "key": "TASK-039",
+  "title": "ch0 mobile: el showcase de terminal scrollea internamente pero nada lo indica",
+  "description": "Hallazgo de descubribilidad de la auditoria de imagenes (TASK-035, 2026-07-29). Es UX, no una imagen rota, y por eso va en ticket propio.\n\nMEDIDO: en mobile, el showcase de terminal de ch0 aparece con 0% visible al aterrizar en el capitulo, de forma intermitente segun que \"programa\" este mostrando el carrusel en ese momento (el clip depende del timing).\n\nEL DEVELOPER LO VERIFICO A MANO Y ES IMPORTANTE: el contenido NO se pierde. Es alcanzable scrolleando .ch0-content hasta el fondo, o sea que el clip es por un ancestro con overflow scroll/auto y no por overflow hidden. Eso baja la severidad: no hay perdida permanente de contenido.\n\nEL PROBLEMA REAL: no hay NINGUN indicio visual de que ese panel scrollea internamente. Un visitante en mobile ve el capitulo, no percibe que hay mas contenido abajo dentro del panel, y se va sin verlo. El contenido existe y es inalcanzable en la practica, que es una forma mas silenciosa del mismo defecto que el criterio permanente de Rafael prohibe (\"si algo tapa contenido, corta texto o vuelve algo inalcanzable, se arregla igual aunque la spec lo pida asi\").\n\nDISTINCION QUE HIZO EL ARNES Y CONVIENE CONSERVAR: un clip por overflow scroll/auto (alcanzable) no es lo mismo que un clip por overflow hidden (perdida permanente). El arnes ya separa las dos clases; este ticket es de la primera.\n\nSALIDAS POSIBLES, a decidir midiendo: un affordance de scroll (gradiente de desvanecido en el borde inferior, o un indicador de scroll), o rediseniar la altura del panel en mobile para que no haga falta scroll interno. La segunda es preferible si entra, porque un scroll interno anidado dentro de un shell con scroll-snap es fragil de por si.\n\nCUIDADO: Chapter0Content.vue esta en la lista de PROHIBIDO TOCAR de los tickets del redisenio porque ch0-ch2 son lo que se rompio en el incidente del 2026-07-27. Este ticket es la EXCEPCION explicita, limitada al panel del showcase en mobile. No toca la terminal MS-DOS que escribe, ni el BootScreen, ni TerminalScroll.vue mas alla de lo necesario.\n\nCOORDINAR: TASK-018 tambien toca ch0 (desbordes con el texto final de Rafael) y TASK-038 tambien (upscale del showcase). Los tres tocan el mismo capitulo: hacerlos en serie o unificarlos.",
+  "acceptance_criteria": [
+    "En mobile, un visitante percibe sin ayuda que el showcase tiene mas contenido: hay un affordance de scroll visible, o el panel deja de necesitar scroll interno.",
+    "El contenido del showcase es alcanzable y se verifica midiendo en 390x844 portrait y 844x390 landscape, en varios momentos del carrusel para cubrir el caracter intermitente del clip.",
+    "No se rompe el scroll-snap del shell: el scroll interno anidado no secuestra el scroll de la pagina ni impide avanzar al capitulo siguiente.",
+    "Cero regresion en ch0 desktop y en el resto del capitulo: la terminal MS-DOS sigue escribiendo y el BootScreen sigue funcionando.",
+    "npm test sigue verde."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "ch0",
+    "ux",
+    "mobile"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-035"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T02:40:35.154Z",
+  "updated_at": "2026-07-30T02:40:35.154Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

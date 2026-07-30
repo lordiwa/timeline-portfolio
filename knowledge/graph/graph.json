@@ -26,6 +26,12 @@
       "label": "ch4 2015: el salto entre realidades, shader multi-pass con optica de headset"
     },
     {
+      "id": "task-012",
+      "type": "task",
+      "ref": "tasks/TASK-012.json",
+      "label": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA"
+    },
+    {
       "id": "task-014",
       "type": "task",
       "ref": "tasks/TASK-014.json",
@@ -66,6 +72,12 @@
       "type": "task",
       "ref": "tasks/TASK-032.json",
       "label": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS"
+    },
+    {
+      "id": "task-035",
+      "type": "task",
+      "ref": "tasks/TASK-035.json",
+      "label": "Auditoria medida de todas las imagenes de los 7 capitulos en el sitio en produccion"
     }
   ],
   "edges": []

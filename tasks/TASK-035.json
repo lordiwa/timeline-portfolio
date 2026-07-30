@@ -11,7 +11,7 @@
     "Reporte de coherencia de los busts del avatar contra ch3 como referencia, por pixel-sampling de piel, pelo y ojos, con los hex medidos.",
     "Cada defecto encontrado queda como ticket de arreglo con su evidencia; este ticket no arregla nada por si mismo."
   ],
-  "status": "in_progress",
+  "status": "done",
   "priority": "high",
   "labels": [
     "qa",
@@ -20,11 +20,19 @@
   ],
   "assignee": null,
   "depends_on": [],
-  "linked_commits": [],
+  "linked_commits": [
+    "588282a"
+  ],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-30T02:41:40.626Z",
+      "body": "CERRADO. Entrega: scripts/verify-image-audit.mjs, 797 lineas, corrido en Chrome headed por CDP sobre los 7 capitulos x 4 viewports (1521x791, 1920x912, 390x844 portrait, 844x390 landscape). Evalua cada <img> y cada elemento con background-image real, excluyendo gradientes, dentro de la section activa mas .avatar-bust. Unos 180 assets unicos por pasada.\n\nSALVEDAD DE PROCESO QUE QUEDA DECLARADA: este ticket se cierra SIN review independiente del arnes. Es cero impacto en runtime (solo scripts/), pero sus findings fundan los tickets de arreglo, asi que cada uno de esos tickets debe RE-VERIFICAR su claim especifico antes de actuar en vez de tomarlo como dado. El reviewer de TASK-012 ronda 2 dejo constancia de que el commit 588282a quedo fuera de su rango y sin revisar.\n\nAC2, CARGA: cero imagenes con naturalWidth o naturalHeight en 0 y cero Content-Type no-image en los ~180 assets. Detectado por Content-Type y naturalWidth, NUNCA por codigo HTTP, correctamente, por el rewrite SPA.\n\nTRES BUGS DEL PROPIO INSTRUMENTO que el developer encontro y corrigio, y que son la razon por la que el reporte sirve:\n1. Falso positivo sistematico de oclusion: 747 HIGH en la primera corrida contra 24 tras el fix. Casi todo el arte decorativo del sitio usa pointer-events: none, y por spec de CSS eso lo excluye de elementsFromPoint aunque este pintado ahi. Fix: forzar pointer-events auto solo en el elemento auditado, restaurar despues.\n2. El clip de un cover sobredimensionado se leia como defecto, cuando en los layers de parallax de ch4 ES el mecanismo del efecto. Downgradeado a LOW para background-image; HIGH se reserva para <img>, que son assets discretos con sujeto real.\n3. La calibracion del sampling de bustos caia FUERA de la cara: el primer punto (mejillas en fx=0.26/0.74) daba sobre el fondo del marco y medía piel casi blanca en ch3 y azul oscuro en ch0. Lo detecto inspeccionando visualmente los recortes reales ANTES de confiar en el dato, y recalibro a la frente en la linea media, verificado contra 4 bustos.\nAdemas introdujo una distincion que conviene conservar: un clip por overflow scroll/auto (contenido alcanzable) no es lo mismo que uno por overflow hidden (perdida permanente), y ajusto la severidad segun eso, confirmandolo a mano en ch0 mobile.\n\nDEFECTOS ENCONTRADOS, todos convertidos en tickets como pedia el AC7:\n- TASK-037 (alta): los 4 GIFs de ch1. skull.gif estirado 8.2% no uniforme (scaleX 1.842 contra scaleY 1.703 sobre un natural de 60x90 con object-fit fill) y cornholio.gif igual; los 4 ademas ocluidos por contenido real. El estiramiento no es ambiguo; la oclusion si, porque el caos decorativo de GeoCities es parte de la identidad de ch1.\n- TASK-038 (media): upscale no entero en pixel art declarado. 3 layers de parallax de ch4 (1.095x a 2.302x) y el showcase de terminal de ch0 (2.27x a 2.79x). El ticket registra la tension real: con background-size cover y viewport arbitrario la escala entera es imposible de garantizar por definicion.\n- TASK-039 (media): el showcase de ch0 en mobile aparece con 0% visible al aterrizar, de forma intermitente segun el carrusel. El contenido NO se pierde (es alcanzable scrolleando .ch0-content) pero nada indica que ese panel scrollea, asi que en la practica el visitante no lo ve.\n- TASK-040 (media, uat-only): bustos. Piel con delta modesto contra ch3 (6.5 en ch2 a 34.7 en ch6, sobre maximo teorico ~441), pelo y ojos con deltas de 13 a 177. El arnes NO puede discriminar drift accidental de estilo intencional de era, y el developer lo declaro en vez de sacar conclusiones. Dato relevante: el drift de piel calificado de pesimo en la memoria del proyecto NO es medible hoy tras la reversion. Requiere el ojo de Rafael antes de tocar arte, porque regenerar a ciegas es exactamente como se produjo el fracaso de busts del 2026-06-01.\n\nEl JSON detallado (1.1 MB) quedo en .planning/, gitignorado por convencion; la evidencia auditable es la consola verbatim del hand-off. El arnes se re-corre con: npm run dev, Chrome headed con --remote-debugging-port=9433, y node scripts/verify-image-audit.mjs --cdp-port=9433."
+    }
+  ],
   "created_at": "2026-07-30T01:40:37.500Z",
-  "updated_at": "2026-07-30T01:42:10.534Z",
+  "updated_at": "2026-07-30T02:41:40.626Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

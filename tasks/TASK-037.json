@@ -1,0 +1,32 @@
+{
+  "key": "TASK-037",
+  "title": "ch1: los 4 GIFs de GeoCities estan estirados y tapados por el contenido",
+  "description": "HIGH de la auditoria medida de imagenes (TASK-035, 2026-07-29). Medido con el arnes scripts/verify-image-audit.mjs en Chrome headed, reproducible en los 4 viewports (1521x791, 1920x912, 390x844 portrait, 844x390 landscape).\n\nDOS DEFECTOS DISTINTOS SOBRE LOS MISMOS ELEMENTOS:\n\n1. ESTIRAMIENTO NO UNIFORME, defecto geometrico duro:\n   - img.ch1-gif--skull (/assets/oldGifs/skull.gif): natural 60x90, object-fit: fill, scaleX=1.842 contra scaleY=1.703. Son 8.2% de estiramiento no uniforme.\n   - img.ch1-gif--cornholio (cornholio.gif): natural 60x111, mismo patron, ratio 1.067.\n   El estiramiento es un defecto real independientemente de la intencion estetica: la figura sale deformada, no \"retro\".\n\n2. OCLUSION por contenido real:\n   - skull.gif: sus 4 esquinas caen tapadas por aside.ch1-meta. El centro si queda visible.\n   - cornholio.gif: tapado por button.tick-button, li.timeline-tick y div.ch1-layout.\n   - goku.gif y milk.gif: tapados por p, caption y div.ch1-bio. Estos dos NO tienen distorsion de aspecto medida.\n\nAMBIGUEDAD QUE HAY QUE RESOLVER ANTES DE TOCAR LA OCLUSION: los 4 son GIFs decorativos aria-hidden, descritos en el codigo como \"floating chaos GeoCities style\". O sea que un cierto desorden es INTENCIONAL y es parte de la identidad de ch1, que es uno de los capitulos que Rafael dijo explicitamente que le gustan (ch0-ch2 se preservan, solo se elevan en craft). La pregunta es si el efecto se percibe como caos noventero deliberado o como un gif perdido detras del texto. El estiramiento, en cambio, NO es ambiguo: se arregla.\n\nCRITERIO APLICABLE: la spec manda en estetica, pero el limite es que no dane la navegacion ni la legibilidad. Un gif decorativo aria-hidden tapado no rompe navegacion ni contenido, asi que aca el criterio de \"roto\" es mas debil que en un HUD que tapa texto. Priorizar el estiramiento.\n\nCUIDADO: Chapter1Content.vue esta en la lista de PROHIBIDO TOCAR de los tickets de capitulo del redisenio, porque ch0-ch2 son justo lo que se rompio en el incidente del 2026-07-27. Este ticket es la EXCEPCION explicita para ch1, limitada a estos 4 GIFs y su layout. No toca el marquee, ni el contador de visitas, ni la tabla, ni los badges, ni el audio del dial-up.",
+  "acceptance_criteria": [
+    "skull.gif y cornholio.gif dejan de estar estirados: la escala horizontal y vertical coinciden, medido con el arnes de imagenes y no a ojo.",
+    "Se decide y documenta explicitamente si la oclusion de los 4 GIFs es intencional o defecto; si es defecto, los GIFs quedan visibles en un porcentaje razonable de su area en los 4 viewports, con prueba geometrica.",
+    "La identidad visual GeoCities de ch1 se conserva: el caos decorativo sigue leyendose como caos deliberado y no se convierte en una grilla ordenada.",
+    "Cero regresion en el resto de ch1: marquee, contador de visitas, tabla, badges y el audio del dial-up de 2001 siguen funcionando igual.",
+    "El arnes scripts/verify-image-audit.mjs deja de reportar ASPECT_DISTORTION en ch1 y sigue verde en todo lo que ya cubria.",
+    "npm test sigue verde."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "ch1",
+    "design",
+    "art"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-035"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T02:39:34.503Z",
+  "updated_at": "2026-07-30T02:39:34.503Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
