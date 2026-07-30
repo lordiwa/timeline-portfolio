@@ -37,6 +37,15 @@
 //      exactamente 1 <aside class="ch6-convo">), el minijuego de ch2 conserva
 //      su canvas, el audio del dial-up dispara al entrar a ch1.
 //   I. Em-dash ausente en el innerText renderizado de ch6.
+//   J. TASK-034 — el ciclo ASCII no queda asentado en el reposo final: tras
+//      alcanzarlo, una franja de fondo samplada VARÍA a lo largo de una
+//      ventana de ~12s (contraste con F3, que bajo PRM da el mismo valor
+//      byte a byte en la misma ventana — cero ruido de medición cuando el
+//      frame no cambia de verdad). El texto de cierre (AC2) se verifica
+//      legible durante toda la ventana. F3 (dentro de checkPRM) confirma
+//      que bajo PRM el ciclo NO arranca (AC5). La prueba visual de QUÉ
+//      cambia (vuelve a la vista normal, no cualquier otra cosa) vive en
+//      las capturas Chrome headed manuales del hand-off, no en este número.
 //
 // CÓMO CORRERLO (Windows/PowerShell, receta completa en
 // .planning/LECCIONES-TECNICAS.md §6):
@@ -512,7 +521,103 @@ async function checkPlanetsAndDronesInFrame(cx, viewportName, canvasRect) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// J: TASK-034 — el ciclo ASCII vuelve a la vista normal y se repite.
+//
+// No hay hook de debug expuesto para leer `uMix` directamente (fuera de la
+// lista blanca del ticket agregarlo), así que la prueba automatizada NO
+// intenta clasificar "es ASCII" / "es vista normal" contra un umbral
+// absoluto de contraste local — se intentó (rango de luma > umbral fijo,
+// misma técnica que el check D) y falló por calibración: en el punto de
+// muestreo elegido, la escena en vista NORMAL ya tiene contraste local alto
+// por sí misma (líneas del anillo holográfico / naves cruzando), así que
+// ningún umbral fijo distingue de forma confiable "ASCII" de "normal" ahí,
+// y desplazar el punto no lo resuelve en general porque casi toda la banda
+// de cámara final tiene algún elemento de detalle (planetas, anillo, naves,
+// héroes, drones). Ver hand-off de TASK-034 para el detalle de la
+// calibración descartada.
+//
+// Señal que SÍ es robusta y no depende de calibrar nada: VARIACIÓN
+// TEMPORAL del mismo punto. F3 (más abajo) ya demuestra que, bajo PRM
+// (donde el ciclo no corre y uTime del pipeline ASCII queda congelado), dos
+// muestras separadas 10s dan el número EXACTO, byte a byte — cero ruido de
+// medición cuando el frame realmente no cambia. Por lo tanto, si fuera de
+// PRM el mismo punto SÍ varía a lo largo de una ventana equivalente, la
+// única explicación posible es que algo lo está animando — el ciclo ASCII
+// (no hay otra fuente: el filamento neural y los struts del unísono ya
+// terminaron su timeline mucho antes de llegar al reposo final). La prueba
+// visual de qué es lo que cambia (el ciclo vuelve a la vista normal, no
+// cualquier otra cosa) queda en las capturas Chrome headed del AC1 (ver
+// hand-off), no en este número.
+async function sampleAsciiRegionRange(cx, canvasRect) {
+  const screenX = canvasRect.x0 + canvasRect.w * 0.5
+  const screenY = canvasRect.y0 + canvasRect.h * 0.30
+  const screenshot = await cx.send('Page.captureScreenshot', { format: 'png' })
+  return sampleLumaGridInBrowser(cx, screenshot.data, screenX, screenY, 60, 40)
+}
+
+async function checkAsciiCycle(cx, url) {
+  const { send, evaluate } = cx
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false })
+  await bootToHome(cx, url)
+  await jumpToChapter(cx, 6)
+
+  // Alcanzar el reposo final rápido: clic repetido sobre el panel — no-op
+  // fuera de streaming/decoding (skip(), spec §5.5) — hasta ver
+  // `.ch6-bits--settled`, marcador inequívoco de phase==='done' (ver
+  // template de Ch6Terminal.vue).
+  let reachedDone = false
+  for (let i = 0; i < 40; i++) {
+    if (await evaluate(`!!document.querySelector('.ch6-convo')`)) {
+      const rect = await evaluate(`(() => {
+        const r = document.querySelector('.ch6-convo').getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + 20 };
+      })()`)
+      await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: rect.x, y: rect.y, button: 'left', clickCount: 1 })
+      await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: rect.x, y: rect.y, button: 'left', clickCount: 1 })
+    }
+    await sleep(500)
+    reachedDone = await evaluate(`!!document.querySelector('.ch6-bits--settled')`)
+    if (reachedDone) break
+  }
+  // Margen de asentamiento tras detectar el marcador (mismo patrón que
+  // checkViewportGeometry) — evita leer opacity a mitad de un repaint.
+  if (reachedDone) await sleep(300)
+  if (!report('J0. [ciclo ASCII] reposo final (phase===done) alcanzado dentro del presupuesto de polling (20s)', reachedDone)) return
+
+  const closingLegible = () => evaluate(`(() => {
+    const words = Array.from(document.querySelectorAll('.ch6-closing-word'));
+    return words.length > 0 && words.every((w) => getComputedStyle(w).opacity === '1');
+  })()`)
+  report('J1 (AC2). texto de cierre legible (opacity 1) justo al alcanzar el reposo final', await closingLegible())
+
+  const canvasRect = await evaluate(`(() => {
+    const r = document.querySelector('.ch6-canvas-host canvas')?.getBoundingClientRect();
+    return r ? { x0: r.left, y0: r.top, w: r.width, h: r.height } : null;
+  })()`)
+  if (!report('J0b. canvas de Phaser presente para samplear', !!canvasRect)) return
+
+  // Ventana de ~12s (> una vuelta de ciclo completa nominal, ~9.6s) —
+  // suficiente para atravesar dwell-ASCII + retorno + dwell-normal +
+  // re-takeover al menos una vez. Muestrea cada 1s.
+  const samples = []
+  for (let i = 0; i < 12; i++) {
+    samples.push((await sampleAsciiRegionRange(cx, canvasRect)).range)
+    await sleep(1000)
+  }
+  const distinctValues = new Set(samples.map((r) => r.toFixed(3))).size
+  report(
+    'J2 (AC1: "el ciclo se repite" — nunca queda asentado). la franja muestrada VARÍA a lo largo de ~12s tras el reposo final (contraste con F3 bajo PRM, que da el MISMO valor byte a byte)',
+    distinctValues > 1,
+    JSON.stringify({ samples, distinctValues }),
+  )
+  report('J3 (AC2). texto de cierre sigue legible tras la ventana de muestreo del ciclo (~12s)', await closingLegible())
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // F: PRM — cero animaciones activas, texto completo, cursor sólido.
+// F3/F4 (TASK-034, AC5): bajo PRM el ciclo NO arranca — la franja de fondo
+// no cambia entre dos muestras separadas por más de una vuelta de ciclo
+// completa (~9.6s nominal).
 // ─────────────────────────────────────────────────────────────────────────
 async function checkPRM(cx, url) {
   const { send, evaluate } = cx
@@ -531,6 +636,20 @@ async function checkPRM(cx, url) {
   })()`)
   report('F. PRM: todas las palabras visibles de inmediato (opacity 1)', m.allOpaque, `wordCount=${m.wordCount}`)
   report('F2. PRM: cursor sin animación activa', m.cursorAnims === 0, `cursorAnims=${m.cursorAnims}`)
+
+  const canvasRect = await evaluate(`(() => {
+    const r = document.querySelector('.ch6-canvas-host canvas')?.getBoundingClientRect();
+    return r ? { x0: r.left, y0: r.top, w: r.width, h: r.height } : null;
+  })()`)
+  if (canvasRect) {
+    const sampleA = await sampleAsciiRegionRange(cx, canvasRect)
+    await sleep(10000) // > una vuelta de ciclo completa nominal (~9.6s) si lo hubiera.
+    const sampleB = await sampleAsciiRegionRange(cx, canvasRect)
+    const stable = Math.abs(sampleA.range - sampleB.range) < 6
+    report('F3 (AC5). bajo PRM el ciclo NO arranca — la franja no cambia tras >1 vuelta nominal', stable, JSON.stringify({ sampleA, sampleB }))
+  } else {
+    report('F3 (AC5). bajo PRM el ciclo NO arranca', false, 'canvasRect null — no se pudo samplear')
+  }
 
   await send('Emulation.setEmulatedMedia', { features: [] })
 }
@@ -614,6 +733,7 @@ async function main() {
     await checkViewportGeometry(cx, url, name, w, h, dsf, mobile)
   }
 
+  await checkAsciiCycle(cx, url)
   await checkPRM(cx, url)
   await checkLocaleToggleMidStream(cx, url)
   await checkNoRegression(cx, url)

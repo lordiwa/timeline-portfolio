@@ -264,6 +264,11 @@ async function runTimeline(v) {
   await delay(prefersReduced.value ? 50 : 400)
   if (!alive(v)) return
   phase.value = 'done'
+  // TASK-034 — el reposo final ya no es el estado permanente de la spec §4.4:
+  // arranca el ciclo (ver runAsciiCycle abajo) que hace "respirar" el
+  // takeover ASCII de vuelta a la vista normal y otra vez, mientras el
+  // visitante siga en ch6. No-op inmediato bajo PRM (AC5).
+  runAsciiCycle(v)
 }
 
 /**
@@ -305,6 +310,74 @@ function skip() {
   // Skip salta directo al "reposo final" (spec §4.4), no al punto intermedio
   // 0.8/mode=1 — mismo estado que runTimeline alcanza al completar el decode.
   emitClosingProgress(1)
+  // TASK-034 — skip también entra al reposo final, así que también arranca el
+  // ciclo (mismo punto de entrada que el final natural de runTimeline). Usa
+  // cycleVersion ya incrementado arriba: es la versión "viva" para este salto.
+  runAsciiCycle(cycleVersion)
+}
+
+// ── Ciclo del ASCII tras el reposo final (TASK-034) ─────────────────────────
+// Pedido directo de Rafael, 2026-07-29 (ver tasks/TASK-034.json): el takeover
+// ASCII NO debe quedarse asentado en el "reposo final" de la spec §4.4 — debe
+// volver a la vista normal de la escena y repetir el ciclo mientras el
+// visitante siga en ch6. Desviación DELIBERADA de la spec (que diseñó el
+// reposo final como estado permanente) por decisión de producto de Rafael,
+// que manda sobre el texto de la spec (mismo criterio ya registrado en
+// .planning/LECCIONES-TECNICAS.md §7, en sentido inverso).
+//
+// Principio de diseño (protege el AC2 de este ticket y el AC1 de TASK-012):
+// el ciclo SOLO mueve el bridge visual 'ascii-progress' hacia Phaser — NUNCA
+// toca revealedWords, decodedBitGroups, bootVisible ni typedPrompt. El texto
+// de la conversación ya quedó revelado por runTimeline()/skip() y se queda
+// así para siempre; lo único que "respira" en el ciclo es el takeover del
+// canvas. phase.value tampoco se mueve de 'done': .ch6-closing usa
+// `phase === 'done' || decodedBitGroups >= closingEndOffsets[i]` así que
+// aunque decodedBitGroups nunca varía, la cláusula `phase === 'done'` sigue
+// manteniendo la frase de cierre visible durante todo el ciclo.
+//
+// Ritmo (decisión de implementación — el ticket deja el ritmo librado a quien
+// lo resuelve, apoyado en la spec): dwell en ASCII pleno 4s (deja "leer" el
+// reposo final tal como lo diseñó la spec antes de moverlo), retorno de ~1.2s
+// reusando el MISMO wipe fBm en reversa (mismo shader AsciiPostFX, mix 1→0,
+// mode se mantiene en 2 como la fila "Primeros tokens IA" de la tabla §4.4),
+// dwell en vista normal 3s (para que el contraste se note antes de retomar),
+// y el re-takeover reusa emitAsciiProgress (misma curva mix/mode/tint que el
+// streaming original) para volver al reposo final vía emitClosingProgress(1).
+const CYCLE_REST_ASCII_MS = 4000
+const CYCLE_RETURN_STEPS = 24
+const CYCLE_RETURN_STEP_MS = 50 // ~1.2s total
+const CYCLE_REST_NORMAL_MS = 3000
+const CYCLE_TAKEOVER_STEPS = 24
+const CYCLE_TAKEOVER_STEP_MS = 60 // ~1.44s total
+
+async function runAsciiCycle(v) {
+  // AC5 (TASK-034): bajo PRM el reposo final es el ÚNICO estado, para
+  // siempre — el ciclo ni siquiera arranca una vuelta.
+  if (prefersReduced.value) return
+  while (alive(v)) {
+    await delay(CYCLE_REST_ASCII_MS)
+    if (!alive(v)) return
+    // Retorno a la vista normal — mismo wipe fBm en reversa (mix 1→0).
+    for (let i = 1; i <= CYCLE_RETURN_STEPS; i++) {
+      if (!alive(v)) return
+      const t = i / CYCLE_RETURN_STEPS
+      emit('ascii-progress', { mix: 1 - t, mode: 2, tint: 0.85 * (1 - t) })
+      await delay(CYCLE_RETURN_STEP_MS)
+    }
+    if (!alive(v)) return
+    await delay(CYCLE_REST_NORMAL_MS)
+    if (!alive(v)) return
+    // Re-takeover — misma curva mix/mode/tint que emitAsciiProgress ya usa
+    // para el streaming original, seguida del mismo emitClosingProgress(1)
+    // que cierra en el reposo final (spec §4.4 filas "Cierre"/"Reposo final").
+    for (let i = 1; i <= CYCLE_TAKEOVER_STEPS; i++) {
+      if (!alive(v)) return
+      emitAsciiProgress(i / CYCLE_TAKEOVER_STEPS)
+      await delay(CYCLE_TAKEOVER_STEP_MS)
+    }
+    if (!alive(v)) return
+    emitClosingProgress(1)
+  }
 }
 
 function startCycle() {
