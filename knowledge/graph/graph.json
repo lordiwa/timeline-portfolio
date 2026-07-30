@@ -44,6 +44,12 @@
       "label": "Techo de fps global: loops rAF de capitulo corriendo sin gate en todo el sitio"
     },
     {
+      "id": "task-019",
+      "type": "task",
+      "ref": "tasks/TASK-019.json",
+      "label": "Mobile: StickyTimeline y ContactHUD se superponen al contenido de los capitulos"
+    },
+    {
       "id": "task-020",
       "type": "task",
       "ref": "tasks/TASK-020.json",

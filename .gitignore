@@ -28,4 +28,4 @@ public/references/
 # aportar auditabilidad real (la evidencia auditable es la salida de consola
 # capturada verbatim en el hand-off/PR, igual que ya hace verify-ch3-*.mjs, que
 # ni siquiera persiste un archivo). Ver decisión en el hand-off de TASK-011.
-.planning/*-verify-results.json
+.planning/*-verify-results*.json

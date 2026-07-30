@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T14:37:19.125Z",
+  "generated_at": "2026-07-30T14:49:31.066Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -112,7 +112,7 @@
     {
       "key": "TASK-019",
       "title": "Mobile: StickyTimeline y ContactHUD se superponen al contenido de los capitulos",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
     },
     {
