@@ -1,0 +1,31 @@
+{
+  "key": "TASK-035",
+  "title": "Auditoria medida de todas las imagenes de los 7 capitulos en el sitio en produccion",
+  "description": "PEDIDO DIRECTO DE RAFAEL el 2026-07-29: \"revisa tambien que todas las fotos de cada chapter se vean bien\".\n\nAlcance: TODAS las imagenes de los 7 capitulos. Incluye los busts del avatar, los fondos de capitulo, las capas de parallax, los assets de las tarjetas de proyecto, los logos de era y cualquier sprite servido como imagen. No incluye lo que se dibuja procedural en shader o canvas, que ya tiene sus propios tickets.\n\nPOR QUE ES UN TICKET Y NO UN VISTAZO: este proyecto tiene historial especifico de arte roto que paso inadvertido. Los busts de ch4, ch5 y ch6 tuvieron un rework FALLIDO que se revirtio entero (memoria: bust-rework-failure-2026-06-01, revertido a 610df6d), ch6 quedo con \"ropa borrada\" pendiente de arreglo selectivo con Adobe, y ch4/ch5 quedaron marcados como \"pesimos, regenerar matcheando ch3\", con ch3 como referencia visual buena. Ademas hay una clase entera de defecto ya documentada: assets aplastados a 128px por optimize_sprite/process_sprite, que se ven \"grandes, feos, rotos o transparentes\" (memoria: art-pipeline-no-optimize). Nada de eso se verifico despues del rediseño signature, y el sitio ya esta en produccion.\n\nQUE HAY QUE MEDIR, no mirar a ojo:\n1. Que cada imagen CARGUE: cero 404 y cero requests fallidos de imagen en los 7 capitulos, capturado por red y no por inspeccion visual. Ojo con la trampa ya documentada: el rewrite ** -> /index.html de firebase.json hace que una imagen faltante devuelva 200 con el HTML del SPA, asi que el codigo de estado NO sirve como sensor. Lo que discrimina es el Content-Type, o naturalWidth/naturalHeight en 0 sobre el elemento img.\n2. Que ninguna imagen este ESTIRADA ni aplastada: comparar la relacion de aspecto natural (naturalWidth/naturalHeight) contra la renderizada (getBoundingClientRect) y reportar toda desviacion relevante.\n3. Que ninguna imagen este pixelada por upscale: reportar los casos donde el tamaño renderizado supera claramente el natural. Ojo, este proyecto es pixel art deliberado con image-rendering: pixelated, asi que el upscale entero y nitido es INTENCIONAL. Lo que se reporta es el upscale no entero o el que se ve borroso, no el pixel art.\n4. Que ninguna imagen quede tapada, fuera de viewport o recortada de forma que pierda su sujeto, en los viewports barridos.\n5. Que los busts del avatar sean coherentes entre capitulos: ch3 es la referencia visual buena. Reportar drift de piel, pelo y ojos por pixel-sampling, que es obligatorio en este proyecto y no se sustituye por apreciacion visual (memoria: validate-bust-colors-vs-ch3, Rafael se enojo dos veces por drift recurrente).\n\nVIEWPORTS: al menos 1521x791, 1920x912, 390x844 portrait y 844x390 landscape, que es el barrido que ya usan los arneses de ch5 y ch6.\n\nESTE TICKET NO ARREGLA NADA. Es diagnostico: entrega el inventario de defectos medidos y priorizados, y de ahi salen los tickets de arreglo. Regenerar arte NO entra aca, y si hiciera falta, aplica el proceso de iteracion del CLAUDE.md 6.5 (mover el asset viejo a public/assets/old con entry en CHANGELOG.md antes de sobrescribir).\n\nRECETA: usar Chrome HEADED por CDP, receta completa en .planning/LECCIONES-TECNICAS.md seccion 6. Headless NO sirve para esto. El arnes se commitea al repo para que el resultado sea auditable y repetible.",
+  "acceptance_criteria": [
+    "Existe un arnes committeado que recorre los 7 capitulos en los 4 viewports y evalua cada imagen del DOM, con el resultado en la salida de consola capturada verbatim.",
+    "Cero imagenes que no carguen, detectadas por Content-Type o por naturalWidth/naturalHeight en 0 y NO por codigo de estado HTTP, dado el rewrite SPA.",
+    "Inventario de toda imagen con distorsion de relacion de aspecto entre lo natural y lo renderizado, con el numero medido de cada caso.",
+    "Inventario de toda imagen con upscale no entero o borroso, distinguiendo explicitamente el pixel art upscaleado a proposito, que no es defecto.",
+    "Inventario de toda imagen tapada, recortada perdiendo su sujeto, o fuera de viewport, con prueba geometrica por getBoundingClientRect.",
+    "Reporte de coherencia de los busts del avatar contra ch3 como referencia, por pixel-sampling de piel, pelo y ojos, con los hex medidos.",
+    "Cada defecto encontrado queda como ticket de arreglo con su evidencia; este ticket no arregla nada por si mismo."
+  ],
+  "status": "in_progress",
+  "priority": "high",
+  "labels": [
+    "qa",
+    "design",
+    "art"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T01:40:37.500Z",
+  "updated_at": "2026-07-30T01:42:10.534Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

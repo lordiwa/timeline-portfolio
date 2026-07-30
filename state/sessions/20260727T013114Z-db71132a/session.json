@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "session_id": "20260727T013114Z-db71132a",
-  "lifecycle_state": "paused",
-  "updated_at": "2026-07-30T01:35:43.225Z",
+  "lifecycle_state": "active",
+  "updated_at": "2026-07-30T01:39:25.645Z",
   "active_task": "TASK-012",
   "workflow_step": "review",
   "mode": "loop",

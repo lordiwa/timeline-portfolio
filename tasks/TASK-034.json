@@ -1,0 +1,34 @@
+{
+  "key": "TASK-034",
+  "title": "ch6: el ASCII no debe quedarse asentado, tiene que volver a la vista normal y ciclar",
+  "description": "PEDIDO DIRECTO DE RAFAEL el 2026-07-29, textual: \"al final den el ultimo chapter se queda todo tipo ascii pero quiero que vuelva a la vista normal y sean ciclos\".\n\nESTO SE DESVIA DE LA SPEC A PROPOSITO. La spec .planning/design/06-ch6-climax-terminal-ia.md, tabla de la seccion 4.4, diseño el final como \"reposo final\": el takeover llega a mix=1.0 con mode=2 (rampa) y ahi se queda, asentado en texto. Es exactamente el comportamiento que TASK-012 acaba de cablear via emitClosingProgress (commit c2c8eb2), o sea que funciona como fue diseñado. Rafael vio el resultado en produccion y decidio otra cosa. Vale su decision de producto: manda sobre la spec, igual que el criterio inverso ya registrado (\"lo que fable 5 recomiende esteticamente yo me acoto mientras no dane la navegacion\") manda sobre el texto de un AC.\n\nQUE SE PIDE: que el efecto ASCII sea CICLICO. Llega al takeover completo, y en vez de quedarse ahi vuelve a la vista normal de la escena espacial, y el ciclo se repite mientras el visitante siga en el capitulo.\n\nDECISIONES DE RITMO que NO estan especificadas y las resuelve quien implemente, apoyandose en la spec: cuanto dura el reposo en ASCII antes de volver, cuanto dura el retorno, si el retorno usa el mismo wipe fBm en reversa o un fundido distinto, y cuanto dura la vista normal antes de arrancar el ciclo de nuevo. No consultarle a Rafael decisiones de gusto: la spec de Fable 5 es la autoridad estetica. El unico limite es el de siempre, que no dane la navegacion ni la legibilidad del texto de cierre.\n\nCUIDADO CRITICO, ES EL RIESGO PRINCIPAL DE ESTE TICKET: un ciclo permanente es justo la forma que tenia el techo de fps global que costo dos tickets arreglar (TASK-017 y TASK-020). La causa raiz de ese incidente fue un loop que corria aunque el visitante nunca estuviera en el capitulo, y scene.pause() NO detiene el loop interno de Phaser. El ciclo nuevo tiene que estar gateado por activeChapter y morir de verdad al salir del capitulo. Medir con Emulation.setCPUThrottlingRate: medir fps SIN throttling no sirve, el vsync topa a ~60 antes y despues y enmascara el defecto por completo, que es exactamente por que ese techo paso inadvertido todo el rediseño.\n\nCONTEXTO ADICIONAL: TASK-012 esta en in_review y toca estos mismos archivos. Este ticket va DESPUES de que ese review cierre, para no mover el piso mientras el reviewer lo audita.\n\nLISTA BLANCA: src/components/Ch6Terminal.vue, src/phaser/AsciiPostFX.js, src/components/Chapter6Content.vue, src/phaser/SpaceScene.js, el bloque de ch6 en src/styles/, tests/** y scripts/verify-ch6-climax.mjs. Nada mas. Siguen PROHIBIDOS el minijuego de ch2, el audio del dial-up, DialUpScreen.vue y los Chapter0..5Content.vue.",
+  "acceptance_criteria": [
+    "El efecto ASCII deja de quedarse asentado: tras el takeover completo vuelve a la vista normal de la escena espacial, y el ciclo se repite mientras el visitante permanezca en ch6. Verificado con capturas en Chrome headed en al menos 3 momentos del ciclo, no inferido del codigo.",
+    "El texto de cierre de la conversacion con la IA sigue legible y accesible durante todo el ciclo: el AC1 de TASK-012 (innerText no vacio desde el montaje, sin depender de Phaser) sigue cumpliendose, y el ciclo no tapa ni borra ese texto en ninguna fase.",
+    "El ciclo esta gateado por activeChapter y se detiene de verdad al salir del capitulo: cero rAF y cero trabajo de Phaser atribuibles a ch6 cuando el visitante esta en otro capitulo, medido con CPU throttling 4x y no sin throttling.",
+    "No hay regresion del techo de fps global: ch0 en reposo se mantiene en el orden de 60 fps con throttle 4x, el mismo numero que dejo TASK-020.",
+    "Bajo prefers-reduced-motion NO hay ciclo: el capitulo queda estatico y bello en un estado unico, nunca vacio y nunca parpadeando.",
+    "Al volver a entrar a ch6 tras salir, el ciclo arranca limpio y no quedan dos ciclos superpuestos ni timers duplicados.",
+    "El arnes scripts/verify-ch6-climax.mjs cubre el ciclo y sigue verde en todo lo que ya cubria; npm test sigue verde."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "ch6",
+    "design",
+    "shader",
+    "signature"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-012"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T01:40:01.327Z",
+  "updated_at": "2026-07-30T01:40:01.327Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

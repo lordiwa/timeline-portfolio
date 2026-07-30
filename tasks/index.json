@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T01:34:50.923Z",
+  "generated_at": "2026-07-30T01:42:10.534Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -198,6 +198,18 @@
       "title": "seoConfig.siteUrl apunta al placeholder .web.app y el sitio ya vive en m4to.com",
       "status": "todo",
       "priority": "medium"
+    },
+    {
+      "key": "TASK-034",
+      "title": "ch6: el ASCII no debe quedarse asentado, tiene que volver a la vista normal y ciclar",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-035",
+      "title": "Auditoria medida de todas las imagenes de los 7 capitulos en el sitio en produccion",
+      "status": "in_progress",
+      "priority": "high"
     }
   ]
 }
