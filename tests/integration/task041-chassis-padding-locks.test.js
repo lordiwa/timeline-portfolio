@@ -95,25 +95,35 @@ describe('TASK-041 — Chapter2Content.vue: reserva de espacio contra StickyTime
     ).toBe('40px')
   })
 
-  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(max-height:376px) reserva margin-top:24px (ronda 4 — tercer brazo para alturas <=375, ej. 844x360 Android landscape)', () => {
+  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(min-height:360px)/(max-height:376px) reserva margin-top:24px (ronda 4 — tercer brazo para alturas 360-376, ej. 844x360 Android landscape)', () => {
     const root = styleRoot(CH2_PATH)
-    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && !p.includes('min-height'))
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('min-height: 360px') && p.includes('max-height: 376px'))
       .find((q) => declsIn(q, '.ch2-meta').length > 0)
-    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(max-height:376px) (sin min-height) tocando .ch2-meta').toBeDefined()
+    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(min-height:360px)/(max-height:376px) tocando .ch2-meta').toBeDefined()
     const decl = declsIn(query, '.ch2-meta').find((d) => d.prop === 'margin-top')
     expect(
       decl && decl.value,
-      'REGRESSION LOCK (TASK-041 ronda 4): .ch2-meta debe declarar margin-top:24px en alturas <=375/376 (ej. 844x360, Android landscape 800x360 ubicuo) — el brazo de 40px usa posiciones fijas (CONTACT.y1 = 336+margin, no depende de H) y NO sobrevive a H=360 (CONTACT cortado 16px, área tappable 24px, glifos del label cortados); 24px es el máximo margin que mantiene CONTACT.y1=360<=H incluso en H=360 y por eso también el que minimiza el residual del año (year.y0=106 vs avatar.y1=112, ~6px de solape declarado estructural — conflicto aritmético real: despejar el año exige margin>=30 pero CONTACT en H=360 exige margin<=24, no existe un margin único que sirva ambos; la navegación manda sobre el solapamiento, LECCIONES-TECNICAS.md §7)'
+      'REGRESSION LOCK (TASK-041 ronda 4): .ch2-meta debe declarar margin-top:24px en alturas 360-376 (ej. 844x360, Android landscape 800x360 ubicuo) — el brazo de 40px usa posiciones fijas (CONTACT.y1 = 336+margin, no depende de H) y NO sobrevive a H=360 (CONTACT cortado 16px, área tappable 24px, glifos del label cortados); 24px es el máximo margin que mantiene CONTACT.y1=360<=H incluso en H=360 y por eso también el que minimiza el residual del año (year.y0=106 vs avatar.y1=112, ~6px de solape declarado estructural — conflicto aritmético real: despejar el año exige margin>=30 pero CONTACT en H=360 exige margin<=24, no existe un margin único que sirva ambos; la navegación manda sobre el solapamiento, LECCIONES-TECNICAS.md §7)'
     ).toBe('24px')
   })
 
-  it('ronda 4 — el brazo de margin-top:24px (alturas cortas) está declarado ANTES que el de margin-top:40px en el CSS fuente, para que el de 40px gane cualquier empate exacto en H=376', () => {
+  it('ronda 5 — el brazo de margin-top:24px tiene un piso min-height:360px, para no regresionar por debajo de la base (0125e57) sin margin', () => {
     const root = styleRoot(CH2_PATH)
-    const shortArm = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && !p.includes('min-height'))
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && p.includes('min-height: 360px'))
+      .find((q) => declsIn(q, '.ch2-meta').length > 0)
+    expect(
+      query,
+      'REGRESSION LOCK (TASK-041 ronda 5): el brazo de margin-top:24px debe llevar min-height:360px como piso — sin él aplica también por debajo de H=360 con la MISMA posición fija (CONTACT.y1=336+24=360), dejando HEAD estrictamente peor que la base (CONTACT.y1=336 sin margin) en toda altura menor a 360 (medido: en [337,359] la base mostraba CONTACT completo y HEAD lo cortaba 1-23px; en <=336 ambos cortan pero HEAD corta 24px más)'
+    ).toBeDefined()
+  })
+
+  it('ronda 4/5 — el brazo de margin-top:24px (alturas cortas) está declarado ANTES que el de margin-top:40px en el CSS fuente, para que el de 40px gane cualquier empate exacto en H=376', () => {
+    const root = styleRoot(CH2_PATH)
+    const shortArm = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 376px') && p.includes('min-height: 360px'))
       .find((q) => declsIn(q, '.ch2-meta').length > 0)
     const midArm = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('min-height: 376px') && p.includes('max-height: 520px'))
       .find((q) => declsIn(q, '.ch2-meta').length > 0)
-    expect(shortArm, 'falta el brazo corto (max-height:376px, margin 24px)').toBeDefined()
+    expect(shortArm, 'falta el brazo corto (min-height:360px/max-height:376px, margin 24px)').toBeDefined()
     expect(midArm, 'falta el brazo medio (min-height:376px/max-height:520px, margin 40px)').toBeDefined()
     const root_ = root
     const shortIdx = root_.nodes.indexOf(shortArm)

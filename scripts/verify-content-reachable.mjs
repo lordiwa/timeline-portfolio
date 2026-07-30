@@ -79,6 +79,21 @@
 // contenido fuera de su propio rect) — para ese caso, la prueba definitiva
 // sigue siendo medición manual con CDP real como la de este mismo ticket.
 //
+// RONDA 5 — límite declarado, no implementado (caso mixto sin cubrir): para
+// un target CON scroll interno propio (`hiddenWords`/`clippedAwayWords` como
+// arriba) cuya propia CAJA está a su vez parcialmente fuera del frame de un
+// ancestro con overflow hidden/clip (recorte LATERAL, no solo vertical), NI
+// `hiddenWords` (compara contra el rect propio de `el`, que no sabe que un
+// ancestro lo recorta) NI `clippedAwayWords` (se omite para estos targets,
+// ver RONDA 4 arriba) ven ese recorte. Es real hoy, no hipotético: ch4 en
+// 834x1194 tiene la caja de `.ch4-panel-column` con `x1=858.4` contra un clip
+// de ancestro en `x=834`, con 4 palabras cortadas entre 0.6 y 7.9px que
+// ningún campo de este script reporta. Ambos números (`el.getBoundingClientRect()`
+// propio y `clipRect` del ancestro) ya se calculan y se reportan por separado
+// en la salida — falta la intersección `boxRect ∩ clipRect` para detectar
+// este caso mixto. No implementado en esta ronda (alcance acotado a
+// documentar el límite); queda al alcance de quien lo necesite.
+//
 // CÓMO CORRERLO (misma receta que verify-chassis-overlap.mjs, LECCIONES-
 // TECNICAS.md §6):
 //   1. `npm run dev`

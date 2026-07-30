@@ -620,13 +620,31 @@ onBeforeUnmount(() => {
  * el brazo de 40px gana por orden de cascada, y en cualquier altura por
  * debajo el brazo de 24px es el único que puede matchear. Verificado con CDP
  * real en 359/360/361/374/375/376/377/430/500/520/521/522: ninguna altura
- * cae sin brazo. */
+ * cae sin brazo.
+ *
+ * RONDA 5 — MEDIUM del review de la ronda 4: el brazo de 24px no tenía piso
+ * (`max-height:376px` sin `min-height`), así que aplicaba también por debajo
+ * de H=360 con la MISMA posición fija (CONTACT.y1 = 336+24 = 360, no depende
+ * de H). Contra la base 0125e57 (sin margin, CONTACT.y1=336), eso deja HEAD
+ * estrictamente PEOR que la base en toda altura < 360: en [337,359] la base
+ * mostraba CONTACT completo y HEAD lo corta 1-23px; en <=336 ambos cortan,
+ * pero HEAD corta 24px más. Ningún dispositivo estacionario real cae en esa
+ * banda, así que no bloqueó, pero es una regresión que introdujo este ticket.
+ * Fix: agregar `min-height:360px` al brazo de 24px — por debajo de 360 NO
+ * aplica ningún brazo, `.ch2-meta` vuelve a su margin-top por defecto (0) y
+ * la geometría es EXACTAMENTE la de la base. El límite en `min-height` es
+ * epsilon-seguro (ver trampa de arriba): el redondeo del dpr fraccional
+ * empuja el alto CSS hacia arriba, lo que solo puede favorecer una condición
+ * `>=` como esta, nunca romperla en su propio límite. Verificado con CDP real
+ * que HEAD >= base en 280/304/336/337/347/359/360/375/376/377: por debajo de
+ * 360 ambos coinciden; en [360,376] HEAD conserva el brazo de 24px como en la
+ * ronda 4 (CONTACT.y1=360-376, siempre <=H). */
 @media (min-width: 600px) and (max-width: 1023px) and (min-height: 521px) {
   .ch2-meta {
     margin-top: 104px;
   }
 }
-@media (min-width: 600px) and (max-width: 1023px) and (max-height: 376px) {
+@media (min-width: 600px) and (max-width: 1023px) and (min-height: 360px) and (max-height: 376px) {
   .ch2-meta {
     margin-top: 24px;
   }
