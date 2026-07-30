@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T17:14:35.369Z",
+  "generated_at": "2026-07-30T21:01:20.909Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -244,8 +244,14 @@
     {
       "key": "TASK-041",
       "title": "Residuales del chasis: excepcion acotada para tocar la columna de contenido de ch2, ch3, ch4 y ch5",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
+    },
+    {
+      "key": "TASK-042",
+      "title": "ch5: el panel de stream perdio ventana visible por el padding de TASK-041, con landscape a la mitad",
+      "status": "todo",
+      "priority": "medium"
     }
   ]
 }

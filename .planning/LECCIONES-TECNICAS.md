@@ -100,6 +100,38 @@ Dos bloqueadores encontrados el 2026-07-27, **no los redescubras**:
   **esperar a que `scrollTop` se estabilice** por polling. Costó una ronda entera de
   mediciones inservibles antes de que se diagnosticara.
 
+**Cuarta trampa del instrumento, pagada en el review de TASK-041 r2 (2026-07-30):** un
+worktree con `node_modules` junctionado hace que Vite sirva las fuentes con **403** (por su
+`fs.allow`), y `document.fonts` queda en estado `error` **sin romper nada visible**. La página
+mide con fuentes de fallback y todas las métricas de glifos se corren ~3 puntos. Fue lo que
+produjo el 162/42% registrado como base de ch4 portrait; con fuentes reales la base es
+172/45%. Además fabricó un "FAIL nuevo" fantasma en ch0 EN 1536 que desapareció al corregirlo.
+
+**Regla:** antes de medir cualquier cosa a nivel de glifos, verificar que `document.fonts` no
+tenga entradas en `error`. Un arnés que mide con fuentes de fallback no está midiendo el sitio.
+
+**Quinta trampa, encontrada y confirmada en TASK-041 r4 (2026-07-30) — el epsilon del dpr
+puede dejar una altura SIN NINGUNA media query aplicable.** Con
+`Emulation.setDeviceMetricsOverride` y `deviceScaleFactor: 3`, el `devicePixelRatio` real medido
+es **`3.0000001192092896`**. A una altura emulada de 375 (con `innerHeight` reportando 375),
+`matchMedia('(max-height: 375px)')` da **false** y `(min-height: 376px)` también da **false**:
+la altura cae en el hueco entre dos brazos que se creían complementarios, y el elemento se
+queda con el valor por defecto — **peor que cualquiera de los dos brazos**.
+
+La asimetría es la clave y hay que entenderla, no memorizarla: el epsilon empuja la altura
+computada **hacia arriba**, así que solo puede favorecer a `>=` (`min-height`) y solo puede
+romper a `<=` (`max-height`) **en su límite exacto**.
+
+**Regla:** cuando partas un rango en brazos por altura, **hacé que ambos brazos compartan el
+valor del límite** (`max-height: N` y `min-height: N`, resolviendo el empate por orden de
+cascada y lockeándolo), en vez de usar `N` y `N+1` como si fueran complementarios. Y lockeá el
+orden, porque en el límite exacto ambos matchean.
+
+Dato relacionado, y contraintuitivo: **la cuantización de altos impares de la §6 no es
+universal.** Medido en la misma corrida: 361→362, 377→378 y 521→522 cuantizan hacia arriba,
+pero 359→359 y 375→375 mapean exacto. No asumas la regla en ninguna de las dos direcciones —
+confirmá con `innerHeight` real.
+
 **Y una regla sobre el arnés como producto:** si el instrumento no está en el repo, su verde
 no es auditable ni reproducible — un reviewer no puede evaluar sus puntos ciegos. El de ch3
 vive en `scripts/verify-ch3-roadmap-geometry.mjs`. Dos puntos ciegos reales que tuvo y que
@@ -149,3 +181,18 @@ mejora el solapamiento y empeora ese segundo número no es un fix.
 Corolario para el diseño de arneses en general: **toda métrica que se puede mejorar quitando
 lo que se mide necesita un contra-sensor en la misma corrida.** No es un problema de este
 arnés en particular; es la forma del problema.
+
+**Addendum del review de la ronda 2 — el "n/a" es la forma más barata de apagar un sensor.**
+El contra-sensor `verify-content-reachable.mjs` se declaró "n/a" para ch2 y ch3 con el
+argumento de que sus cajas no tienen `overflow-y: auto` propio. El argumento es **débil y
+dejó pasar un HIGH**: las secciones de capítulo son `100dvh` con `overflow: hidden`
+(`ScrollShell.vue:174-186`) y los slides de ch3 usan `overflow: clip`. Ahí el recorte es
+**peor** que un scroll container, porque lo recortado es *inalcanzable*, no diferido. Así
+quedó el botón CONTACT de ch2 fuera del frame en landscape de teléfono sin que ningún sensor
+lo viera.
+
+**Regla:** la pregunta correcta no es "¿esta caja scrollea?" sino **"¿algún ancestro recorta
+esta caja, y qué queda afuera del frame?"**. Un `n/a` solo vale con la medición contra el
+frame del ancestro, nunca con la ausencia de `overflow-y: auto`. Corolario para navegación:
+cuando un fix mueva una columna que contiene controles, la prueba de aceptación debe incluir
+**el rect del último control del nav contra el alto del viewport**.

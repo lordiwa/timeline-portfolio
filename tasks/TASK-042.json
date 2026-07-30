@@ -1,0 +1,32 @@
+{
+  "key": "TASK-042",
+  "title": "ch5: el panel de stream perdio ventana visible por el padding de TASK-041, con landscape a la mitad",
+  "description": "Hallazgo del review de cierre de TASK-041 ronda 2 (2026-07-30), declarado FUERA DE ALCANCE por el developer en vez de callarlo y confirmado + ampliado por el reviewer. Rafael habia acotado la ronda 2 a los dos fixes de ch4, asi que no se toco.\n\nQUE PASA: el padding que TASK-041 ronda 1 agrego a `.ch5-stream-panel` reduce la ventana visible de `.ch5-panel-body`, que scrollea internamente por diseno. El contenido sigue ALCANZABLE (overflow-y:auto + fade ya existentes), asi que no cruza el limite de \"inalcanzable\" — pero es el mismo patron de la leccion §8 de .planning/LECCIONES-TECNICAS.md: mejorar el solapamiento del chasis achicando la ventana del texto.\n\nTABLA COMPLETA ES, base (0125e57) -> HEAD, `.ch5-panel-body` clientHeight y % de palabras fuera del rect visible. Es del reviewer, no del developer, que solo habia reportado el ejemplo de 1440x900:\n- 390x844 mobile portrait: 297px -> 297px (91% -> 94%)\n- 844x390 mobile landscape: 198px -> 109px (96% -> 98%)   <-- EL CASO GRAVE, la ventana cae a la mitad\n- 834x1194 tablet portrait: 1002px -> 913px (80% -> 88%)\n- 1536x791 dpr1.25: 599px -> 551px (81% -> 86%)\n- 1440x900: 708px -> 660px (77% -> 83%)\n\nQUE COMPRO A CAMBIO, y por eso NO se revierte a ciegas: el chasis dejo de cubrir glifos de ch5 en 4 viewports mas el titulo en mobile portrait — 5 FAILs del arnes de chasis resueltos, incluido el ano \"2022\" que LangToggle tapaba y que la ronda 2 de TASK-019 habia declarado imposible de limpiar. Cualquier fix tiene que conservar esos 5.\n\nCRITERIO DEL REVIEWER, textual: \"ticket aparte, no ronda 3 ni bloqueo de este — pero el ticket nuevo debe llevar mi tabla completa, porque el caso grave es landscape (ventana a la mitad), no el ejemplo de 1440x900\".\n\nMETODO OBLIGATORIO: los dos arneses en ES y EN — scripts/verify-chassis-overlap.mjs (glifos, referencia a no empeorar: PASS ES 50, EN 51) y scripts/verify-content-reachable.mjs (clientHeight/scrollHeight + palabras fuera del rect visible). Antes de medir a nivel de glifos, verificar que `document.fonts` no tenga entradas en `error` (cuarta trampa de instrumento de la §6: un worktree con node_modules junctionado sirve las fuentes con 403 y corre las metricas ~3 puntos).\n\nLISTA BLANCA: rige la misma excepcion acotada que Rafael dio el 2026-07-30 — padding, margin, max-height y box-sizing de la columna de contenido de Chapter5Content.vue. Sigue prohibido todo lo demas, en particular la multitud de 125 personajes de ch5 y su loop rAF.\n\nHIGIENE: Chrome con --user-data-dir propio de nombre unico y filtrar SIEMPRE por ese perfil al matar procesos. Prohibido Get-Process chrome | Stop-Process -Force.",
+  "acceptance_criteria": [
+    "La ventana visible de .ch5-panel-body en mobile landscape (844x390) se recupera respecto de los 109px actuales, medida con scripts/verify-content-reachable.mjs en ES y EN, o se declara estructural con la aritmetica que lo demuestre.",
+    "Los 5 FAILs del arnes de chasis que TASK-041 resolvio en ch5 siguen resueltos: los 4 viewports con glifos cubiertos mas el titulo en mobile portrait. El conteo de PASS no baja de ES 50 / EN 51.",
+    "Se aporta la tabla completa base -> antes -> despues de clientHeight y % de palabras ocultas en los 5 viewports de la descripcion, no un ejemplo suelto.",
+    "Solo se modificaron padding, margin, max-height o box-sizing de la columna de contenido de Chapter5Content.vue. El diff no toca la multitud de 125, su loop rAF, logica, animaciones ni shaders.",
+    "npm test sigue verde y los locks de ch5 que cambien de valor traen su red-green plantado."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "responsive",
+    "mobile",
+    "chasis",
+    "ch5"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-041"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T18:44:13.421Z",
+  "updated_at": "2026-07-30T18:44:13.421Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
