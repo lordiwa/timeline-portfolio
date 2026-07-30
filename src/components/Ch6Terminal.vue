@@ -266,10 +266,42 @@ async function runTimeline(v) {
   phase.value = 'done'
 }
 
+/**
+ * Ronda 2 (2026-07-29) — HIGH de review: skip() completaba revealedWords /
+ * decodedBitGroups pero NUNCA detenía la runTimeline(v) en vuelo. Esa
+ * timeline sigue iterando sobre un contador LOCAL (`revealed`/`g`) que no se
+ * entera del salto; en la iteración siguiente pisaba los refs con su valor
+ * local, menor, y el texto ya revelado volvía a opacity:0.001 (bits
+ * decodificados volvían a crudo, ascii-progress retrocedía el takeover).
+ * Traza real: pointerdown durante los ~17s de streaming, o CUALQUIER toque
+ * para scrollear el bottom-sheet en móvil.
+ *
+ * Fix: reusar el mecanismo YA existente de cancelación de timeline —
+ * `cycleVersion` — en vez de agregar una bandera nueva. runTimeline() y
+ * typeString() ya llaman `if (!alive(v)) return` como PRIMERA línea de cada
+ * iteración de sus loops, antes de tocar cualquier ref; bumpear
+ * `cycleVersion` aquí hace que la instancia en vuelo se auto-cancele en su
+ * próximo checkpoint sin escribir nada más. `clearAllTimers()` evita además
+ * timers zombie pendientes (mismo patrón que `stopCycle()`).
+ *
+ * Deliberadamente NO se implementa como guard de monotonicidad global sobre
+ * `emitAsciiProgress`/`emitClosingProgress` — TASK-034 (aprobado, pendiente)
+ * requiere que el takeover ASCII, tras llegar al reposo final, vuelva a
+ * ciclar mientras el visitante siga en ch6. Un guard "nunca bajar" en
+ * ascii-progress bloquearía ese ciclo. Este fix solo cancela la timeline QUE
+ * DISPARÓ el skip; no restringe ninguna emisión futura de progreso.
+ */
 function skip() {
   if (phase.value !== 'streaming' && phase.value !== 'decoding') return
+  cycleVersion++
+  clearAllTimers()
   revealedWords.value = totalWords.value
   decodedBitGroups.value = totalBitGroups.value
+  // Reposo final explícito (spec §4.4): el decode/streaming en vuelo queda
+  // cancelado arriba, así que sin esto phase.value se quedaría congelado en
+  // 'streaming'/'decoding' para siempre — .ch6-bits (v-if phase==='decoding'
+  // || 'done') nunca se mostraría pese a decodedBitGroups ya completo.
+  phase.value = 'done'
   // Skip salta directo al "reposo final" (spec §4.4), no al punto intermedio
   // 0.8/mode=1 — mismo estado que runTimeline alcanza al completar el decode.
   emitClosingProgress(1)
@@ -344,6 +376,19 @@ if (import.meta.hot) {
         v-if="phase === 'thinking'"
         class="ch6-thinking"
       > {{ t('chapters.6.convo.thinking') }} ▍▍▍</span></pre>
+
+    <!--
+      Hint de skip (spec §5.5, clave chapters.6.convo.skipHint) — decorativo,
+      no interactivo (el `@pointerdown` que completa el streaming ya vive en
+      todo el `<aside>`, ver arriba). Ronda 2 (2026-07-29): la clave existía en
+      ES/EN pero nunca se renderizaba. Oculto bajo PRM: sin streaming/decoding
+      animado no hay nada que "completar al instante".
+    -->
+    <p
+      v-if="!prefersReduced && (phase === 'streaming' || phase === 'decoding')"
+      class="ch6-skip-hint"
+      aria-hidden="true"
+    >{{ t('chapters.6.convo.skipHint') }}</p>
 
     <p v-for="(para, pi) in bodyParagraphs" :key="'p-' + pi" class="ch6-convo-p">
       <span
@@ -440,6 +485,18 @@ if (import.meta.hot) {
   display: block;
   opacity: 0.7;
   font-style: italic;
+}
+
+/* Hint de skip (spec §5.5) — decorativo, no interactivo; mismo patrón visual
+ * que `.ch2-cin-skip-hint` (Chapter2Content.vue): tenue, uppercase, no compite
+ * con el cuerpo cian del panel. */
+.ch6-skip-hint {
+  margin: 0 0 var(--sp-xs, 4px) 0;
+  font-size: 0.75em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+  color: rgba(77, 255, 255, 0.45);
 }
 
 .ch6-convo-p {

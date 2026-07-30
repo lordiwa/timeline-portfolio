@@ -149,4 +149,85 @@ describe('Ch6Terminal.vue — DOM-first (TASK-007 defectos 2/3, spec §5.1)', ()
     expect(es.bio.eras['6'].text.endsWith(es.chapters['6'].convo.closing)).toBe(true)
     expect(en.bio.eras['6'].text.endsWith(en.chapters['6'].convo.closing)).toBe(true)
   })
+
+  it('T9 REGRESSION LOCK (ronda 2, HIGH): skip() cancela la timeline en curso — el texto no vuelve a des-completarse después', async () => {
+    // Reproduce el defecto real: pointerdown durante el streaming completa
+    // revealedWords/decodedBitGroups al instante, pero la runTimeline(v) que
+    // ya estaba corriendo seguía iterando sobre un contador LOCAL y, en su
+    // siguiente tick, pisaba los refs con un valor MENOR — el texto ya
+    // revelado volvía a opacity:0.001. En móvil, cualquier toque para
+    // scrollear el bottom-sheet dispara este pointerdown.
+    vi.useFakeTimers()
+    try {
+      const { wrapper } = await mountTerminal({ prefersReduced: false, activeChapter: 6 })
+
+      // t≈9s: boot (2.5s) + pausa (0.4s) + prompt tipeado (33 chars × ~70ms) +
+      // thinking (0.9s) suman ≈5.6-6.6s con jitter — a los 9s estamos siempre
+      // en pleno streaming (total streaming ≈17s), nunca completado por sí solo.
+      await vi.advanceTimersByTimeAsync(9000)
+      await flushPromises()
+
+      await wrapper.find('.ch6-convo').trigger('pointerdown')
+      await flushPromises()
+
+      const wordsRightAfterSkip = wrapper.findAll('.ch6-convo-word')
+      expect(wordsRightAfterSkip.length).toBeGreaterThan(50)
+      wordsRightAfterSkip.forEach((w) => {
+        expect(w.attributes('style')).toContain('opacity: 1')
+      })
+
+      // En t=9000ms la timeline (si no fue cancelada) estaba a mitad de un
+      // `await delay(...)` pendiente de la iteración de streaming en curso.
+      // Avanzar apenas 500ms (el delay de burst más largo es ~350ms) alcanza
+      // para que esa iteración pendiente resuma y, sin el fix, sobreescriba
+      // revealedWords con su contador LOCAL —menor al total— revirtiendo a
+      // opacity:0.001 palabras que el skip ya había revelado. Este es el
+      // punto exacto del defecto: no aparece en el estado final (la timeline
+      // vieja, no cancelada, termina alcanzando el total por sí sola más
+      // tarde), solo en esta ventana intermedia.
+      await vi.advanceTimersByTimeAsync(500)
+      await flushPromises()
+
+      const wordsShortlyAfterSkip = wrapper.findAll('.ch6-convo-word')
+      wordsShortlyAfterSkip.forEach((w) => {
+        expect(w.attributes('style')).toContain('opacity: 1')
+      })
+
+      // Y sigue íntegro mucho más adelante (no es solo un parpadeo momentáneo
+      // que la timeline vieja repara sola).
+      await vi.advanceTimersByTimeAsync(25000)
+      await flushPromises()
+
+      const wordsAfterLongWait = wrapper.findAll('.ch6-convo-word')
+      expect(wordsAfterLongWait.length).toBe(wordsRightAfterSkip.length)
+      wordsAfterLongWait.forEach((w) => {
+        expect(w.attributes('style')).toContain('opacity: 1')
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('T10 (ronda 2, LOW): el hint de skip (chapters.6.convo.skipHint, spec §5.5) se renderiza durante streaming y desaparece en done; ausente bajo PRM', async () => {
+    vi.useFakeTimers()
+    try {
+      const { wrapper } = await mountTerminal({ prefersReduced: false, activeChapter: 6 })
+      // t≈9s: mismo cálculo que T9, siempre en pleno streaming.
+      await vi.advanceTimersByTimeAsync(9000)
+      await flushPromises()
+      expect(wrapper.find('.ch6-skip-hint').exists()).toBe(true)
+      expect(wrapper.text()).toContain(es.chapters['6'].convo.skipHint)
+
+      await wrapper.find('.ch6-convo').trigger('pointerdown')
+      await flushPromises()
+      // skip() salta a phase 'done' — el hint ya no aplica (nada que completar).
+      expect(wrapper.find('.ch6-skip-hint').exists()).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+
+    const { wrapper: prmWrapper } = await mountTerminal({ prefersReduced: true })
+    await flushPromises()
+    expect(prmWrapper.find('.ch6-skip-hint').exists()).toBe(false)
+  })
 })

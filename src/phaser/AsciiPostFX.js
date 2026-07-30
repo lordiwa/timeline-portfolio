@@ -16,12 +16,29 @@
 // Decisión deliberada: SPACE_BG_FRAG ya está probado y revisado en múltiples
 // rondas; tocarlo para introducir una abstención compartida arriesga una
 // regresión en un shader que funciona, a cambio de ~15 líneas de duplicación.
+//
+// Precisión (MEDIUM ronda 2, 2026-07-29): `rampBitmask()` devuelve hasta
+// 1048575.0 (2^20-1) y `glyph()` calcula `exp2()` con exponente hasta 34 —
+// GLSL ES solo garantiza a `mediump` rango ±2^14 y 11 bits de mantisa; en GPUs
+// móviles con fp16 real (Mali, Adreno viejos) esas constantes desbordan y
+// hasta BM_ZERO/BM_ONE se redondean mal → glifos basura o vacíos, justo en el
+// tier móvil que la spec §8 declara objetivo. `GL_FRAGMENT_PRECISION_HIGH` (si
+// el driver lo soporta) fuerza highp; si no existe la macro, cae a mediump
+// como antes (misma cobertura que había, sin regresión). NO VERIFICADO EN
+// DISPOSITIVO REAL: no hay un móvil con fp16 real disponible en este entorno
+// de desarrollo (Rafael no tiene iOS — ver .planning/LECCIONES-TECNICAS.md);
+// esto corrige la causa raíz descrita por el reviewer pero queda pendiente de
+// confirmación visual en hardware Mali/Adreno viejo.
 
 import Phaser from 'phaser'
 
 const ASCII_FRAG = `
 #ifdef GL_ES
-precision mediump float;
+  #ifdef GL_FRAGMENT_PRECISION_HIGH
+  precision highp float;
+  #else
+  precision mediump float;
+  #endif
 #endif
 
 uniform sampler2D uMainSampler;

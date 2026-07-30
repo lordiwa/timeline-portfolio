@@ -695,11 +695,13 @@ export class SpaceScene extends Phaser.Scene {
           this._asciiPipeline = this._asciiPipeline[0]
         }
         if (prefersReduced && this._asciiPipeline) {
-          // PRM (spec §8): uMix fijo 0.35, modo rampa, sin wipe animado.
+          // PRM (spec §8): uMix fijo 0.35, modo rampa, sin wipe animado. El
+          // congelado real de uTime ocurre en update() (no avanza bajo PRM);
+          // no hay una propiedad `frozenTime` leída en ningún lado (LOW ronda
+          // 2, escritura muerta retirada).
           this._asciiPipeline.uMix = 0.35
           this._asciiPipeline.uMode = 2
           this._asciiPipeline.uTint = 0.2
-          this._asciiPipeline.frozenTime = 0.5
         }
       } catch (_) {
         this._asciiPipeline = null

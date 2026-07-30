@@ -25,8 +25,9 @@
               (bridge DOM → Phaser, spec §4.2: "el DOM manda, Phaser obedece")
     - ResizeObserver (PHA-09): recalcula zoom vía computeZoom(hostEl) del chunk
       lazy + game.value.scale.setZoom(newZoom) sólo si difiere (anti-thrash).
-    - A11Y: 3 sr-only buttons keyboard-navigable (D5-06), replicando los planet
-      clicks dentro de Phaser. Tab order cronológico ar-vr → remoose → software-mind.
+    - A11Y: 2 sr-only buttons keyboard-navigable (D5-06), replicando los planet
+      clicks dentro de Phaser. Tab order: remoose → software-mind (TASK-013 movió
+      ar-vr a chapterEra 4; comentario corregido en ronda 2, 2026-07-29).
     - Ch6Terminal.vue (TASK-012): la conversación con la IA, DOM-first, SIEMPRE
       montada (no depende de activeChapter ni de Phaser en absoluto) — es el
       corazón narrativo del capítulo y vive independientemente del canvas.
@@ -92,7 +93,7 @@ let computeZoomFn = null
 const arrivalDone = ref(false)
 const activeProject = ref(null)
 
-// 3 proyectos ch6 — usado por v-for de los sr-only buttons (D5-06).
+// 2 proyectos ch6 (TASK-013) — usado por v-for de los sr-only buttons (D5-06).
 const ch6Projects = computed(() => projects.filter((p) => p.chapterEra === 6))
 
 /**
