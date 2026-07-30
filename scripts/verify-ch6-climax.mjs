@@ -382,7 +382,133 @@ async function checkViewportGeometry(cx, url, name, w, h, dsf, mobile) {
     panelRect: m.panelRect, timelineRect: m.timelineRect, contactRect: m.contactRect, langRect: m.langRect, mantraRect: m.mantraRect,
   }))
 
+  // TASK-012 ronda 2 (2026-07-29) — check D, documentado en la cabecera desde
+  // la ronda 1 pero AUSENTE de este archivo (hallazgo del orquestador: "mitad
+  // sustantiva del AC#8 sin sensor"). Implementado ahora. Spec §2 excluye
+  // DELIBERADAMENTE los planetas del focal portrait ("caen fuera del focal
+  // portrait por diseño... accesibles via sr-only buttons"), así que este
+  // check SOLO corre en viewports no-mobile — en mobile, AC#8 queda
+  // verificado solo en su parte geométrica (check C), no en D.
+  if (!mobile) {
+    // Margen medido empíricamente (ronda 2): "canvas existe en el DOM" dispara
+    // muy temprano (tan pronto arranca el contexto WebGL), MUCHO antes de que
+    // preload()+create() terminen y el tween de arrival (2200ms) siquiera
+    // empiece — confirmado con un hook de debug temporal: a los 2600ms post-
+    // canvasReady la cámara medía scrollY=1261 (no los 1350 de reposo). 6000ms
+    // fue suficiente en runs repetidos. Sin esto, cualquier cálculo world→screen
+    // usando CAMERA_FINAL_Y como referencia queda sistemáticamente desplazado.
+    await sleep(6000)
+    await checkPlanetsAndDronesInFrame(cx, name, m.canvasRect)
+  }
+
   return m
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// D: planetas/drones rescatados — sampling de píxeles reales (Lección #3:
+// Page.captureScreenshot + <img>/canvas en el propio navegador, NUNCA
+// canvas.toDataURL sobre el WebGL en vivo) en las coordenadas de pantalla
+// calculadas a partir del mismo canvasRect que ya midió el check C (mismo
+// zoom COVER + anclaje bottom que aplica applyCanvasAnchor en
+// Chapter6Content.vue). Confirma que esos 4 puntos ya NO son fondo plano:
+// se mide la dispersión de luma en una grilla 5x5 alrededor de cada punto —
+// el shader de fondo es un degradé suave de baja variación local; un
+// planeta/dron procedural (relleno + líneas + highlights ámbar) tiene
+// contraste local real.
+// ─────────────────────────────────────────────────────────────────────────
+const CH6_WORLD_POINTS = [
+  // ar-vr YA NO EXISTE (ronda 2, 2026-07-29): TASK-013 (ticket posterior, fuera
+  // de este alcance) retiró 'ch6-ar-vr' de src/data/projects.js por completo.
+  // El punto mundo (170,1425) — su slot original en SpaceScene.js PLANET_SLOTS
+  // — queda deliberadamente SIN chequear aquí: no hay proyecto que renderizar
+  // ahí, así que "está vacío" es el resultado CORRECTO, no un fallo. Verificado
+  // aparte (fix de esta misma ronda): sin este punto en la lista, el AC#8 de
+  // este ticket queda con SOLO 2 planetas reales (remoose, software-mind) —
+  // ver hand-off, discrepancia con el texto original del ticket que asumía 3.
+  // remoose: antes y=1080, fuera de banda; ahora y=1455.
+  { label: 'planeta remoose (x=820,y=1455)', worldX: 820, worldY: 1455 },
+  // software-mind: "ya era visible" (spec §1.2) — se incluye igual como control
+  // positivo (domina la postal, r=90, PLANET_SLOTS['ch6-software-mind']).
+  { label: 'planeta software-mind (x=600,y=1566)', worldX: 600, worldY: 1566 },
+  // dron ex-y=1040 → reubicado a (260,1418). radiusX/radiusY: los drones NO
+  // son estáticos — SpaceScene.js les aplica tweens Sine.easeInOut yoyo/repeat
+  // con amplitud xA=50/yA=14 (este) sobre esta base, así que su posición REAL
+  // en pantalla oscila continuamente. Confirmado con un hook de debug temporal
+  // (ronda 2): a los ~6.5s la posición viva medía (309.9,1405.0), no (260,1418)
+  // — un punto de muestra centrado en la base con radio angosto puede caer
+  // fuera del dron aunque esté perfectamente vivo y visible. El radio de
+  // búsqueda cubre la amplitud del tween + medio sprite (24px tras setScale(2)).
+  { label: 'dron ex-y=1040 (x=260,y=1418)', worldX: 260, worldY: 1418, ampX: 50, ampY: 14 },
+  // dron ex-y=580 → reubicado a (340,1512). xA=120/yA=18 (mayor amplitud).
+  { label: 'dron ex-y=580 (x=340,y=1512)', worldX: 340, worldY: 1512, ampX: 120, ampY: 18 },
+]
+const CAMERA_FINAL_Y_REF = 1350 // SpaceScene.js CAMERA_FINAL_Y — mundo en reposo tras arrival.
+const BASE_W_REF = 960
+
+async function sampleLumaGridInBrowser(cx, base64Png, screenX, screenY, radiusX, radiusY) {
+  const script = `
+    (async () => {
+      const img = new Image();
+      const src = 'data:image/png;base64,${base64Png}';
+      await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = src; });
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const dsf = img.naturalWidth / window.innerWidth;
+      const cx0 = Math.round(${screenX} * dsf), cy0 = Math.round(${screenY} * dsf);
+      const rx = ${radiusX} * dsf, ry = ${radiusY} * dsf;
+      const stepX = Math.max(3, Math.round(rx / 8)), stepY = Math.max(3, Math.round(ry / 8));
+      const lumas = [];
+      for (let dy = -ry; dy <= ry; dy += stepY) {
+        for (let dx = -rx; dx <= rx; dx += stepX) {
+          const px = Math.max(0, Math.min(img.naturalWidth - 1, Math.round(cx0 + dx)));
+          const py = Math.max(0, Math.min(img.naturalHeight - 1, Math.round(cy0 + dy)));
+          const d = ctx.getImageData(px, py, 1, 1).data;
+          lumas.push(0.299 * d[0] + 0.587 * d[1] + 0.114 * d[2]);
+        }
+      }
+      return { min: Math.min(...lumas), max: Math.max(...lumas), range: Math.max(...lumas) - Math.min(...lumas) };
+    })()
+  `
+  const { send } = cx
+  const res = await send('Runtime.evaluate', { expression: script, returnByValue: true, awaitPromise: true })
+  if (res.exceptionDetails) throw new Error('Eval error: ' + JSON.stringify(res.exceptionDetails))
+  return res.result.value
+}
+
+async function checkPlanetsAndDronesInFrame(cx, viewportName, canvasRect) {
+  if (!canvasRect) {
+    report(`D. [${viewportName}] planetas/drones rescatados visibles (sampling de luma)`, false, 'canvasRect null — no se pudo calcular world→screen')
+    return
+  }
+  const zoom = canvasRect.w / BASE_W_REF
+  const screenshot = await cx.send('Page.captureScreenshot', { format: 'png' })
+  const LUMA_RANGE_THRESHOLD = 18 // fondo shader liso mide <10 en pruebas; arte procedural con líneas/highlights supera 18 con margen.
+  // Radio base de muestreo (planetas, estáticos): ±24px cubre su footprint
+  // completo tras setScale/zoom. Para drones (animados con tween), se suma la
+  // amplitud real del tween (ampX/ampY, spec DRONE_DEFS) — ver comentario en
+  // CH6_WORLD_POINTS: sin esto, un dron en movimiento puede quedar fuera de un
+  // radio angosto centrado en su posición BASE aunque esté vivo y visible.
+  const BASE_SAMPLE_RADIUS = 24
+  const details = []
+  let allOk = true
+  for (const pt of CH6_WORLD_POINTS) {
+    const screenX = canvasRect.x0 + pt.worldX * zoom
+    const screenY = canvasRect.y0 + (pt.worldY - CAMERA_FINAL_Y_REF) * zoom
+    const radiusX = BASE_SAMPLE_RADIUS + (pt.ampX ?? 0) * zoom
+    const radiusY = BASE_SAMPLE_RADIUS + (pt.ampY ?? 0) * zoom
+    let sample
+    try {
+      sample = await sampleLumaGridInBrowser(cx, screenshot.data, screenX, screenY, radiusX, radiusY)
+    } catch (e) {
+      sample = { error: e.message }
+    }
+    const ok = sample && typeof sample.range === 'number' && sample.range > LUMA_RANGE_THRESHOLD
+    if (!ok) allOk = false
+    details.push({ ...pt, screenX: Math.round(screenX), screenY: Math.round(screenY), radiusX: Math.round(radiusX), radiusY: Math.round(radiusY), sample, ok })
+  }
+  report(`D. [${viewportName}] planetas/drones rescatados visibles (sampling de luma, umbral rango>${LUMA_RANGE_THRESHOLD})`, allOk, JSON.stringify(details))
 }
 
 // ─────────────────────────────────────────────────────────────────────────

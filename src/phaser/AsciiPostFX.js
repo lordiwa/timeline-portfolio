@@ -122,9 +122,28 @@ float glyphForLuma(float l, float mode, vec2 p, vec2 cellHash) {
 }
 
 // Wipe orgánico del takeover: umbral por fBm, no cortina lineal.
+//
+// Bug encontrado en ronda 2 (2026-07-29, verificación visual real en Chrome
+// headed + sampling de píxeles del check D): la polaridad de smoothstep()
+// estaba invertida. smoothstep(mix01 - 0.12, mix01, term) devuelve 1
+// (ASCII) cuando term >= mix01 — con term = uv.y*0.65 + n*0.35 siempre >= 0,
+// a mix01=0 casi TODO el frame ya caía en la rama "term >= mix01" (mix01=0
+// es el umbral MÁS BAJO posible), es decir la escena arrancaba ya disuelta
+// en glifos en vez de imagen pura. Y al crecer mix01 el umbral se vuelve MÁS
+// EXIGENTE (hace falta term aún mayor), así que el efecto se encogía con el
+// tiempo — exactamente al revés de "uMix progreso del takeover" (spec §4.2).
+// Confirmado con screenshot real: al segundo ~3 (fase prompt, mix todavía
+// bajo) la escena ya era ~90% negro con glifos dispersos.
+//
+// Fórmula corregida: el ASCII cubre los píxeles con term <= mix01 (empieza
+// en term=0, la zona de MENOS ruido/más arriba, y a medida que mix01 crece
+// hacia 1 incorpora progresivamente los term más altos hasta cubrir toda la
+// pantalla). mix01=0 → prácticamente 0% ASCII (imagen pura). mix01=1 → 100%
+// ASCII (term nunca excede ~1.0).
 float takeover(vec2 uv, float mix01) {
   float n = fbm3(uv * 3.0 + vec2(0.0, uTime * 0.02));
-  return smoothstep(mix01 - 0.12, mix01, uv.y * 0.65 + n * 0.35);
+  float term = uv.y * 0.65 + n * 0.35;
+  return 1.0 - smoothstep(mix01, mix01 + 0.12, term);
 }
 
 void main() {

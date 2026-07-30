@@ -78,9 +78,22 @@ const PRM_SHIP2_X = 720
 // encima de la banda visible). Ahora la Y es explícita, no derivada del orbit.
 // Arrays indexados por orden cronológico ascendente de planetOrbit (D5-01):
 // idx 0 = ar-vr (0.2), idx 1 = remoose (0.5), idx 2 = software-mind (0.8).
-const PLANET_XS = [170, 820, 600]
-const PLANET_YS = [1425, 1455, 1566] // software-mind ya era visible, no se mueve.
-const PLANET_RADII = [56, 62, 90]    // software-mind domina: es el presente (spec §1.2).
+// RONDA 2 (2026-07-29) — bug real encontrado por verificación visual (check D,
+// screenshot con panel oculto): estos 3 slots se indexaban por POSICIÓN de
+// array (idx 0/1/2), asumiendo que this.projectsData siempre trae exactamente
+// 3 proyectos en el orden [ar-vr, remoose, software-mind]. TASK-013 (ticket
+// posterior, fuera de este alcance) retiró 'ch6-ar-vr' de src/data/projects.js
+// por completo — con solo 2 proyectos restantes, el índice 0 (pensado para
+// ar-vr: x=170,r=56) terminaba asignándose a remoose, y el índice 1 (pensado
+// para remoose: x=820,r=62) a software-mind, que además spec dice que debía
+// DOMINAR con r=90 y quedó con r=62. Fix: lookup por id de proyecto, no por
+// índice — cada slot es explícito y sobrevive a que un proyecto se agregue o
+// se retire de la lista sin volver a barajar a los demás.
+const PLANET_SLOTS = {
+  'ch6-ar-vr': { x: 170, y: 1425, r: 56 },
+  'ch6-remoose': { x: 820, y: 1455, r: 62 },
+  'ch6-software-mind': { x: 600, y: 1566, r: 90 }, // domina: es el presente (spec §1.2).
+}
 
 // Ring wireframe holográfico (ERA-AGNT-02) — reemplaza ch6-structures-t.png.
 // Elipse en perspectiva; semi-ejes: OA/OB = exterior, IA/IB = interior.
@@ -383,14 +396,16 @@ export class SpaceScene extends Phaser.Scene {
     this.projectsData = projects.filter((p) => p.chapterEra === 6)
     this.projectsData.sort((a, b) => a.planetOrbit - b.planetOrbit)
 
-    this.projectsData.forEach((proj, idx) => {
+    this.projectsData.forEach((proj) => {
       const textureKey = `ch6-planet-${proj.id.replace('ch6-', '')}`
-      const planetX = PLANET_XS[idx] ?? BASE_W / 2
+      // Lookup por id (no por índice de array) — ver comentario de PLANET_SLOTS.
+      const slot = PLANET_SLOTS[proj.id]
+      const planetX = slot?.x ?? BASE_W / 2
       // TASK-012 RESCATE: Y explícita por planeta (spec §1.2), ya NO derivada de
       // planetOrbit * ARRIVAL_DESCENT — esa fórmula dejaba a ar-vr y remoose fuera
       // de la banda de cámara final [1350, 1890].
-      const planetY = PLANET_YS[idx] ?? CAMERA_FINAL_Y + BASE_H / 2
-      const planetR = PLANET_RADII[idx] ?? PLANET_R
+      const planetY = slot?.y ?? CAMERA_FINAL_Y + BASE_H / 2
+      const planetR = slot?.r ?? PLANET_R
 
       // Sprite PNG invisible — satisface el contrato de tests (T2/T3) sin renderizar.
       const planet = this.add.sprite(planetX, planetY, textureKey)

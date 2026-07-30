@@ -43,10 +43,23 @@ describe('SpaceScene rescate + unísono + ASCII (TASK-012)', () => {
     expect(src).toMatch(/ARRIVAL_DURATION_MS\s*=\s*2200/)
   })
 
-  it('T2: PLANET_XS/YS/RADII con los valores exactos de la spec §1.2', () => {
-    expect(src).toMatch(/PLANET_XS\s*=\s*\[\s*170,\s*820,\s*600\s*\]/)
-    expect(src).toMatch(/PLANET_YS\s*=\s*\[\s*1425,\s*1455,\s*1566\s*\]/)
-    expect(src).toMatch(/PLANET_RADII\s*=\s*\[\s*56,\s*62,\s*90\s*\]/)
+  it('T2: cada planeta tiene los x/y/r exactos de la spec §1.2, indexados por id (no por posición de array)', () => {
+    // Ronda 2 (2026-07-29) — bug real encontrado por verificación visual: los
+    // arrays PLANET_XS/YS/RADII indexaban por POSICIÓN, asumiendo siempre 3
+    // proyectos [ar-vr, remoose, software-mind] en ese orden. TASK-013 retiró
+    // 'ch6-ar-vr' de src/data/projects.js — con solo 2 proyectos restantes,
+    // remoose heredaba el slot de ar-vr (x=170,r=56) y software-mind heredaba
+    // el de remoose (x=820,r=62) en vez de su r=90 dominante. Fix: lookup por
+    // id de proyecto (PLANET_SLOTS), inmune a que un proyecto se agregue o
+    // retire. Se preservan los mismos 3 valores exactos de la spec.
+    expect(src).toMatch(/PLANET_SLOTS\s*=\s*\{/)
+    expect(src).toMatch(/'ch6-ar-vr'\s*:\s*\{\s*x:\s*170,\s*y:\s*1425,\s*r:\s*56\s*\}/)
+    expect(src).toMatch(/'ch6-remoose'\s*:\s*\{\s*x:\s*820,\s*y:\s*1455,\s*r:\s*62\s*\}/)
+    expect(src).toMatch(/'ch6-software-mind'\s*:\s*\{\s*x:\s*600,\s*y:\s*1566,\s*r:\s*90\s*\}/)
+    // Anti-regresión: nunca más indexar por posición de array para estos slots.
+    expect(src).not.toMatch(/PLANET_XS\s*=/)
+    expect(src).not.toMatch(/PLANET_YS\s*=/)
+    expect(src).not.toMatch(/PLANET_RADII\s*=/)
   })
 
   it('T3: los 2 drones reubicados están en la banda visible (y=1418/x=260, y=1512/x=340), no en y=1040/y=580', () => {
