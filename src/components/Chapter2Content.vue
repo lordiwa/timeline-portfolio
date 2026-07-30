@@ -553,10 +553,34 @@ onBeforeUnmount(() => {
  * real. Acotado a este rango (no toca 1536/1440 desktop, donde no hay
  * residual): a esos anchos el aside ya queda libre de StickyAvatar sin ayuda.
  * margin-top empuja TODO el bloque meta (tag+año+era) por debajo del borde
- * inferior del avatar (16+96=112px) con margen. */
-@media (min-width: 600px) and (max-width: 1023px) {
+ * inferior del avatar (16+96=112px) con margen.
+ *
+ * RONDA 3 — HIGH bloqueante del review de la ronda 2: los 104px de margin-top
+ * viven en la MISMA fila de grid ("meta", auto-height) que la fila "nav"
+ * (grid-template-rows: auto minmax(0, 1fr) auto, chapter-components.css); al
+ * ser fila auto, el margin-top se suma a su altura y empuja toda la fila
+ * "nav" hacia abajo esa misma cantidad — no hay filtrado por ancho, así que
+ * un margin pensado para 834x1194 (mucha altura libre) empujaba también en
+ * 844x390 (poca altura), sacando el botón CONTACT del sidebar Y2K por debajo
+ * del borde de `.chapter-section` (100dvh + overflow:hidden, sin scroll
+ * posible — ScrollShell.vue). Medido en 844x390 ES antes de este fix: CONTACT
+ * y1=440 contra un viewport de 390px de alto, y WORK cortado 2px (y1=392).
+ *
+ * Fix: partir la regla por altura. min-height:521px conserva los 104px
+ * (834x1194 sigue con el mismo margen que resolvió su residual). max-
+ * height:520px (mismo umbral que ya usan ch3/ch4 para "landscape de
+ * teléfono") reduce el margin a 40px — medido con CDP real en 844x390: sigue
+ * despejando `.ch2-year` de StickyAvatar (year y0=122, avatar y1=112, 10px de
+ * margen) y deja CONTACT completo dentro del viewport (y1=376 < 390, 14px de
+ * margen) y WORK sin cortes (y1=328 < 390). */
+@media (min-width: 600px) and (max-width: 1023px) and (min-height: 521px) {
   .ch2-meta {
     margin-top: 104px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1023px) and (max-height: 520px) {
+  .ch2-meta {
+    margin-top: 40px;
   }
 }
 

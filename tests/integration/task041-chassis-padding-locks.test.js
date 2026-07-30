@@ -71,16 +71,28 @@ describe('TASK-041 — Chapter2Content.vue: reserva de espacio contra StickyTime
     ).toBe('64px')
   })
 
-  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px) reserva margin-top:104px contra StickyAvatar', () => {
+  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(min-height:521px) reserva margin-top:104px contra StickyAvatar (tablet portrait)', () => {
     const root = styleRoot(CH2_PATH)
-    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px'))
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('min-height: 521px'))
       .find((q) => declsIn(q, '.ch2-meta').length > 0)
-    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px) tocando .ch2-meta').toBeDefined()
+    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(min-height:521px) tocando .ch2-meta').toBeDefined()
     const decl = declsIn(query, '.ch2-meta').find((d) => d.prop === 'margin-top')
     expect(
       decl && decl.value,
-      'REGRESSION LOCK (TASK-041): .ch2-meta debe declarar margin-top:104px en este rango — sin esto, StickyAvatar (16-112px) vuelve a tapar el año ("2009") en mobile landscape/tablet portrait'
+      'REGRESSION LOCK (TASK-041): .ch2-meta debe declarar margin-top:104px en tablet portrait (min-height:521px) — sin esto, StickyAvatar (16-112px) vuelve a tapar el año ("2009") en 834x1194'
     ).toBe('104px')
+  })
+
+  it('.ch2-meta dentro de @media(min-width:600px)/(max-width:1023px)/(max-height:520px) reserva margin-top:40px (ronda 3 — brazo corto para no sacar CONTACT del viewport en landscape de teléfono)', () => {
+    const root = styleRoot(CH2_PATH)
+    const query = mediaAtRules(root, (p) => p.includes('min-width: 600px') && p.includes('max-width: 1023px') && p.includes('max-height: 520px'))
+      .find((q) => declsIn(q, '.ch2-meta').length > 0)
+    expect(query, 'no se encontró @media(min-width:600px)/(max-width:1023px)/(max-height:520px) tocando .ch2-meta').toBeDefined()
+    const decl = declsIn(query, '.ch2-meta').find((d) => d.prop === 'margin-top')
+    expect(
+      decl && decl.value,
+      'REGRESSION LOCK (TASK-041 ronda 3): .ch2-meta debe declarar margin-top:40px en 844x390 (max-height:520px) — un valor de 104px en esta rama (heredado sin filtrar por altura) empuja la fila "nav" del grid ese mismo tanto y saca el botón CONTACT del sidebar Y2K por debajo del borde de .chapter-section (100dvh + overflow:hidden, sin scroll posible); medido con verify-chassis-overlap.mjs, 40px despeja .ch2-year de StickyAvatar (10px de margen) y deja CONTACT (y1=376) y WORK (y1=328) completos dentro de un viewport de 390px de alto'
+    ).toBe('40px')
   })
 })
 

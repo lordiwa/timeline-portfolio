@@ -29,6 +29,29 @@
 // contenido crítico) el número de acá NO es un fix — regla general anotada
 // en LECCIONES-TECNICAS.md §8.
 //
+// PUNTO CIEGO DE CLIP POR ANCESTRO (LOW pendiente de la ronda 2, ADDENDUM de
+// §8 en LECCIONES-TECNICAS.md — el HIGH bloqueante de la ronda 2/3 vivía
+// exactamente acá): `el.getBoundingClientRect()` de la caja medida NO refleja
+// el recorte de un ancestro con `overflow: hidden`/`clip`. Una caja puede
+// reportar un rect "completo" mientras un ancestro (p.ej. `.chapter-section`,
+// 100dvh + overflow:hidden, ScrollShell.vue) le recorta la mitad de abajo sin
+// que exista NINGÚN mecanismo de scroll para llegar a esa mitad — eso es
+// PEOR que un scroll container propio, porque lo recortado es inalcanzable,
+// no diferido. Con los TARGETS actuales (`.ch4-panel-column`, `.ch5-panel-body`,
+// ambos con su propio overflow-y interno) esto no cambia el resultado, pero
+// cualquier target nuevo que NO tenga su propio scroll interno sí lo
+// necesita. Mitigado en esta ronda (no eliminado del todo, ver más abajo):
+// `__reachable()` ahora acumula la intersección de `el` con el rect de CADA
+// ancestro cuyo overflow computado (x o y) sea hidden/clip, y reporta
+// `clipRect` + `clippedAwayWords` (palabras cuyo rect cae completamente fuera
+// de ese frame acumulado — inalcanzables sin importar scroll) por separado de
+// `hiddenWords` (fuera de la caja propia, puede ser alcanzable con scroll
+// interno si `el` mismo scrollea). Sigue siendo una heurística de DOM, no un
+// motor de pintado real (no modela `clip-path`, `mask`, ni transforms que
+// muevan contenido fuera de su propio rect) — para ese caso, la prueba
+// definitiva sigue siendo medición manual con CDP real como la de este
+// mismo ticket (ver hand-off de la ronda 3).
+//
 // CÓMO CORRERLO (misma receta que verify-chassis-overlap.mjs, LECCIONES-
 // TECNICAS.md §6):
 //   1. `npm run dev`
@@ -203,6 +226,27 @@ window.__reachable = function(selector) {
   const el = document.querySelector(selector);
   if (!el) return null;
   const box = el.getBoundingClientRect();
+  // TASK-041 RONDA 3 — mitigación del punto ciego de clip por ancestro (ver
+  // encabezado del archivo): acumula la intersección de \`el\` con el rect de
+  // CADA ancestro cuyo overflow computado (x o y) sea hidden/clip. Ese frame
+  // acumulado es lo más cerca que se puede llegar, sin un motor de pintado
+  // real, a "lo que efectivamente puede pintar \`el\`" — a diferencia de \`box\`
+  // (el rect propio de \`el\`, ciego a cualquier recorte de un ancestro).
+  let clip = { left: -Infinity, top: -Infinity, right: Infinity, bottom: Infinity };
+  let hasClippingAncestor = false;
+  for (let anc = el.parentElement; anc; anc = anc.parentElement) {
+    const cs = getComputedStyle(anc);
+    if (cs.overflowX === 'hidden' || cs.overflowX === 'clip' || cs.overflowY === 'hidden' || cs.overflowY === 'clip') {
+      hasClippingAncestor = true;
+      const ar = anc.getBoundingClientRect();
+      clip = {
+        left: Math.max(clip.left, ar.left),
+        top: Math.max(clip.top, ar.top),
+        right: Math.min(clip.right, ar.right),
+        bottom: Math.min(clip.bottom, ar.bottom),
+      };
+    }
+  }
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       if (!node.textContent.trim()) return NodeFilter.FILTER_REJECT;
@@ -212,6 +256,7 @@ window.__reachable = function(selector) {
   });
   let totalWords = 0;
   let hiddenWords = 0;
+  let clippedAwayWords = 0;
   let node;
   while ((node = walker.nextNode())) {
     const text = node.textContent;
@@ -238,26 +283,58 @@ window.__reachable = function(selector) {
         rr.top < box.bottom && rr.bottom > box.top
       );
       if (!visible) hiddenWords++;
+      // "recortada por ancestro" = ningún rect de la palabra intersecta el
+      // frame acumulado de ancestros con overflow:hidden/clip — inalcanzable
+      // aunque \`el\` mismo scrollee, porque el recorte lo hace un padre sin
+      // mecanismo de scroll propio (el caso del bloqueante de ronda 2).
+      if (hasClippingAncestor) {
+        const withinClip = rects.some((rr) =>
+          rr.width > 0 && rr.height > 0 &&
+          rr.left < clip.right && rr.right > clip.left &&
+          rr.top < clip.bottom && rr.bottom > clip.top
+        );
+        if (!withinClip) clippedAwayWords++;
+      }
     }
   }
   return {
     clientHeight: el.clientHeight,
     scrollHeight: el.scrollHeight,
     boxRect: { x0: Math.round(box.left), y0: Math.round(box.top), x1: Math.round(box.right), y1: Math.round(box.bottom) },
+    hasClippingAncestor,
+    clipRect: hasClippingAncestor
+      ? { x0: Math.round(clip.left), y0: Math.round(clip.top), x1: Math.round(clip.right), y1: Math.round(clip.bottom) }
+      : null,
     totalWords,
     hiddenWords,
+    clippedAwayWords,
   };
 };
 'installed';
 `
 
 const RESULTS = []
+let anySkipped = false
 function report(name, detail) {
   RESULTS.push({ name, detail })
   const pct = detail && detail.totalWords ? Math.round((detail.hiddenWords / detail.totalWords) * 100) : null
+  const clipInfo = detail && detail.hasClippingAncestor ? ` clippedAway=${detail.clippedAwayWords}` : ''
   console.log(
-    `MEASURE — ${name} :: clientHeight=${detail?.clientHeight} scrollHeight=${detail?.scrollHeight} palabras=${detail?.totalWords} ocultas=${detail?.hiddenWords}${pct !== null ? ` (${pct}%)` : ''}`
+    `MEASURE — ${name} :: clientHeight=${detail?.clientHeight} scrollHeight=${detail?.scrollHeight} palabras=${detail?.totalWords} ocultas=${detail?.hiddenWords}${pct !== null ? ` (${pct}%)` : ''}${clipInfo}`
   )
+}
+
+// TASK-041 RONDA 3 — HIGH/LOW de la ronda 2: un target ausente (sección que
+// no monta, o selector que ya no existe) hacía `continue` en silencio y la
+// entrada desaparecía del artefacto sin error ni marca — así quedó un
+// artefacto de una corrida de base solo-ch5 pisando el JSON de HEAD de ES sin
+// que nadie lo notara. Ahora emite una línea SKIPPED explícita y marca el
+// run para salir con código != 0: un sensor que se saltea en silencio se lee
+// como cobertura, y no lo es.
+function reportSkipped(name, reason) {
+  anySkipped = true
+  RESULTS.push({ name, detail: null, skipped: true, reason })
+  console.log(`SKIPPED — ${name} :: ${reason}`)
 }
 
 const VIEWPORTS = [
@@ -293,26 +370,44 @@ async function main() {
     await bootToHome(cx, url)
     allResults[name] = {}
     for (const n of chapters) {
+      const targets = TARGETS[n] || []
+      if (targets.length === 0) continue // capítulo sin target declarado — no es un skip, no hay chequeo que hacer
       const ready = await jumpToChapter(cx, n)
-      if (!ready) continue
+      if (!ready) {
+        for (const sel of targets) {
+          reportSkipped(`[${name}] ch${n} ${sel}`, `sección [data-chapter="${n}"] no montó — jumpToChapter() no encontró section[data-chapter="${n}"] tras el timeout`)
+        }
+        continue
+      }
       await cx.evaluate(MEASURE_REACHABLE)
-      for (const sel of TARGETS[n] || []) {
+      for (const sel of targets) {
         const detail = await cx.evaluate(`window.__reachable(${JSON.stringify(sel)})`)
-        if (!detail) continue
+        if (!detail) {
+          reportSkipped(`[${name}] ch${n} ${sel}`, `document.querySelector('${sel}') no encontró el elemento dentro de ch${n} en este viewport`)
+          continue
+        }
         allResults[name][`ch${n} ${sel}`] = detail
         report(`[${name}] ch${n} ${sel}`, detail)
       }
     }
   }
 
+  const skippedEntries = RESULTS.filter((r) => r.skipped)
   const outPath = path.resolve(__dirname, '..', '.planning', `task041-content-reachable-${locale}.json`)
   try {
-    fs.writeFileSync(outPath, JSON.stringify({ locale, results: allResults }, null, 2))
+    fs.writeFileSync(outPath, JSON.stringify({ locale, results: allResults, skipped: skippedEntries }, null, 2))
     console.log(`\nResultados escritos en ${outPath}`)
   } catch {
     // best-effort
   }
+  if (anySkipped) {
+    console.log(`\n=== RESULTADO: ${skippedEntries.length} TARGET(S) SALTEADO(S) — ver líneas SKIPPED arriba ===`)
+  }
   cx.ws.close()
+  // TASK-041 RONDA 3 — un target ausente ya no es cobertura silenciosa: sale
+  // con código != 0 para que CI/el desarrollador lo note (ver defecto de la
+  // ronda 2 documentado arriba de reportSkipped()).
+  process.exitCode = anySkipped ? 1 : 0
 }
 
 main().catch((e) => {
