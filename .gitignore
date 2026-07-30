@@ -5,6 +5,11 @@ dist
 .env
 .env.local
 
+# Cache local de firebase-tools: guarda hashes del ultimo deploy para subir solo
+# los archivos cambiados. Es estado por-maquina, no configuracion del proyecto
+# (esa vive en firebase.json y .firebaserc, que SI se commitean).
+.firebase/
+
 # Documentos personales fuera del repo (excepto la copia pública del CV servida por Vite)
 Profile.pdf
 !public/Profile.pdf
