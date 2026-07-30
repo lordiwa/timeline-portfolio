@@ -80,6 +80,12 @@
       "label": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS"
     },
     {
+      "id": "task-034",
+      "type": "task",
+      "ref": "tasks/TASK-034.json",
+      "label": "ch6: el ASCII no debe quedarse asentado, tiene que volver a la vista normal y ciclar"
+    },
+    {
       "id": "task-035",
       "type": "task",
       "ref": "tasks/TASK-035.json",

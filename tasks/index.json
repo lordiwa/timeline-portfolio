@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T14:49:31.066Z",
+  "generated_at": "2026-07-30T14:52:59.634Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -202,7 +202,7 @@
     {
       "key": "TASK-034",
       "title": "ch6: el ASCII no debe quedarse asentado, tiene que volver a la vista normal y ciclar",
-      "status": "in_progress",
+      "status": "done",
       "priority": "high"
     },
     {
