@@ -60,6 +60,12 @@
       "type": "task",
       "ref": "tasks/TASK-028.json",
       "label": "ch3: caption del roadmap desalineado en la banda [2.84, 3.0) y umbral 0.05 duplicado entre componente y test"
+    },
+    {
+      "id": "task-032",
+      "type": "task",
+      "ref": "tasks/TASK-032.json",
+      "label": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS"
     }
   ],
   "edges": []

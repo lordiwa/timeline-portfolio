@@ -8,7 +8,7 @@
     "Existe un lock de regresion que falla si el title estatico de index.html vuelve a ser el nombre del repo.",
     "npm test sigue verde."
   ],
-  "status": "in_review",
+  "status": "done",
   "priority": "medium",
   "labels": [
     "seo",
@@ -16,17 +16,24 @@
   ],
   "assignee": null,
   "depends_on": [],
-  "linked_commits": [],
+  "linked_commits": [
+    "5688ea9"
+  ],
   "linked_prs": [],
   "comments": [
     {
       "author": "orchestrator",
       "at": "2026-07-30T01:34:50.923Z",
       "body": "ENTREGADO Y EN PRODUCCION, PENDIENTE DE REVIEW DE CIERRE. Commit 5688ea9. review_depth calculado: LIGHT (una linea en index.html mas un archivo de test nuevo; no toca schema, seguridad, estado compartido, packaging, infra de tests ni logica tdd).\n\nVALOR: el title estatico paso de \"mato-new-portfolio\" a \"Rafael Matovelle · Full Stack & QA\", tomado verbatim de es.json seo.title. Locale por defecto confirmado como es con tres evidencias independientes: <html lang=\"es\"> en index.html, el hreflang x-default de App.vue apuntando a la misma URL que es, y resolveInitialLocale() en src/i18n/index.js cayendo a 'es' como ultimo fallback.\n\nLOCK: tests/seo/static-title.test.js, 2 tests. Uno falla si el title vuelve a ser el name de package.json; el otro exige que coincida verbatim con es.json seo.title, asi que tambien protege de que fallback y reactivo se desincronicen. El developer planto el rojo revirtiendo el title en memoria y confirmo que ambos tests fallan por la razon correcta antes de commitear.\n\nSUITE: 708 passed con 2 fallas por timeout en ScrollShell.test.js y ScrollShell.theme-isolation.test.js, archivos que no toco. Re-corridos aislados con --testTimeout=20000 dan 35/35. Es el flake conocido por contencion de CPU externa al repo, ya documentado en TASK-027. NO ajusto timeouts ajenos, correctamente.\n\nDEPLOY: se rebuildeo, se barrio el dist (references y assets/old) y se redeployo a Firebase. Verificado en vivo con curl sobre m4to.com: el title servido es el nuevo, y las fotos de references y las iteraciones de assets/old siguen devolviendo el fallback SPA en text/html, no la imagen.\n\nHALLAZGO DERIVADO, fuera de alcance: el developer reporto que seoConfig.siteUrl sigue con el placeholder multiverse-portfolio.web.app mientras el sitio ya vive en m4to.com. Abierto como TASK-033."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-07-30T01:53:17.069Z",
+      "body": "CERRADO con review en PASS. review_depth: LIGHT. Inputs del rubric: 2 archivos y 36 lineas cambiadas (+1/-1 en index.html, +35 el test nuevo), y cero superficies mandatory-FULL tocadas (no toca schema, seguridad, estado compartido, packaging/dist, infra de tests, logica tdd ni gate de release). El reviewer confirmo el rubric con git show y declaro que no encontro motivo para escalar a FULL.\n\nVEREDICTO: PASS. Cero HIGH, cero MEDIUM, 2 LOW informativos.\n\nLO QUE EL REVIEWER VERIFICO EJECUTANDO, no leyendo:\n- tests/seo/static-title.test.js 2/2 verde.\n- Suite completa 707/710, con 3 timeouts en ScrollShell.test.js, ScrollShell.theme-isolation.test.js y ScrollShell.theme-isolation-phase4.test.js, ninguno tocado por el commit. Re-corridos aislados con --testTimeout=20000 dan 41/41. Es el flake preexistente de TASK-027 y el commit no lo introduce ni lo empeora.\n- NO VACUIDAD DEL LOCK, el punto que mas importaba: siendo read-only, replico el sensor exacto del test (misma regex, mismas dos aserciones, mismas fuentes) contra el index.html real con el title revertido a mato-new-portfolio, y confirmo que AMBAS aserciones fallan por la razon correcta. El lock no es vacuo.\n- Descarto que la segunda asercion sea tautologica: compara el artefacto (index.html, leido por fs) contra la fuente (es.json, import independiente). Son dos archivos distintos, no el mismo valor comparado consigo mismo.\n- git ls-files dist vacio y dist en .gitignore, asi que la clase dist-rancio no aplica.\n\nBARRIDO DE LAS 5 CLASES RECURRENTES DE HIGH: ninguna presente. Unspecced path descartado porque el diff mapea 1:1 a los AC; sensor vacuo descartado por ejecucion; dist rancio N/A; parity drift es justamente lo que el lock encadena y quedo verde; calibration laundering no aplica porque el commit no toca archivos con markers epistemicos.\n\nTIER-AUDIT: tests-after bien asignado para markup estatico sin logica, estado ni parsing, y de todos modos quedaron locks.\n\nDATO UTIL DEL REVIEW: la paridad index.html <-> es.json seguia intacta incluso despues de que trabajo paralelo modificara es.json, lo que confirma que el lock hace el trabajo que se le pidio.\n\nLOW REGISTRADOS, sin accion: (1) la comparacion verbatim fallaria si alguien escapa el & del title a &amp;, equivalente en render pero distinto en bytes; el reviewer lo considera conservadurismo deseable y solo deja constancia para que un futuro fix de escaping no sorprenda. (2) el flake de ScrollShell alcanzo a 3 archivos en su corrida en vez de 2; si la lista sigue creciendo, TASK-027 merece mas prioridad.\n\nEN PRODUCCION: el cambio ya estaba deployado a m4to.com antes del review, por decision explicita de Rafael de cerrar la sesion. El title servido en vivo es el nuevo, verificado por curl."
     }
   ],
   "created_at": "2026-07-30T01:24:51.236Z",
-  "updated_at": "2026-07-30T01:34:50.923Z",
+  "updated_at": "2026-07-30T01:53:17.069Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"

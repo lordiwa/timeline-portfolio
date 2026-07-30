@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T01:42:10.534Z",
+  "generated_at": "2026-07-30T01:53:38.366Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -190,7 +190,7 @@
     {
       "key": "TASK-032",
       "title": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS",
-      "status": "in_review",
+      "status": "done",
       "priority": "medium"
     },
     {
