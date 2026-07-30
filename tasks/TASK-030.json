@@ -1,0 +1,29 @@
+{
+  "key": "TASK-030",
+  "title": "public/references/ se publica en dist y no lo usa nadie: 6 fotos personales de Rafael en el payload",
+  "description": "Hallazgo del barrido de PII previo al primer deploy (2026-07-29, orquestador).\n\n`npm run build` copia `public/references/` entero a `dist/references/`, con las 6 fotos personales de Rafael (2011.jpg, 2016.jpg, 2019.jpg, 2022.jpeg, 2024.jpg, 2026.jpg) mas logos de terceros. Verificado con grep sobre `src/` e `index.html`: NADIE las referencia, cero usos. Son superficie de fuga pura, no assets del sitio.\n\nHoy la unica proteccion es el glob `**/references/**` en el `ignore` de firebase.json (commit 19efccf). Eso mitiga el deploy pero NO evita que las fotos queden en `dist/`, y hace que la privacidad dependa de que un glob matchee bien en vez de que el archivo no este. En el deploy de hoy se resolvio a mano borrando `dist/references` antes de publicar, lo cual no es reproducible.\n\nPrecedente: este proyecto YA tuvo dos fugas reales de PII por esta misma via (public/ -> dist/), una en un PDF binario y otra en fotos gitignoradas.\n\nLo mismo aplica a `public/assets/old/`: 23 MB de iteraciones historicas de arte que se copian a dist (el dist crudo pesa 39 MB; el payload servible real son 8.1 MB).\n\nArreglo propuesto: sacar las referencias y `assets/old/` de `public/` a una carpeta hermana fuera del pipeline de build (por ejemplo `.refs/` o `art-history/` en la raiz, gitignorada igual), o excluirlas explicitamente en la config de Vite. La regla del CLAUDE.md §6.5 sobre preservar iteraciones en `assets/old/` con CHANGELOG sigue valiendo: lo que cambia es donde vive esa carpeta, no que exista.",
+  "acceptance_criteria": [
+    "Un `npm run build` limpio produce un dist que NO contiene ninguna foto de public/references/, verificado por comando y no a ojo.",
+    "El dist limpio no contiene assets/old/, y el peso total del dist queda en el orden del payload servible (~8 MB) y no en 39 MB.",
+    "La proteccion no depende del glob `ignore` de firebase.json: aunque ese glob se borrara, las fotos no estarian en el dist.",
+    "Las iteraciones historicas de arte siguen preservadas en disco y versionadas segun CLAUDE.md 6.5; solo cambia su ubicacion fuera del pipeline de build.",
+    "Ningun asset que el sitio SI usa se rompe: barrido de 404s de imagenes en los 7 capitulos tras el cambio."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "deploy",
+    "privacy",
+    "build"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T00:20:28.887Z",
+  "updated_at": "2026-07-30T00:20:28.887Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-29T18:48:06.652Z",
+  "generated_at": "2026-07-30T00:21:28.961Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -174,6 +174,18 @@
       "title": "Arnés de ch5: cerrar la vía de degradación silenciosa del gate de contraste",
       "status": "todo",
       "priority": "low"
+    },
+    {
+      "key": "TASK-030",
+      "title": "public/references/ se publica en dist y no lo usa nadie: 6 fotos personales de Rafael en el payload",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-031",
+      "title": "ch6: un dron queda fuera de cuadro en 1920x912 y el AC de planetas asume 3 proyectos cuando quedan 2",
+      "status": "todo",
+      "priority": "medium"
     }
   ]
 }

@@ -1,0 +1,30 @@
+{
+  "key": "TASK-031",
+  "title": "ch6: un dron queda fuera de cuadro en 1920x912 y el AC de planetas asume 3 proyectos cuando quedan 2",
+  "description": "Dos cabos sueltos declarados por el developer de TASK-012 al entregar, ninguno de los dos silenciado.\n\n1. DRON FUERA DE CUADRO. El arnes `scripts/verify-ch6-climax.mjs` cierra en 20/21. El unico rojo es el check D en 1920x912: el dron reubicado en world (260, 1418) queda fuera de cuadro porque el recorte vertical del ajuste COVER es mas agresivo en viewports anchos. Confirmado con captura real en Chrome headed, no inferido. En 1521x791 los 4 puntos (remoose, software-mind y los 2 drones) dan ok:true. El developer NO lo arreglo a proposito: mover el dron es una decision de composicion y el limite del ticket era no romper lo que ya funciona en otros viewports. Necesita criterio estetico (spec de Fable 5 en .planning/design/06-ch6-climax-terminal-ia.md) antes de tocar coordenadas.\n\n2. DISCREPANCIA HEREDADA EN EL AC#8 DE TASK-012. Ese AC habla de \"los 2 planetas-proyecto y 2 drones\", redactado cuando ch6 tenia 3 proyectos (ch6-ar-vr, remoose, software-mind). TASK-013 retiro `ch6-ar-vr` de los datos, asi que hoy son 2 planetas. El texto del AC quedo desalineado con los datos reales. Es documental, no un defecto de codigo.\n\nCONTEXTO UTIL: al medir esto el developer encontro y corrigio un bug real relacionado (commit d28a130): `PLANET_XS/YS/RADII` en SpaceScene.js indexaban por posicion de array asumiendo 3 proyectos, asi que tras la baja de ar-vr remoose heredaba la posicion y radio de ar-vr, y software-mind perdia su radio dominante r=90. Ya esta arreglado con lookup por id. Este ticket es solo el encuadre del dron que quedo.\n\nMOBILE: el check D no se corre en 390x844 ni 844x390 porque la seccion 2 de la spec excluye deliberadamente planetas y drones del focal en portrait. Ahi solo se verifica geometria (checks C y E). No es un hueco de cobertura sino un alcance decidido.",
+  "acceptance_criteria": [
+    "El check D del arnes verify-ch6-climax.mjs cierra en verde en 1920x912 sin aflojar la asercion: los 2 planetas y los 2 drones dan ok:true por sampling de pixeles.",
+    "El arnes completo queda en 21/21 y no se rompe ninguno de los checks que hoy estan en verde, en particular D en 1521x791.",
+    "El encuadre nuevo respeta la spec 06 y no deja elementos pegados al borde superior del mundo en ningun viewport barrido.",
+    "El texto del AC#8 de TASK-012 se corrige o se anota para que diga 2 planetas-proyecto, alineado con los datos reales tras la baja de ch6-ar-vr en TASK-013."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "ch6",
+    "design",
+    "shader"
+  ],
+  "assignee": null,
+  "depends_on": [
+    "TASK-012"
+  ],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-07-30T00:20:54.528Z",
+  "updated_at": "2026-07-30T00:20:54.528Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}
