@@ -1002,7 +1002,25 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 28px;
+  /* TASK-041 (residuales de chasis) — el panel vive pegado al borde derecho
+   * (right:0), el mismo borde donde viven LangToggle (fixed top-right,
+   * 82x44) y ContactHUD (fixed bottom-right, 46px de ancho). Medido con CDP
+   * real (verify-chassis-overlap.mjs) en mobile landscape/tablet
+   * portrait/ambos desktops:
+   *   - padding-top 28px→76px: LangToggle mide y0-y1 = 16-60px en TODOS esos
+   *     viewports (44px de alto + 16px de inset); 76px despeja su borde
+   *     inferior con margen — `.ch5-panel-badge/-year/-title` dejan de
+   *     quedar bajo la píldora (caso documentado sin arreglo posible desde
+   *     el chasis en el comentario de LangToggle.vue — la excepción de este
+   *     ticket lo resuelve acá).
+   *   - padding-right 28px→72px: ContactHUD mide su borde izquierdo a
+   *     viewport-62px (46px de ancho + 16px de inset) en los mismos
+   *     viewports; `.ch5-feed-text` quedaba con glifos bajo esa franja.
+   * El brazo mobile portrait (`@media max-width:600px`, más abajo en este
+   * archivo) resetea padding-top — ahí no hay residual de LangToggle (el
+   * panel queda debajo de la escena, no al costado) y sí necesita más
+   * padding-left en su lugar (ver ese bloque). */
+  padding: 76px 72px 28px 28px;
   background: rgba(10, 12, 20, 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1284,6 +1302,16 @@ onBeforeUnmount(() => {
     width: 100%;
     border-left: none;
     border-top: 1px solid rgba(129, 140, 248, 0.25);
+    /* TASK-041 (residuales de chasis) — en mobile portrait el panel queda
+     * DEBAJO de la escena (flujo normal, no al costado), así que el reserve
+     * de LangToggle de la regla base no hace falta acá (sin residual medido)
+     * — se vuelve a 28px. En cambio el panel ocupa el ANCHO COMPLETO del
+     * viewport, y el StickyTimeline global (compacto, ~58px, ver
+     * StickyTimeline.vue) SÍ tapaba el badge/título/viewers del header y el
+     * timestamp del primer item del feed (medido con CDP real en 390x844):
+     * padding-left 28px→68px despeja el rail con margen. */
+    padding-top: 28px;
+    padding-left: 68px;
   }
 
   /* Ronda 2 de review de TASK-011, HIGH bloqueante: el lower-third (left:4%,

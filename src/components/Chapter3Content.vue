@@ -1412,6 +1412,21 @@ onBeforeUnmount(() => {
      * hacía falta, así que se retira en vez de debilitar un lock ajeno. */
     .ch3-slide {
       padding-top: calc(var(--inset-chapter-top) + var(--sp-sm) + 74px);
+      /* TASK-041 (residuales de chasis) — el StickyTimeline GLOBAL (distinto
+       * de Ch3Roadmap.vue, que ya reserva arriba) mide ~58px de ancho
+       * compacto en este mismo breakpoint (año+era ocultos, ver
+       * StickyTimeline.vue @media max-width:599px/max-height:500px).
+       * `.ch3-hero`/`.ch3-beat`/`.ch3-close` heredaban solo 24px (var(--sp-lg))
+       * de este mismo padding compartido — medido con CDP real
+       * (verify-chassis-overlap.mjs): hero-sub, los leads de los beats, los
+       * kickers y "Seguir leyendo" quedaban con glifos bajo el rail en
+       * 390x844. 66px despeja el rail con margen; se aplica acá (compartido
+       * por hero/beats/cierre) en vez de repetirlo en cada clase hija.
+       * `.ch3-hero` fija su PROPIO padding (shorthand, línea ~972) — como esta
+       * regla es la MISMA especificidad (una clase) y va DESPUÉS en el
+       * archivo, gana para padding-left específicamente (cascada por
+       * propiedad, no por bloque completo). */
+      padding-left: 66px;
       box-sizing: border-box;
     }
     .ch3-slide:not(.ch3-close-slide) {
@@ -1419,6 +1434,39 @@ onBeforeUnmount(() => {
     }
     .ch3-close-slide {
       justify-content: flex-start;
+    }
+  }
+
+  /* TASK-041 (residuales de chasis) — tablet portrait (834x1194 en el arnés)
+   * NO cae en ninguno de los dos brazos de arriba (max-width:767px ni
+   * max-height:767px), así que `.ch3-slide` seguía con el padding-left BASE
+   * (24px, var(--sp-lg)) mientras el StickyTimeline global usa acá su
+   * versión DESKTOP completa (año+era visibles, ~153-169px de ancho — el
+   * disparador compacto de StickyTimeline es max-width:599px/max-height:500px,
+   * ninguno de los dos se cumple a 834x1194). Medido con CDP real: hero-sub,
+   * kickers, beat-lead, "Seguir leyendo", el cierre y las tarjetas de
+   * proyecto quedaban con glifos bajo el rail. Rango acotado a 768-1023px
+   * (no toca mobile <768, que ya tiene su propio brazo arriba, ni desktop
+   * >=1024, donde no hay residual reportado — el centrado del contenido a
+   * esos anchos ya despeja el rail sin ayuda). */
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .ch3-slide {
+      padding-left: 190px;
+      box-sizing: border-box;
+    }
+  }
+
+  /* TASK-041 (residuales de chasis) — mobile LANDSCAPE (ej. 844x390): además
+   * del rail (ya cubierto por el brazo max-height:767px de arriba), ContactHUD
+   * (fixed bottom-right, 46px de ancho + 16px de inset ⇒ borde izquierdo en
+   * viewport-62) tapaba `.ch3-beat-lead` y `.project-card-desc` por el lado
+   * DERECHO — medido con CDP real en 844x390, ambos llegaban a x1=791-796,
+   * dentro de esa franja. Acotado a alturas cortas de teléfono (<=520px,
+   * mismo criterio que Chapter4Content.vue) para no tocar mobile portrait
+   * (donde este residual no existe) ni tablet/desktop landscape (más altos). */
+  @media (max-height: 520px) {
+    .ch3-slide {
+      padding-right: 70px;
     }
   }
 

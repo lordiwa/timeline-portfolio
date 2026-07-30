@@ -529,8 +529,34 @@ onBeforeUnmount(() => {
   }
   .flash-y2k-mobile {
     display: block;
-    padding: 56px var(--sp-md) calc(env(safe-area-inset-bottom, 0px) + 96px);
+    /* TASK-041 (residuales de chasis) — el left original (var(--sp-md)=16px)
+       queda por debajo del ancho compacto del StickyTimeline global (~58px en
+       este breakpoint, ver .tick-button/StickyTimeline.vue) — medido con CDP
+       real (verify-chassis-overlap.mjs): el rail cubría glifos de "MOBILE
+       DETECTED" y del párrafo largo del stack mobile. 64px despeja el rail
+       con margen sin tocar el tap target de 44px (contrato ajeno, se resuelve
+       dando espacio acá, no encogiendo el chasis). El right también sube de
+       var(--sp-md)=16px a 60px: al angostar la columna por el left, el
+       párrafo largo reflowaba más alto y su borde derecho (antes en 374,
+       fijo por el right original) quedaba dentro de la franja de ContactHUD
+       (x0=337 en este viewport) — medido tras el primer fix. 60px deja el
+       borde derecho en 330, fuera de esa franja. */
+    padding: 56px 60px calc(env(safe-area-inset-bottom, 0px) + 96px) 64px;
     min-height: 100dvh;
+  }
+}
+
+/* TASK-041 (residuales de chasis, mapa de la descripción del ticket) —
+ * StickyAvatar (fixed top:16px/left:16px, 80x96 en este rango) tapa el año de
+ * `.ch2-year` (dentro de `.ch2-meta`, aside del layout desktop de Y2K) en
+ * mobile landscape (844x390) y tablet portrait (834x1194) — medido con CDP
+ * real. Acotado a este rango (no toca 1536/1440 desktop, donde no hay
+ * residual): a esos anchos el aside ya queda libre de StickyAvatar sin ayuda.
+ * margin-top empuja TODO el bloque meta (tag+año+era) por debajo del borde
+ * inferior del avatar (16+96=112px) con margen. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .ch2-meta {
+    margin-top: 104px;
   }
 }
 

@@ -430,8 +430,31 @@ onBeforeUnmount(() => {
   z-index: 5;
   align-self: flex-start;    /* base izquierda */
   margin-left: 7vw;          /* solo un poco hacia el centro (no centrado del todo) */
-  margin-top: clamp(24px, 10vh, 96px);
-  max-height: calc(100% - clamp(24px, 10vh, 96px) - var(--ch4-title-h, 72px) - var(--sp-md));
+  /* TASK-041 (residuales de chasis) — GlobalMantra (fixed, banda
+   * bottom-center ~30px de alto) tapaba .ch4-bio/.ch4-project-desc en ambos
+   * desktops (1536x791 y 1440x900, medido con CDP real). `max-height` por sí
+   * solo NO alcanza acá: overflow-y:auto recorta la PINTURA pero no reubica
+   * el flujo interno — el texto ya posicionado más abajo del corte sigue
+   * midiendo su rect real vía getBoundingClientRect()/Range.getClientRects()
+   * (lo que decide PASS/FAIL en verify-chassis-overlap.mjs), aunque esté
+   * clippeado visualmente. El cambio que sí reubica geometría es colapsar
+   * este margin-top a un valor casi fijo (18px, antes clamp(24px,10vh,96px)
+   * — a 900px/791px de alto el 10vh ya excedía por mucho el tope viejo):
+   * sube TODO el contenido, y combinado con el padding reducido de
+   * `.floating-panel` más abajo, deja el conteo de glifos afectados en
+   * ambos desktops en 1 (antes 1-2 por viewport, ver hand-off de TASK-041 —
+   * el residual que sobrevive, la fila "Frontend Engineer"/el título
+   * "Metrodigi" justo en el borde de GlobalMantra, se declara estructural:
+   * el ajuste fino de 1-2px que lo cerraría del todo en un viewport lo abre
+   * en el otro, señal de que ya no queda margen real, no de que falte
+   * probar otro número). Búsqueda de valores documentada en el hand-off. */
+  margin-top: clamp(18px, 10vh, 18px);
+  /* Reserva adicional de 120px al fondo del cálculo: complementa lo de
+   * arriba recortando (paint, no geometría) cualquier resto que aún exceda
+   * el nuevo margin-top más ajustado, para que el fade + scroll interno
+   * (mask-image, línea de abajo) señale contenido extra sin pintarlo encima
+   * del chasis. */
+  max-height: calc(100% - clamp(18px, 10vh, 18px) - var(--ch4-title-h, 72px) - var(--sp-md) - 120px);
   flex: 0 1 auto;
   min-height: 0;
   min-width: 0;
@@ -865,7 +888,13 @@ onBeforeUnmount(() => {
 .ch4-layout :deep(.floating-panel) {
   position: relative;
   z-index: 4;
-  padding: var(--sp-md);
+  /* TASK-041 (residuales de chasis) — de var(--sp-md)=16px a 10px: parte del
+   * mismo cierre de reserva vertical que el margin-top de `.ch4-panel-column`
+   * (arriba) para que el panel de proyectos completo (título+desc) quede por
+   * encima de GlobalMantra en ambos desktops — cada panel (bio y proyectos)
+   * pierde 8px de padding-top y 8px de padding-bottom, y como el panel de
+   * proyectos viene DESPUÉS del de bio en el flujo, el ahorro es acumulativo. */
+  padding: 10px;
   background-color: rgba(6, 10, 30, 0.78);
   border: 1px solid var(--c-accent);
   border-radius: 8px;
@@ -1188,11 +1217,76 @@ onBeforeUnmount(() => {
 }
 
 /* ─────────────────────────────────────────────────────────────
+ * TASK-041 (residuales de chasis) — mobile LANDSCAPE (ej. 844x390): el
+ * layout sigue la rama "desktop" (>=600px de ancho no dispara el bloque de
+ * abajo), pero a un alto tan bajo StickyAvatar (fixed top:16px/left:16px,
+ * 80x96) y ContactHUD (fixed, 46px de ancho, bottom-right) quedan casi tan
+ * altos como el viewport entero. Medido con CDP real en 844x390:
+ *   - `.ch4-title` (margin negativo a propósito, spec: título full-bleed)
+ *     arranca en y0=72, dentro del rango vertical de StickyAvatar (16-112)
+ *     y a lo ANCHO completo (x0=0) — bajo su esquina.
+ *   - `.ch4-panel-column` (width:100% + margin-left:7vw + max-width:640px)
+ *     se sale del content-box de `.ch4-layout` a este ancho (640+7vw excede
+ *     el ancho disponible tras el padding-left:160px) — el borde derecho
+ *     terminaba dentro de la franja de ContactHUD (x0=790 en este viewport).
+ * Acotado a `min-width:600px` (no toca el brazo <600px de abajo, que ya
+ * resuelve mobile portrait con su propio padding) y `max-height:520px`
+ * (cubre el alto típico de teléfono en landscape ~360-430px sin tocar
+ * tablet/desktop landscape, que miden bastante más alto — mismo criterio de
+ * umbral que StickyTimeline.vue usa para su propio disparo compacto). */
+@media (min-width: 600px) and (max-height: 520px) {
+  .ch4-layout {
+    /* Empuja el título por debajo del borde inferior de StickyAvatar
+       (16+96=112px) con margen — el resto de paddings queda igual.
+       padding-right sube de var(--sp-lg)=24px a 70px: reduce el content-box
+       disponible para que `.ch4-panel-column` (width:100%, ver abajo) NO
+       llegue a la franja de ContactHUD (46px de ancho + 16px de inset desde
+       el borde real ⇒ su borde izquierdo cae en viewport-62). */
+    padding-top: 128px;
+    padding-right: 70px;
+  }
+  .ch4-panel-column {
+    /* Sin el corrimiento extra hacia el centro: a este alto/ancho el cap de
+       640px ya no cabe con el margin-left:7vw sin desbordar el content-box
+       del layout (medido: desbordaba ~15-40px más allá del propio
+       viewport). margin en 0 dej que `width:100%` (resuelto contra el
+       content-box real de `.ch4-layout`, que ya reserva padding-right en la
+       regla de abajo) sea la única fuente de ancho. */
+    margin-left: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * TASK-041 (residuales de chasis) — tablet portrait (834x1194 en el arnés):
+ * StickyAvatar (16-96px en X, 16-112px en Y) tapaba `.ch4-title` (glyphRect
+ * medido x0=90, casi pegado al borde derecho del avatar en 96) — a este
+ * ancho el título (clamp de font-size) no tiene tanto margen lateral como en
+ * desktops más anchos, donde la MISMA caja intersecta el rect del avatar
+ * pero ningún glifo real cae ahí (declarado como falso positivo de caja por
+ * el propio arnés). Empujar el título por debajo del borde inferior del
+ * avatar (16+96=112px) con el mismo padding-top que usa el brazo de
+ * landscape de arriba resuelve el único glifo real. Acotado a 768-1023px
+ * (no toca mobile <768 con su propio bloque, ni desktop >=1024 sin
+ * residual). */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .ch4-layout {
+    padding-top: 128px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
  * Mobile <600px stacked (D3-09 heredado) — sin parallax de puntero.
  * ───────────────────────────────────────────────────────────── */
 @media (max-width: 599px) {
+  /* TASK-041 (residuales de chasis) — el left/right original (var(--sp-sm)=
+   * 8px) queda muy por debajo de lo que hace falta para despejar el chasis:
+   * medido con CDP real en 390x844, el StickyTimeline compacto mide ~58px
+   * (left) y ContactHUD ~53px desde el borde derecho (390-337). 64px/60px
+   * despejan ambos con margen, sin tocar top/bottom (sin residual horizontal
+   * ahí). El reserve vertical de fondo (StickyAvatar/HUD bottom) lo maneja
+   * `.ch4-panel-column` (max-height) más abajo en este mismo bloque. */
   .ch4-layout {
-    padding: calc(64px + var(--sp-sm)) var(--sp-sm) var(--sp-sm);
+    padding: calc(64px + var(--sp-sm)) 60px var(--sp-sm) 64px;
   }
 
   /* Título: sin márgenes negativos en mobile (causaban desborde); centrado en el
@@ -1223,8 +1317,15 @@ onBeforeUnmount(() => {
     max-width: 100%;
     margin: var(--sp-sm) 0 0 0;
     /* Recalculada con el margin-top real de mobile (var(--sp-sm), no el
-       clamp() de desktop) — mismo fix §8, cota de altura consistente. */
-    max-height: calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm));
+       clamp() de desktop) — mismo fix §8, cota de altura consistente.
+       TASK-041 (residuales de chasis): +210px extra de reserva al fondo —
+       medido con CDP real en 390x844, ContactHUD (46x194, la más alta de
+       las tres) empieza a ~202px del borde inferior del viewport; sin esta
+       reserva, .ch4-bio (un solo párrafo largo) quedaba con glifos bajo
+       ContactHUD/SoundToggle/GlobalMantra. El panel ya scrollea internamente
+       (overflow-y:auto + fade existentes), así que el texto que ya no entra
+       sigue accesible con scroll, no se pierde. */
+    max-height: calc(100% - var(--sp-sm) - var(--ch4-title-h, 56px) - var(--sp-sm) - 210px);
     animation: none;
   }
 

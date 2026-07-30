@@ -10,7 +10,7 @@
     "La composicion de desktop no se degrada: se aporta medicion antes y despues en 1536x791 dpr1.25 y 1440x900.",
     "npm test sigue verde y el conteo de PASS del arnes de chasis mejora respecto de la linea base de la ronda 2 (ES 47/74, EN 48/74), sin introducir rojos nuevos."
   ],
-  "status": "todo",
+  "status": "in_progress",
   "priority": "high",
   "labels": [
     "responsive",
@@ -26,7 +26,7 @@
   "linked_prs": [],
   "comments": [],
   "created_at": "2026-07-30T14:37:19.125Z",
-  "updated_at": "2026-07-30T14:37:19.125Z",
+  "updated_at": "2026-07-30T15:32:31.212Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"
