@@ -139,7 +139,16 @@ async function handleClick() {
 <style scoped>
 .sound-toggle {
   position: fixed;
-  bottom: var(--sp-md);
+  /* TASK-019 — AC5: en desktop (1536×791 dpr1.25, el viewport real de
+     Rafael) el `bottom: var(--sp-md)` original (16px) caía encima del HUD
+     diegético `.ch4-hud-bl` de Chapter4Content.vue ("FPS 72.4 │ LATENCY
+     11ms", bottom:12px/left:14px, ~37-45px de alto) — medido en Chrome real,
+     el icono tapaba el bloque "FPS". Se sube el piso a 60px (16 + 44, el
+     alto de un tap target) para despejar cualquier HUD de esquina de ~44px
+     de alto sin depender de saber la altura exacta de cada capítulo (fix
+     sistémico, no un offset ad-hoc sólo para ch4). Mobile (abajo) conserva
+     su propio valor sin cambios. */
+  bottom: calc(var(--sp-md) + 44px);
   left: var(--sp-md);
   z-index: 40;
 
@@ -197,8 +206,13 @@ async function handleClick() {
   }
 }
 
-/* Mobile: tap target garantizado */
-@media (max-width: 599px) {
+/* Mobile: tap target garantizado. TASK-019: `(max-height: 500px)` añadido
+   para que mobile landscape (ancho > 599px pero alto corto de teléfono, ej.
+   844×390) reciba el mismo inset compacto en vez del lift de +44px del
+   bloque desktop de arriba — ese lift es para despejar HUD de esquina en
+   viewports altos, innecesario aquí porque ContactHUD/StickyTimeline ya
+   compactan su propia huella en este mismo breakpoint (ver sus componentes). */
+@media (max-width: 599px), (max-height: 500px) {
   .sound-toggle {
     bottom: var(--sp-sm);
     left: var(--sp-sm);

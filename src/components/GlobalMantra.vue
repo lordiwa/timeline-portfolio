@@ -54,8 +54,17 @@ const { t } = useI18n()
 }
 
 /* Mobile <600px: aún más pequeño + alineado a viewport bottom con padding mayor
-   para evitar overlap con ContactHUD bottom-right que en mobile puede estar más cerca. */
-@media (max-width: 599px) {
+   para evitar overlap con ContactHUD bottom-right que en mobile puede estar más cerca.
+   TASK-019: `(max-height: 500px)` añadido — mismo teléfono en landscape corto
+   (ver el comentario de StickyTimeline/ContactHUD para el porqué del segundo
+   disparador). Reducción adicional de opacidad/tamaño en ese caso: la firma es
+   decorativa (pointer-events:none) y el espacio vertical es el más escaso de
+   los cinco breakpoints del ticket — cede terreno primero. NOTA (hand-off
+   TASK-019): parte del solapamiento medido contra `.global-mantra` en ch0/ch4/
+   ch5 correlaciona con el desborde de texto que TASK-018 ya investiga (el
+   párrafo de bio excede el viewport y su borde inferior cae justo donde vive
+   esta firma) — no es enteramente un problema de posición de este componente. */
+@media (max-width: 599px), (max-height: 500px) {
   .global-mantra {
     font-size: 0.75rem;
     bottom: calc(env(safe-area-inset-bottom, 0px) + var(--sp-sm));

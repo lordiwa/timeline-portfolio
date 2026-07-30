@@ -136,7 +136,19 @@ const locationDisabled = computed(() => !contact.location || contact.location ==
  * ───────────────────────────────────────────────────────────────────────── */
 .contact-hud {
   position: fixed;
-  bottom: env(safe-area-inset-bottom, 0);
+  /* TASK-019 — AC5: en desktop (1536×791 dpr1.25) `bottom: env(...)` (~0-16px
+     efectivo) caía sobre el HUD diegético `.ch4-hud-br` de Chapter4Content.vue
+     ("OCULUS RIFT CV1 / AR/VR 2015", bottom:12px/right:14px) — medido en
+     Chrome real, el ícono de GitHub cortaba ese rótulo a "OCULUS RIFT...".
+     Un primer intento de +44px (ver SoundToggle) despejaba `.ch4-hud-bl` pero
+     NO `.ch4-hud-br` — remedido en Chrome real a 1536×791 dpr1.25 (viewport
+     real innerHeight≈774): `.contact-hud` con +44px cerraba en y=730, y
+     `.ch4-hud-br` (que además de FPS/LATENCY tiene la línea "OCULUS RIFT
+     CV1") empieza en y=724 — 6px de solapamiento real, `.ch4-hud-br` es más
+     alto que `.ch4-hud-bl` por esa línea extra. +60px (igual que SoundToggle)
+     despeja con margen (cierra en y=714, 10px de aire). Mobile conserva su
+     propio inset sin cambios (media query abajo). */
+  bottom: calc(env(safe-area-inset-bottom, 0) + 60px);
   right: var(--sp-md);
   z-index: 40;
   display: flex;
@@ -184,14 +196,35 @@ const locationDisabled = computed(() => !contact.location || contact.location ==
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Mobile — RESEARCH Pattern 5 §537-548 verbatim.
- * <600px: right shrinks a --sp-sm; bottom añade --sp-sm extra por barra de navegación.
+ * Mobile — RESEARCH Pattern 5 §537-548 + TASK-019.
+ * <600px (y mobile landscape corto, ver abajo): right shrinks a --sp-sm.
  * Tap target 44×44 PRESERVADO (width/height fijos en .contact-icon no cambian).
+ *
+ * TASK-019 — INTENTO REVERTIDO: la primera versión de este bloque convertía
+ * la columna vertical en FILA horizontal (flex-direction: row) para reducir
+ * su huella vertical de ~250px a 44px, y de hecho reduce el solapamiento
+ * genérico medido en ch0/ch1/ch4/ch5. Pero re-medido contra ch6 (sólo
+ * LECTURA, TASK-034 en curso sobre ese capítulo — ver restricción de
+ * concurrencia del ticket): el panel `.ch6-convo` recibió sus insets en
+ * TASK-012 calibrados contra el ANCHO angosto (~46px) de la columna
+ * vertical original; la fila horizontal (~194px, 4 iconos × 44 + gaps)
+ * invade hacia la izquierda un tramo que antes estaba libre y sí intersecta
+ * `.ch6-convo-word` en portrait Y landscape (medido en Chrome real, ambos
+ * rojos). Tocar `.ch6-convo` está fuera de alcance (prohibido). Se revierte
+ * a columna (ancho sin cambios respecto al shipped) — sólo se amplía el
+ * disparador a `(max-height: 500px)` para que mobile landscape reciba el
+ * MISMO inset ya compatible con ch6 en portrait (mismo ancho/posición,
+ * ya verificado por scripts/verify-ch6-climax.mjs). El solapamiento vertical
+ * de la columna con contenido general de otros capítulos queda como hallazgo
+ * residual reportado en el hand-off (requiere o bien un rediseño de
+ * colapso-a-toggle re-verificado también contra ch6, o ampliar el margen del
+ * propio capítulo — ninguno de los dos es seguro dentro del alcance/lista
+ * blanca de este ticket).
  * ───────────────────────────────────────────────────────────────────────── */
-@media (max-width: 599px) {
+@media (max-width: 599px), (max-height: 500px) {
   .contact-hud {
     right: var(--sp-sm);
-    bottom: calc(env(safe-area-inset-bottom, 0) + var(--sp-sm));
+    bottom: env(safe-area-inset-bottom, 0);
   }
 }
 </style>

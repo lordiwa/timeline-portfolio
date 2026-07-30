@@ -253,10 +253,20 @@ watch(activeChapter, (newCh, oldCh) => {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Mobile <600px (UI-SPEC §9): compactar a year-only para no ocupar viewport.
+ * Compacto mobile (UI-SPEC §9 + TASK-019): year-only para no ocupar viewport.
  * Padding/inset menores; era oculta; espina y nodos se mantienen.
+ *
+ * TASK-019 — el disparador ERA sólo `max-width: 599px`: en mobile LANDSCAPE
+ * (ej. 844×390) el ancho excede 599px y el panel quedaba en su versión
+ * DESKTOP completa (año+era, ~153px de ancho) — medido en Chrome real: ese
+ * ancho llega a tapar el título completo de ch4 ("Del " / "From motion to
+ * new realities" queda parcialmente debajo de la columna de años). Se añade
+ * `(max-height: 500px)` como segundo disparador (cubre los altos típicos de
+ * teléfono en landscape, ~360-430px, sin afectar tablet/desktop landscape
+ * que miden bastante más alto) — el mismo panel compacto aplica en AMBAS
+ * orientaciones de teléfono, no sólo portrait.
  * ───────────────────────────────────────────────────────────────────────── */
-@media (max-width: 599px) {
+@media (max-width: 599px), (max-height: 500px) {
   .sticky-timeline {
     left: var(--sp-xs);
     padding: var(--sp-xs);
@@ -271,6 +281,31 @@ watch(activeChapter, (newCh, oldCh) => {
   }
   .timeline-ticks::before {
     left: 8px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * TASK-019 — compactación adicional: además de ocultar la era (arriba,
+ * heredado), ocultar TAMBIÉN el año. Medido: con año visible el panel mide
+ * ~67px de ancho en portrait / ~153px en landscape (antes del fix de arriba);
+ * varios capítulos (ch0 en portrait, título de ch4 en landscape) reservan
+ * menos margen izquierdo que eso. `.tick-button` conserva `min-width: 44px` +
+ * `min-height: 44px` SIN TOCAR (contrato de tap target a11y, UI-SPEC §3 —
+ * tests/components/StickyTimeline.test.js Test 8 lockea el bloque BASE, no
+ * este @media) — sólo se retira contenido visual (año), no se reduce el
+ * tap target. Techo real de ancho tras este cambio: ~50px (44 del botón +
+ * padding/inset mínimos), no 0 — ver hand-off de TASK-019 para qué
+ * capítulos quedan por debajo de ese margen (ch2/ch3/ch4 en los puntos
+ * medidos, estructuralmente en conflicto con el tap target de 44px, fuera
+ * de alcance sin tocar esos Chapter*Content.vue).
+ * ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 599px), (max-height: 500px) {
+  .tick-year {
+    display: none;
+  }
+  .tick-button {
+    gap: 0;
+    padding: var(--sp-xs);
   }
 }
 

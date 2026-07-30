@@ -153,15 +153,45 @@ describe('ContactHUD.vue', () => {
   // T7: CSS readFileSync — position:fixed, bottom:env(...), right:var(--sp-md),
   //     z-index:40, width:44px, height:44px, flex-direction:column, transition 150ms
   // ─────────────────────────────────────────────────────────────────────────
-  it('T7 CSS: source contiene position:fixed, bottom:env(safe-area-inset-bottom,0), right:var(--sp-md), z-index:40, width:44px, height:44px, flex-direction:column, transition 150ms', () => {
+  it('T7 CSS: source contiene position:fixed, bottom con env(safe-area-inset-bottom,0), right:var(--sp-md), z-index:40, width:44px, height:44px, flex-direction:column, transition 150ms', () => {
     expect(CONTACT_HUD_SOURCE).toMatch(/position:\s*fixed/)
-    expect(CONTACT_HUD_SOURCE).toMatch(/bottom:\s*env\(safe-area-inset-bottom,\s*0\)/)
+    expect(CONTACT_HUD_SOURCE).toMatch(/env\(safe-area-inset-bottom,\s*0\)/)
     expect(CONTACT_HUD_SOURCE).toMatch(/right:\s*var\(--sp-md\)/)
     expect(CONTACT_HUD_SOURCE).toMatch(/z-index:\s*40/)
     expect(CONTACT_HUD_SOURCE).toMatch(/width:\s*44px/)
     expect(CONTACT_HUD_SOURCE).toMatch(/height:\s*44px/)
     expect(CONTACT_HUD_SOURCE).toMatch(/flex-direction:\s*column/)
     expect(CONTACT_HUD_SOURCE).toMatch(/transition:\s*background 150ms/)
+  })
+
+  // T9 (TASK-019, AC5): bottom base sube 60px sobre el safe-area-inset para
+  // despejar el HUD diegético de esquina de ch4 (.ch4-hud-br, medido en
+  // Chrome real a 1536×791 dpr1.25, innerHeight≈774): un primer intento de
+  // +44px (igual que SoundToggle) dejaba 6px de solapamiento real porque
+  // `.ch4-hud-br` es más alto (línea extra "OCULUS RIFT CV1") que
+  // `.ch4-hud-bl` — ver comentario en el <style scoped>.
+  it('T9 (TASK-019): CSS .contact-hud base declara bottom: calc(env(safe-area-inset-bottom, 0) + 60px)', () => {
+    const baseMatch = CONTACT_HUD_SOURCE.match(/\.contact-hud\s*\{[\s\S]*?\}/)
+    expect(baseMatch).not.toBeNull()
+    expect(baseMatch[0]).toMatch(/bottom:\s*calc\(env\(safe-area-inset-bottom,\s*0\)\s*\+\s*60px\)/)
+  })
+
+  // T10 (TASK-019): el mismo inset mobile (right: var(--sp-sm), bottom sin
+  // lift) que ya regía sólo en portrait (<600px de ancho) ahora también
+  // dispara en mobile landscape corto (max-height: 500px) — antes ese
+  // breakpoint (ej. 844×390) quedaba con el ancho DESKTOP completo. Se
+  // conserva `flex-direction: column` (columna vertical, SIN cambios de
+  // forma): una versión anterior de este fix la convertía en fila horizontal,
+  // pero eso regresionaba `.ch6-convo` (TASK-012) — revertido, ver comentario
+  // largo en el componente.
+  it('T10 (TASK-019): @media (max-width:599px), (max-height:500px) aplica right/bottom compactos SIN cambiar flex-direction', () => {
+    const mobileMatch = CONTACT_HUD_SOURCE.match(
+      /@media \(max-width: 599px\), \(max-height: 500px\) \{\s*\.contact-hud\s*\{[\s\S]*?\}/
+    )
+    expect(mobileMatch).not.toBeNull()
+    expect(mobileMatch[0]).not.toMatch(/flex-direction/)
+    expect(mobileMatch[0]).toMatch(/right:\s*var\(--sp-sm\)/)
+    expect(mobileMatch[0]).toMatch(/bottom:\s*env\(safe-area-inset-bottom,\s*0\)/)
   })
 
   // ─────────────────────────────────────────────────────────────────────────

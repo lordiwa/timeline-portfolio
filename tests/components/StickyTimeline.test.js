@@ -178,14 +178,36 @@ describe('StickyTimeline.vue (vertical-left redesign)', () => {
   })
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Test 9: CSS @media (max-width: 599px) → oculta .tick-era (year-only)
+  // Test 9: CSS @media (max-width: 599px), (max-height: 500px) → oculta
+  // .tick-era (year-only). TASK-019: se añadió `(max-height: 500px)` al
+  // disparador — mobile landscape (ancho > 599px, ej. 844×390) no recibía
+  // este compactado y el panel completo (con era) llegaba a tapar el
+  // título de ch4, medido en Chrome real (ver hand-off de TASK-019).
   // ───────────────────────────────────────────────────────────────────────────
-  it('CSS: @media (max-width: 599px) hides .tick-era for compact year-only mobile column', () => {
+  it('CSS: @media (max-width: 599px), (max-height: 500px) hides .tick-era for compact year-only mobile column', () => {
     const mobileMatch = STICKY_TIMELINE_SOURCE.match(
-      /@media\s*\(\s*max-width:\s*599px\s*\)\s*\{[\s\S]*?\}\s*\}/
+      /@media\s*\(\s*max-width:\s*599px\s*\),\s*\(\s*max-height:\s*500px\s*\)\s*\{[\s\S]*?\}\s*\}/
     )
     expect(mobileMatch).not.toBeNull()
     expect(mobileMatch[0]).toMatch(/\.tick-era\s*\{[\s\S]*?display:\s*none/)
+  })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Test 9b (TASK-019): un SEGUNDO bloque con el mismo disparador oculta
+  // TAMBIÉN .tick-year — el panel con año visible mide ~67px de ancho
+  // (portrait) / ~153px (landscape antes del fix de Test 9), más de lo que
+  // varios capítulos reservan de margen izquierdo (medido en Chrome real,
+  // ver hand-off). .tick-button conserva min-width/min-height 44px (Test 8,
+  // bloque BASE, sin tocar) — sólo se retira contenido visual.
+  // ───────────────────────────────────────────────────────────────────────────
+  it('CSS (TASK-019): un segundo @media (max-width: 599px), (max-height: 500px) oculta también .tick-year', () => {
+    const blocks = [
+      ...STICKY_TIMELINE_SOURCE.matchAll(
+        /@media\s*\(\s*max-width:\s*599px\s*\),\s*\(\s*max-height:\s*500px\s*\)\s*\{[\s\S]*?\r?\n\}\r?\n/g
+      ),
+    ]
+    const yearHidingBlock = blocks.find((m) => /\.tick-year\s*\{[\s\S]*?display:\s*none/.test(m[0]))
+    expect(yearHidingBlock).not.toBeUndefined()
   })
 
   // ───────────────────────────────────────────────────────────────────────────

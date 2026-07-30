@@ -150,13 +150,30 @@ describe('SoundToggle.vue', () => {
   })
 
   // ── T7: CSS posición fixed, bottom-left, z-index:40, min-w/h 44px ───────────
-  it('T7: source contiene position:fixed, bottom/left var(--sp-md), z-index:40, min-width/height 44px', () => {
+  it('T7: source contiene position:fixed, bottom/left, z-index:40, min-width/height 44px', () => {
     expect(SOUND_TOGGLE_SOURCE).toMatch(/position:\s*fixed/)
-    expect(SOUND_TOGGLE_SOURCE).toMatch(/bottom:\s*var\(--sp-md\)/)
     expect(SOUND_TOGGLE_SOURCE).toMatch(/left:\s*var\(--sp-md\)/)
     expect(SOUND_TOGGLE_SOURCE).toMatch(/z-index:\s*40/)
     expect(SOUND_TOGGLE_SOURCE).toMatch(/min-width:\s*44px/)
     expect(SOUND_TOGGLE_SOURCE).toMatch(/min-height:\s*44px/)
+  })
+
+  // ── T9 (TASK-019, AC5): bottom base sube 44px sobre --sp-md para despejar
+  // el HUD diegético de esquina de ch4 (.ch4-hud-bl, medido en Chrome real a
+  // 1536×791 dpr1.25) — ver comentario en el <style scoped> del componente.
+  // Mobile (<600px o alto corto de teléfono) conserva el inset original.
+  it('T9 (TASK-019): CSS .sound-toggle base declara bottom: calc(var(--sp-md) + 44px)', () => {
+    const baseMatch = SOUND_TOGGLE_SOURCE.match(/\.sound-toggle\s*\{[\s\S]*?\}/)
+    expect(baseMatch).not.toBeNull()
+    expect(baseMatch[0]).toMatch(/bottom:\s*calc\(var\(--sp-md\)\s*\+\s*44px\)/)
+  })
+
+  it('T10 (TASK-019): mobile (max-width:599px o max-height:500px) restaura bottom: var(--sp-sm)', () => {
+    const mobileMatch = SOUND_TOGGLE_SOURCE.match(
+      /@media \(max-width: 599px\), \(max-height: 500px\) \{\s*\.sound-toggle\s*\{[\s\S]*?\}/
+    )
+    expect(mobileMatch).not.toBeNull()
+    expect(mobileMatch[0]).toMatch(/bottom:\s*var\(--sp-sm\)/)
   })
 
   // ── T8: aria-pressed="true" cuando estado es on ─────────────────────────────
