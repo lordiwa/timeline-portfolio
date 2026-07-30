@@ -1,0 +1,33 @@
+{
+  "key": "TASK-032",
+  "title": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS",
+  "description": "Hallazgo de la verificacion post-deploy del 2026-07-29 (orquestador), medido con curl sobre m4to.com en produccion.\n\nindex.html linea 11 tiene `<title>mato-new-portfolio</title>`, el nombre del repo. El title reactivo YA funciona bien: App.vue linea 143 usa useHead() con seo.title de i18n, que resuelve a \"Rafael Matovelle - Full Stack & QA Engineer\" (en) y \"Rafael Matovelle - Full Stack & QA\" (es). O sea que un visitante con JS ve el title correcto en cuanto Vue monta.\n\nLo que queda mal es lo que se ve ANTES de que monte y lo que ven los consumidores sin JS:\n- El destello inicial de la pestana muestra el nombre del repo.\n- Los crawlers y los previews de link que no ejecutan JS (varios bots de redes sociales y de chat) leen el fallback estatico.\n\nVerificado en vivo: `curl -s https://m4to.com/ | grep title` devuelve mato-new-portfolio.\n\nEs literalmente una linea. El valor nuevo debe alinearse con el `seo.title` del locale por defecto del sitio, para que el fallback y el title reactivo no se contradigan.",
+  "acceptance_criteria": [
+    "El `<title>` estatico de index.html ya no contiene el nombre del repo y coincide con el `seo.title` del locale por defecto configurado en el sitio.",
+    "El title reactivo de useHead en App.vue sigue funcionando y sigue cambiando al alternar ES/EN: el fallback estatico no lo pisa ni lo duplica.",
+    "Existe un lock de regresion que falla si el title estatico de index.html vuelve a ser el nombre del repo.",
+    "npm test sigue verde."
+  ],
+  "status": "in_review",
+  "priority": "medium",
+  "labels": [
+    "seo",
+    "deploy"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [
+    {
+      "author": "orchestrator",
+      "at": "2026-07-30T01:34:50.923Z",
+      "body": "ENTREGADO Y EN PRODUCCION, PENDIENTE DE REVIEW DE CIERRE. Commit 5688ea9. review_depth calculado: LIGHT (una linea en index.html mas un archivo de test nuevo; no toca schema, seguridad, estado compartido, packaging, infra de tests ni logica tdd).\n\nVALOR: el title estatico paso de \"mato-new-portfolio\" a \"Rafael Matovelle · Full Stack & QA\", tomado verbatim de es.json seo.title. Locale por defecto confirmado como es con tres evidencias independientes: <html lang=\"es\"> en index.html, el hreflang x-default de App.vue apuntando a la misma URL que es, y resolveInitialLocale() en src/i18n/index.js cayendo a 'es' como ultimo fallback.\n\nLOCK: tests/seo/static-title.test.js, 2 tests. Uno falla si el title vuelve a ser el name de package.json; el otro exige que coincida verbatim con es.json seo.title, asi que tambien protege de que fallback y reactivo se desincronicen. El developer planto el rojo revirtiendo el title en memoria y confirmo que ambos tests fallan por la razon correcta antes de commitear.\n\nSUITE: 708 passed con 2 fallas por timeout en ScrollShell.test.js y ScrollShell.theme-isolation.test.js, archivos que no toco. Re-corridos aislados con --testTimeout=20000 dan 35/35. Es el flake conocido por contencion de CPU externa al repo, ya documentado en TASK-027. NO ajusto timeouts ajenos, correctamente.\n\nDEPLOY: se rebuildeo, se barrio el dist (references y assets/old) y se redeployo a Firebase. Verificado en vivo con curl sobre m4to.com: el title servido es el nuevo, y las fotos de references y las iteraciones de assets/old siguen devolviendo el fallback SPA en text/html, no la imagen.\n\nHALLAZGO DERIVADO, fuera de alcance: el developer reporto que seoConfig.siteUrl sigue con el placeholder multiverse-portfolio.web.app mientras el sitio ya vive en m4to.com. Abierto como TASK-033."
+    }
+  ],
+  "created_at": "2026-07-30T01:24:51.236Z",
+  "updated_at": "2026-07-30T01:34:50.923Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[EXPLICIT]"
+}

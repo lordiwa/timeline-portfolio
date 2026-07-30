@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T00:21:28.961Z",
+  "generated_at": "2026-07-30T01:34:50.923Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -70,7 +70,7 @@
     {
       "key": "TASK-012",
       "title": "ch6 2026: climax, el circulo se cierra en ASCII, binario y terminal con IA",
-      "status": "in_progress",
+      "status": "in_review",
       "priority": "critical"
     },
     {
@@ -184,6 +184,18 @@
     {
       "key": "TASK-031",
       "title": "ch6: un dron queda fuera de cuadro en 1920x912 y el AC de planetas asume 3 proyectos cuando quedan 2",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-032",
+      "title": "El title estatico de index.html dice el nombre del repo: destello de pestana y previews sin JS",
+      "status": "in_review",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-033",
+      "title": "seoConfig.siteUrl apunta al placeholder .web.app y el sitio ya vive en m4to.com",
       "status": "todo",
       "priority": "medium"
     }

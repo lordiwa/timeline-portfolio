@@ -16,7 +16,7 @@
     "NO REGRESION, criterio bloqueante: los otros 6 capitulos siguen montando sin cambios; el minijuego de ch2 sigue con su canvas presente y jugable; el audio del dial-up de 2001 sigue disparandose al entrar a ch1; el avatar, la timeline y el HUD siguen funcionando en ch6.",
     "La suite de tests existente sigue en verde y se agrega un lock de regresion que falle si ch6 vuelve a depender de un evento de Phaser para renderizar su texto de bio."
   ],
-  "status": "in_progress",
+  "status": "in_review",
   "priority": "critical",
   "labels": [
     "design",
@@ -45,7 +45,7 @@
     }
   ],
   "created_at": "2026-07-27T05:48:52.658Z",
-  "updated_at": "2026-07-30T00:21:28.961Z",
+  "updated_at": "2026-07-30T01:34:23.382Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[EXPLICIT]"
