@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T02:41:40.626Z",
+  "generated_at": "2026-07-30T05:15:39.324Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -112,7 +112,7 @@
     {
       "key": "TASK-019",
       "title": "Mobile: StickyTimeline y ContactHUD se superponen al contenido de los capitulos",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "high"
     },
     {
@@ -202,7 +202,7 @@
     {
       "key": "TASK-034",
       "title": "ch6: el ASCII no debe quedarse asentado, tiene que volver a la vista normal y ciclar",
-      "status": "todo",
+      "status": "in_progress",
       "priority": "high"
     },
     {

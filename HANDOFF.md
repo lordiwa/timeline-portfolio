@@ -1,200 +1,182 @@
 # HANDOFF.md — snapshot de retoma
 
-**Actualizado:** 2026-07-29, corte por contexto (>35%)
+**Actualizado:** 2026-07-30, corte por contexto (35%)
 **Sesión:** `20260727T013114Z-db71132a`
 
 > Fuente de verdad completa: `state/sessions/20260727T013114Z-db71132a/session.json`.
-> Este archivo es el resumen operativo.
+> De los tickets manda `tasks/`. Este archivo es el resumen operativo.
 
-## AL RETOMAR: en este orden
+## 0. HAY TRABAJO EN VUELO — LEER ESTO PRIMERO
 
-1. `git log --oneline -5` y `git status`. El repo está **sincronizado con
-   `origin/master`** en `6bce961`. Árbol limpio salvo `.claude/context-monitor/`
-   sin trackear (scratch local, ignorable).
-2. **Leer `.planning/LECCIONES-TECNICAS.md` completo antes de despachar nada.**
-   Son 7 lecciones más 3 trampas del arnés CDP, todas pagadas con rondas perdidas.
-3. Levantar el sitio si hace falta: `npm run dev` → http://localhost:5173/
-4. **No hay nada a medio camino.** El siguiente trabajo es TASK-011 (ch5) o
-   TASK-012 (ch6) — ver "Qué sigue".
+Al momento del corte había **dos agentes corriendo en background**. Si el clear
+perdió sus notificaciones, su trabajo puede estar en disco sin que nadie lo haya
+recogido. **Antes de despachar nada: `git log --oneline -5` y `git status`.**
 
----
-
-## Qué se hizo en esta tanda (2026-07-28 → 29)
-
-### 1. Rewrite de historial + primer push — RESUELTO, no rehacer
-
-El repo `github.com/lordiwa/timeline-portfolio` es público y el teléfono de
-Rafael vivía en el historial desde `b55dd30`, nunca pusheado.
-
-Se reescribieron los **19 commits** de `b55dd30~1..HEAD` con
-`git filter-branch --index-filter`, sustituyendo la cadena por `[REDACTADO]` en
-los dos únicos archivos afectados: `src/data/contact.js` y
-`.planning/GUION-TEXTOS-FINAL.md`. Verificado que **no** estaba en `tasks/` ni
-`state/` (esos la describen por patrón, correcto).
-
-Tres verificaciones antes de pushear: la cadena no sobrevive en ningún commit; el
-árbol de HEAD quedó **byte-idéntico**; `origin/master` seguía siendo ancestro →
-push **fast-forward sin `--force`**.
-
-Después se purgó el PII también del clon local: rama backup borrada, reflogs
-expirados, `gc --prune=now`. **Hallazgo:** tras borrar la rama el PII **seguía
-alcanzable** por una `refs/stash` huérfana cuyo segundo padre era el `master`
-viejo. Sin sacarla, el `gc` no purgaba nada.
-
-**También se borró un `dist/` viejo** que contenía el número. Estaba gitignored y
-nunca llegó a GitHub, pero era un vector real si se deployaba ese build. Se
-reconstruyó limpio. **Lección: el grep de control tiene que barrer artefactos de
-build, no sólo lo trackeado.**
-
-Los `linked_commits` muertos de TASK-010, TASK-017 y TASK-020 se remapearon; los
-17 de los 6 tickets resuelven y son alcanzables desde `master`.
-
-### 2. TASK-025 — el "cuadrado naranja" de ch3 (CERRADO)
-
-Era la **capa del Acto 1** (`.ch3-act1-white` + `.ch3-act1-accent`) quedándose en
-`opacity:1` **y `pointer-events:auto`** encima del hero: su fade arrancaba en
-`ACT1_UNITS` (3) mientras el hero ya estaba pleno desde 2.84, y
-`stepToOverallVh(1)` aterriza **exactamente** en 3. Por eso scrollear destrababa.
-
-**Segunda causa que nadie había visto:** apagar la capa en 2.84 dejaba el clímax
-sin terminar de renderizarse. Como `opacity` es multiplicativo, **la muerte del
-stage de Flash nunca superaba ~9% de intensidad visual**. Se veía casi apagada
-desde siempre. Corregido con `P1_COMPLETE_VH`.
-
-3 commits: `7ca7d8a` (WIP heredado) + `79e2d47` + `de34b73`.
-
-### 3. TASK-028 — caption y umbral duplicado de ch3 (CERRADO)
-
-El caption decía "1/8" durante ~16vh mientras el hero ya se veía pleno. Alineado
-con `ACT1_FADE_END`. Y el umbral `0.05` estaba duplicado como literal en tres
-lugares → `INERT_OPACITY_THRESHOLD` en `ch3Progress.js`.
-
-2 commits: `d8f5c0c` + `343951c`.
-
-### 4. TASK-024 — stepper horizontal (CERRADO, 6 rondas)
-
-Ver la nota de cierre del ticket para el detalle completo. Resumen: quedó
-horizontal, arriba, centrado, con más presencia (dot 40px, numeral 1.2rem,
-tarjeta que calca la spec §6), flechas ←→ para el foco y ↑↓ intactas para navegar
-capítulos.
-
-**Cuatro BLOCK, ninguno cosmético.** Vale la pena leerlos en la nota del ticket
-porque son la misma familia de error repetida: *reservar espacio sin verificar
-qué se rompe del otro lado*.
-
-**Estado final: cuatro bandas medidas** (reserva ≤767, Acto 1 ≤735, Acto 2 ≤525,
-expandido ≤841 o ancho ≤767; la POSICIÓN del expandido es global vía `:has()`).
-
-6 commits: `b681a00`, `18a06fd`, `641a367`, `1159ce7`, `a1d9024`, `84e972d`.
-
-**Lo que dejó el ticket y sobrevive a él:**
-- **`scripts/verify-ch3-roadmap-geometry.mjs`** — arnés CDP commiteado: 16
-  viewports × 2 locales × colapsado y expandido. Antes cada verificación era
-  irrepetible y un reviewer no podía auditar sus puntos ciegos.
-- **12 locks** en `tests/integration/ch3-roadmap-round3-locks.test.js`, probados
-  por el reviewer plantándoles 4 regresiones.
-- **Tripwire de copy:** 620 caracteres sobre el `rest` de los 4 beats (ES+EN). Si
-  se pule el copy de ch3 y se pasa, un test se pone rojo antes de que vuelva el
-  recorte. El margen real en 844×390 es de **14px**.
-
----
-
-## Tickets
-
-| Ticket | Qué | Estado |
+| Qué | Estado al cortar | Cómo saber si terminó |
 |---|---|---|
-| TASK-024 / 025 / 028 | ch3: stepper, cuadrado naranja, caption | **CERRADOS** con review PASS |
-| TASK-011 / TASK-012 | ch5 y ch6, los dos capítulos **sin texto en pantalla** | todo — **es el trabajo grande que sigue** |
-| TASK-021 | ch3 scroll sensible + roadmap | in_progress — el HIGH se arregló en `c8fd6a7`, **falta re-review** |
-| TASK-023 | Sacar el teléfono | in_progress — código listo, **falta re-review**; los 2 HIGH cerrados |
-| TASK-026 | Tarjetas era Flash | in_progress — **falta review** |
-| TASK-027 | Timeouts de mount bajo jsdom paralelo con carga | todo, media |
-| TASK-015 / 016 / 018 / 019 / 022 | Cola normal | todo |
-| TASK-001 / TASK-006 | **NO CERRAR.** CI nunca se hizo; los 4 bugs de cableado siguen vivos | todo |
+| **TASK-034 ronda 2** (developer) | Arreglando el sensor J2 del arnés de ch6 + medir fps | Commit nuevo de TASK-034 encima de `96405c9` |
+| **TASK-019** (reviewer, Fable 5) | Review de cierre del fix del chasis, sobre `0848966` | Es read-only, no deja commit. Si no volvió, **re-despachar** |
 
-**Gate de producto pendiente:** TASK-024 cumple sus AC y el reviewer dio juicio
-visual favorable con screenshot, pero *"más visible"* tiene componente de gusto.
-**Falta que Rafael mire ch3 en el navegador.**
+Si TASK-034 dejó cambios sin commitear, **preservarlos en un commit WIP antes de
+tocar nada** (precedente: `03c9f12`).
 
-**Bloqueado por el guard de UAT:** TASK-013, 002, 003, 004 y 005. El texto de
-Rafael **ya está entregado y cargado**, verificado. Sólo falta el asiento de
-aprobación. Rafael tiene que correr:
+## 1. Al retomar, en este orden
+
+1. `git log --oneline -5` y `git status` — ver punto 0.
+2. **Leer `.planning/LECCIONES-TECNICAS.md` completo antes de despachar nada.**
+3. Leer las lecciones nuevas de esta sesión, punto 8 de este archivo.
+4. Cerrar TASK-034 y TASK-019; después seguir la fila del punto 6.
+
+## 2. Estado del sitio
+
+**EN PRODUCCIÓN** en https://m4to.com (y `multiverse-portfolio.web.app`, mismo
+hosting de Firebase, proyecto `multiverse-portfolio`): ch6 completo con
+ASCII/binario/terminal (TASK-012, sus dos rondas) y el title corregido
+(TASK-032). Tres deploys hoy, los tres verificados en vivo.
+
+**NO deployado:** el ciclo del ASCII (TASK-034, en BLOCK) y el fix del chasis
+(TASK-019, en review).
+
+### Procedimiento de deploy — repetir tal cual hasta que se haga TASK-030
 
 ```
-node "C:/Users/RafaelMatovelle/.claude/plugins/cache/hivemind-marketplace/hivemind/0.18.0/dist/loop-ctl.cjs" set-mode --repo-root "C:/Users/RafaelMatovelle/Documents/mato-new-portfolio" --mode harness
+1. npm run build
+2. rm -rf dist/references dist/assets/old      # IMPRESCINDIBLE
+3. npx firebase-tools deploy --only hosting --non-interactive
+4. curl -s -I -L https://m4to.com/references/2026.jpg | grep -i content-type
+   → tiene que decir text/html (fallback SPA). Si dice image/jpeg, HAY FUGA.
 ```
 
-Al orquestador el clasificador le bloquea ese comando. **No rodearlo editando
-`session.json` a mano** — es justo el guard que impide autofirmarse la aprobación.
+El paso 2 no es opcional: el build copia `public/references/` (6 fotos personales
+de Rafael, **cero usos en el sitio**, verificado por grep) y 23 MB de
+`assets/old`. Sin ese paso el dist crudo pesa 39 MB; con él, 8.1 MB.
 
----
+El paso 4 tiene trampa: el rewrite `** → /index.html` hace que **cualquier** ruta
+inexistente devuelva 200. **El código de estado no prueba nada; el
+`Content-Type` sí.**
 
-## Qué sigue
+La credencial de Rafael (`srparca@gmail.com`) ya está cacheada en disco, así que
+el deploy **ya no es interactivo** y el orquestador lo corre solo. La CLI no está
+instalada globalmente pero `npx` la resuelve.
 
-**TASK-011 (ch5) y TASK-012 (ch6)**: los dos capítulos que no muestran nada del
-texto de Rafael. Es el trabajo grande que queda, y ahora se puede diseñar
-conociendo el largo real del guion en vez de adivinando (era5 = 4188 caracteres,
-era6 = 2031).
+## 3. BLOQUEADOR ACTIVO PENDIENTE DE RAFAEL
 
-Cuidado documentado: la multitud de 125 personajes de ch5 quedó gateada por
-`activeChapter` en TASK-017 y **ese gate no se rompe** — fue una de las cuatro
-cosas que se rompieron en el incidente de los 17 agentes.
+**13-14 procesos `tesseract.exe` ajenos al repo al 100 % de CPU**, toda la sesión.
+Consecuencias medidas, no supuestas:
 
----
+- La suite da rojos falsos por **timeout** (nunca AssertionError), en archivos
+  distintos según la carga del momento: 2 en una corrida, 3 en otra, 4 en otra.
+  Aislados con `--testTimeout=20000/30000` siempre dan verde.
+- **La medición de fps es imposible:** dos mediciones consecutivas del *mismo*
+  estado en reposo de ch0 dieron 14.0 y 19.5 fps (~40 % de variación).
 
-## Lecciones de esta tanda
+Eso deja el AC4 de TASK-034 sin verificar, que es justo el criterio que más
+importa ahí. Se le pidió a Rafael cerrar lo que los lanza. **Regla para los
+developers: si la máquina no está quieta, reportar "no medido" y NO inventar un
+número.**
 
-1. **Una redacción de PII sin commitear es frágil.** Un cambio de privacidad se
-   commitea en el acto.
-2. **Nunca transcribir PII dentro de un ticket.** Describir por patrón.
-3. **El grep de control tiene que barrer el repo entero, incluidos artefactos de
-   build.** El `dist/` viejo tenía el número.
-4. **Una corrida que se cree aislada puede no estarlo.** Se caracterizó mal un
-   test como determinista por asumir aislamiento sin verificar que no hubiera
-   procesos del equipo multi-agente vivos. Corregido en TASK-027.
-5. **Los dispatches que listan riesgos concretos encuentran defectos que
-   "verificá que ande" no encuentra.** El hallazgo del clímax al 9% y los cuatro
-   BLOCK de TASK-024 salieron todos de lupas puestas a propósito.
-6. **Un reporte tiene que declarar qué NO cubrió.** Un commit de TASK-024 decía
-   "cero solape" — literalmente cierto y aun así engañoso, porque la medición era
-   ciega al recorte.
-7. **Séptima confirmación:** Rafael encontró usando el sitio un bug bloqueante que
-   sobrevivió a la suite Y a un reviewer independiente. **El UAT humano no es
-   opcional acá.**
+## 4. Incidente de proceso — no repetir
 
-Las lecciones técnicas completas (7 + 3 trampas del arnés CDP) están en
-`.planning/LECCIONES-TECNICAS.md`. **Leerlo antes de despachar nada.**
+El developer de TASK-019 corrió `Get-Process chrome | Stop-Process -Force` **sin
+filtrar por perfil** y mató todas las ventanas de Chrome de la máquina, incluida
+la de Rafael. Irreversible. **Regla obligatoria en todo dispatch que use Chrome:**
+`--user-data-dir` propio con nombre único, y al matar procesos filtrar SIEMPRE por
+ese perfil.
 
----
+## 5. Cerrado hoy
 
-## Autorizaciones vigentes (session-scoped, re-confirmar al retomar)
+- **TASK-012** (ch6 clímax) — 2 rondas. La 1 volvió en BLOCK por un HIGH vivo en
+  producción: `skip()` completaba y después **des-completaba**, devolviendo texto
+  ya visible a `opacity: 0.001` y haciendo retroceder el shader ante cualquier tap
+  (en móvil, cualquier toque para scrollear). Commits `c2c8eb2`, `d28a130`,
+  `9767c79`. Se corrigieron además 3 bugs reales que la suite verde no vio: la
+  polaridad invertida del `smoothstep` del wipe ASCII, el umbral `mode < 0.5` que
+  dejaba la fase binaria sin mostrarse nunca, y los índices de `PLANET_SLOTS` por
+  posición de array tras la baja de `ch6-ar-vr`.
+- **TASK-032** (title estático) — review PASS. Commit `5688ea9`.
+- **TASK-035** (auditoría de imágenes) — arnés `scripts/verify-image-audit.mjs`,
+  commit `588282a`. **Cerrado sin review independiente del instrumento:** cada
+  ticket derivado debe re-verificar su claim antes de actuar.
 
-- Cierre automático en review verde: **SÍ**
-- Consolidación automática: **SÍ**
-- Push a remoto: **SÍ** (el rewrite previo ya se hizo, no rehacerlo)
-- Delegación de UAT: **NO**
-- Version bump: **NO**
+## 6. Fila con el alcance recortado por Rafael
 
-## Reglas de proceso
+Cerrar **TASK-034** y **TASK-019** → **TASK-018** (desbordes ch0/ch4 con el texto
+final) → **TASK-006** (4 bugs de cableado) → **TASK-015 + TASK-016** juntos.
+Fuera del alcance sin ejecutar: TASK-001 (CI) y TASK-027 (timeouts), aunque
+TASK-027 ganó mucha evidencia hoy.
 
-Sólo hivemind — el hook `.claude/hooks/enforce-hivemind.mjs` bloquea `Agent` y
-`Workflow` fuera del equipo, y Rafael pidió no quitarlo nunca. Lista blanca de
-archivos en cada dispatch. Prohibido recortar alcance en silencio. Verificar en
-Chrome headed por CDP; headless no sirve. Reviewers con `model: 'fable'`.
+### Tickets abiertos hoy
 
-**Los developers tienen que cerrar su Chrome y su dev server al terminar.** Una
-ronda dejó 8 procesos vivos y hubo que matarlos a mano mientras Rafael estaba en
-una reunión.
+| Ticket | Qué es | Prioridad |
+|---|---|---|
+| TASK-030 | `public/references` y `assets/old` se publican al dist (6 fotos personales) | **alta** |
+| TASK-031 | Dron fuera de cuadro en 1920x912 + el AC#8 dice 2 planetas con texto de cuando había 3 | media |
+| TASK-033 | `seoConfig.siteUrl` sigue en el placeholder `.web.app` con el sitio ya en m4to.com | media |
+| TASK-034 | El ciclo del ASCII (pedido de Rafael) — **ronda 2, BLOCK por sensor vacuo** | alta |
+| TASK-036 | Tier C de ch6: el fallback CSS que pide la spec §8 no existe | media |
+| TASK-037 | 4 GIFs de ch1 estirados 8.2 % no uniforme y tapados por contenido | alta |
+| TASK-038 | Upscale no entero en pixel art de ch0/ch4 | media |
+| TASK-039 | Showcase de ch0 sin affordance de scroll en mobile | media |
+| TASK-040 | Bustos: revisión visual con Rafael antes de tocar arte (**uat-only**) | media |
 
-## Fuentes de verdad
+## 7. Residuales de TASK-019 que necesitan decisión de Rafael
 
-**Diseño:** `.planning/design/00-sistema-visual-global.md` y `03-` a `06-`.
-**Contenido:** `.planning/GUION-TEXTOS-FINAL.md`.
-**Lecciones:** `.planning/LECCIONES-TECNICAS.md`.
+El fix del chasis mejoró pero **no resolvió** todo. La timeline pasó de 67px
+(portrait) y 153px (landscape) a 54px, y ch0 portrait pasó de solapar a limpio.
+Quedan:
 
-Las specs ganan sobre el cuerpo de un ticket. El único límite es que no dañe la
-navegación ni la legibilidad, y eso se prueba geométricamente, no a ojo.
+- **ch2, ch3 y ch4 siguen solapando en móvil**: sus columnas de contenido tienen
+  menos de 44px de margen desde el borde, y 44px es el mínimo de accesibilidad de
+  un tap target.
+- **ch4 en landscape**: su `<h1>` mide `x0=0, x1=844`, el ancho completo del
+  viewport sin margen alguno.
+- Hallazgo nuevo: **`LangToggle` tapa el primer párrafo de bio de ch0** en los dos
+  viewports desktop y en tablet portrait.
+- Se midió **en inglés, no en español**, y el español es el caso de texto largo.
+- `GlobalMantra` sigue interceptando `.ch6-convo-word` en mobile.
 
-**Nota:** `CLAUDE.md` §7.1 y §7.3 tienen dos datos desactualizados detectados en
-esta tanda: la estructura de i18n es `src/i18n/*.json` (no `i18n/locales/`), y
-`projects.js` **no** es todo stub — la entrada de ch3 (Pink Parrot) es real.
+El developer sostiene que ch2/ch3/ch4 son imposibles sin tocar los
+`Chapter*Content.vue`, prohibidos por la lista blanca. **La decisión que le
+corresponde a Rafael es si se levanta esa prohibición** en un ticket de
+seguimiento — existe porque un pase de agentes sin restricción rompió cuatro cosas
+que funcionaban el 2026-07-27.
+
+## 8. Lecciones nuevas de esta sesión
+
+1. **Un check documentado en el encabezado de un arnés pero ausente de los
+   resultados es un sensor vacío que se lee como cobertura** (el check D de ch6).
+2. **Cuando un check pasa de FAIL a PASS con el MISMO número medido**, exigir la
+   justificación de por qué la aserción vieja era la equivocada. En ch6 se
+   sostuvo: `canvas == host` es imposible bajo zoom COVER, y la propia spec §1.1
+   lo predice.
+3. **La variación visual no prueba que un efecto anime.** El check J2 del ciclo
+   daba verde con el ciclo apagado, porque el fondo tiene estrellas titilando y
+   drones que oscilan dentro de la franja muestreada. Se demostró midiendo la
+   ventana en que el ciclo está en silencio por diseño.
+4. **Sexta vez** que un verde de la suite convive con un defecto real. jsdom no
+   hace layout y el WebGL está mockeado: un verde de Vitest nunca es evidencia
+   visual.
+5. Los locks por **regex sobre CSS fuente** son ciegos a la cascada (ya costó dos
+   HIGH en TASK-014). Los de TASK-019 son de esa clase.
+6. **Un arnés puede medirse a sí mismo y dar un falso rojo**: el check H3 daba el
+   audio del dial-up como ausente, y en realidad `jumpToChapter()` del propio
+   arnés desarmaba el `.dialup-scrim` con Escape. El audio nunca estuvo roto.
+7. **Un test puede pasar en falso positivo por mirar solo el estado final.** El
+   primer T9 de ch6 pasaba porque la timeline sin cancelar terminaba alcanzando el
+   total por su cuenta; hubo que capturar la ventana intermedia.
+
+## 9. Pendientes de Rafael que bloquean cierres
+
+- **Los 5 tickets uat-only** (013, 002, 003, 004, 005) no se pueden cerrar: el
+  guard exige que el veredicto UAT lo firme un humano y
+  `loop_auth.uat_delegated_to_orchestrator` es `false`. Su texto **ya está
+  entregado y cargado**, verificado. Solo falta el asiento de aprobación. La línea
+  que tiene que correr él:
+  `node "C:/Users/RafaelMatovelle/.claude/plugins/cache/hivemind-marketplace/hivemind/0.18.0/dist/loop-ctl.cjs" set-mode --repo-root "C:/Users/RafaelMatovelle/Documents/mato-new-portfolio" --mode harness`
+  Al orquestador el clasificador le bloquea ese comando, y **no hay que rodearlo
+  editando `session.json` a mano**, porque es justo el guard que impide
+  autofirmarse la aprobación.
+- **TASK-040**: la revisión visual de los 7 bustos lado a lado.
+- **Los procesos `tesseract.exe`** del punto 3.
+- **gh CLI** instalado pero sin autenticar; los 2 reportes de bug del framework
+  esperan en `.claude/framework-bug-reports/`.
