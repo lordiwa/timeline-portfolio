@@ -32,3 +32,6 @@ public/references/
 # TASK-041 ronda 2: mismo criterio, mismo motivo — el instrumento
 # (scripts/verify-content-reachable.mjs) se commitea, sus JSON de resultados no.
 .planning/task041-content-reachable-*.json
+
+# Lockfile: proyecto de una sola maquina, sin CI ni npm ci
+package-lock.json
