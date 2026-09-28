@@ -33,7 +33,14 @@ import { resolve } from 'node:path'
 import Chapter3Content from '@/components/Chapter3Content.vue'
 import Ch3StoryBeat from '@/components/Ch3StoryBeat.vue'
 import Ch3Roadmap from '@/components/Ch3Roadmap.vue'
-import { CH3_STEP_COUNT, ACT1_UNITS, stepToOverallVh } from '@/utils/ch3Progress'
+import {
+  CH3_STEP_COUNT,
+  ACT1_UNITS,
+  DECOR_FADE_P1_START,
+  DECOR_FADE_RATE,
+  P1_COMPLETE_VH,
+  stepToOverallVh,
+} from '@/utils/ch3Progress'
 import { createTestI18n } from '../i18n/test-helpers.js'
 
 vi.mock('@/data/projects', () => ({ projects: [] }))
@@ -84,6 +91,29 @@ function mountHarness({ locale = 'es' } = {}) {
   return wrapper
 }
 
+// mountHarnessAttached — TASK-030 ronda 2, MEDIUM-2: `attachTo` va como
+// opción de mount() de NIVEL SUPERIOR (contrato de Vue Test Utils v2), no
+// dentro de `global` — mountHarness() de arriba lo pone ahí desde hace
+// tiempo y @vue/test-utils lo ignora en silencio (no lanza, no conecta el
+// wrapper al `document.body` real). Sin la clave en el lugar correcto,
+// `document.activeElement` nunca refleja `.focus()` porque el elemento no
+// cuelga del document real (jsdom exige conexión real para enfocar). Los
+// tests de foco de esta ronda necesitan `document.activeElement` real —
+// mismo patrón ya usado por tests/a11y/focus-trap.test.js — así que se
+// resuelve acá en un helper propio en vez de tocar mountHarness() (arriba)
+// y arriesgar el comportamiento de T1-T18, que no dependen de foco real.
+function mountHarnessAttached({ reduced = false } = {}) {
+  const i18n = createTestI18n({ locale: 'es' })
+  const wrapper = mount(Harness, {
+    attachTo: document.body,
+    global: {
+      plugins: [i18n],
+      provide: { prm: { prefersReduced: { value: reduced } } },
+    },
+  })
+  return wrapper
+}
+
 const CH3_SOURCE = readFileSync(
   resolve(process.cwd(), 'src/components/Chapter3Content.vue'),
   'utf8'
@@ -93,14 +123,25 @@ const EM_DASH = String.fromCharCode(0x2014)
 
 describe('Chapter3Content.vue (TASK-009 — La muerte de Flash, rediseño flat 2013)', () => {
   // ── T1: DOM de los dos actos ─────────────────────────────────────────────
-  it('T1 Acto 1: .ch3-act1-pin + .ch3-act1-scene + H1 accesible + escenografía aria-hidden', () => {
+  it('T1 Acto 1: .ch3-act1-pin + .ch3-act1-scene + H1 accesible + escenografía aria-hidden salvo el play', () => {
     const { wrapper } = mountCh3()
     expect(wrapper.find('.ch3-act1-pin').exists()).toBe(true)
     expect(wrapper.find('.ch3-act1-scene').exists()).toBe(true)
     const h1 = wrapper.find('.ch3-act1-title')
     expect(h1.element.tagName).toBe('H1')
     expect(h1.text().length).toBeGreaterThan(0)
-    expect(wrapper.find('.ch3-act1-decor').attributes('aria-hidden')).toBe('true')
+    // TASK-030 (feedback Rafael): `.ch3-act1-decor` dejó de llevar
+    // aria-hidden en el contenedor (adentro vive el botón de play, real y
+    // focusable) — cada pieza puramente decorativa lo lleva individualmente.
+    expect(wrapper.find('.ch3-act1-decor').attributes('aria-hidden')).toBeUndefined()
+    expect(wrapper.find('.ch3-desktop').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.find('.ch3-phone').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.find('.ch3-wireframe').attributes('aria-hidden')).toBe('true')
+    const playBtn = wrapper.find('.ch3-flash-btn')
+    expect(playBtn.exists()).toBe(true)
+    expect(playBtn.element.tagName).toBe('BUTTON')
+    expect(playBtn.attributes('aria-hidden')).toBeUndefined()
+    expect(playBtn.attributes('aria-label')?.length).toBeGreaterThan(0)
     expect(wrapper.find('.ch3-flash-stage').exists()).toBe(true)
     expect(wrapper.find('.ch3-phone').exists()).toBe(true)
   })
@@ -367,6 +408,275 @@ describe('Chapter3Content.vue — TASK-021 roadmap (gate + wiring)', () => {
       // directamente stepToOverallVh(4) * 800px.
       expect(call.top).toBeCloseTo(stepToOverallVh(4) * 800, 5)
       expect(stepToOverallVh(4)).toBeGreaterThan(ACT1_UNITS) // sanity: paso 4 cae en el Acto 2
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  // ── T16-T18: TASK-030 (feedback Rafael) — el botón de play del Acto 1
+  // deja de ser decoración y dispara el mismo recorrido que el CTA del hero
+  // y los puntos del roadmap (goToStep → shellEl.scrollTo). Mismo harness y
+  // mismo mock de scrollTo que T14, arriba.
+  it('T16 click en .ch3-flash-btn navega a step 1: shellEl.scrollTo(target físico de stepToOverallVh(1))', async () => {
+    HTMLElement.prototype.scrollTo.mockClear()
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarness()
+      await wrapper.find('.ch3-flash-btn').trigger('click')
+      expect(HTMLElement.prototype.scrollTo).toHaveBeenCalledTimes(1)
+      const call = HTMLElement.prototype.scrollTo.mock.calls[0][0]
+      expect(call.behavior).toBe('smooth')
+      expect(call.top).toBeCloseTo(stepToOverallVh(1) * 800, 5)
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('T17 REGRESSION LOCK: .ch3-flash-btn es un <button type="button"> con aria-label no vacío (antes era un <div> decorativo)', () => {
+    const { wrapper } = mountCh3()
+    const btn = wrapper.find('.ch3-flash-btn')
+    expect(btn.element.tagName).toBe('BUTTON')
+    expect(btn.attributes('type')).toBe('button')
+    expect(btn.attributes('aria-label')?.trim().length).toBeGreaterThan(0)
+  })
+
+  it('T18 la capa del Acto 1 (act1LayerRef) queda `inert` cuando su opacidad cae bajo INERT_OPACITY_THRESHOLD, para sacar el play del tab order al desvanecerse', async () => {
+    // jsdom no hace layout real (Lección 2 de LECCIONES-TECNICAS.md, citada
+    // también en T14) — flushProgress() lee sectionEl.getBoundingClientRect()
+    // directo, así que se mockea acá en vez de simular scrollTop físico.
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarness()
+      const act1Layer = wrapper.find('.ch3-act1-pin').element
+      // Al montar (overallVh=0) el Acto 1 está a opacidad plena → no inert.
+      expect(act1Layer.inert).toBe(false)
+
+      const sectionEl = wrapper.find('section').element
+      // Bien pasado el último paso del Acto 2 → act1LayerOp cae bajo el
+      // umbral (mismo mecanismo que T10, acá exercitando la transición).
+      const overallVh = stepToOverallVh(CH3_STEP_COUNT - 1) + 2
+      sectionEl.getBoundingClientRect = () => ({ top: -overallVh * 800, bottom: 0, left: 0, right: 0, width: 0, height: 0 })
+      sectionEl.dispatchEvent(new Event('scroll'))
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20)) // deja correr el rAF mockeado (setTimeout 16ms, ver tests/setup.js)
+      expect(act1Layer.inert, 'act1LayerRef debería quedar inert lejos del Acto 1').toBe(true)
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  // ── T19-T23: ronda 2 de review (feedback Rafael) ────────────────────────
+  it('T19 REGRESSION LOCK (LOW-6/AC2): tras el click en .ch3-flash-btn, cuando el scroll llega al hero, currentStep avanza a 1 y el roadmap lo refleja', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarness()
+      const sectionEl = wrapper.find('section').element
+      await wrapper.find('.ch3-flash-btn').trigger('click')
+      // shellEl.scrollTo está mockeado (jsdom no anima scroll real, ver
+      // tests/setup.js) — se simula el efecto que produciría: la posición
+      // física del paso 1 (mismo patrón de mock que T18, arriba).
+      sectionEl.getBoundingClientRect = () => ({
+        top: -stepToOverallVh(1) * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      const roadmap = wrapper.findComponent(Ch3Roadmap)
+      expect(roadmap.props('currentIndex')).toBe(1)
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('T20 MEDIUM-1 REGRESSION LOCK: .ch3-act1-decor (con el botón de play adentro) queda `inert` en cuanto SU PROPIO fade toca 0, ANTES de que act1LayerOp/act1LayerRef lo hagan', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarness()
+      const sectionEl = wrapper.find('section').element
+      // Mismo overallVh que T19 de ch3Progress.test.js: decorOp ya en 0,
+      // act1LayerOp todavía arriba del umbral (ni siquiera empezó su fade,
+      // que arranca recién en ACT1_FADE_START).
+      const decorZeroVh = (DECOR_FADE_P1_START + 1 / DECOR_FADE_RATE) * P1_COMPLETE_VH
+      sectionEl.getBoundingClientRect = () => ({
+        top: -decorZeroVh * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(
+        wrapper.find('.ch3-act1-decor').element.inert,
+        'el decor debería quedar inert en cuanto su propio fade (decorOp) toca 0'
+      ).toBe(true)
+      expect(
+        wrapper.find('.ch3-act1-pin').element.inert,
+        'la capa entera NO debería estar inert todavía acá — act1LayerOp sigue arriba del umbral'
+      ).toBe(false)
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('T21 MEDIUM-2 REGRESSION LOCK: tras playAct1 (modo pin), cuando el scroll llega al hero el foco se mueve al CTA del hero en vez de quedar huérfano en <body>', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarnessAttached()
+      const sectionEl = wrapper.find('section').element
+      const playBtn = wrapper.find('.ch3-flash-btn')
+      playBtn.element.focus()
+      await playBtn.trigger('click')
+      sectionEl.getBoundingClientRect = () => ({
+        top: -stepToOverallVh(1) * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      const heroCta = wrapper.find('.ch3-hero .ch3-ghost-btn').element
+      expect(document.activeElement).toBe(heroCta)
+      wrapper.unmount() // LOW (ronda 3): attachTo: document.body deja nodos colgados si no se desmonta
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('T22 REGRESSION LOCK: si currentStep llega a 1 por scroll MANUAL (sin pasar por playAct1), el foco NO se roba — pendingFocusStep sólo se arma dentro de playAct1', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarnessAttached()
+      const sectionEl = wrapper.find('section').element
+      const heroCta = wrapper.find('.ch3-hero .ch3-ghost-btn').element
+      const otherEl = wrapper.find('.ch3-act1-title').element
+      otherEl.tabIndex = -1
+      otherEl.focus()
+      expect(document.activeElement).toBe(otherEl) // sanity: el foco arranca en otro lado
+
+      // Mismo destino físico que T21/T19 (paso 1 = hero), pero SIN haber
+      // pasado por playAct1() — nadie armó pendingFocusStep.
+      sectionEl.getBoundingClientRect = () => ({
+        top: -stepToOverallVh(1) * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      const roadmap = wrapper.findComponent(Ch3Roadmap)
+      expect(roadmap.props('currentIndex')).toBe(1) // el paso sí avanzó...
+      expect(document.activeElement, 'el foco no debería moverse solo porque currentStep llegó a 1 sin pasar por playAct1').not.toBe(heroCta)
+      expect(document.activeElement).toBe(otherEl)
+      wrapper.unmount()
+    } finally {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
+    }
+  })
+
+  it('T23 MEDIUM-2 bajo PRM: playAct1 también mueve el foco al CTA del hero cuando el IntersectionObserver confirma currentStep===1 (rama scrollIntoView)', async () => {
+    globalThis.MockIntersectionObserver.reset()
+    const wrapper = mountHarnessAttached({ reduced: true })
+    const playBtn = wrapper.find('.ch3-flash-btn')
+    playBtn.element.focus()
+    // Bajo PRM, goToStep() resuelve por scrollIntoView (jsdom lo ignora, no
+    // hace nada real) — currentStep lo mueve initPRMStepObserver(), no
+    // applyProgress(), así que se simula la intersección real del hero
+    // (targets[1] en ese observer) cruzando el centro del viewport.
+    await playBtn.trigger('click')
+    const heroEl = wrapper.find('.ch3-hero').element
+    // Varios hijos de Chapter3Content.vue (Ch3StoryBeat, etc.) traen su
+    // PROPIO IntersectionObserver para reveals — el stepObserver de
+    // initPRMStepObserver() no es necesariamente el último instanciado, así
+    // que se ubica por CONTENIDO (el único que observa `sceneRef` + los 7
+    // slides, heroEl entre ellos) en vez de asumir orden de instanciación.
+    const stepObserver = globalThis.MockIntersectionObserver.instances.find((inst) => inst.observed.has(heroEl))
+    expect(stepObserver, 'debería existir un IntersectionObserver observando el slide del hero (initPRMStepObserver)').toBeTruthy()
+    stepObserver.triggerEntries([{ isIntersecting: true, target: heroEl }])
+    await flushPromises()
+    const heroCta = wrapper.find('.ch3-hero .ch3-ghost-btn').element
+    expect(document.activeElement).toBe(heroCta)
+    wrapper.unmount()
+  })
+
+  it('T24 MEDIUM-3 REGRESSION LOCK (camino b, el que más duele): click en play + remar hacia atrás (currentStep nunca llega a 1) + click en el roadmap a un paso lejano NO deja el flag robar el foco en tránsito ni al llegar a destino', async () => {
+    const originalInnerHeight = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { value: 800, configurable: true })
+    try {
+      const wrapper = mountHarnessAttached()
+      const sectionEl = wrapper.find('section').element
+      const heroCta = wrapper.find('.ch3-hero .ch3-ghost-btn').element
+
+      // 1) click en play — arma pendingFocusStep=1, dispara el primer
+      // shellEl.scrollTo (mockeado, no mueve nada real — ver tests/setup.js).
+      await wrapper.find('.ch3-flash-btn').trigger('click')
+
+      // 2) el usuario "rema hacia atrás y cancela" el scroll suave: currentStep
+      // NUNCA llega a 1 (el flag sigue armado, sin nadie que lo limpie salvo
+      // el fix de esta ronda).
+
+      // 3) click en un punto lejano del roadmap (paso 4) — MISMO patrón que
+      // T14: el smooth scroll nuevo hacia el paso 4 ATRAVIESA currentStep=1
+      // en tránsito antes de asentarse en destino. Sin el fix, el watcher
+      // dispara en pleno vuelo al cruzar el paso 1 y roba el foco al CTA del
+      // hero — que después queda inert cuando el scroll sigue de largo.
+      const roadmap = wrapper.findComponent(Ch3Roadmap)
+      const dots = roadmap.findAll('.ch3-roadmap-dot')
+      await dots[4].trigger('click') // paso 4 = beat índice 2 (mismo dot que T14)
+
+      // Simula el tránsito: primero se cruza el paso 1 (hero)...
+      sectionEl.getBoundingClientRect = () => ({
+        top: -stepToOverallVh(1) * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(
+        document.activeElement,
+        'el foco NO debería saltar al CTA del hero de sólo PASAR por currentStep=1 en tránsito hacia otro destino'
+      ).not.toBe(heroCta)
+
+      // ...y después se asienta en el paso 4 real (destino del click).
+      sectionEl.getBoundingClientRect = () => ({
+        top: -stepToOverallVh(4) * 800,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: 0,
+      })
+      wrapper.find('.scroll-shell').element.dispatchEvent(new Event('scroll'))
+      await new Promise((resolve) => setTimeout(resolve, 20))
+
+      expect(roadmap.props('currentIndex')).toBe(4) // aterrizó donde el click pidió
+      // NOTA: el foco puede terminar huérfano en <body> acá — el botón de
+      // play original queda `inert` en cuanto decorOp cruza el umbral (lejos
+      // ya del paso 4), y eso es el MISMO comportamiento de un usuario que
+      // tabulea al botón y scrollea lejos a mano SIN clickear nada (fuera
+      // del alcance de MEDIUM-3). Lo que este lock protege puntualmente es
+      // que el flag NO añada un robo de foco extra hacia el CTA del hero.
+      expect(document.activeElement, 'el foco no debería haber sido robado al CTA del hero, que ya no es el paso activo').not.toBe(heroCta)
+      wrapper.unmount()
     } finally {
       Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true })
     }

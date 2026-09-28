@@ -32,9 +32,12 @@ import {
   ACT1_FADE_END,
   P1_COMPLETE_VH,
   INERT_OPACITY_THRESHOLD,
+  DECOR_FADE_P1_START,
+  DECOR_FADE_RATE,
   slideWeight,
   computeCh3Frame,
   stepToOverallVh,
+  decorOpacity,
 } from '@/utils/ch3Progress'
 
 describe('ch3Progress — HIGH regression lock: el hero no se superpone al Acto 1', () => {
@@ -298,5 +301,43 @@ describe('ch3Progress — TASK-028: caption alineado con el apagado real de la c
     const justBefore = computeCh3Frame(ACT1_FADE_END - 0.001)
     expect(justBefore.act1LayerOp).toBeGreaterThan(0)
     expect(justBefore.currentStep).toBe(0)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// MEDIUM-1 (ronda 2 de review de TASK-030): decorOp — el chrome del
+// navegador + botón de play (dentro de `.ch3-act1-decor`) tiene su PROPIO
+// fade, que termina bien antes que act1LayerOp. Antes de este fix esa
+// fórmula sólo vivía como un calc() de CSS invisible para JS, así que el
+// botón de play (real/focusable desde TASK-030) quedaba invisible pero
+// tabulable en la franja donde decorOp ya tocó 0 pero act1LayerOp todavía no
+// llegó al umbral — el hallazgo MEDIUM-1 exacto del review. Estos locks
+// verifican la matemática pura que decorRef (Chapter3Content.vue) usa para
+// cerrar esa franja.
+// ─────────────────────────────────────────────────────────────────────────
+describe('ch3Progress — MEDIUM-1 (ronda 2): decorOp del chrome/botón de play', () => {
+  it('T18 decorOpacity(p1) es 1 hasta DECOR_FADE_P1_START, y cae a 0 en DECOR_FADE_P1_START + 1/DECOR_FADE_RATE', () => {
+    expect(decorOpacity(0)).toBe(1)
+    expect(decorOpacity(DECOR_FADE_P1_START)).toBe(1)
+    expect(decorOpacity(DECOR_FADE_P1_START + 1 / DECOR_FADE_RATE)).toBe(0)
+    expect(decorOpacity(1)).toBe(0)
+  })
+
+  it('T19 REGRESSION LOCK: existe una franja real de overallVh donde decorOp ya cayó bajo el umbral pero act1LayerOp sigue arriba (el hallazgo MEDIUM-1) — computeCh3Frame() expone AMBOS valores para que Chapter3Content.vue pueda cerrarla', () => {
+    // p1 llega a DECOR_FADE_P1_START + 1/DECOR_FADE_RATE (decorOp=0) en este
+    // overallVh — bien antes de que act1LayerOp empiece siquiera a moverse
+    // (arranca recién en ACT1_FADE_START).
+    const decorZeroVh = (DECOR_FADE_P1_START + 1 / DECOR_FADE_RATE) * P1_COMPLETE_VH
+    expect(decorZeroVh).toBeLessThan(ACT1_FADE_START)
+
+    const frame = computeCh3Frame(decorZeroVh)
+    expect(frame.decorOp).toBeLessThanOrEqual(INERT_OPACITY_THRESHOLD)
+    expect(frame.act1LayerOp).toBeGreaterThan(INERT_OPACITY_THRESHOLD)
+  })
+
+  it('T20 en overallVh=0 (montaje) decorOp arranca visible, igual que act1LayerOp', () => {
+    const frame = computeCh3Frame(0)
+    expect(frame.decorOp).toBe(1)
+    expect(frame.act1LayerOp).toBe(1)
   })
 })

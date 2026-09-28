@@ -89,7 +89,7 @@
     `applyProgress()` en modo pin, o `initPRMStepObserver()` bajo PRM.
 -->
 <script setup>
-import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { chapters } from '@/data/chapters'
 import { projects } from '@/data/projects'
@@ -223,6 +223,8 @@ const currentStep = ref(0)
 const stageRef = ref(null) // root .chapter-stage — TASK-014 contrato punto 2
 const act1LayerRef = ref(null) // .ch3-act1-pin — capa completa del Acto 1, ver applyProgress()
 const sceneRef = ref(null) // .ch3-act1-scene — target de --ch3-p (idéntico a 672ca4a)
+const decorRef = ref(null) // .ch3-act1-decor — chrome+botón de play, fade propio (ver decorOp abajo)
+const heroCtaRef = ref(null) // .ch3-ghost-btn del hero — destino de foco tras playAct1(), ver pendingFocusStep
 const heroSkyRef = ref(null)
 const heroHillBackRef = ref(null)
 const heroHillFrontRef = ref(null)
@@ -258,8 +260,35 @@ function applyProgress(overallVh) {
   // verificación CDP real: sin esto, el bloque naranja HTML5 queda pintado
   // encima de todos los slides del Acto 2 para siempre).
   if (act1LayerRef.value) {
+    const act1Live = frame.act1LayerOp > INERT_OPACITY_THRESHOLD
     act1LayerRef.value.style.opacity = frame.act1LayerOp.toFixed(3)
-    act1LayerRef.value.style.pointerEvents = frame.act1LayerOp > INERT_OPACITY_THRESHOLD ? 'auto' : 'none'
+    act1LayerRef.value.style.pointerEvents = act1Live ? 'auto' : 'none'
+    // El botón de play del Acto 1 es focusable (ver playAct1), así que la capa
+    // necesita el MISMO tratamiento `inert` que los slides del Acto 2 más
+    // abajo: sin esto, Tab seguiría alcanzando un botón a opacity:0 una vez
+    // que el Acto 1 se desvaneció (WCAG 2.4.3/2.4.7, mismo hallazgo que
+    // documenta el bloque de slides). pointer-events por sí solo no saca del
+    // tab order.
+    act1LayerRef.value.inert = !act1Live
+  }
+
+  // decorRef — MEDIUM-1 (ronda 2 de review): el chrome del navegador + botón
+  // de play tienen su PROPIO fade (frame.decorOp, spec §3 tramo p 0.70-0.85 —
+  // ver decorOpacity() en ch3Progress.js), que SIEMPRE termina antes que el
+  // de act1LayerOp arriba. Antes ese fade vivía sólo como un calc() en el
+  // <style> (invisible para JS): con el botón de play ahora real/focusable,
+  // eso dejaba una franja de scroll real (~0.8 viewports con las constantes
+  // actuales) donde el botón ya estaba invisible pero `act1Live` seguía
+  // `true` — Tab lo alcanzaba, el outline de focus-visible también a
+  // opacity:0, Enter disparaba goToStep(1) sin ningún affordance visible
+  // (WCAG 2.4.7). Mismo tratamiento que act1LayerRef arriba, aplicado acá
+  // con INERT_OPACITY_THRESHOLD (MISMA constante, no un umbral propio) sobre
+  // el valor de opacidad que de verdad manda en esta capa.
+  if (decorRef.value) {
+    const decorLive = frame.decorOp > INERT_OPACITY_THRESHOLD
+    decorRef.value.style.opacity = frame.decorOp.toFixed(3)
+    decorRef.value.style.pointerEvents = decorLive ? 'auto' : 'none'
+    decorRef.value.inert = !decorLive
   }
 
   // Acto 2 — un slide por índice (0=hero .. 6=cierre), opacity+translateY
@@ -349,6 +378,12 @@ function onResize() {
   })
 }
 
+// pendingFocusStep — declarado ANTES de goToStep() porque goToStep() lo
+// limpia (MEDIUM-3, ronda 3 de review, ver el comentario largo junto al
+// watcher más abajo): cualquier navegación NUEVA cancela una intención de
+// foco pendiente de una navegación anterior que nunca llegó a destino.
+const pendingFocusStep = ref(null)
+
 // goToStep — navegación paso a paso (TASK-021 AC#4): usada tanto por el CTA
 // del hero ("La historia completa" → goToStep(2), el primer beat) como por
 // cada punto del roadmap (Ch3Roadmap.vue @navigate). step 0 = Acto 1
@@ -361,7 +396,20 @@ function onResize() {
 // scrollIntoView real funciona; en el modo pineado no hay un elemento al que
 // "entrar" (todo vive en el mismo frame fijo), así que se salta el scroll
 // del shell directo a la posición física que corresponde a ese paso.
+//
+// MEDIUM-3 (ronda 3 de review): limpia `pendingFocusStep` al TOPE, antes de
+// disparar el scroll nuevo. Sin esto, un click en el roadmap (u otro
+// goToStep) mientras el flag de playAct1() seguía armado (el usuario
+// remó hacia atrás sin llegar nunca al hero) hacía que el smooth scroll
+// nuevo ATRAVESARA currentStep=1 en tránsito hacia su destino real — el
+// watcher de abajo disparaba en pleno vuelo, robaba el foco al CTA del hero
+// por un instante, y el scroll seguía hasta el paso pedido, dejando el hero
+// (ahora inert) con el foco adentro: exactamente el foco huérfano que
+// MEDIUM-2 arregló, más un robo transitorio de foco en el medio. playAct1()
+// arma el flag DESPUÉS de llamar a goToStep() (ver más abajo) para que este
+// clear no se pise a sí mismo — la llamada es síncrona, así que alcanza.
 function goToStep(step) {
+  pendingFocusStep.value = null
   if (reduced()) {
     const target = step <= 0 ? sceneRef.value : slideEls.value[clamp(step - 1, 0, ACT2_SLIDE_COUNT - 1)]
     target?.scrollIntoView({ behavior: 'auto', block: 'start' })
@@ -371,6 +419,74 @@ function goToStep(step) {
   const vh = window.innerHeight || document.documentElement.clientHeight || 1
   const target = sectionEl.offsetTop + stepToOverallVh(step) * vh
   shellEl.scrollTo({ top: target, behavior: 'smooth' })
+}
+
+// playAct1 — el botón de Flash del Acto 1 dispara el recorrido (feedback
+// Rafael): antes era decoración pura (`aria-hidden`, sin handler) y leía como
+// un control roto, y el arranque del capítulo dependía de descubrir que hay
+// que scrollear. Ahora reproduce el Acto 1 de una: goToStep(1) hace scroll
+// suave del shell hasta el hero, y como el scrub del plugin muerto está atado
+// a la posición de scroll, el "play" ES la animación de la muerte de Flash.
+// El roadmap se mueve solo — currentStep se recalcula en cada frame de scroll
+// vía applyProgress(), sin cablear nada aparte.
+//
+// El `stopPropagation` no hace falta (no hay handler de click ancestro) y no
+// se previene el default (un <button type="button"> no tiene). Bajo PRM,
+// goToStep() ya resuelve por scrollIntoView en vez de scroll del shell.
+//
+// MEDIUM-2 (ronda 2 de review): con teclado, el botón tenía el foco cuando su
+// propia capa se vuelve `inert` (decorRef, arriba) — el navegador manda el
+// foco a `document.body` sin que nada lo reclame, y el siguiente Tab arranca
+// desde el principio del documento en vez de seguir en el punto donde el
+// usuario "reprodujo". `pendingFocusStep` (declarado arriba, junto a
+// goToStep()) + este watcher de `currentStep` resuelven el timing sin timers
+// mágicos: el scroll es smooth y el inert se aplica por frame de rAF (o por
+// IntersectionObserver bajo PRM), así que un `.focus()` inmediato acá se
+// perdería o pelearía contra el scroll en curso. En cambio, se marca la
+// intención (paso 1 = hero) y se espera a que `currentStep` — la MISMA
+// fuente que ya mueve el roadmap, actualizada por applyProgress() en modo
+// pin o por initPRMStepObserver() bajo PRM — confirme que el destino real se
+// alcanzó, sea cual sea el mecanismo.
+//
+// MEDIUM-3 (ronda 3 de review): el guard de abajo también LIMPIA el flag
+// cuando currentStep cambia a un valor que NO es el pendiente — no sólo
+// hace `return`. Sin ese clear, un flag armado por playAct1() que nunca
+// llegó a completar (usuario rema hacia atrás y cancela el scroll suave sin
+// tocar el paso 1) quedaba vivo indefinidamente: el listener de scroll del
+// shell corre siempre, incluso con otro capítulo activo, así que volver
+// desde un capítulo posterior hacia arriba atraviesa currentStep 7→…→1 y el
+// watcher robaba el foco al pasar por acá, minutos después y sin ninguna
+// interacción reciente con el play. Con el clear temprano de goToStep()
+// (arriba) cubriendo la navegación NUEVA que atraviesa el paso 1 en tránsito,
+// y este clear cubriendo cualquier otro cambio de currentStep, el único
+// camino que sobrevive es 0→1 directo — que es exactamente el que produce un
+// click en el play (nunca pasa por otro valor intermedio antes de llegar).
+//
+// Sub-caso residual documentado, deliberadamente NO cerrado con más
+// maquinaria (no vale un listener de wheel/touchstart sólo para esto): click
+// en play → el usuario rema hacia atrás SIN que currentStep llegue a
+// cambiar nunca (se queda en 0) → después scrollea hacia adelante a mano.
+// El flag sigue armado y el foco salta al CTA en ese scroll manual — un
+// falso positivo minoritario y de bajo impacto (el usuario de todos modos
+// terminó en el hero), aceptado a cambio de no sumar un segundo mecanismo de
+// detección de "intención cancelada".
+watch(currentStep, (step) => {
+  if (pendingFocusStep.value === null) return
+  if (step !== pendingFocusStep.value) {
+    pendingFocusStep.value = null
+    return
+  }
+  pendingFocusStep.value = null
+  // preventScroll: LOW barato (ronda 3) — blindaje si algún día el CTA no
+  // está en viewport al momento del focus(); sin esto el foco implícito de
+  // .focus() podría saltar el scroll a otro lado y pelear con el smooth
+  // scroll que goToStep() ya dejó en curso.
+  heroCtaRef.value?.focus({ preventScroll: true })
+})
+
+function playAct1() {
+  goToStep(1)
+  pendingFocusStep.value = 1
 }
 
 // ── Roadmap bajo PRM (TASK-021 AC#4 + AC#9) ─────────────────────────────────
@@ -439,37 +555,42 @@ onBeforeUnmount(() => {
         <div ref="sceneRef" class="ch3-act1-scene">
           <h1 class="ch3-act1-title">{{ t('ui.deathOfFlash') }}</h1>
 
-          <div class="ch3-act1-decor" aria-hidden="true">
-            <div class="ch3-desktop"></div>
+          <div ref="decorRef" class="ch3-act1-decor">
+            <div class="ch3-desktop" aria-hidden="true"></div>
 
             <div class="ch3-browser">
-              <div class="ch3-browser-tabs"><span class="ch3-browser-tab"></span></div>
-              <div class="ch3-browser-omnibox"></div>
-              <div class="ch3-browser-infobar">
+              <div class="ch3-browser-tabs" aria-hidden="true"><span class="ch3-browser-tab"></span></div>
+              <div class="ch3-browser-omnibox" aria-hidden="true"></div>
+              <div class="ch3-browser-infobar" aria-hidden="true">
                 <span>{{ t('ch3.ui.infobar') }}</span>
                 <span class="ch3-ghost-btn ch3-ghost-btn--tiny">{{ t('ch3.ui.runOnce') }}</span>
               </div>
 
               <div class="ch3-flash-stage">
-                <div class="ch3-flash-btn">
+                <button
+                  type="button"
+                  class="ch3-flash-btn"
+                  :aria-label="t('ch3.ui.playAria')"
+                  @click="playAct1"
+                >
                   <span class="ch3-flash-shadow"></span>
                   <span class="ch3-flash-bevel"></span>
                   <span class="ch3-flash-fill"></span>
                   <span class="ch3-flash-desat"></span>
                   <span class="ch3-flash-specular"></span>
-                  <span class="ch3-flash-play">&#9654;</span>
-                </div>
-                <svg class="ch3-wireframe" viewBox="0 0 100 72">
+                  <span class="ch3-flash-play" aria-hidden="true">&#9654;</span>
+                </button>
+                <svg class="ch3-wireframe" aria-hidden="true" viewBox="0 0 100 72">
                   <rect x="4" y="4" width="92" height="64" rx="2" />
                   <circle cx="4" cy="4" r="2" /><circle cx="96" cy="4" r="2" />
                   <circle cx="96" cy="68" r="2" /><circle cx="4" cy="68" r="2" />
                   <circle cx="50" cy="36" r="2" />
                 </svg>
-                <div class="ch3-flat-block"></div>
+                <div class="ch3-flat-block" aria-hidden="true"></div>
               </div>
             </div>
 
-            <div class="ch3-phone">
+            <div class="ch3-phone" aria-hidden="true">
               <div class="ch3-phone-screen">
                 <svg class="ch3-puzzle" viewBox="0 0 40 40">
                   <path d="M4 10h6a3 3 0 1 1 0 6H4v6h6a3 3 0 1 1 0 6H4a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" />
@@ -478,7 +599,10 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="ch3-act1-cue"><span class="ch3-act1-cue-arrow">&#8964;</span></div>
+            <div class="ch3-act1-cue" aria-hidden="true">
+              <span class="ch3-act1-cue-hint">{{ t('ch3.ui.act1Cue') }}</span>
+              <span class="ch3-act1-cue-arrow">&#8964;</span>
+            </div>
           </div>
 
           <div class="ch3-act1-white" aria-hidden="true"></div>
@@ -500,7 +624,7 @@ onBeforeUnmount(() => {
         <div class="ch3-hero-copy">
           <h2 class="ch3-hero-title">{{ t('ch3.hero.title') }}</h2>
           <p class="ch3-hero-sub">{{ t('ch3.hero.sub') }}</p>
-          <button type="button" class="ch3-ghost-btn" @click="goToStep(2)">{{ t('ch3.hero.cta') }}</button>
+          <button ref="heroCtaRef" type="button" class="ch3-ghost-btn" @click="goToStep(2)">{{ t('ch3.hero.cta') }}</button>
         </div>
       </div>
 
@@ -713,8 +837,12 @@ onBeforeUnmount(() => {
     gap: var(--sp-2xl);
     padding-top: 8vh;
     /* Fade de todo el chrome (navegador + teléfono) hacia el final del scrub —
-       spec §3 tramo p 0.70-0.85. */
-    opacity: calc(1 - max(0, (var(--ch3-p) - 0.7) * 6.5));
+     * spec §3 tramo p 0.70-0.85. Antes era un calc() local sobre --ch3-p;
+     * ahora lo escribe applyProgress() vía decorRef (opacity + pointer-events
+     * + inert juntos, MEDIUM-1 ronda 2 de review) porque el botón de play que
+     * vive adentro es real/focusable — un calc() de CSS no puede gatear el
+     * tab order, así que la misma fórmula (decorOpacity() en ch3Progress.js)
+     * pasó a JS para poder hacer las dos cosas desde una sola fuente. */
   }
 
   /* ── Navegador 2013 (CSS puro) ────────────────────────────────────────── */
@@ -767,11 +895,35 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: center;
   }
+  /* Es un <button> real (dispara playAct1), así que necesita el reset: el UA
+   * le pone border/padding/background propios que romperían el círculo
+   * glossy. LOW-4 (ronda 2 de review): el <div> viejo NO centraba el ▶ —
+   * `.ch3-flash-play` es `position: relative` sin flex/grid en su padre, así
+   * que flotaba en el flow normal sin garantía de quedar en el medio del
+   * círculo; sólo `.ch3-flash-stage` (el contenedor de afuera) centraba el
+   * DIV entero, no el glifo adentro suyo. `display: grid` + place-items acá
+   * es una mejora real, no una preservación: ahora el ▶ sí queda centrado
+   * dentro del botón, con o sin el reset del <button>. */
   .ch3-flash-btn {
     position: relative;
+    display: grid;
+    place-items: center;
     width: 46%;
     aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    background: none;
     border-radius: 50%;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 160ms ease;
+  }
+  .ch3-flash-btn:hover { transform: scale(1.04); }
+  .ch3-flash-btn:active { transform: scale(0.98); }
+  .ch3-flash-btn:focus-visible {
+    outline: 3px solid var(--ch3-white);
+    outline-offset: 4px;
   }
   .ch3-flash-shadow,
   .ch3-flash-bevel,
@@ -888,7 +1040,22 @@ onBeforeUnmount(() => {
     left: 50%;
     transform: translateX(-50%);
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     opacity: calc(1 - var(--ch3-p) * 8);
+  }
+  /* El arranque del capítulo dependía de adivinar que hay que scrollear
+   * (feedback Rafael). El hint nombra las DOS entradas ahora disponibles —
+   * el play del plugin y el scroll — sin robarle protagonismo a la escena. */
+  .ch3-act1-cue-hint {
+    color: var(--ch3-dead-gray);
+    font-family: var(--font-body);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
   .ch3-act1-cue-arrow {
     display: inline-block;
@@ -1236,6 +1403,15 @@ onBeforeUnmount(() => {
     .ch3-act1-cue-arrow,
     .ch3-hero-cloud {
       animation: none !important;
+    }
+    /* El play sigue funcionando bajo PRM (goToStep resuelve por
+     * scrollIntoView 'auto'), pero sin el rebote de hover/active. */
+    .ch3-flash-btn {
+      transition: none !important;
+    }
+    .ch3-flash-btn:hover,
+    .ch3-flash-btn:active {
+      transform: none !important;
     }
     .ch3-hero-sky,
     .ch3-hero-hill--back,

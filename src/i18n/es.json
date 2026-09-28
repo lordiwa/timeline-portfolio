@@ -207,7 +207,9 @@
       "readLess": "Cerrar",
       "phoneNote": "El plugin nunca llegó aquí",
       "infobar": "Se bloqueó el complemento Adobe Flash Player",
-      "runOnce": "Ejecutar esta vez"
+      "runOnce": "Ejecutar esta vez",
+      "playAria": "Reproducir: ver morir al plugin y entrar a la historia",
+      "act1Cue": "Dale play o desplázate"
     },
     "roadmap": {
       "act1": "EL ADIÓS",

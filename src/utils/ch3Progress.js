@@ -158,6 +158,30 @@ export const P1_COMPLETE_VH = ACT1_FADE_START // 2.34
 // solo, en vez de requerir acordarse de tocar dos lugares.
 export const INERT_OPACITY_THRESHOLD = 0.05
 
+// DECOR_FADE_P1_START/DECOR_FADE_RATE (ronda 2 de review, MEDIUM-1): fórmula
+// del fade de `.ch3-act1-decor` (chrome del navegador + botón de play +
+// teléfono, spec §3 tramo p 0.70-0.85) — antes vivía SÓLO como un
+// `calc(1 - max(0, (var(--ch3-p) - 0.7) * 6.5))` en el <style> del
+// componente, invisible para JS. Como el botón de play ahora es un elemento
+// real y focusable (ver playAct1() en Chapter3Content.vue), esa opacidad deja
+// de ser un detalle puramente visual: hay una franja real de scroll
+// (overallVh≈2.0 a ≈2.815 con las constantes actuales) donde el decor ya
+// está en opacity:0 pero `act1LayerOp` — que gobierna el `inert` de la capa
+// ENTERA del Acto 1 — sigue arriba de INERT_OPACITY_THRESHOLD, así que Tab
+// seguía alcanzando un botón invisible ahí (WCAG 2.4.7, hallazgo MEDIUM-1 de
+// la ronda 2 de review). Se hoistea la fórmula a esta función pura (mismo
+// resultado numérico que el calc() de CSS, que se retira del <style> — ver
+// applyProgress()) para que decorOp comparta LA MISMA constante
+// INERT_OPACITY_THRESHOLD que ya gobierna el resto de los umbrales inert/
+// pointer-events de este archivo, en vez de vivir como un segundo criterio
+// (opacity:0 visual vs. inert real) que puede desalinearse.
+export const DECOR_FADE_P1_START = 0.7
+export const DECOR_FADE_RATE = 6.5
+
+export function decorOpacity(p1) {
+  return clamp(1 - Math.max(0, (p1 - DECOR_FADE_P1_START) * DECOR_FADE_RATE), 0, 1)
+}
+
 // HIGH (hallazgo de verificación CDP real en esta sesión, no detectable por
 // ningún test de jsdom): la primera versión de `continuousSlide` clampeaba
 // el PISO en 0 (`clamp(overallVh - ACT1_UNITS, 0, ACT2_SLIDE_COUNT - 1)`).
@@ -177,6 +201,14 @@ export function computeCh3Frame(overallVh) {
   // opacity+pointer-events (ver applyProgress() en Chapter3Content.vue) —
   // constantes ACT1_FADE_DURATION/ACT1_FADE_END/ACT1_FADE_START arriba.
   const act1LayerOp = clamp(1 - Math.max(0, overallVh - ACT1_FADE_START) / ACT1_FADE_DURATION, 0, 1)
+
+  // decorOp — fade propio del chrome/botón de play (ver decorOpacity()
+  // arriba), SIEMPRE termina antes que act1LayerOp (0.70-0.85 de p1, que
+  // completa su recorrido en overallVh=P1_COMPLETE_VH, contra el fade de la
+  // capa entera que ni siquiera arranca hasta ACT1_FADE_START). applyProgress()
+  // usa el valor MÁS BAJO de los dos para decidir el `inert` del botón —
+  // así se apaga en cuanto CUALQUIERA de los dos lo vuelve invisible.
+  const decorOp = decorOpacity(p1)
 
   // Sin piso: si el piso fuera 0, continuousSlide quedaría en 0 (peso pleno
   // del hero) durante TODO el Acto 1 — ver el HIGH de arriba. El techo sí se
@@ -229,7 +261,7 @@ export function computeCh3Frame(overallVh) {
     ? 0
     : 1 + clamp(Math.round(continuousSlide), 0, ACT2_SLIDE_COUNT - 1)
 
-  return { p1, act1LayerOp, continuousSlide, slides, heroLocalP, currentStep }
+  return { p1, act1LayerOp, decorOp, continuousSlide, slides, heroLocalP, currentStep }
 }
 
 // stepToOverallVh(step) — inversa de currentStep: dado un índice de paso del

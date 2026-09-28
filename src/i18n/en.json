@@ -207,7 +207,9 @@
       "readLess": "Close",
       "phoneNote": "The plugin never made it here",
       "infobar": "The Adobe Flash Player plugin was blocked",
-      "runOnce": "Run this time"
+      "runOnce": "Run this time",
+      "playAria": "Play: watch the plugin die and enter the story",
+      "act1Cue": "Hit play or scroll"
     },
     "roadmap": {
       "act1": "THE GOODBYE",
