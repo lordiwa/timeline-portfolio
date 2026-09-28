@@ -14,7 +14,8 @@
   - Los #3 (PRESS ANY KEY) y #4 (vacío en ch6) quedaron descartados: eran artefactos de throttling de pestaña, y wrecker lo concedió.
   - **wrecker espera un ping en el bridge después del próximo deploy** para re-verificar TASK-043 y después correr TASK-045.
 - **Trabajo de ch3 SIN COMMITEAR, pendiente de review:** `src/components/Chapter3Content.vue` (botón play del Acto 1 real y focusable, `pendingFocusStep`), `src/utils/ch3Progress.js` (`decorOpacity`), `src/i18n/{es,en}.json` y sus tests. No se sabe a qué ticket pertenece. Preguntarle a Rafael antes de commitearlo o descartarlo.
-- **La deuda de deploy sigue:** TASK-041 no está deployado y m4to.com sigue en `0125e57`. El procedimiento está abajo, en el punto 2. El deploy lo aprueba Rafael.
+- **DEPLOY HECHO 2026-09-28:** m4to.com sirve `fd878d1` (TASK-041, TASK-043 y el play de ch3, commit 4926e0e). La deuda de deploy de abajo quedó saldada. El chequeo de fuga (`curl` de /references/2026.jpg) quedó SIN correr porque lo bloqueó un permiso; `dist/references` sí se verificó ausente antes del deploy. TASK-043 sigue en in_review hasta el UAT de wrecker (msg_0014).
+- **Sin commitear, a propósito:** `.claude/settings*.json`, `.mcp.json` y `CLAUDE.md` (setup del bridge). El permiso de auto-mode bloquea que el agente los commitee, así que los commitea Rafael. `.planning/GUION-SITIO.md` está sin trackear: revisar si tiene PII antes de commitearlo.
 
 > Fuente de verdad completa: `state/sessions/20260727T013114Z-db71132a/session.json`.
 > De los tickets manda `tasks/`. Este archivo es el resumen operativo.
