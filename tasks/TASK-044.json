@@ -1,0 +1,29 @@
+{
+  "key": "TASK-044",
+  "title": "Medir y acotar la carga del main thread en ch4 (AR/VR 2015)",
+  "description": "Lo reportó wrecker (QA en vivo de m4to.com, 2026-09-28, bridge msg_0008 #2). Estando en ch4, una captura de pantalla dio timeout de 30 s con el mensaje \"renderer may be frozen\", y después se recuperó.\n\nEVIDENCIA DÉBIL: ese síntoma también aparece por el throttling de Chrome en pestañas de automatización sin foco (ver la memoria chrome-background-tab-throttling), así que puede no ser un problema real. Por eso este ticket empieza MIDIENDO y no optimizando.\n\nContexto: ch4 corre Ch4PortalShader (shader multi-pass con óptica de headset, TASK-010) y layers de parallax. TASK-017 ya puso un techo global de fps, pero no hay un presupuesto de frame-time medido para ch4.\n\nPASO 1: trazar Performance en Chrome headed con la pestaña en foco, sin throttle y con 4x/6x CPU throttle, scrolleando por ch4, y registrar los long tasks. Si no aparecen long tasks de más de 50 ms atribuibles a ch4, se cierra documentando las mediciones.",
+  "acceptance_criteria": [
+    "Existe una traza medida de ch4 en Chrome headed con pestaña en foco, sin throttle y con CPU throttle 4x, que reporta la cantidad y duracion de los long tasks y el frame time p95 al scrollear y al quedarse quieto en ch4.",
+    "Si hay long tasks mayores a 50 ms atribuibles a ch4, se identifica la causa (shader, parallax, layout) y se reducen hasta que no haya ninguno mayor a 100 ms y el frame time p95 quede en 33 ms o menos con CPU 4x.",
+    "Si la medicion no muestra stalls, el ticket se cierra con los numeros anotados y se registra que el sintoma de wrecker vino del throttling de pestaña.",
+    "La apariencia de ch4 no cambia respecto de la spec. Cualquier degradacion va solo al tier de gama baja."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "performance",
+    "ch4",
+    "from-wrecker",
+    "needs-measurement"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-09-28T16:21:31.336Z",
+  "updated_at": "2026-09-28T16:21:31.336Z",
+  "jira_key": null,
+  "verification_tier": "uat-only",
+  "marker": "[INFERRED:weak]"
+}

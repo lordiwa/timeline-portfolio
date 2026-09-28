@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T21:01:20.909Z",
+  "generated_at": "2026-09-28T16:21:31.386Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -250,6 +250,24 @@
     {
       "key": "TASK-042",
       "title": "ch5: el panel de stream perdio ventana visible por el padding de TASK-041, con landscape a la mitad",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-043",
+      "title": "Los clicks del StickyTimeline no llegan a ch4/ch5 cuando se cruza el ch3 pineado",
+      "status": "todo",
+      "priority": "high"
+    },
+    {
+      "key": "TASK-044",
+      "title": "Medir y acotar la carga del main thread en ch4 (AR/VR 2015)",
+      "status": "todo",
+      "priority": "medium"
+    },
+    {
+      "key": "TASK-045",
+      "title": "Barrido de navegación y performance en mobile y tablet (360, 390 y 768)",
       "status": "todo",
       "priority": "medium"
     }

@@ -1,0 +1,28 @@
+{
+  "key": "TASK-045",
+  "title": "Barrido de navegación y performance en mobile y tablet (360, 390 y 768)",
+  "description": "Lo pidió wrecker (QA de m4to.com, 2026-09-28, bridge msg_0008 #5). Su entorno no pudo emular anchos menores a 1920, así que mobile y tablet quedaron sin cubrir.\n\nYa hay tickets mobile puntuales (TASK-039 ch0, TASK-042 ch5 landscape; TASK-019 cerrado), pero ninguno es un barrido completo. Este ticket es ese barrido: recorrer los 7 capítulos en 360x800, 390x844 y 768x1024 (portrait, y además landscape en 390), con Chrome headed y la pestaña en foco. Los defectos que aparezcan se abren como tickets propios y no se arreglan acá. Conviene hacerlo después de cerrar el ticket de navegación del timeline, para no reportar el mismo bug dos veces.",
+  "acceptance_criteria": [
+    "Se recorren los 7 capitulos en 360x800, 390x844 (portrait y landscape) y 768x1024, con captura de cada capitulo en cada viewport.",
+    "En cada viewport se verifica que no haya scroll horizontal (scrollWidth menor o igual a clientWidth), que el StickyTimeline llegue a cada era y que ningun contenido quede tapado ni sea inalcanzable.",
+    "Se mide la performance con CPU throttle 4x en al menos 390x844 y se reportan los long tasks por capitulo.",
+    "Cada defecto encontrado se abre como un ticket propio con su repro. Este ticket se cierra con el informe, sin arreglos mezclados."
+  ],
+  "status": "todo",
+  "priority": "medium",
+  "labels": [
+    "qa",
+    "mobile",
+    "from-wrecker"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-09-28T16:21:31.386Z",
+  "updated_at": "2026-09-28T16:21:31.386Z",
+  "jira_key": null,
+  "verification_tier": "uat-only",
+  "marker": "[EXPLICIT]"
+}

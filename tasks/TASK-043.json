@@ -1,0 +1,30 @@
+{
+  "key": "TASK-043",
+  "title": "Los clicks del StickyTimeline no llegan a ch4/ch5 cuando se cruza el ch3 pineado",
+  "description": "Lo reportó wrecker (QA en vivo de m4to.com, 2026-09-28, bridge msg_0008 #1, desktop 1920x1080, versión desplegada 0125e57).\n\nREPRO: desde la zona de ch3 (2013), clickear \"2015 AR/VR\" (ch4) o \"2022\" en el StickyTimeline. El highlight del timeline se actualiza, pero el viewport queda trabado en ch3 \"EL ADIÓS\" (paso 1/8). El destino solo se alcanza scrolleando a mano. Los saltos largos que sí funcionan tardan entre 5 y 9 s.\n\nVIGENCIA: se chequeó contra master el 2026-09-28. useScrollState.js, ScrollShell.vue y StickyTimeline.vue no cambiaron desde 0125e57, y ni TASK-041 ni el trabajo de ch3 sin commitear tocan la navegación. Por lo tanto el bug sigue vigente.\n\nSOSPECHAS (no verificadas): scrollToChapter() en src/composables/useScrollState.js:113 hace shell.scrollTo({top: section.offsetTop, behavior:'smooth'}) sobre un shell con scroll-snap-type: y mandatory, y cada .chapter-section tiene scroll-snap-stop: always. ch3 es multi-viewport (TASK-014, data-viewports) y ahí el smooth scroll largo puede cortarse o re-snapear dentro del pin. Además, applyProgress/goToStep de Chapter3Content también escriben el scroll del shell (línea ~421) y podrían competir con el scroll en vuelo. La lentitud (5-9 s) es coherente con un smooth scroll que recorre los 5 viewports de ch3.\n\nCriterio de Rafael: esto daña la navegación, así que se arregla sin consultar gusto. La spec estética no se toca.",
+  "acceptance_criteria": [
+    "Desde cualquier capitulo, incluido cualquier paso del pin de ch3, clickear cualquier era del StickyTimeline deja el viewport en esa seccion (section.offsetTop del destino) en 1.5 s o menos. Se verifica en Chrome headed (pestaña con foco) en 1920x1080 y 1366x768, con medicion real de shell.scrollTop.",
+    "Los saltos que cruzan ch3 hacia adelante (ch0-ch2 hacia ch4-ch6) y hacia atras (ch4-ch6 hacia ch0-ch2) llegan al destino sin quedar atrapados en un paso intermedio del pin.",
+    "Bajo prefers-reduced-motion el salto sigue siendo instantaneo ('auto') y llega al destino.",
+    "La navegacion paso a paso de ch3 (roadmap, CTA del hero, boton play del Acto 1) sigue funcionando igual que hoy.",
+    "Se agrega un lock de regresion para el salto a traves de ch3, y npm test queda verde."
+  ],
+  "status": "todo",
+  "priority": "high",
+  "labels": [
+    "bug",
+    "navegacion",
+    "ch3",
+    "from-wrecker"
+  ],
+  "assignee": null,
+  "depends_on": [],
+  "linked_commits": [],
+  "linked_prs": [],
+  "comments": [],
+  "created_at": "2026-09-28T16:21:31.272Z",
+  "updated_at": "2026-09-28T16:21:31.272Z",
+  "jira_key": null,
+  "verification_tier": "tests-after",
+  "marker": "[INFERRED:strong]"
+}
