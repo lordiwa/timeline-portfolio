@@ -192,29 +192,38 @@ describe('useScrollState', () => {
     await waitForDeepLink()
     // Limpiamos el spy del deep-link inicial.
     HTMLElement.prototype.scrollTo.mockClear()
-    get().state.scrollToChapter(2, 'smooth')
     const shell = document.querySelector('.scroll-shell')
+    // offsetTop de las sections es siempre 0 en JSDOM (sin layout real) — el
+    // guard LOW-1 (ver TASK-043 abajo) trataría cualquier destino como
+    // "ya estamos ahí" si scrollTop también fuera 0, así que lo alejamos.
+    shell.scrollTop = 999
+    get().state.scrollToChapter(2, 'smooth')
     expect(shell.scrollTo).toHaveBeenCalledTimes(1)
     expect(shell.scrollTo).toHaveBeenCalledWith({ top: expect.any(Number), behavior: 'smooth' })
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TASK-043 (2026-09-28): lock de regresión para el salto a través de ch3
-  // multi-viewport pineado. `.chapter-section[data-viewports]` (ch3, TASK-014)
-  // sigue siendo un único snap point (`scroll-snap-align:start` +
-  // `scroll-snap-stop:always`) pero mide N*100dvh — con
-  // `scroll-snap-type:y mandatory` en el shell, un scrollTo() que atraviesa
-  // ese punto (ej. ch2→ch5) quedaba atrapado en el borde de entrada de ch3 y
-  // nunca llegaba al destino (bug reportado por wrecker en m4to.com). El fix
-  // apaga `scroll-snap-type` en el shell durante el viaje y lo restaura al
-  // terminar (evento `scrollend`, con fallback a timeout).
+  // TASK-043 (2026-09-28, ronda 2 tras review): lock de regresión para el
+  // salto a través de ch3 multi-viewport pineado. `.chapter-section[data-viewports]`
+  // (ch3, TASK-014) sigue siendo un único snap point (`scroll-snap-align:start`
+  // + `scroll-snap-stop:always`) pero mide N*100dvh — el fix apaga
+  // `scroll-snap-type` en el shell durante cualquier salto programático y lo
+  // restaura cuando el scroll se asienta (ver JSDoc de scrollToChapter para
+  // la hipótesis de causa, no confirmada con medición en vivo, y el porqué
+  // del fix defensivo de todos modos).
+  //
+  // Los tests arrancan desde el estado real de prod: `shell.style.scrollSnapType`
+  // vacío (el snap vive en la hoja de estilos, `.scroll-shell` en ScrollShell.vue
+  // — nunca se fija inline salvo por este mismo fix), NO 'y mandatory' inline
+  // (eso NO es el estado shipped, corregido en esta ronda).
   // ─────────────────────────────────────────────────────────────────────────
-  it('TASK-043: scrollToChapter desactiva scroll-snap-type en el shell durante el viaje y lo restaura en "scrollend"', async () => {
+  it('TASK-043: scrollToChapter apaga scroll-snap-type durante el viaje y lo restaura en "scrollend"', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
     const shell = document.querySelector('.scroll-shell')
-    shell.style.scrollSnapType = 'y mandatory'
+    expect(shell.style.scrollSnapType).toBe('')
+    shell.scrollTop = 999 // lejos del destino (offsetTop=0 en JSDOM)
 
     get().state.scrollToChapter(5, 'smooth')
 
@@ -224,23 +233,131 @@ describe('useScrollState', () => {
 
     shell.dispatchEvent(new Event('scrollend'))
 
-    // Al terminar: snap restaurado — wheel/touch/teclado vuelven a snappear
-    // normal una vez que el shell llegó a destino.
-    expect(shell.style.scrollSnapType).toBe('y mandatory')
+    // Al terminar: snap restaurado AL VALOR ORIGINAL (vacío, no 'none').
+    expect(shell.style.scrollSnapType).toBe('')
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TASK-043: red de seguridad — sin 'scrollend' (ej. Safari, o un scrollTo()
-  // que no genera scroll real porque el shell ya está en destino), el snap
-  // se restaura igual vía el timeout de fallback, nunca queda apagado para
-  // siempre.
+  // TASK-043 (a): dos llamadas superpuestas + un solo 'scrollend' final
+  // restauran el valor ORIGINAL de antes del lote — no 'none' (HIGH-1: la
+  // versión de ronda 1 recapturaba 'none' como "original" en la segunda
+  // llamada porque el estilo ya estaba apagado por la primera).
   // ─────────────────────────────────────────────────────────────────────────
-  it('TASK-043: sin evento "scrollend", el timeout de fallback restaura scroll-snap-type', async () => {
+  it('TASK-043 (a): dos scrollToChapter seguidos + un "scrollend" restauran el valor original, no "none"', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
     const shell = document.querySelector('.scroll-shell')
-    shell.style.scrollSnapType = 'y mandatory'
+    shell.scrollTop = 999
+
+    get().state.scrollToChapter(4, 'smooth')
+    expect(shell.style.scrollSnapType).toBe('none')
+    get().state.scrollToChapter(6, 'smooth') // segundo click, primero sigue en vuelo
+
+    expect(shell.style.scrollSnapType).toBe('none')
+    shell.dispatchEvent(new Event('scrollend'))
+
+    expect(shell.style.scrollSnapType).toBe('')
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043 (b): el debounce/timer del PRIMER salto no toca el estilo
+  // durante el segundo — si el debounce de 150ms del primero disparara
+  // igual (bug de ronda 1: no cancelaba su propio timer al ser reemplazado),
+  // restauraría el snap a mitad del segundo salto en vuelo.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043 (b): el debounce del primer salto no restaura el estilo mientras el segundo sigue en vuelo', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 999
+
+    get().state.scrollToChapter(4, 'smooth')
+    shell.dispatchEvent(new Event('scroll')) // scroll real del primer salto en curso
+
+    get().state.scrollToChapter(6, 'smooth') // segundo click cancela el debounce del primero
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      // Si el debounce del PRIMER salto sobreviviera, dispararía acá (150ms
+      // desde su propio evento 'scroll') y restauraría el estilo de más.
+      vi.advanceTimersByTime(150)
+      expect(shell.style.scrollSnapType).toBe('none')
+    } finally {
+      vi.useRealTimers()
+    }
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043 (c): no se acumulan listeners/timers entre llamadas superpuestas
+  // — cada nueva llamada cancela los del salto anterior antes de agregar los
+  // propios (spy de add/removeEventListener sobre 'scroll'/'scrollend').
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043 (c): llamadas superpuestas no acumulan listeners de scroll/scrollend', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 999
+    const addSpy = vi.spyOn(shell, 'addEventListener')
+    const removeSpy = vi.spyOn(shell, 'removeEventListener')
+
+    get().state.scrollToChapter(4, 'smooth')
+    get().state.scrollToChapter(5, 'smooth')
+    get().state.scrollToChapter(6, 'smooth')
+
+    const addScrollCalls = addSpy.mock.calls.filter(([type]) => type === 'scroll').length
+    const removeScrollCalls = removeSpy.mock.calls.filter(([type]) => type === 'scroll').length
+    // 3 llamadas → 3 'scroll' listeners agregados, pero los 2 primeros deben
+    // haberse removido al ser reemplazados (sólo el último queda vivo).
+    expect(addScrollCalls).toBe(3)
+    expect(removeScrollCalls).toBe(2)
+
+    const addScrollendCalls = addSpy.mock.calls.filter(([type]) => type === 'scrollend').length
+    const removeScrollendCalls = removeSpy.mock.calls.filter(([type]) => type === 'scrollend').length
+    expect(addScrollendCalls).toBe(3)
+    expect(removeScrollendCalls).toBe(2)
+
+    shell.dispatchEvent(new Event('scrollend'))
+    // El listener final también se limpia al asentarse el último salto.
+    expect(removeSpy.mock.calls.filter(([type]) => type === 'scroll').length).toBe(3)
+
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043 (d): destino igual a la posición actual (LOW-1) → el estilo no
+  // se toca en absoluto — sin este guard, el deep-link inicial a ch0 (scroll
+  // ya en 0) dejaba el snap en 'none' hasta que venciera el fallback.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043 (d): destino == posición actual no toca scroll-snap-type', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 0 // == offsetTop del destino (siempre 0 en JSDOM)
+    expect(shell.style.scrollSnapType).toBe('')
+
+    get().state.scrollToChapter(0, 'smooth')
+
+    expect(shell.style.scrollSnapType).toBe('')
+    // El scroll igual se pide (no-op real, pero el contrato de la llamada
+    // no cambia) — sólo el manejo del snap se salta.
+    expect(shell.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043: red de seguridad — sin 'scrollend' ni más eventos 'scroll' (ej.
+  // Safari, o un navegador que deja de disparar 'scroll' a mitad de camino),
+  // el snap se restaura igual vía el timer largo de 3s, nunca queda apagado
+  // para siempre.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043: sin "scrollend" ni más "scroll", el timer de red de seguridad (3s) restaura scroll-snap-type', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 999
 
     // Fakeamos setTimeout/clearTimeout SOLO acá, después del mount+deep-link
     // (que ya se resolvió en tiempo real arriba) — así no interferimos con
@@ -250,8 +367,11 @@ describe('useScrollState', () => {
       get().state.scrollToChapter(4, 'smooth')
       expect(shell.style.scrollSnapType).toBe('none')
 
-      vi.advanceTimersByTime(1000)
-      expect(shell.style.scrollSnapType).toBe('y mandatory')
+      vi.advanceTimersByTime(2999)
+      expect(shell.style.scrollSnapType).toBe('none')
+
+      vi.advanceTimersByTime(1)
+      expect(shell.style.scrollSnapType).toBe('')
     } finally {
       vi.useRealTimers()
     }

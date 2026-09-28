@@ -87,6 +87,14 @@ export function useScrollState(shellRef) {
   let scrollListener = null
   let idleTimer = null
 
+  // TASK-043 ronda 2 (ver JSDoc completo junto a scrollToChapter): estado del
+  // "salto en vuelo" con snap apagado, a nivel de COMPOSABLE (no por-llamada).
+  // { origSnap, scrollListener, scrollendListener, debounceTimer, safetyTimer } | null.
+  // Compartido entre todas las llamadas a scrollToChapter de esta instancia
+  // (tick clicks, deep-link, navigate() de ScrollShell) para poder detectar
+  // llamadas superpuestas — ver HIGH-1 del review de ronda 1.
+  let pendingRestore = null
+
   // RAF loop bajo demanda: pause/resume según haya scroll activo.
   // useRafFn de vueuse acepta { immediate: false } para no arrancar hasta el primer scroll.
   const rafCtl = useRafFn(() => {
@@ -115,55 +123,123 @@ export function useScrollState(shellRef) {
   // (2026-07-10) ya no alcanza desde que ch3 pasó a multi-viewport (TASK-014,
   // 2026-07-27). `.chapter-section[data-viewports]` sigue siendo UN solo snap
   // point (`scroll-snap-align:start` + `scroll-snap-stop:always`, ver
-  // ScrollShell.vue), pero ahora mide N*100dvh en vez de 1 — con
-  // `scroll-snap-type:y mandatory` en el shell, Chrome trata `stop:always`
-  // como una posta obligatoria: un scrollTo() que tiene que ATRAVESAR ese
-  // punto (origen y destino a los dos lados de ch3, ej. ch2→ch5 o ch3→ch4) se
-  // corta en el borde de entrada de ch3 y el navegador no retoma el viaje por
-  // sí solo — medido: el highlight del StickyTimeline sí avanza (el
-  // IntersectionObserver ve la sección entrar), pero `shell.scrollTop` queda
-  // clavado en `section-3.offsetTop` (paso 1/8 del pin) indefinidamente. Los
-  // saltos que sí completan (destino y origen dentro del mismo lado de ch3)
-  // igual pagan el relay de "un snap point por vez" del motor de scroll
-  // nativo — de ahí los 5-9s medidos por wrecker en saltos largos.
+  // ScrollShell.vue), pero ahora mide N*100dvh en vez de 1.
+  //
+  // HIPÓTESIS DE CAUSA (NO confirmada con medición en vivo — ver nota de
+  // ronda 2 de review, 2026-09-29): con `scroll-snap-type:y mandatory` en el
+  // shell, `stop:always` podría tratarse como una posta obligatoria para un
+  // scrollTo() que tiene que ATRAVESAR ese punto (ej. ch2→ch5, ch3→ch4),
+  // cortando el viaje en el borde de entrada de ch3 sin que el navegador lo
+  // retome solo — consistente con el síntoma reportado por wrecker (highlight
+  // avanza, `shell.scrollTop` queda clavado en el paso 1/8). Una medición en
+  // Chrome real del código VIEJO (snap activo) para ch2→ch5 dio 1659ms sin
+  // trabarse, así que esta hipótesis específica de "todo cruce de ch3 se
+  // corta" NO quedó confirmada — puede ser un caso más acotado (combinación
+  // con otro estado, viewport/timing específico) que no se reprodujo en esa
+  // única medición. El fix de abajo es defensivo: apagar el snap durante
+  // cualquier salto programático no tiene downside conocido (el snap se
+  // restaura apenas el shell llega a destino, ver más abajo) y cubre la
+  // hipótesis sin depender de reproducirla exactamente.
   //
   // Fix: apagar `scroll-snap-type` en el shell ANTES de scrollTo() y
-  // restaurarlo cuando el scroll termina (evento `scrollend`, con fallback a
-  // timeout para navegadores sin soporte — Safari a la fecha de este fix).
-  // Sin snap activo durante el viaje, `scrollTo()` (nativo, con su propia
-  // curva 'smooth') se mueve en un solo tramo continuo de origen a destino,
-  // sin postas intermedias que lo corten ni relay que lo alargue — el motor
-  // vuelve a snappear normal (para wheel/touch/teclado) en cuanto el shell
-  // llega a destino. No toca Chapter3Content.vue/ch3Progress.js: applyProgress()
-  // ahí SOLO lee shell.scrollTop (listener pasivo), nunca lo escribe, así que
-  // no compite con este scrollTo() en vuelo.
+  // restaurarlo cuando el scroll termina. Sin snap activo durante el viaje,
+  // `scrollTo()` nativo (con su propia curva 'smooth') no puede quedar
+  // atrapado en ningún snap point intermedio — el motor vuelve a snappear
+  // normal (para wheel/touch/teclado) en cuanto el shell llega a destino. No
+  // toca Chapter3Content.vue/ch3Progress.js: applyProgress() ahí SOLO lee
+  // shell.scrollTop (listener pasivo), nunca lo escribe, así que no compite
+  // con este scrollTo() en vuelo.
+  //
+  // RONDA 2 (HIGH-1 del review): el estado del "salto en vuelo" vive en
+  // `pendingRestore`, a nivel de COMPOSABLE — no capturado por closure en cada
+  // llamada. La versión de ronda 1 recapturaba `prevSnap` (ya 'none' en ese
+  // momento) y acumulaba un listener+timer por cada llamada si dos saltos se
+  // superponían (doble click en el timeline, o autorepeat de flecha vía
+  // `navigate()` en ScrollShell.vue) — el snap quedaba apagado para siempre y
+  // el restore del primer salto podía reactivarlo a mitad del segundo: el
+  // bug original, pero autoinflingido por el propio fix. Ahora: si ya hay un
+  // salto en vuelo, este NUEVO salto cancela sus listeners/timers (sin
+  // restaurar el estilo — `cancelPendingListeners()`) y sigue usando el
+  // `origSnap` que capturó el PRIMER salto del lote; sólo se restaura al
+  // valor original de antes de que empezara el lote entero.
+  //
+  // MEDIUM-1: detección de fin primaria = inactividad de scroll (debounce
+  // 150ms tras el último evento 'scroll' del shell) + 'scrollend' nativo
+  // cuando existe (restore inmediato, sin esperar el debounce). Un timeout
+  // fijo NO sirve de detección primaria — un salto largo sin 'scrollend'
+  // (Safari) podría seguir animando más allá de un timeout corto y quedar
+  // reactivado el snap a mitad de vuelo. El timer de 3000ms es sólo la red
+  // de seguridad final (navegador que nunca vuelve a disparar 'scroll' ni
+  // 'scrollend', o excepción no prevista).
+  //
+  // LOW-1: si el shell YA está a menos de 1px del destino (ej. el deep-link
+  // inicial a ch0 cuando scrollTop ya es 0), no se toca el snap para nada —
+  // sin este guard, ese caso dejaba el snap en 'none' hasta que venciera el
+  // fallback, sin que hubiera scroll real que lo restaurara antes.
+  function cancelPendingListeners() {
+    if (!pendingRestore) return
+    const shell = shellRef.value
+    if (shell) {
+      if (pendingRestore.scrollListener) {
+        shell.removeEventListener('scroll', pendingRestore.scrollListener)
+      }
+      if (pendingRestore.scrollendListener) {
+        shell.removeEventListener('scrollend', pendingRestore.scrollendListener)
+      }
+    }
+    clearTimeout(pendingRestore.debounceTimer)
+    clearTimeout(pendingRestore.safetyTimer)
+  }
+
+  function finishPendingRestore() {
+    if (!pendingRestore) return
+    const shell = shellRef.value
+    const { origSnap } = pendingRestore
+    cancelPendingListeners()
+    if (shell) shell.style.scrollSnapType = origSnap
+    pendingRestore = null
+  }
+
   function scrollToChapter(N, behavior = 'smooth') {
     const shell = shellRef.value
     const section = document.getElementById(`chapter-${N}`)
     if (!shell || !section) return
 
-    const prevSnap = shell.style.scrollSnapType
-    let restored = false
-    let fallbackTimer = null
-    const restoreSnap = () => {
-      if (restored) return
-      restored = true
-      shell.style.scrollSnapType = prevSnap
-      shell.removeEventListener('scrollend', restoreSnap)
-      clearTimeout(fallbackTimer)
+    const target = section.offsetTop
+
+    // LOW-1: ya estamos ahí — no hay viaje que proteger, no tocar el snap.
+    if (Math.abs(shell.scrollTop - target) < 1) {
+      shell.scrollTo({ top: target, behavior })
+      return
     }
 
-    shell.style.scrollSnapType = 'none'
-    // 'scrollend' (Baseline 2023, sin soporte en Safari a la fecha de este
-    // fix) es la señal exacta de "el scroll terminó" — cubre tanto 'smooth'
-    // (duración variable según distancia) como 'auto'/'instant' (1 frame).
-    // El timeout de 1000ms es solo la red de seguridad para navegadores sin
-    // 'scrollend' o si el navegador nunca dispara el evento (ej. scrollTo a
-    // la posición donde ya está, que no genera scroll real).
-    shell.addEventListener('scrollend', restoreSnap, { once: true })
-    fallbackTimer = setTimeout(restoreSnap, 1000)
+    if (pendingRestore) {
+      // Salto superpuesto: cancelamos la detección de fin del salto anterior
+      // SIN restaurar el estilo — seguimos con el snap apagado y el mismo
+      // origSnap capturado al principio del lote (HIGH-1).
+      cancelPendingListeners()
+    } else {
+      pendingRestore = { origSnap: shell.style.scrollSnapType }
+      shell.style.scrollSnapType = 'none'
+    }
 
-    shell.scrollTo({ top: section.offsetTop, behavior })
+    pendingRestore.scrollListener = () => {
+      clearTimeout(pendingRestore.debounceTimer)
+      pendingRestore.debounceTimer = setTimeout(finishPendingRestore, 150)
+    }
+    shell.addEventListener('scroll', pendingRestore.scrollListener, { passive: true })
+
+    // 'scrollend' (Baseline 2023, sin soporte en Safari a la fecha de este
+    // fix): cuando existe, restaura apenas el navegador confirma el fin del
+    // scroll, sin esperar el debounce de 150ms.
+    if ('onscrollend' in window) {
+      pendingRestore.scrollendListener = finishPendingRestore
+      shell.addEventListener('scrollend', finishPendingRestore, { once: true })
+    }
+
+    pendingRestore.safetyTimer = setTimeout(finishPendingRestore, 3000)
+
+    shell.scrollTo({ top: target, behavior })
   }
 
   function parseInitialChapter() {
@@ -230,6 +306,12 @@ export function useScrollState(shellRef) {
     }
     rafCtl.pause()
     clearTimeout(idleTimer)
+    // TASK-043 ronda 2: si el componente se desmonta con un salto en vuelo
+    // (listeners de scroll/scrollend + timers de pendingRestore), limpiarlos
+    // explícitamente — sin esto sobreviven al unmount (el shell puede seguir
+    // vivo si sólo se reemplaza el composable, ej. en tests) y el timer de
+    // 3s dispara sobre un shellRef ya null/desactualizado.
+    finishPendingRestore()
     stopWatch()
   })
 
