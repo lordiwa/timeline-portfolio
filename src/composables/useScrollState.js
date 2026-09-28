@@ -110,10 +110,59 @@ export function useScrollState(shellRef) {
   // points (ej. ch0→ch5), scrollIntoView podía quedar atrapado en un punto
   // intermedio (ch1/ch2) y requerir un segundo clic. shell.scrollTo({top: section.offsetTop})
   // apunta al contenedor directamente, sin pasar por la lógica de snap-stop.
+  //
+  // TASK-043 (2026-09-28, reportado por wrecker en m4to.com): el fix de arriba
+  // (2026-07-10) ya no alcanza desde que ch3 pasó a multi-viewport (TASK-014,
+  // 2026-07-27). `.chapter-section[data-viewports]` sigue siendo UN solo snap
+  // point (`scroll-snap-align:start` + `scroll-snap-stop:always`, ver
+  // ScrollShell.vue), pero ahora mide N*100dvh en vez de 1 — con
+  // `scroll-snap-type:y mandatory` en el shell, Chrome trata `stop:always`
+  // como una posta obligatoria: un scrollTo() que tiene que ATRAVESAR ese
+  // punto (origen y destino a los dos lados de ch3, ej. ch2→ch5 o ch3→ch4) se
+  // corta en el borde de entrada de ch3 y el navegador no retoma el viaje por
+  // sí solo — medido: el highlight del StickyTimeline sí avanza (el
+  // IntersectionObserver ve la sección entrar), pero `shell.scrollTop` queda
+  // clavado en `section-3.offsetTop` (paso 1/8 del pin) indefinidamente. Los
+  // saltos que sí completan (destino y origen dentro del mismo lado de ch3)
+  // igual pagan el relay de "un snap point por vez" del motor de scroll
+  // nativo — de ahí los 5-9s medidos por wrecker en saltos largos.
+  //
+  // Fix: apagar `scroll-snap-type` en el shell ANTES de scrollTo() y
+  // restaurarlo cuando el scroll termina (evento `scrollend`, con fallback a
+  // timeout para navegadores sin soporte — Safari a la fecha de este fix).
+  // Sin snap activo durante el viaje, `scrollTo()` (nativo, con su propia
+  // curva 'smooth') se mueve en un solo tramo continuo de origen a destino,
+  // sin postas intermedias que lo corten ni relay que lo alargue — el motor
+  // vuelve a snappear normal (para wheel/touch/teclado) en cuanto el shell
+  // llega a destino. No toca Chapter3Content.vue/ch3Progress.js: applyProgress()
+  // ahí SOLO lee shell.scrollTop (listener pasivo), nunca lo escribe, así que
+  // no compite con este scrollTo() en vuelo.
   function scrollToChapter(N, behavior = 'smooth') {
     const shell = shellRef.value
     const section = document.getElementById(`chapter-${N}`)
     if (!shell || !section) return
+
+    const prevSnap = shell.style.scrollSnapType
+    let restored = false
+    let fallbackTimer = null
+    const restoreSnap = () => {
+      if (restored) return
+      restored = true
+      shell.style.scrollSnapType = prevSnap
+      shell.removeEventListener('scrollend', restoreSnap)
+      clearTimeout(fallbackTimer)
+    }
+
+    shell.style.scrollSnapType = 'none'
+    // 'scrollend' (Baseline 2023, sin soporte en Safari a la fecha de este
+    // fix) es la señal exacta de "el scroll terminó" — cubre tanto 'smooth'
+    // (duración variable según distancia) como 'auto'/'instant' (1 frame).
+    // El timeout de 1000ms es solo la red de seguridad para navegadores sin
+    // 'scrollend' o si el navegador nunca dispara el evento (ej. scrollTo a
+    // la posición donde ya está, que no genera scroll real).
+    shell.addEventListener('scrollend', restoreSnap, { once: true })
+    fallbackTimer = setTimeout(restoreSnap, 1000)
+
     shell.scrollTo({ top: section.offsetTop, behavior })
   }
 

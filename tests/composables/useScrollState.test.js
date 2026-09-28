@@ -200,6 +200,66 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043 (2026-09-28): lock de regresión para el salto a través de ch3
+  // multi-viewport pineado. `.chapter-section[data-viewports]` (ch3, TASK-014)
+  // sigue siendo un único snap point (`scroll-snap-align:start` +
+  // `scroll-snap-stop:always`) pero mide N*100dvh — con
+  // `scroll-snap-type:y mandatory` en el shell, un scrollTo() que atraviesa
+  // ese punto (ej. ch2→ch5) quedaba atrapado en el borde de entrada de ch3 y
+  // nunca llegaba al destino (bug reportado por wrecker en m4to.com). El fix
+  // apaga `scroll-snap-type` en el shell durante el viaje y lo restaura al
+  // terminar (evento `scrollend`, con fallback a timeout).
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043: scrollToChapter desactiva scroll-snap-type en el shell durante el viaje y lo restaura en "scrollend"', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.style.scrollSnapType = 'y mandatory'
+
+    get().state.scrollToChapter(5, 'smooth')
+
+    // Durante el viaje: snap apagado — así un scrollTo() que atraviesa el
+    // snap point de ch3 (N*100dvh, stop:always) no se corta en su borde.
+    expect(shell.style.scrollSnapType).toBe('none')
+
+    shell.dispatchEvent(new Event('scrollend'))
+
+    // Al terminar: snap restaurado — wheel/touch/teclado vuelven a snappear
+    // normal una vez que el shell llegó a destino.
+    expect(shell.style.scrollSnapType).toBe('y mandatory')
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043: red de seguridad — sin 'scrollend' (ej. Safari, o un scrollTo()
+  // que no genera scroll real porque el shell ya está en destino), el snap
+  // se restaura igual vía el timeout de fallback, nunca queda apagado para
+  // siempre.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043: sin evento "scrollend", el timeout de fallback restaura scroll-snap-type', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.style.scrollSnapType = 'y mandatory'
+
+    // Fakeamos setTimeout/clearTimeout SOLO acá, después del mount+deep-link
+    // (que ya se resolvió en tiempo real arriba) — así no interferimos con
+    // flushPromises()/RAF de @vue/test-utils durante el setup del composable.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      get().state.scrollToChapter(4, 'smooth')
+      expect(shell.style.scrollSnapType).toBe('none')
+
+      vi.advanceTimersByTime(1000)
+      expect(shell.style.scrollSnapType).toBe('y mandatory')
+    } finally {
+      vi.useRealTimers()
+    }
+
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Test 9: IO callback con intersectionRatio ≥ 0.6 actualiza activeChapter
   // ─────────────────────────────────────────────────────────────────────────
   it('IO callback with intersectionRatio >= 0.6 updates activeChapter', async () => {
