@@ -262,40 +262,100 @@ describe('useScrollState', () => {
   })
 
   // ─────────────────────────────────────────────────────────────────────────
-  // TASK-043 (b): el debounce/timer del PRIMER salto no toca el estilo
-  // durante el segundo — si el debounce de 150ms del primero disparara
-  // igual (bug de ronda 1: no cancelaba su propio timer al ser reemplazado),
-  // restauraría el snap a mitad del segundo salto en vuelo.
+  // Helper TASK-043 (ronda 3, MEDIUM-3): fuerza temporalmente la rama SIN
+  // 'onscrollend' en window (ej. Safari) para poder testear el debounce de
+  // 'scroll' — JSDOM trae 'onscrollend' en window por default, así que sin
+  // este helper scrollToChapter toma siempre la rama scrollend/3000ms.
+  // Restaura el descriptor original al final, sea cual sea el resultado.
   // ─────────────────────────────────────────────────────────────────────────
-  it('TASK-043 (b): el debounce del primer salto no restaura el estilo mientras el segundo sigue en vuelo', async () => {
+  function withoutScrollend(fn) {
+    const desc = Object.getOwnPropertyDescriptor(window, 'onscrollend')
+    delete window.onscrollend
+    expect('onscrollend' in window).toBe(false)
+    try {
+      return fn()
+    } finally {
+      if (desc) Object.defineProperty(window, 'onscrollend', desc)
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TASK-043 (b) (ronda 3, MEDIUM-3): SIN 'onscrollend' — el debounce/timer
+  // del PRIMER salto no toca el estilo durante el segundo. Si el debounce de
+  // 150ms del primero disparara igual (bug de ronda 1: no cancelaba su
+  // propio timer al ser reemplazado), restauraría el snap a mitad del
+  // segundo salto en vuelo.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('TASK-043 (b) sin onscrollend: el debounce del primer salto no restaura el estilo mientras el segundo sigue en vuelo', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
     const shell = document.querySelector('.scroll-shell')
     shell.scrollTop = 999
 
+    withoutScrollend(() => {
+      get().state.scrollToChapter(4, 'smooth')
+      shell.dispatchEvent(new Event('scroll')) // scroll real del primer salto en curso
+
+      get().state.scrollToChapter(6, 'smooth') // segundo click cancela el debounce del primero
+
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      try {
+        // Si el debounce del PRIMER salto sobreviviera, dispararía acá (150ms
+        // desde su propio evento 'scroll') y restauraría el estilo de más.
+        vi.advanceTimersByTime(150)
+        expect(shell.style.scrollSnapType).toBe('none')
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+    wrapper.unmount()
+  })
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // MEDIUM-3 (ronda 3): con 'onscrollend' disponible, un main thread trabado
+  // más de 150ms en pleno viaje (createGame de ch6, applyProgress de ch3 en
+  // máquina lenta) NO debe restaurar el snap de más — el debounce de
+  // 'scroll' directamente no se registra en esta rama, así que ni siquiera
+  // un evento 'scroll' tardío puede dispararlo.
+  // ─────────────────────────────────────────────────────────────────────────
+  it('MEDIUM-3: con onscrollend, un evento "scroll" NO restaura el estilo (el debounce de 150ms no se registra en esta rama)', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 999
+    expect('onscrollend' in window).toBe(true) // rama default de JSDOM
+
     get().state.scrollToChapter(4, 'smooth')
-    shell.dispatchEvent(new Event('scroll')) // scroll real del primer salto en curso
+    expect(shell.style.scrollSnapType).toBe('none')
 
-    get().state.scrollToChapter(6, 'smooth') // segundo click cancela el debounce del primero
-
+    // Simula el main thread trabado: el scroll real sigue en curso pero un
+    // evento 'scroll' tardío llega solo — con la versión de ronda 2 (debounce
+    // siempre registrado) esto hubiera arrancado un timer de 150ms que,
+    // sin más eventos, restauraría el snap con la animación todavía viva.
+    shell.dispatchEvent(new Event('scroll'))
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {
-      // Si el debounce del PRIMER salto sobreviviera, dispararía acá (150ms
-      // desde su propio evento 'scroll') y restauraría el estilo de más.
-      vi.advanceTimersByTime(150)
+      vi.advanceTimersByTime(200) // > 150ms del debounce viejo
       expect(shell.style.scrollSnapType).toBe('none')
     } finally {
       vi.useRealTimers()
     }
+
+    // El camino real de esta rama sigue siendo scrollend (o la red de 3s).
+    shell.dispatchEvent(new Event('scrollend'))
+    expect(shell.style.scrollSnapType).toBe('')
+
     wrapper.unmount()
   })
 
   // ─────────────────────────────────────────────────────────────────────────
   // TASK-043 (c): no se acumulan listeners/timers entre llamadas superpuestas
   // — cada nueva llamada cancela los del salto anterior antes de agregar los
-  // propios (spy de add/removeEventListener sobre 'scroll'/'scrollend').
+  // propios. Con 'onscrollend' (rama default de JSDOM) sólo se registra
+  // 'scrollend'; forzando la rama sin 'onscrollend' (MEDIUM-3) sólo se
+  // registra 'scroll' — nunca los dos juntos (spy de add/removeEventListener).
   // ─────────────────────────────────────────────────────────────────────────
-  it('TASK-043 (c): llamadas superpuestas no acumulan listeners de scroll/scrollend', async () => {
+  it('TASK-043 (c) con onscrollend: llamadas superpuestas no acumulan listeners de "scrollend" (y nunca registran "scroll")', async () => {
     const { wrapper, get } = makeWrapper()
     await waitForDeepLink()
     const shell = document.querySelector('.scroll-shell')
@@ -308,20 +368,60 @@ describe('useScrollState', () => {
     get().state.scrollToChapter(6, 'smooth')
 
     const addScrollCalls = addSpy.mock.calls.filter(([type]) => type === 'scroll').length
-    const removeScrollCalls = removeSpy.mock.calls.filter(([type]) => type === 'scroll').length
-    // 3 llamadas → 3 'scroll' listeners agregados, pero los 2 primeros deben
-    // haberse removido al ser reemplazados (sólo el último queda vivo).
-    expect(addScrollCalls).toBe(3)
-    expect(removeScrollCalls).toBe(2)
-
     const addScrollendCalls = addSpy.mock.calls.filter(([type]) => type === 'scrollend').length
     const removeScrollendCalls = removeSpy.mock.calls.filter(([type]) => type === 'scrollend').length
+    // Rama con scrollend: JAMÁS se registra 'scroll'.
+    expect(addScrollCalls).toBe(0)
+    // 3 llamadas → 3 'scrollend' listeners agregados, pero los 2 primeros
+    // deben haberse removido al ser reemplazados (sólo el último queda vivo).
     expect(addScrollendCalls).toBe(3)
     expect(removeScrollendCalls).toBe(2)
 
     shell.dispatchEvent(new Event('scrollend'))
     // El listener final también se limpia al asentarse el último salto.
-    expect(removeSpy.mock.calls.filter(([type]) => type === 'scroll').length).toBe(3)
+    expect(removeSpy.mock.calls.filter(([type]) => type === 'scrollend').length).toBe(3)
+
+    wrapper.unmount()
+  })
+
+  it('TASK-043 (c) sin onscrollend: llamadas superpuestas no acumulan listeners de "scroll" (y nunca registran "scrollend")', async () => {
+    const { wrapper, get } = makeWrapper()
+    await waitForDeepLink()
+    const shell = document.querySelector('.scroll-shell')
+    shell.scrollTop = 999
+
+    withoutScrollend(() => {
+      const addSpy = vi.spyOn(shell, 'addEventListener')
+      const removeSpy = vi.spyOn(shell, 'removeEventListener')
+
+      get().state.scrollToChapter(4, 'smooth')
+      get().state.scrollToChapter(5, 'smooth')
+      get().state.scrollToChapter(6, 'smooth')
+
+      const addScrollendCalls = addSpy.mock.calls.filter(([type]) => type === 'scrollend').length
+      const addScrollCalls = addSpy.mock.calls.filter(([type]) => type === 'scroll').length
+      const removeScrollCalls = removeSpy.mock.calls.filter(([type]) => type === 'scroll').length
+      // Rama sin scrollend: JAMÁS se registra 'scrollend'.
+      expect(addScrollendCalls).toBe(0)
+      // 3 llamadas → 3 'scroll' listeners agregados, pero los 2 primeros
+      // deben haberse removido al ser reemplazados (sólo el último queda vivo).
+      expect(addScrollCalls).toBe(3)
+      expect(removeScrollCalls).toBe(2)
+
+      // Fakeamos ANTES de dispatchear — el setTimeout(150ms) del debounce se
+      // agenda dentro del listener de 'scroll', tiene que quedar faked para
+      // poder avanzarlo sincrónicamente.
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+      try {
+        shell.dispatchEvent(new Event('scroll'))
+        vi.advanceTimersByTime(150)
+      } finally {
+        vi.useRealTimers()
+      }
+      // El listener final también se limpia al asentarse el último salto
+      // (esta vez vía debounce, no scrollend).
+      expect(removeSpy.mock.calls.filter(([type]) => type === 'scroll').length).toBe(3)
+    })
 
     wrapper.unmount()
   })

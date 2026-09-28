@@ -163,14 +163,26 @@ export function useScrollState(shellRef) {
   // `origSnap` que capturó el PRIMER salto del lote; sólo se restaura al
   // valor original de antes de que empezara el lote entero.
   //
-  // MEDIUM-1: detección de fin primaria = inactividad de scroll (debounce
-  // 150ms tras el último evento 'scroll' del shell) + 'scrollend' nativo
-  // cuando existe (restore inmediato, sin esperar el debounce). Un timeout
-  // fijo NO sirve de detección primaria — un salto largo sin 'scrollend'
-  // (Safari) podría seguir animando más allá de un timeout corto y quedar
-  // reactivado el snap a mitad de vuelo. El timer de 3000ms es sólo la red
-  // de seguridad final (navegador que nunca vuelve a disparar 'scroll' ni
+  // MEDIUM-1: detección de fin primaria = 'scrollend' nativo cuando existe
+  // (restore inmediato), o inactividad de scroll (debounce 150ms tras el
+  // último evento 'scroll' del shell) donde no existe. Un timeout fijo NO
+  // sirve de detección primaria — un salto largo sin 'scrollend' (Safari)
+  // podría seguir animando más allá de un timeout corto y quedar reactivado
+  // el snap a mitad de vuelo. El timer de 3000ms es sólo la red de
+  // seguridad final (navegador que nunca vuelve a disparar 'scroll' ni
   // 'scrollend', o excepción no prevista).
+  //
+  // MEDIUM-3 (ronda 3 de review): el debounce de 'scroll' y 'scrollend' son
+  // ramas EXCLUYENTES, no se registran los dos juntos (ver el `if/else`
+  // dentro de scrollToChapter, más abajo). Con 'scrollend' disponible, un
+  // main thread trabado más de 150ms en pleno viaje (ej. `createGame` de
+  // ch6 a mitad de un salto largo, o `applyProgress` de ch3 en una máquina
+  // lenta) retrasa el próximo evento 'scroll' sin que el scroll real haya
+  // terminado — el debounce de 150ms disparaba igual y restauraba el snap
+  // con la animación todavía en curso, el mismo bug que este fix existe
+  // para evitar. 'scrollend' no tiene ese problema: lo dispara el
+  // navegador cuando el compositor confirma el fin real del scroll,
+  // inmune a que el hilo principal se trabe.
   //
   // LOW-1: si el shell YA está a menos de 1px del destino (ej. el deep-link
   // inicial a ch0 cuando scrollTop ya es 0), no se toca el snap para nada —
@@ -223,18 +235,31 @@ export function useScrollState(shellRef) {
       shell.style.scrollSnapType = 'none'
     }
 
-    pendingRestore.scrollListener = () => {
-      clearTimeout(pendingRestore.debounceTimer)
-      pendingRestore.debounceTimer = setTimeout(finishPendingRestore, 150)
-    }
-    shell.addEventListener('scroll', pendingRestore.scrollListener, { passive: true })
-
-    // 'scrollend' (Baseline 2023, sin soporte en Safari a la fecha de este
-    // fix): cuando existe, restaura apenas el navegador confirma el fin del
-    // scroll, sin esperar el debounce de 150ms.
+    // MEDIUM-3 (ronda 3 de review): el debounce de 'scroll' (150ms) SOLO se
+    // registra cuando el navegador NO tiene 'scrollend'. Con 'scrollend'
+    // disponible, el camino es scrollend + la red de seguridad de 3000ms —
+    // sin el debounce de por medio. Motivo: si el main thread se traba más
+    // de 150ms en pleno viaje (ej. `createGame` de ch6 a mitad de un salto
+    // largo, o `applyProgress` de ch3 en una máquina lenta), el debounce
+    // puede vencer con la animación de scroll TODAVÍA en curso — el próximo
+    // evento 'scroll' llega tarde porque el hilo estuvo ocupado, no porque
+    // el scroll haya terminado — y restaura el snap en vuelo, exactamente el
+    // bug que este fix existe para evitar. 'scrollend' no tiene ese problema:
+    // es el propio navegador confirmando el fin real del scroll, inmune a
+    // que el main thread se trabe (el estado de scroll lo lleva el
+    // compositor). Donde 'scrollend' no existe (Safari a la fecha de este
+    // fix), el debounce sigue siendo la única señal de progreso disponible
+    // — mejor que depender solo del timer fijo de 3000ms, que en un salto
+    // largo puede vencer con el scroll todavía en curso.
     if ('onscrollend' in window) {
       pendingRestore.scrollendListener = finishPendingRestore
       shell.addEventListener('scrollend', finishPendingRestore, { once: true })
+    } else {
+      pendingRestore.scrollListener = () => {
+        clearTimeout(pendingRestore.debounceTimer)
+        pendingRestore.debounceTimer = setTimeout(finishPendingRestore, 150)
+      }
+      shell.addEventListener('scroll', pendingRestore.scrollListener, { passive: true })
     }
 
     pendingRestore.safetyTimer = setTimeout(finishPendingRestore, 3000)
