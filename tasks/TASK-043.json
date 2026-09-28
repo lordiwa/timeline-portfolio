@@ -9,7 +9,7 @@
     "La navegacion paso a paso de ch3 (roadmap, CTA del hero, boton play del Acto 1) sigue funcionando igual que hoy.",
     "Se agrega un lock de regresion para el salto a traves de ch3, y npm test queda verde."
   ],
-  "status": "todo",
+  "status": "in_review",
   "priority": "high",
   "labels": [
     "bug",
@@ -21,9 +21,30 @@
   "depends_on": [],
   "linked_commits": [],
   "linked_prs": [],
-  "comments": [],
+  "comments": [
+    {
+      "author": "reviewer",
+      "at": "2026-09-28T16:41:15.462Z",
+      "body": "[FINDING-HIGH: 043-H1] Review de 5d49904: BLOQUEADO. HIGH-1 useScrollState.js:145,163-164: las llamadas consecutivas a scrollToChapter recapturan prevSnap='none' y acumulan un listener y un timer por llamada. Resultado: el snap queda apagado para siempre, y el restore del primer salto reactiva el snap a mitad del segundo (reproducido en jsdom). MEDIUM-1: el fallback de 1000 ms puede vencer en pleno vuelo si el navegador no tiene scrollend. MEDIUM-2: falta la medición headed de los AC 1 a 3. LOW-1: si el destino es la posición actual, no hay scrollend y el snap queda apagado 1 s (deep-link inicial). LOW-2/3: aceptables. Tests: fijan inline 'y mandatory' en vez del estado de prod y no cubren las llamadas consecutivas. npm test 753/753."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-09-28T16:41:15.563Z",
+      "body": "Medición parcial en Chrome real contra el dev server a 1920x855. La pestaña estuvo hidden casi todo el tiempo por la oclusión de ventanas en Windows, así que casi todo es inválido. El ÚNICO sample con la pestaña visible: el código VIEJO (snap mandatory activo, smooth scrollTo directo) llegó de ch2 (1710) a ch5 (10260) en 1659 ms sin trabarse. Eso contradice que snap-stop:always corte todo cruce programático de ch3. La causa raíz sigue SIN CONFIRMAR: falta probar el arranque desde adentro del pin de ch3 (el caso literal de wrecker) con la pestaña visible."
+    },
+    {
+      "author": "reviewer",
+      "at": "2026-09-28T16:50:10.436Z",
+      "body": "[FINDING-RESOLVED: 043-H1] Re-review de a23808c: PASS de código. HIGH-1, MEDIUM-1 y LOW-1 están resueltos y fijados por tests (757/757). Queda abierto MEDIUM-2: el UAT headed tiene que usar el repro exacto de wrecker (desde un paso del pin de ch3 hacia 2015/2022, a 1920x1080 y 1366x768). Ojo: los 1659 ms medidos con el código viejo ya superan el techo de 1.5 s del AC#1, y la duración del smooth nativo no depende de este código. NUEVO MEDIUM-3, no bloqueante: si el main thread se traba más de 150 ms, el debounce puede vencer en pleno vuelo (por ejemplo, createGame de ch6). Fix: registrar el debounce solo cuando !('onscrollend' in window)."
+    },
+    {
+      "author": "orchestrator",
+      "at": "2026-09-28T16:55:31.161Z",
+      "body": "Ronda 3 (3121101): MEDIUM-3 resuelto. scrollend y el debounce de scroll ahora son ramas excluyentes, y la red de 3 s queda en ambas. Revisé el diff yo: es chico y va exactamente en la línea que sugirió el reviewer; useScrollState.test.js 22/22 y el developer reporta 759/759 en la suite completa. Commits: 5d49904, a23808c, 3121101. El ticket queda en in_review hasta el UAT headed con el repro exacto de wrecker (MEDIUM-2), a hacer en el QA de vite preview previo al deploy o en la re-verificación de wrecker después del deploy. Pendiente de decisión: el techo de 1.5 s del AC#1 contra la duración del smooth nativo (1659 ms medidos con el código viejo)."
+    }
+  ],
   "created_at": "2026-09-28T16:21:31.272Z",
-  "updated_at": "2026-09-28T16:21:31.272Z",
+  "updated_at": "2026-09-28T16:55:31.161Z",
   "jira_key": null,
   "verification_tier": "tests-after",
   "marker": "[INFERRED:strong]"

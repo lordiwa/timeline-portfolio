@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-28T16:21:31.386Z",
+  "generated_at": "2026-09-28T16:55:31.161Z",
   "tasks": [
     {
       "key": "TASK-001",
@@ -256,7 +256,7 @@
     {
       "key": "TASK-043",
       "title": "Los clicks del StickyTimeline no llegan a ch4/ch5 cuando se cruza el ch3 pineado",
-      "status": "todo",
+      "status": "in_review",
       "priority": "high"
     },
     {
