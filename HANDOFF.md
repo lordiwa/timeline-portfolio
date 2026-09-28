@@ -1,7 +1,20 @@
 # HANDOFF.md — snapshot de retoma
 
-**Actualizado:** 2026-08-02, cierre limpio de tanda
+**Actualizado:** 2026-09-28 (bloque de arriba); el resto del archivo es el cierre del 2026-08-02
 **Sesión:** `20260727T013114Z-db71132a`
+
+## ★ 2026-09-28: retoma, bridge y QA de wrecker (LEER PRIMERO)
+
+- **Bridge conectado.** El id es `timeline-portfolio` y se usa el canal `hub`. Al retomar: RESUME-FIRST y después `bridge_read({channel:"hub", unread_for:"timeline-portfolio"})`.
+  Rafael habilitó **autorespond**: los asks informativos se contestan en el bridge sin consultarlo (memoria `bridge-autorespond`). Código, commits, deploy y gasto siguen necesitando su OK en la terminal.
+- **Barrido de QA de wrecker sobre m4to.com** (hilo `m4to-qa-2026-09-28`, msg_0008, 0010 y 0011). El triage está commiteado en `ce7799d`:
+  - **TASK-043 (alta, in_progress):** el StickyTimeline no pasa el pin de ch3. Sospecha: un smooth `scrollTo` más `scroll-snap: y mandatory` + `snap-stop: always` en `useScrollState.js:113` y `ScrollShell.vue`. Un developer (`hivemind:developer`) quedó despachado en background con esta regla: si necesita tocar `Chapter3Content.vue` o `ch3Progress.js`, frena y avisa. **Si /clear lo cortó, ver `git log` por commits `fix(TASK-043)` y re-despachar o seguir desde ahí.** Falta el reviewer en contexto fresco.
+  - **TASK-044 (media):** primero medir la performance de ch4 con la pestaña en foco. Puede ser throttling.
+  - **TASK-045 (media):** barrido mobile y tablet (360, 390 y 768), solo informe. Va después de TASK-043.
+  - Los #3 (PRESS ANY KEY) y #4 (vacío en ch6) quedaron descartados: eran artefactos de throttling de pestaña, y wrecker lo concedió.
+  - **wrecker espera un ping en el bridge después del próximo deploy** para re-verificar TASK-043 y después correr TASK-045.
+- **Trabajo de ch3 SIN COMMITEAR, pendiente de review:** `src/components/Chapter3Content.vue` (botón play del Acto 1 real y focusable, `pendingFocusStep`), `src/utils/ch3Progress.js` (`decorOpacity`), `src/i18n/{es,en}.json` y sus tests. No se sabe a qué ticket pertenece. Preguntarle a Rafael antes de commitearlo o descartarlo.
+- **La deuda de deploy sigue:** TASK-041 no está deployado y m4to.com sigue en `0125e57`. El procedimiento está abajo, en el punto 2. El deploy lo aprueba Rafael.
 
 > Fuente de verdad completa: `state/sessions/20260727T013114Z-db71132a/session.json`.
 > De los tickets manda `tasks/`. Este archivo es el resumen operativo.
