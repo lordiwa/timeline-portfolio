@@ -26,7 +26,17 @@ export function useLab() {
   return { page, has, t, tBug, tt, toast, locale }
 }
 
-/** Errata determinista: intercambia las letras de la 1a palabra de >=4 letras. */
+/** Errata determinista: intercambia dos letras distintas y contiguas de la 1a palabra donde se pueda.
+ *  Invariante: el resultado SIEMPRE difiere del original. */
 export function withTypo(text) {
-  return text.replace(/\p{L}{4,}/u, (w) => w[0] + w[2] + w[1] + w.slice(3))
+  for (const m of text.matchAll(/[\p{L}]{3,}/gu)) {
+    const w = m[0]
+    for (let i = 1; i < w.length - 1; i++) {
+      if (w[i] !== w[i + 1]) {
+        const typo = w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2)
+        return text.slice(0, m.index) + typo + text.slice(m.index + w.length)
+      }
+    }
+  }
+  return text + text.slice(-1) // sin par de letras distintas: duplica la ultima
 }

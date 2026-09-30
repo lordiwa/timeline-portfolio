@@ -43,7 +43,7 @@ const vars = computed(() => ({
     </main>
     <footer class="site-footer">{{ t('site.footer', { brand }) }}</footer>
     <Modal :open="helpOpen" :title="t('site.helpTitle')" @close="helpOpen = false">
-      <p>{{ t('site.helpBody') }}</p>
+      <p>{{ t("site.helpBody") }} <a href="#" @click.prevent>{{ t("site.about") }}</a></p>
     </Modal>
   </div>
 </template>

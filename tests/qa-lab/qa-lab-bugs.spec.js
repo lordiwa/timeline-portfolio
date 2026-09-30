@@ -1,0 +1,128 @@
+// TASK-046 ronda 1 — manifestacion de bugs puros (con y sin flag) + invariantes de fixes.
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
+import { generatePage } from '../../src/qa-lab/generator/index.js'
+import { withTypo } from '../../src/qa-lab/composables/useLab.js'
+import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
+import SitePage from '../../src/qa-lab/components/SitePage.vue'
+import es from '../../src/qa-lab/i18n/es.json'
+import en from '../../src/qa-lab/i18n/en.json'
+
+function pageFor(templateId) {
+  for (let i = 0; i < 500; i++) {
+    const p = generatePage(`bug-${i}`)
+    if (p.templateId === templateId) return p
+  }
+  throw new Error('sin seed para ' + templateId)
+}
+const mountPage = (templateId, bugs, locale = 'es') => {
+  const page = pageFor(templateId)
+  const w = mount(SitePage, { props: { page, bugSet: new Set(bugs) }, global: { plugins: [createLabI18n(locale)] }, attachTo: document.body })
+  return { w, page }
+}
+const click = (w, label) => w.findAll('button').find((b) => b.text() === label)
+
+describe('QA Lab: bugs puros se manifiestan con flag y no sin flag', () => {
+  it('pagination-skips: "Siguiente" desde skipAt avanza dos solo con el flag (evita un bug de "mentira" o uno siempre activo)', async () => {
+    for (const flag of [false, true]) {
+      const { w, page } = mountPage('products', flag ? ['pagination-skips'] : [])
+      const { skipAt } = page.content
+      for (let i = 1; i < skipAt; i++) await click(w, 'Siguiente').trigger('click')
+      await click(w, 'Siguiente').trigger('click')
+      expect(w.find('.qa-page-info').text()).toMatch(new RegExp(`Página ${skipAt + (flag ? 2 : 1)} de`))
+      w.unmount()
+    }
+  })
+
+  it('filter-not-reset: "Limpiar filtros" deja la categoria solo con el flag (evita un filtro que nunca se limpia sin bug)', async () => {
+    for (const flag of [false, true]) {
+      const { w } = mountPage('dashboard', flag ? ['filter-not-reset'] : [])
+      const sel = w.find('.qa-toolbar-row select')
+      await sel.setValue('1')
+      await w.find('input[type=search]').setValue('zzz')
+      await click(w, 'Limpiar filtros').trigger('click')
+      expect(w.find('.qa-toolbar-row select').element.value).toBe(flag ? '1' : '')
+      expect(w.find('input[type=search]').element.value).toBe('')
+      w.unmount()
+    }
+  })
+
+  it('total-wrong: total de checkout y de dashboard solo incorrectos con flag (evita totales mal calculados sin bug)', async () => {
+    for (const flag of [false, true]) {
+      const { w, page } = mountPage('checkout', flag ? ['total-wrong'] : [])
+      const { lines, taxRate } = page.content
+      const sub = lines.reduce((s, l) => s + l.qty * l.price, 0)
+      const expected = (sub * (1 + taxRate / 100)).toFixed(2)
+      const got = w.find('[data-testid="grand-total"]').text()
+      expect(got === expected).toBe(!flag)
+      w.unmount()
+
+      const d = mountPage('dashboard', flag ? ['total-wrong'] : [])
+      const rows = d.page.content.rows.slice(0, d.page.content.pageSize)
+      const real = rows.reduce((s, r) => s + r.price, 0)
+      const shown = Number(d.w.find('[data-testid="page-total"]').text())
+      expect(shown === real).toBe(!flag)
+      d.w.unmount()
+    }
+  })
+
+  it('double-submit: dos envios seguidos registran 2 solo con flag (evita doble registro en formularios sanos)', async () => {
+    for (const flag of [false, true]) {
+      const { w, page } = mountPage('contact', flag ? ['double-submit'] : [])
+      for (const f of page.content.fields) {
+        const el = w.find(`[data-field="${f.key}"] ${f.type === 'select' ? 'select' : f.type === 'textarea' ? 'textarea' : 'input'}`)
+        const v = { email: 'a@b.co', select: '1' }[f.type] ?? 'Ana Perez'
+        await el.setValue(v)
+      }
+      await w.find('form').trigger('submit')
+      await w.find('form').trigger('submit')
+      expect(w.find('[data-testid="submissions"]').text()).toContain(flag ? '2' : '1')
+      w.unmount()
+    }
+  })
+
+  it('typo: la errata siempre difiere del original en TODOS los nombres y titulos de los 8 temas x 2 idiomas (evita un bug typo invisible)', () => {
+    let checked = 0
+    for (const msgs of [es, en]) {
+      const tpl = Object.values(msgs.tpl).map((x) => x.title)
+      for (const theme of Object.values(msgs.theme)) {
+        for (const n of [theme.name0, theme.name1, theme.name2]) {
+          for (const title of tpl) {
+            const text = title.replace('{brand}', n)
+            expect(withTypo(text)).not.toBe(text)
+            checked++
+          }
+        }
+      }
+    }
+    expect(checked).toBe(2 * 8 * 3 * 8)
+    expect(withTypo('oo')).not.toBe('oo') // fallback sin letras distintas
+  })
+
+  it('checkout: cantidad 0, negativa o vacia no da total negativo sin flag (evita un bug no intencional)', async () => {
+    const { w } = mountPage('checkout', [])
+    const inputs = w.findAll('.qa-cart input')
+    for (const v of ['0', '-5', '']) {
+      await inputs[0].setValue(v)
+      const total = Number(w.find('[data-testid="grand-total"]').text())
+      expect(total).toBeGreaterThan(0)
+    }
+    w.unmount()
+  })
+
+  it('modal: Tab/Shift+Tab ciclan dentro del dialogo (evita que el foco escape del modal)', async () => {
+    const { w } = mountPage('faq', [])
+    await click(w, 'Ayuda').trigger('click')
+    await new Promise((r) => setTimeout(r))
+    const dlg = document.querySelector('.qa-modal')
+    const btns = dlg.querySelectorAll('button, a[href]')
+    const last = btns[btns.length - 1]
+    last.focus()
+    dlg.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(btns[0])
+    btns[0].focus()
+    dlg.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }))
+    expect(document.activeElement).toBe(last)
+    w.unmount()
+  })
+})

@@ -18,7 +18,7 @@ const tabs = computed(() => [
 
 function publish() {
   if (!draft.value.trim()) return
-  comments.unshift({ author: '·', text: draft.value.trim(), minutes: 0 })
+  comments.unshift({ author: null, text: draft.value.trim(), minutes: 0 })
   draft.value = ''
   toast(t('article.commentPosted'))
 }
@@ -35,7 +35,7 @@ function publish() {
         </article>
         <section v-else>
           <div v-for="(m, i) in comments" :key="i" class="qa-comment">
-            <strong>{{ m.author }}</strong> <small>{{ t('article.minutesAgo', { n: m.minutes }) }}</small>
+            <strong>{{ m.author || t('article.you') }}</strong> <small>{{ t('article.minutesAgo', { n: m.minutes }) }}</small>
             <p>{{ m.text || t(`comment.c${m.textIdx}`) }}</p>
           </div>
           <form class="qa-form" @submit.prevent="publish">

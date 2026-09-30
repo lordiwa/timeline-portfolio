@@ -22,6 +22,7 @@
     },
     "difficulty": { "easy": "Fácil", "medium": "Media", "hard": "Difícil" }
   },
+  "themeName": {"store":"Tienda","clinic":"Clínica","gym":"Gimnasio","travel":"Viajes","restaurant":"Restaurante","library":"Biblioteca","bank":"Banco","school":"Academia"},
   "tplName": {
     "signup": "Registro",
     "checkout": "Checkout",
@@ -154,6 +155,7 @@
     "publish": "Publicar comentario",
     "by": "Por la redacción",
     "minutesAgo": "hace {n} min",
+    "you": "Vos",
     "commentPosted": "Comentario publicado."
   },
   "theme": {

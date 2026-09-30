@@ -22,6 +22,7 @@
     },
     "difficulty": { "easy": "Easy", "medium": "Medium", "hard": "Hard" }
   },
+  "themeName": {"store":"Store","clinic":"Clinic","gym":"Gym","travel":"Travel","restaurant":"Restaurant","library":"Library","bank":"Bank","school":"School"},
   "tplName": {
     "signup": "Sign up",
     "checkout": "Checkout",
@@ -154,6 +155,7 @@
     "publish": "Post comment",
     "by": "By the editorial team",
     "minutesAgo": "{n} min ago",
+    "you": "You",
     "commentPosted": "Comment posted."
   },
   "theme": {

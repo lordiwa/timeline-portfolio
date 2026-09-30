@@ -50,7 +50,7 @@ function regenerate() {
 
     <section v-if="revealed" class="lab-solution" data-testid="solution">
       <h2>{{ t('lab.bugsTitle') }}</h2>
-      <p>{{ t('lab.bugsCount', { n: solution.length }) }} · {{ t('lab.template') }}: {{ t(`tplName.${page.templateId}`) }} · {{ t('lab.theme') }}: {{ page.themeId }}</p>
+      <p>{{ t('lab.bugsCount', { n: solution.length }) }} · {{ t('lab.template') }}: {{ t(`tplName.${page.templateId}`) }} · {{ t('lab.theme') }}: {{ t(`themeName.${page.themeId}`) }}</p>
       <ul>
         <li v-for="b in solution" :key="b.id" :data-bug-id="b.id">
           <code>{{ b.id }}</code>

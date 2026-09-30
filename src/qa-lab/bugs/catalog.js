@@ -109,8 +109,8 @@ export const BUGS = [
   {
     id: 'tab-order', category: 'a11y', difficulty: 'hard', templates: [...FORMS, 'products'],
     description: {
-      es: 'El orden de tabulación está roto: tabindex positivos hacen que el foco arranque por el botón principal.',
-      en: 'Tab order is broken: positive tabindex values make focus start on the primary button.',
+      es: 'El orden de tabulación está roto: tabindex positivos hacen que el foco arranque por el botón principal (formularios) o por el botón/buscador fuera de orden (listado de productos).',
+      en: 'Tab order is broken: positive tabindex values make focus start on the primary button (forms) or jump to the wrong control (product listing search).',
     },
   },
   {
@@ -130,8 +130,8 @@ export const BUGS = [
   {
     id: 'untranslated', category: 'content', difficulty: 'easy', templates: ALL,
     description: {
-      es: 'El párrafo de introducción queda sin traducir al cambiar de idioma.',
-      en: 'The intro paragraph stays untranslated when switching language.',
+      es: 'El párrafo de introducción se muestra en el otro idioma (no coincide con el idioma elegido).',
+      en: 'The intro paragraph is displayed in the other language (it does not match the selected language).',
     },
   },
   {

@@ -17,7 +17,10 @@ const HINTS = { password: 'fields.hintPassword', age: 'fields.hintAge', email: '
 
 const lines = reactive((page.content.lines || []).map((l) => ({ ...l })))
 const fmt = (n) => n.toFixed(2)
-const lineTotal = (l) => l.qty * l.price
+// Cantidad valida: entero 1..99 (vacio/0/negativos no rompen el total). Solo con 'total-wrong' se usa el valor crudo.
+const qtyOf = (l) => (has('total-wrong') ? l.qty : Math.min(99, Math.max(1, Math.floor(Number(l.qty)) || 1)))
+const lineTotal = (l) => qtyOf(l) * l.price
+const normalizeQty = (l) => { if (!has('total-wrong')) l.qty = qtyOf(l) }
 const subtotal = computed(() =>
   lines.reduce((sum, l, i) => sum + (has('total-wrong') && i === 0 ? l.price : lineTotal(l)), 0), // BUG: ignora la cantidad de la 1a linea
 )
@@ -38,7 +41,7 @@ function submit() {
       <tbody>
         <tr v-for="(l, i) in lines" :key="l.itemIdx">
           <td>{{ tt(`item${l.itemIdx}`) }}</td>
-          <td><input v-model.number="l.qty" type="number" min="1" :aria-label="`${t('cart.qty')} ${i + 1}`" /></td>
+          <td><input v-model.number="l.qty" type="number" min="1" max="99" @change="normalizeQty(l)":aria-label="`${t('cart.qty')} ${i + 1}`" /></td>
           <td>{{ fmt(l.price) }}</td>
           <td data-testid="line-total">{{ fmt(lineTotal(l)) }}</td>
         </tr>
