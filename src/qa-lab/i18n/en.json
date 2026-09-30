@@ -39,6 +39,7 @@
     "contactLink": "Contact",
     "menu": "Menu",
     "help": "Help",
+    "aboutText": "{brand} is a fictitious practice site for testers.",
     "about": "About",
     "helpTitle": "Help center",
     "helpBody": "Write to us if you need help with your request. We reply within 48 business hours.",

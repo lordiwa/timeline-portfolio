@@ -109,7 +109,7 @@ export const BUGS = [
   {
     id: 'tab-order', category: 'a11y', difficulty: 'hard', templates: [...FORMS, 'products'],
     description: {
-      es: 'El orden de tabulación está roto: tabindex positivos hacen que el foco arranque por el botón principal (formularios) o por el botón/buscador fuera de orden (listado de productos).',
+      es: 'El orden de tabulación está roto: tabindex positivos hacen que el foco arranque por el botón principal (formularios) o por el buscador (listado de productos).',
       en: 'Tab order is broken: positive tabindex values make focus start on the primary button (forms) or jump to the wrong control (product listing search).',
     },
   },
