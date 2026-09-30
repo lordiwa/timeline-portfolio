@@ -9,6 +9,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        qaLab: fileURLToPath(new URL('./qa-lab/index.html', import.meta.url))
+      }
+    }
+  },
   server: {
     host: true,
     port: 5173,

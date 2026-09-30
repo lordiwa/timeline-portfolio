@@ -1,0 +1,118 @@
+/* Estilos del sitio GENERADO por el QA Lab. Propios del lab: no importan nada del portafolio.
+   Parece un sitio web corriente a proposito. Variables: --hue, --radius, --width. */
+.site {
+  --accent: hsl(var(--hue) 55% 38%);
+  --accent-soft: hsl(var(--hue) 45% 95%);
+  --ink: #1f2933;
+  --muted: #52606d;
+  --line: #d9dee3;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  max-width: var(--width);
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+}
+.site.font-serif { font-family: Georgia, "Times New Roman", serif; }
+.site *, .site *::before, .site *::after { box-sizing: border-box; }
+.site button, .site input, .site select, .site textarea { font: inherit; color: inherit; }
+
+.site-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 20px; background: var(--accent); color: #fff; border-radius: var(--radius) var(--radius) 0 0; }
+.site.hdr-minimal .site-header { background: #fff; color: var(--accent); border-bottom: 2px solid var(--accent); }
+.site.hdr-banner .site-header { background: linear-gradient(120deg, var(--accent), hsl(calc(var(--hue) + 30) 55% 30%)); padding-block: 28px; }
+.brand { font-weight: 700; font-size: 1.25rem; }
+.tagline { opacity: .85; font-size: .9rem; }
+.site-nav { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+.site-nav button { background: transparent; border: 1px solid currentColor; border-radius: var(--radius); padding: 6px 12px; cursor: pointer; color: inherit; }
+
+.site-main { padding: 24px 20px 32px; }
+.site-main h1 { margin: 0 0 8px; font-size: 1.75rem; line-height: 1.2; }
+.site-lead { margin: 0 0 8px; color: var(--muted); }
+.site-note { margin: 0 0 20px; color: var(--muted); font-size: .9rem; }
+.site-footer { padding: 14px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; }
+.site.den-compact .site-main { padding-block: 14px 20px; }
+
+.qa-form { display: grid; gap: 14px; max-width: 520px; }
+.qa-field { display: flex; flex-direction: column; gap: 4px; }
+.qa-label { font-weight: 600; font-size: .9rem; }
+.qa-inline { display: flex; align-items: center; gap: 8px; margin-right: 14px; font-weight: 400; }
+.qa-field fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; }
+.qa-field input:not([type=checkbox]):not([type=radio]), .qa-field select, .qa-field textarea { padding: 8px 10px; border: 1px solid #aeb7c0; border-radius: var(--radius); background: #fff; }
+.qa-field.has-error input, .qa-field.has-error select, .qa-field.has-error textarea { border-color: #b42318; }
+.qa-hint { margin: 0; font-size: .8rem; color: var(--muted); }
+.qa-error { margin: 0; font-size: .85rem; color: #b42318; }
+
+.qa-btn-wrap { position: relative; display: inline-block; }
+.qa-btn { background: var(--accent); color: #fff; border: 0; border-radius: var(--radius); padding: 10px 20px; cursor: pointer; font-weight: 600; }
+.qa-btn:disabled { opacity: .55; cursor: not-allowed; }
+.qa-btn.secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+.qa-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.qa-counter { margin: 12px 0 0; font-size: .85rem; color: var(--muted); }
+
+.qa-tablist { display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.qa-tablist button { background: none; border: 0; padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; }
+.qa-tablist button.active { border-bottom-color: var(--accent); color: var(--accent); font-weight: 600; }
+.qa-tabpanel { padding-top: 14px; }
+
+.qa-acc-item { border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 8px; }
+.qa-acc-head { width: 100%; text-align: left; background: var(--accent-soft); border: 0; padding: 10px 14px; cursor: pointer; font-weight: 600; border-radius: var(--radius); }
+.qa-acc-body { padding: 10px 14px; }
+
+.qa-dropdown { position: relative; }
+.qa-dd-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 160px; margin: 0; padding: 4px; list-style: none; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 6px 18px rgba(0, 0, 0, .15); }
+.site .qa-dd-menu button { width: 100%; text-align: left; border: 0; color: var(--ink); }
+.qa-dropdown.on-light .qa-dd-toggle { color: var(--accent); border-color: var(--accent); }
+
+.qa-modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); display: grid; place-items: center; z-index: 50; }
+.qa-modal { background: #fff; color: var(--ink); width: min(440px, 92vw); border-radius: var(--radius); padding: 20px; }
+.qa-modal h2 { margin-top: 0; }
+.qa-toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 60; }
+.qa-toast { background: #1f2933; color: #fff; padding: 10px 14px; border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0, 0, 0, .25); }
+
+.qa-toolbar-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.qa-toolbar-row input[type=search], .qa-toolbar-row select { padding: 8px 10px; border: 1px solid #aeb7c0; border-radius: var(--radius); }
+.qa-grid { display: grid; gap: 14px; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); }
+.qa-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 6px; }
+.qa-card h3 { margin: 0; font-size: 1rem; }
+.qa-price { font-weight: 700; color: var(--accent); }
+.qa-pager { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 16px; }
+.qa-pager button { padding: 6px 12px; border: 1px solid var(--accent); background: #fff; color: var(--accent); border-radius: var(--radius); cursor: pointer; }
+.qa-pager button:disabled { opacity: .45; cursor: not-allowed; }
+
+.qa-table { width: 100%; border-collapse: collapse; }
+.qa-table th, .qa-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.qa-table th { background: var(--accent-soft); font-size: .85rem; }
+.qa-table td.num, .qa-table th.num { text-align: right; }
+.qa-table tfoot td { font-weight: 700; }
+.qa-kpis { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.qa-kpi { flex: 1 1 140px; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; }
+.qa-kpi b { display: block; font-size: 1.4rem; color: var(--accent); }
+.qa-badge { font-size: .75rem; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); }
+
+.qa-cart { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+.qa-cart th, .qa-cart td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.qa-cart input { width: 64px; padding: 4px 6px; border: 1px solid #aeb7c0; border-radius: var(--radius); }
+.qa-totals { text-align: right; margin-bottom: 18px; }
+.qa-totals .grand { font-size: 1.2rem; font-weight: 700; }
+.qa-stepper { display: flex; gap: 6px; margin-bottom: 16px; }
+.qa-stepper span { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.qa-stepper span.done { background: var(--accent); }
+.qa-comment { border-bottom: 1px solid var(--line); padding: 10px 0; }
+.qa-comment small { color: var(--muted); }
+.qa-article p { max-width: 62ch; }
+
+/* --- Bugs visuales (se activan SOLO por clase desde el flag correspondiente) --- */
+.site .bug-misaligned { margin-left: 26px; transform: translateY(-5px); }
+.site .bug-truncated { height: 1.5em; overflow: clip; }
+.site .bug-overflow { min-width: 760px; }
+.site.lowc .qa-label, .site.lowc .qa-hint, .site.lowc .site-note, .site.lowc .qa-page-info, .site.lowc .qa-counter { color: #b4bcc4; }
+.qa-sticker { position: absolute; left: 0; top: 0; bottom: 0; width: 52%; display: grid; place-items: center; background: #f5c518; color: #222; font-size: .75rem; font-weight: 700; border-radius: var(--radius) 0 0 var(--radius); transform: rotate(-3deg); z-index: 2; }
+.site-strip { margin-top: 24px; padding: 10px 14px; background: var(--accent-soft); border: 1px dashed var(--accent); white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .qa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-main { padding-inline: 14px; }
+}
