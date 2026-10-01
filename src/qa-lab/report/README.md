@@ -31,7 +31,8 @@ Sin ellas `submitReport` devuelve `{ ok: false, error: 'not-configured' }` y no 
 ## Reglas de Firestore
 
 `/firestore.rules`: solo `create` en `qa_lab_attempts/{id}` con claves exactas, tipos y tamanos; todo lo demas denegado.
-Las reglas no iteran listas: `findings` se acota a 20 (limite de 1000 expresiones por evaluacion; ver el comentario de `firestore.rules`) y cada indice 0..19 se valida con `validFinding`. Ademas: `createdAt == request.time` (el cliente manda `serverTimestamp()`), `durationMs == finishedAt - startedAt` y `finishedAt <= request.time + 5 min`.
+`firestore.rules` es GENERADO: no editar a mano. Editar `scripts/gen-firestore-rules.mjs` (o `LIMITS` en `schema.js`) y correr `node scripts/gen-firestore-rules.mjs`; `tests/qa-lab/report-rules-gen.spec.js` falla si el archivo y el generador se desincronizan.
+Las reglas no iteran listas: `findings` se acota a 20 y cada indice 0..19 se valida EN LINEA, sin llamadas a funciones por finding. Motivo (medido en produccion): Firestore limita las LLAMADAS A FUNCIONES por evaluacion (no solo las expresiones); con `validFinding` + 2 `optStr` por finding, 4 findings ya daban `permission-denied`. Solo existe `validAttempt` (1 llamada); candidate, score y findings van en linea. Limite secundario: ~1000 expresiones (probar `playground-20.json`). Ademas: `createdAt == request.time` (el cliente manda `serverTimestamp()`), `durationMs == finishedAt - startedAt` y `finishedAt <= request.time + 5 min`.
 
 **Test de reglas con emulador: PENDIENTE** (requiere Java; no disponible donde se desarrollo). Comando exacto, en una
 maquina con Java 11+ y `npm i -D @firebase/rules-unit-testing firebase-tools`:

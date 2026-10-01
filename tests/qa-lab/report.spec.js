@@ -171,7 +171,7 @@ describe('firestore.rules (estatico; el test con emulador queda PENDIENTE, ver R
     const list = (m) => [...m.matchAll(/'([A-Za-z]+)'/g)].map((x) => x[1]).sort()
     const top = code.match(/d\.keys\(\)\.hasOnly\(\[([^\]]+)\]/)[1]
     expect(list(top)).toEqual([...DOC_KEYS, 'createdAt'].sort())
-    const sc = code.match(/s\.keys\(\)\.hasOnly\(\[([^\]]+)\]/)[1]
+    const sc = code.match(/d\.score\.keys\(\)\.hasOnly\(\[([^\]]+)\]/)[1]
     expect(list(sc)).toEqual([...SCORE_KEYS].sort())
   })
 })
