@@ -1,5 +1,7 @@
 // Utilidades compartidas de los specs del QA Lab (no es un spec: vitest solo corre *.spec.js).
 import { mount } from '@vue/test-utils'
+import { vi } from 'vitest'
+import { FIELD_DEFS } from '../../src/qa-lab/generator/fields.js'
 import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { capabilitiesOf } from '../../src/qa-lab/generator/capabilities.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
@@ -23,10 +25,11 @@ export function cleanup() {
 export const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms))
 
 /** Sitio generado con paginas y bugs forzados: bugs = { 'bug-id': 'pagina' } (vacio = sin bugs). */
-export function forceSite({ seed = 'force-1', level = 'semi', pages, bugs = {} }) {
+export function forceSite({ seed = 'force-1', level = 'semi', pages, bugs = {}, params = {}, data = {} }) {
   const base = generateSite(seed, level)
   const p = pages || base.pages
-  return { ...base, pages: p, capabilities: capabilitiesOf(p, base.data), bugs: Object.keys(bugs), bugPages: { ...bugs } }
+  const d = { ...base.data, ...data }
+  return { ...base, pages: p, data: d, capabilities: capabilitiesOf(p, d), bugs: Object.keys(bugs), bugPages: { ...bugs }, bugParams: { ...base.bugParams, ...params } }
 }
 
 export const ALL_PAGES = ['home', 'list', 'detail', 'cart', 'checkout', 'login', 'signup', 'account', 'contact', 'faq', 'dashboard', 'blog', 'wizard']
@@ -71,5 +74,48 @@ export async function fill(w, values) {
     if (typeof v === 'boolean') await box.find('input[type=checkbox]').setValue(v)
     else if (!el.exists()) await box.findAll('input[type=radio]')[Number(v)].setValue(true)
     else await el.setValue(v)
+  }
+}
+
+// ---------------------------------------------------------------- TASK-049
+/** Vigilante de consola: console.error / warn / log, window.error y rechazos sin manejar quedan en `seen` (lista permitida VACIA). */
+export function watchConsole() {
+  const seen = []
+  const spies = ['error', 'warn', 'log'].map((m) => vi.spyOn(console, m).mockImplementation((...a) => { seen.push(`console.${m}: ${a.map((x) => (x && x.message) || String(x)).join(' ')}`) }))
+  const onErr = (e) => seen.push(`window.error: ${e.message}`)
+  const onRej = (e) => seen.push(`unhandledrejection: ${String(e.reason)}`)
+  window.addEventListener('error', onErr)
+  window.addEventListener('unhandledrejection', onRej)
+  return {
+    seen,
+    stop() {
+      spies.forEach((s) => s.mockRestore())
+      window.removeEventListener('error', onErr)
+      window.removeEventListener('unhandledrejection', onRej)
+    },
+  }
+}
+
+/** Valor valido para un campo del lab segun su definicion (para recorrer formularios con datos correctos). */
+export function validValue(key, n = 0) {
+  const def = FIELD_DEFS[key]
+  if (key === 'card') return '4111111111111111'
+  if (key === 'address') return 'Calle 1'
+  if (key === 'email') return `qa${n}@example.com`
+  if (key === 'birth') return '2000-05-10'
+  if (def.type === 'password') return 'abcdefgh'
+  if (def.type === 'number') return '30'
+  if (def.type === 'select') return '1'
+  if (def.type === 'radio') return '0'
+  if (def.type === 'checkbox') return key === 'terms'
+  if (def.type === 'textarea') return 'hola mundo'
+  return 'Ana Perez'
+}
+
+/** Completa con datos validos TODOS los campos que el DOM muestra ahora (vuelve a mirar: un check puede mostrar mas campos). */
+export async function fillVisible(w, n = 0) {
+  for (let pass = 0; pass < 3; pass++) {
+    const keys = w.findAll('[data-field]').map((b) => b.attributes('data-field'))
+    for (const k of keys) await fill(w, { [k]: validValue(k, n) })
   }
 }

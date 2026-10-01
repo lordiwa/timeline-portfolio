@@ -99,7 +99,8 @@ describe('bugParams en un sub-stream propio', () => {
     rng2.fork('bug:nth-x').int(0, 9)
     expect([rng2.next(), rng2.next()]).toEqual(before)
     const site = generateSite('abc', 'semi')
-    expect(site.bugParams).toEqual({}) // el catalogo actual no declara params
+    // el catalogo v2 declara params en 4 bugs; estan en el sitio aunque no esten activos (TASK-049)
+    expect(Object.keys(site.bugParams).sort()).toEqual(['date-timezone-shift', 'nth-add-to-cart-fails', 'nth-login-rejected', 'nth-submit-server-error'])
     expect(createRng('abc').fork('bug:nth-x').int(0, 1e9)).toBe(createRng('abc').fork('bug:nth-x').int(0, 1e9))
     expect(createRng('abc').fork('a').next()).not.toBe(createRng('abc').fork('b').next())
   })

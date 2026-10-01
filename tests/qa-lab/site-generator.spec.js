@@ -124,8 +124,8 @@ describe('generateSite: bugs', () => {
     expect(hard('senior')).toBeGreaterThan(hard('semi'))
   })
 
-  it('el catalogo mantiene los 19 bugs con paginas validas (evita un bug que ninguna pagina pueda mostrar)', () => {
-    expect(BUGS.length).toBe(19)
+  it('el catalogo v2 tiene 36 bugs (19 + 17) con paginas validas (evita un bug que ninguna pagina pueda mostrar)', () => {
+    expect(BUGS.length).toBe(36)
     for (const b of BUGS) {
       expect(b.pages.length).toBeGreaterThan(0)
       for (const p of b.pages) expect(PAGE_TYPES).toContain(p)

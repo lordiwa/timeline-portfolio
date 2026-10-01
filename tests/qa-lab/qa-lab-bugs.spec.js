@@ -336,7 +336,8 @@ describe('typo: invariantes del helper', () => {
       'age-off-by-one', 'password-off-by-one', 'missing-label', 'modal-focus-lost', 'console-error', 'typo', 'untranslated',
       ...Object.keys(PAGE_CASES),
     ])
-    expect(BUGS.filter((b) => !covered.has(b.id)).map((b) => b.id)).toEqual([])
-    expect(Object.keys(BUG_BY_ID).length).toBe(19)
+    // los 19 bugs de v1; los 17 de v2 se cubren en qa-lab-bugs-v2.spec.js (que tiene su propio chequeo de cobertura)
+    expect(BUGS.slice(0, 19).filter((b) => !covered.has(b.id)).map((b) => b.id)).toEqual([])
+    expect(Object.keys(BUG_BY_ID).length).toBe(36)
   })
 })
