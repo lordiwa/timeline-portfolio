@@ -10,16 +10,40 @@
     "bugsTitle": "Solucionario",
     "bugsCount": "Bugs inyectados en esta semilla y nivel: {n}",
     "theme": "Tema",
-    "category": {"validation": "Validación", "ui": "UI / visual", "functional": "Funcional", "a11y": "Accesibilidad", "console": "Consola", "content": "Contenido", "responsive": "Responsive"},
-    "difficulty": {"easy": "Fácil", "medium": "Media", "hard": "Difícil"},
+    "category": {
+      "validation": "Validación",
+      "ui": "UI / visual",
+      "functional": "Funcional",
+      "a11y": "Accesibilidad",
+      "console": "Consola",
+      "content": "Contenido",
+      "responsive": "Responsive"
+    },
+    "difficulty": {
+      "easy": "Fácil",
+      "medium": "Media",
+      "hard": "Difícil"
+    },
     "level": "Nivel",
-    "levels": {"junior": "Junior", "semi": "Semi", "senior": "Senior"},
+    "levels": {
+      "junior": "Junior",
+      "semi": "Semi",
+      "senior": "Senior"
+    },
     "pages": "Páginas",
     "page": "Página",
     "pageList": "Páginas del sitio ({n})",
     "noBugs": "Este sitio no tiene bugs activos.",
     "cartNote": "El carrito es de invitado: sobrevive al cerrar sesión.",
-    "where": {"blogComments": "Ubicación: Blog → abrir un post → pestaña Comentarios", "checkoutStep": "Ubicación: Checkout, paso {n} ({step})", "wizardStep": "Ubicación: Asistente, paso «{step}»", "helpButton": "Ubicación: botón «Ayuda» del navbar (abre el modal)", "pageEnd": "Ubicación: al final de la página (se ve en mobile)", "dashboardFooter": "Ubicación: Panel, fila de total al pie de la tabla", "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)"}
+    "where": {
+      "blogComments": "Ubicación: Blog → abrir un post → pestaña Comentarios",
+      "checkoutStep": "Ubicación: Checkout, paso {n} ({step})",
+      "wizardStep": "Ubicación: Asistente, paso «{step}»",
+      "helpButton": "Ubicación: botón «Ayuda» del navbar (abre el modal)",
+      "pageEnd": "Ubicación: al final de la página (se ve en mobile)",
+      "dashboardFooter": "Ubicación: Panel, fila de total al pie de la tabla",
+      "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)"
+    }
   },
   "themeName": {
     "store": "Tienda",
@@ -110,20 +134,76 @@
     "pattern": "El formato no es válido."
   },
   "tpl": {
-    "signup": {"title": "Creá tu cuenta en {brand}", "lead": "Unite en un minuto y empezá a disfrutar de {brand}.", "note": "Al registrarte recibirás un correo de bienvenida con los próximos pasos para completar tu perfil y configurar tus preferencias."},
-    "checkout": {"title": "Finalizá tu compra en {brand}", "lead": "Completá los pasos para terminar tu pedido.", "note": "Los pedidos confirmados antes de las 14 hs se despachan el mismo día; el resto, al siguiente día hábil."},
-    "contact": {"title": "Contactá con {brand}", "lead": "Estamos para ayudarte. Completá el formulario y te respondemos pronto.", "note": "Nuestro horario de atención es de lunes a viernes, de 9 a 18 hs, excepto feriados nacionales."},
-    "wizard": {"title": "Configurá tu perfil en {brand}", "lead": "Te guiamos paso a paso; algunas preguntas dependen de tus respuestas anteriores.", "note": "Podés volver a un paso anterior en cualquier momento sin perder lo que ya completaste."},
-    "faq": {"title": "Preguntas frecuentes de {brand}", "lead": "Encontrá respuestas rápidas a las dudas más comunes.", "note": "Si no encontrás lo que buscás, escribinos desde la sección de contacto y te ayudamos."},
-    "dashboard": {"title": "Panel de {brand}", "lead": "Resumen de la actividad reciente.", "note": "Los datos se actualizan cada 15 minutos y pueden diferir levemente de los reportes mensuales."},
-    "home": {"title": "Bienvenido a {brand}", "lead": "Todo lo que necesitás, en un solo lugar.", "note": "Navegá por el sitio, agregá productos al carrito y probá cada flujo con calma."},
-    "list": {"title": "Catálogo de {brand}", "lead": "Explorá todo lo que tenemos para vos.", "note": "Los precios incluyen impuestos. Las imágenes son ilustrativas y pueden variar respecto del producto final."},
-    "detail": {"title": "Producto de {brand}", "lead": "Conocé los detalles antes de decidir.", "note": "Los precios incluyen impuestos. Podés cambiar la cantidad en el carrito en cualquier momento."},
-    "cart": {"title": "Tu carrito en {brand}", "lead": "Revisá lo que elegiste antes de pagar.", "note": "Los precios y las cantidades pueden cambiar hasta que confirmes el pedido."},
-    "login": {"title": "Ingresá a {brand}", "lead": "Accedé a tu cuenta para ver tus pedidos.", "note": "La sesión es solo una simulación: no se envía ningún dato real."},
-    "account": {"title": "Mi cuenta en {brand}", "lead": "Tus datos y tus pedidos.", "note": "Solo vos podés ver esta página: requiere una sesión iniciada."},
-    "blog": {"title": "Novedades de {brand}", "lead": "Lo último que pasó en nuestra comunidad.", "note": "Los artículos son publicados por el equipo editorial y revisados antes de su publicación final."},
-    "notfound": {"title": "No encontramos esta página", "lead": "Esa dirección no existe en {brand}.", "note": "Volvé al inicio y seguí navegando."}
+    "signup": {
+      "title": "Creá tu cuenta en {brand}",
+      "lead": "Unite en un minuto y empezá a disfrutar de {brand}.",
+      "note": "Al registrarte recibirás un correo de bienvenida con los próximos pasos para completar tu perfil y configurar tus preferencias."
+    },
+    "checkout": {
+      "title": "Finalizá tu compra en {brand}",
+      "lead": "Completá los pasos para terminar tu pedido.",
+      "note": "Los pedidos confirmados antes de las 14 hs se despachan el mismo día; el resto, al siguiente día hábil."
+    },
+    "contact": {
+      "title": "Contactá con {brand}",
+      "lead": "Estamos para ayudarte. Completá el formulario y te respondemos pronto.",
+      "note": "Nuestro horario de atención es de lunes a viernes, de 9 a 18 hs, excepto feriados nacionales."
+    },
+    "wizard": {
+      "title": "Configurá tu perfil en {brand}",
+      "lead": "Te guiamos paso a paso; algunas preguntas dependen de tus respuestas anteriores.",
+      "note": "Podés volver a un paso anterior en cualquier momento sin perder lo que ya completaste."
+    },
+    "faq": {
+      "title": "Preguntas frecuentes de {brand}",
+      "lead": "Encontrá respuestas rápidas a las dudas más comunes.",
+      "note": "Si no encontrás lo que buscás, escribinos desde la sección de contacto y te ayudamos."
+    },
+    "dashboard": {
+      "title": "Panel de {brand}",
+      "lead": "Resumen de la actividad reciente.",
+      "note": "Los datos se actualizan cada 15 minutos y pueden diferir levemente de los reportes mensuales."
+    },
+    "home": {
+      "title": "Bienvenido a {brand}",
+      "lead": "Todo lo que necesitás, en un solo lugar.",
+      "note": "Navegá por el sitio, agregá productos al carrito y probá cada flujo con calma."
+    },
+    "list": {
+      "title": "Catálogo de {brand}",
+      "lead": "Explorá todo lo que tenemos para vos.",
+      "note": "Los precios incluyen impuestos. Las imágenes son ilustrativas y pueden variar respecto del producto final."
+    },
+    "detail": {
+      "title": "Producto de {brand}",
+      "lead": "Conocé los detalles antes de decidir.",
+      "note": "Los precios incluyen impuestos. Podés cambiar la cantidad en el carrito en cualquier momento."
+    },
+    "cart": {
+      "title": "Tu carrito en {brand}",
+      "lead": "Revisá lo que elegiste antes de pagar.",
+      "note": "Los precios y las cantidades pueden cambiar hasta que confirmes el pedido."
+    },
+    "login": {
+      "title": "Ingresá a {brand}",
+      "lead": "Accedé a tu cuenta para ver tus pedidos.",
+      "note": "La sesión es solo una simulación: no se envía ningún dato real."
+    },
+    "account": {
+      "title": "Mi cuenta en {brand}",
+      "lead": "Tus datos y tus pedidos.",
+      "note": "Solo vos podés ver esta página: requiere una sesión iniciada."
+    },
+    "blog": {
+      "title": "Novedades de {brand}",
+      "lead": "Lo último que pasó en nuestra comunidad.",
+      "note": "Los artículos son publicados por el equipo editorial y revisados antes de su publicación final."
+    },
+    "notfound": {
+      "title": "No encontramos esta página",
+      "lead": "Esa dirección no existe en {brand}.",
+      "note": "Volvé al inicio y seguí navegando."
+    }
   },
   "list": {
     "sortBy": "Ordenar por",
@@ -188,14 +268,142 @@
     "commentPosted": "Comentario publicado."
   },
   "theme": {
-    "store": {"name0": "Casa Nube", "name1": "Mercado Norte", "name2": "Tienda Olmo", "tagline": "Todo para tu casa y tu día a día", "item0": "Mochila", "item1": "Lámpara", "item2": "Zapatillas", "item3": "Auriculares", "item4": "Taza", "item5": "Reloj", "cat0": "Hogar", "cat1": "Moda", "cat2": "Tecnología", "cta": "Comprar", "article": "Llegaron las novedades de temporada"},
-    "clinic": {"name0": "Clínica Aurora", "name1": "Centro Médico Sur", "name2": "Salud Plena", "tagline": "Cuidamos tu salud con cercanía", "item0": "Consulta general", "item1": "Pediatría", "item2": "Dermatología", "item3": "Cardiología", "item4": "Análisis de sangre", "item5": "Fisioterapia", "cat0": "Consultas", "cat1": "Estudios", "cat2": "Terapias", "cta": "Pedir turno", "article": "Cómo prepararte para un chequeo anual"},
-    "gym": {"name0": "Forja Fitness", "name1": "Gimnasio Vértice", "name2": "Pulso Club", "tagline": "Entrená a tu ritmo", "item0": "Clase de spinning", "item1": "Yoga", "item2": "Entrenamiento funcional", "item3": "Boxeo", "item4": "Pilates", "item5": "Plan personalizado", "cat0": "Cardio", "cat1": "Fuerza", "cat2": "Bienestar", "cta": "Anotarme", "article": "Cinco rutinas para empezar el año"},
-    "travel": {"name0": "Rumbo Viajes", "name1": "Horizonte Tours", "name2": "Mapa Azul", "tagline": "El próximo destino te espera", "item0": "Escapada a la playa", "item1": "Tour por la montaña", "item2": "Ciudad histórica", "item3": "Safari fotográfico", "item4": "Crucero por el río", "item5": "Fin de semana rural", "cat0": "Naturaleza", "cat1": "Ciudad", "cat2": "Aventura", "cta": "Reservar", "article": "Destinos para viajar fuera de temporada"},
-    "restaurant": {"name0": "La Brasa", "name1": "Casa Olivo", "name2": "Sabor de Barrio", "tagline": "Cocina casera, mesa abierta", "item0": "Milanesa", "item1": "Ensalada mixta", "item2": "Pizza de horno", "item3": "Risotto", "item4": "Tarta de frutas", "item5": "Empanadas", "cat0": "Entradas", "cat1": "Platos", "cat2": "Postres", "cta": "Reservar mesa", "article": "La historia detrás de nuestra receta de la casa"},
-    "library": {"name0": "Biblioteca Central", "name1": "Casa del Libro", "name2": "Letras Abiertas", "tagline": "Leer es viajar sin moverse", "item0": "Novela", "item1": "Ensayo", "item2": "Poesía", "item3": "Cómic", "item4": "Atlas", "item5": "Diccionario", "cat0": "Ficción", "cat1": "No ficción", "cat2": "Referencia", "cta": "Pedir prestado", "article": "Los libros más leídos del mes"},
-    "bank": {"name0": "Banco Delta", "name1": "Caja Norte", "name2": "Finanzas Cercanas", "tagline": "Tu dinero, más simple", "item0": "Cuenta corriente", "item1": "Tarjeta de crédito", "item2": "Préstamo personal", "item3": "Seguro de hogar", "item4": "Plazo fijo", "item5": "Caja de ahorro", "cat0": "Cuentas", "cat1": "Créditos", "cat2": "Seguros", "cta": "Solicitar", "article": "Consejos para ordenar tus finanzas personales"},
-    "school": {"name0": "Academia Faro", "name1": "Instituto Brújula", "name2": "Escuela Mirador", "tagline": "Aprender nunca fue tan claro", "item0": "Curso de inglés", "item1": "Programación", "item2": "Dibujo", "item3": "Fotografía", "item4": "Matemática", "item5": "Música", "cat0": "Idiomas", "cat1": "Tecnología", "cat2": "Arte", "cta": "Inscribirme", "article": "Cómo elegir el curso que mejor te sirve"}
+    "store": {
+      "name0": "Casa Nube",
+      "name1": "Mercado Norte",
+      "name2": "Tienda Olmo",
+      "tagline": "Todo para tu casa y tu día a día",
+      "item0": "Mochila",
+      "item1": "Lámpara",
+      "item2": "Zapatillas",
+      "item3": "Auriculares",
+      "item4": "Taza",
+      "item5": "Reloj",
+      "cat0": "Hogar",
+      "cat1": "Moda",
+      "cat2": "Tecnología",
+      "cta": "Comprar",
+      "article": "Llegaron las novedades de temporada"
+    },
+    "clinic": {
+      "name0": "Clínica Aurora",
+      "name1": "Centro Médico Sur",
+      "name2": "Salud Plena",
+      "tagline": "Cuidamos tu salud con cercanía",
+      "item0": "Consulta general",
+      "item1": "Pediatría",
+      "item2": "Dermatología",
+      "item3": "Cardiología",
+      "item4": "Análisis de sangre",
+      "item5": "Fisioterapia",
+      "cat0": "Consultas",
+      "cat1": "Estudios",
+      "cat2": "Terapias",
+      "cta": "Pedir turno",
+      "article": "Cómo prepararte para un chequeo anual"
+    },
+    "gym": {
+      "name0": "Forja Fitness",
+      "name1": "Gimnasio Vértice",
+      "name2": "Pulso Club",
+      "tagline": "Entrená a tu ritmo",
+      "item0": "Clase de spinning",
+      "item1": "Yoga",
+      "item2": "Entrenamiento funcional",
+      "item3": "Boxeo",
+      "item4": "Pilates",
+      "item5": "Plan personalizado",
+      "cat0": "Cardio",
+      "cat1": "Fuerza",
+      "cat2": "Bienestar",
+      "cta": "Anotarme",
+      "article": "Cinco rutinas para empezar el año"
+    },
+    "travel": {
+      "name0": "Rumbo Viajes",
+      "name1": "Horizonte Tours",
+      "name2": "Mapa Azul",
+      "tagline": "El próximo destino te espera",
+      "item0": "Escapada a la playa",
+      "item1": "Tour por la montaña",
+      "item2": "Ciudad histórica",
+      "item3": "Safari fotográfico",
+      "item4": "Crucero por el río",
+      "item5": "Fin de semana rural",
+      "cat0": "Naturaleza",
+      "cat1": "Ciudad",
+      "cat2": "Aventura",
+      "cta": "Reservar",
+      "article": "Destinos para viajar fuera de temporada"
+    },
+    "restaurant": {
+      "name0": "La Brasa",
+      "name1": "Casa Olivo",
+      "name2": "Sabor de Barrio",
+      "tagline": "Cocina casera, mesa abierta",
+      "item0": "Milanesa",
+      "item1": "Ensalada mixta",
+      "item2": "Pizza de horno",
+      "item3": "Risotto",
+      "item4": "Tarta de frutas",
+      "item5": "Empanadas",
+      "cat0": "Entradas",
+      "cat1": "Platos",
+      "cat2": "Postres",
+      "cta": "Reservar mesa",
+      "article": "La historia detrás de nuestra receta de la casa"
+    },
+    "library": {
+      "name0": "Biblioteca Central",
+      "name1": "Casa del Libro",
+      "name2": "Letras Abiertas",
+      "tagline": "Leer es viajar sin moverse",
+      "item0": "Novela",
+      "item1": "Ensayo",
+      "item2": "Poesía",
+      "item3": "Cómic",
+      "item4": "Atlas",
+      "item5": "Diccionario",
+      "cat0": "Ficción",
+      "cat1": "No ficción",
+      "cat2": "Referencia",
+      "cta": "Pedir prestado",
+      "article": "Los libros más leídos del mes"
+    },
+    "bank": {
+      "name0": "Banco Delta",
+      "name1": "Caja Norte",
+      "name2": "Finanzas Cercanas",
+      "tagline": "Tu dinero, más simple",
+      "item0": "Cuenta corriente",
+      "item1": "Tarjeta de crédito",
+      "item2": "Préstamo personal",
+      "item3": "Seguro de hogar",
+      "item4": "Plazo fijo",
+      "item5": "Caja de ahorro",
+      "cat0": "Cuentas",
+      "cat1": "Créditos",
+      "cat2": "Seguros",
+      "cta": "Solicitar",
+      "article": "Consejos para ordenar tus finanzas personales"
+    },
+    "school": {
+      "name0": "Academia Faro",
+      "name1": "Instituto Brújula",
+      "name2": "Escuela Mirador",
+      "tagline": "Aprender nunca fue tan claro",
+      "item0": "Curso de inglés",
+      "item1": "Programación",
+      "item2": "Dibujo",
+      "item3": "Fotografía",
+      "item4": "Matemática",
+      "item5": "Música",
+      "cat0": "Idiomas",
+      "cat1": "Tecnología",
+      "cat2": "Arte",
+      "cta": "Inscribirme",
+      "article": "Cómo elegir el curso que mejor te sirve"
+    }
   },
   "text": {
     "p0": "Durante los últimos meses el equipo trabajó en mejorar cada detalle de la experiencia.",
@@ -305,9 +513,25 @@
     "back": "Volver al blog"
   },
   "checkout": {
-    "step": {"data": "Tus datos", "shipping": "Envío y cupón", "payment": "Pago", "done": "Pedido confirmado"},
-    "ship": {"standard": "Envío estándar", "express": "Envío exprés", "pickup": "Retiro en el local"},
-    "coupon": {"label": "Cupón de descuento", "apply": "Aplicar", "hint": "Cupón de práctica: {code} ({pct}% de descuento).", "applied": "Cupón {code} aplicado ({pct}%).", "err_empty": "Ingresá un código.", "err_invalid": "El cupón no es válido."},
+    "step": {
+      "data": "Tus datos",
+      "shipping": "Envío y cupón",
+      "payment": "Pago",
+      "done": "Pedido confirmado"
+    },
+    "ship": {
+      "standard": "Envío estándar",
+      "express": "Envío exprés",
+      "pickup": "Retiro en el local"
+    },
+    "coupon": {
+      "label": "Cupón de descuento",
+      "apply": "Aplicar",
+      "hint": "Cupón de práctica: {code} ({pct}% de descuento).",
+      "applied": "Cupón {code} aplicado ({pct}%).",
+      "err_empty": "Ingresá un código.",
+      "err_invalid": "El cupón no es válido."
+    },
     "placed": "¡Pedido realizado!",
     "thanks": "Gracias por tu compra. Número de pedido: {id}",
     "paid": "Total pagado",
@@ -331,8 +555,56 @@
     "items": "{n} unidades"
   },
   "wizard": {
-    "step": {"data": "Tus datos", "security": "Seguridad", "profile": "Perfil", "prefs": "Preferencias", "payment": "Pago", "confirm": "Confirmación"},
+    "step": {
+      "data": "Tus datos",
+      "security": "Seguridad",
+      "profile": "Perfil",
+      "prefs": "Preferencias",
+      "payment": "Pago",
+      "confirm": "Confirmación"
+    },
     "yes": "Sí",
     "no": "No"
+  },
+  "report": {
+    "startTitle": "Empezar la prueba",
+    "name": "Nombre",
+    "email": "Email",
+    "start": "Empezar prueba",
+    "privacy": "Guardamos tu nombre, email, hallazgos y puntaje para revisar la práctica; no se comparte con terceros.",
+    "errName": "Ingresá tu nombre (hasta 80 caracteres).",
+    "errEmail": "Ingresá un email válido.",
+    "title": "Reporte de hallazgos",
+    "time": "Tiempo: {t}",
+    "page": "Página",
+    "description": "Descripción del bug",
+    "severity": "Severidad",
+    "category": "Categoría (opcional)",
+    "bug": "Bug del catálogo (opcional)",
+    "none": "Sin especificar",
+    "add": "Agregar hallazgo",
+    "remove": "Quitar hallazgo",
+    "findings": "Hallazgos cargados: {n}",
+    "submit": "Enviar reporte",
+    "sending": "Enviando…",
+    "errDescription": "Describí el bug (hasta {max} caracteres).",
+    "errMax": "Máximo {max} hallazgos.",
+    "sev": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "critical": "Crítica"
+    },
+    "submitError": {
+      "not-configured": "El guardado no está configurado en este entorno.",
+      "network": "No se pudo enviar. Revisá tu conexión y reintentá.",
+      "invalid": "El reporte no es válido. Revisá los datos."
+    },
+    "resultTitle": "Resultado",
+    "score": "Puntaje: {n}/100",
+    "hits": "Aciertos: {n}",
+    "halfHits": "Medios aciertos (solo categoría): {n}",
+    "falsePositives": "Falsos positivos: {n}",
+    "missed": "Bugs no encontrados: {n}"
   }
 }
