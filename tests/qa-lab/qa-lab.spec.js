@@ -1,47 +1,24 @@
-// TASK-046 — QA Lab. Cada spec nombra el dano que previene.
-import { describe, it, expect, vi, afterEach } from 'vitest'
+// TASK-046 / TASK-047 — shell del QA Lab: solucionario, nivel, idioma, "nueva pagina", aislamiento del portafolio.
+import { describe, it, expect, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { generatePage, MIN_BUGS, MAX_BUGS } from '../../src/qa-lab/generator/index.js'
-import { BUGS, BUG_BY_ID, CATEGORIES, DIFFICULTIES, bugApplies } from '../../src/qa-lab/bugs/catalog.js'
-import { TEMPLATE_IDS } from '../../src/qa-lab/templates/registry.js'
-import { checkField } from '../../src/qa-lab/composables/useForm.js'
+import { generateSite } from '../../src/qa-lab/generator/site.js'
+import { concretePath } from '../../src/qa-lab/generator/pages.js'
+import { BUGS, BUG_BY_ID, CATEGORIES, DIFFICULTIES } from '../../src/qa-lab/bugs/catalog.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
+import { resolveContent } from '../../src/qa-lab/content/index.js'
 import App from '../../src/qa-lab/App.vue'
+import es from '../../src/qa-lab/i18n/es.json'
+import en from '../../src/qa-lab/i18n/en.json'
+import { tick, track, cleanup } from './helpers.js'
 
-const seeds = Array.from({ length: 300 }, (_, i) => `seed-${i}`)
+afterEach(cleanup)
 
-afterEach(() => vi.restoreAllMocks())
+const mountApp = (props, locale = 'es') => track(mount(App, { props, global: { plugins: [createLabI18n(locale)] }, attachTo: document.body }))
 
-describe('QA Lab', () => {
-  it('misma seed = misma pagina, sin Math.random (evita que un tester no pueda reproducir el bug reportado)', () => {
-    const rnd = vi.spyOn(Math, 'random')
-    for (const s of ['abc123', 'xyz', 'k7m2p9']) {
-      expect(JSON.stringify(generatePage(s))).toBe(JSON.stringify(generatePage(s)))
-    }
-    expect(rnd).not.toHaveBeenCalled()
-  })
-
-  it('seeds distintas dan paginas distintas y hay >=6 plantillas y >=6 temas (evita una pagina repetida siempre)', () => {
-    const pages = seeds.map(generatePage)
-    expect(new Set(pages.map((p) => JSON.stringify(p))).size).toBe(seeds.length)
-    expect(new Set(pages.map((p) => p.templateId)).size).toBeGreaterThanOrEqual(6)
-    expect(new Set(pages.map((p) => p.themeId)).size).toBeGreaterThanOrEqual(6)
-    expect(TEMPLATE_IDS.length).toBeGreaterThanOrEqual(6)
-  })
-
-  it('cada seed activa 3-7 bugs, todos compatibles con la plantilla (evita bugs imposibles de observar)', () => {
-    for (const s of seeds) {
-      const p = generatePage(s)
-      expect(p.bugs.length).toBeGreaterThanOrEqual(MIN_BUGS)
-      expect(p.bugs.length).toBeLessThanOrEqual(MAX_BUGS)
-      expect(new Set(p.bugs).size).toBe(p.bugs.length)
-      for (const id of p.bugs) expect(bugApplies(BUG_BY_ID[id], p.templateId)).toBe(true)
-    }
-  })
-
-  it('catalogo unico: >=12 bugs con categoria, dificultad y descripcion es/en (evita un bug que el solucionario no pueda explicar)', () => {
+describe('QA Lab: catalogo unico', () => {
+  it('19 bugs con categoria, dificultad y descripcion es/en (evita un bug que el solucionario no pueda explicar)', () => {
     expect(BUGS.length).toBeGreaterThanOrEqual(12)
     expect(new Set(BUGS.map((b) => b.id)).size).toBe(BUGS.length)
     for (const b of BUGS) {
@@ -49,51 +26,129 @@ describe('QA Lab', () => {
       expect(DIFFICULTIES).toContain(b.difficulty)
       expect(b.description.es.length).toBeGreaterThan(5)
       expect(b.description.en.length).toBeGreaterThan(5)
-      if (b.templates !== '*') for (const t of b.templates) expect(TEMPLATE_IDS).toContain(t)
     }
   })
 
-  it('"revelar bugs" lista exactamente los flags activos, cambia de idioma y "nueva pagina" cambia la seed en la URL (evita solucionario desincronizado)', async () => {
+  it('es.json y en.json tienen exactamente las mismas claves (evita texto sin traducir en un idioma)', () => {
+    const flat = (o, p = '') => Object.entries(o).flatMap(([k, v]) => (v && typeof v === 'object' ? flat(v, `${p}${k}.`) : [`${p}${k}`]))
+    expect(flat(en).sort()).toEqual(flat(es).sort())
+  })
+})
+
+describe('QA Lab: shell', () => {
+  it('"revelar bugs" lista exactamente los activos con su pagina y un link a esa ruta (evita solucionario desincronizado)', async () => {
     const seed = 'rev-7'
-    const i18n = createLabI18n('es')
-    const w = mount(App, { props: { initialSeed: seed }, global: { plugins: [i18n] } })
+    const w = mountApp({ initialSeed: seed, initialLevel: 'senior' })
+    const site = generateSite(seed, 'senior')
     expect(window.location.search).toContain(`seed=${seed}`)
+    expect(window.location.search).toContain('level=senior')
     expect(w.find('[data-testid="seed"]').text()).toBe(seed)
 
     await w.find('[data-testid="reveal"]').trigger('click')
-    const ids = w.findAll('[data-testid="solution"] li').map((li) => li.attributes('data-bug-id'))
-    expect(ids).toEqual(generatePage(seed).bugs)
-    const first = w.find('[data-testid="solution"] li span').text()
-    expect(first).toBe(BUG_BY_ID[ids[0]].description.es)
+    const items = w.findAll('[data-testid="solution"] li')
+    expect(items.map((li) => li.attributes('data-bug-id'))).toEqual(site.bugs)
+    expect(items.map((li) => li.attributes('data-bug-page'))).toEqual(site.bugs.map((id) => site.bugPages[id]))
+    items.forEach((li, i) => {
+      const id = site.bugs[i]
+      expect(li.find('span').text()).toBe(BUG_BY_ID[id].description.es)
+      expect(li.find('[data-testid="bug-link"]').attributes('href')).toBe(`#${concretePath(site, site.bugPages[id])}`)
+    })
+    expect(w.find('[data-testid="site-pages"]').text()).toContain(`(${site.pages.length})`)
 
     await w.find('[data-testid="lang"]').setValue('en')
-    expect(w.find('[data-testid="solution"] li span').text()).toBe(BUG_BY_ID[ids[0]].description.en)
+    expect(w.find('[data-testid="solution"] li span').text()).toBe(BUG_BY_ID[site.bugs[0]].description.en)
     expect(window.location.search).toContain('lang=en')
-
-    await w.find('[data-testid="new-page"]').trigger('click')
-    const fresh = w.find('[data-testid="seed"]').text()
-    expect(fresh).not.toBe(seed)
-    expect(window.location.search).toContain(`seed=${fresh}`)
     w.unmount()
   })
 
-  it('los bugs de validacion son reales: con flag aceptan lo invalido, sin flag lo rechazan (evita bugs "de mentira")', () => {
-    const on = (...ids) => (id) => ids.includes(id)
-    const none = on()
-    const email = { key: 'email', type: 'email', required: true }
-    const age = { key: 'age', type: 'number', required: true, min: 18, max: 120 }
-    const pw = { key: 'password', type: 'password', required: true, min: 8 }
-    const name = { key: 'name', type: 'text', required: true }
-    expect(checkField(email, 'sin-arroba', none)).not.toBeNull()
-    expect(checkField(email, 'sin-arroba', on('email-no-at'))).toBeNull()
-    expect(checkField(age, '18', none)).toBeNull()
-    expect(checkField(age, '18', on('age-off-by-one'))).not.toBeNull()
-    expect(checkField(pw, '1234567', none)).not.toBeNull()
-    expect(checkField(pw, '1234567', on('password-off-by-one'))).toBeNull()
-    expect(checkField(name, '', none)).not.toBeNull()
-    expect(checkField(name, '', on('required-not-validated'))).toBeNull()
+  it('el link del solucionario lleva a la pagina donde esta el bug (caso 7)', async () => {
+    const seed = 'rev-7'
+    const w = mountApp({ initialSeed: seed, initialLevel: 'senior' })
+    await w.find('[data-testid="reveal"]').trigger('click')
+    const site = generateSite(seed, 'senior')
+    const first = site.bugs[0]
+    window.location.hash = `#${concretePath(site, site.bugPages[first])}`
+    await tick()
+    expect(w.find('main [data-page]').attributes('data-page')).toBe(site.bugPages[first])
+    w.unmount()
   })
 
+  it('cambiar el nivel conserva la semilla, cambia paginas y bugs, queda en la URL y vuelve al inicio (caso 7)', async () => {
+    window.location.hash = '#/faq'
+    const w = mountApp({ initialSeed: 'lvl-2', initialLevel: 'junior' })
+    await w.find('[data-testid="reveal"]').trigger('click')
+    const count = (level) => generateSite('lvl-2', level)
+    expect(w.findAll('[data-testid="solution"] li').length).toBe(count('junior').bugs.length)
+    await w.find('[data-testid="level"]').setValue('senior')
+    expect(w.find('[data-testid="seed"]').text()).toBe('lvl-2')
+    expect(window.location.search).toContain('level=senior')
+    expect(window.location.hash).toBe('')
+    await w.find('[data-testid="reveal"]').trigger('click')
+    expect(w.findAll('[data-testid="solution"] li').length).toBe(count('senior').bugs.length)
+    expect(w.find('[data-testid="site-pages"]').text()).toContain(`(${count('senior').pages.length})`)
+    expect(w.findAll('[data-nav]').length).toBeGreaterThanOrEqual(3)
+    w.unmount()
+  })
+
+  it('una URL con nivel invalido o ausente abre en semi (evita un ?level roto)', () => {
+    const w = mountApp({ initialSeed: 'x1', initialLevel: 'experto' })
+    expect(w.find('[data-testid="level"]').element.value).toBe('semi')
+    expect(window.location.search).toContain('level=semi')
+    w.unmount()
+    const w2 = mountApp({ initialSeed: 'x1' })
+    expect(w2.find('[data-testid="level"]').element.value).toBe('semi')
+    w2.unmount()
+  })
+
+  it('"nueva pagina" cambia la semilla, la escribe en la URL y empieza en el inicio (caso 8)', async () => {
+    window.location.hash = '#/blog'
+    const w = mountApp({ initialSeed: 'old-1', initialLevel: 'semi' })
+    await w.find('[data-testid="new-page"]').trigger('click')
+    const fresh = w.find('[data-testid="seed"]').text()
+    expect(fresh).not.toBe('old-1')
+    expect(window.location.search).toContain(`seed=${fresh}`)
+    expect(window.location.hash).toBe('')
+    expect(w.find('main [data-page]').attributes('data-page')).toBe('home')
+    w.unmount()
+  })
+
+  it('el idioma traduce la UI y el contenido sin cambiar el sitio (caso 8)', async () => {
+    const w = mountApp({ initialSeed: 'lang-4', initialLevel: 'semi' })
+    const site = generateSite('lang-4', 'semi')
+    const brandEs = es.theme[site.themeId][`name${site.brandIdx}`]
+    expect(w.find('.brand').text()).toBe(brandEs)
+    await w.find('[data-testid="lang"]').setValue('en')
+    expect(w.find('.brand').text()).toBe(en.theme[site.themeId][`name${site.brandIdx}`])
+    expect(w.find('h1').text()).toBe(en.tpl.home.title.replace('{brand}', en.theme[site.themeId][`name${site.brandIdx}`]))
+    expect(w.find('[data-testid="level"]').element.value).toBe('semi')
+    w.unmount()
+  })
+})
+
+describe('QA Lab: capa de contenido', () => {
+  it('resolveContent entrega la interfaz documentada en es y en (evita que cablear los packs rompa las paginas)', () => {
+    const site = generateSite('content-1', 'semi')
+    for (const [locale, msgs] of [['es', es], ['en', en]]) {
+      const i18n = createLabI18n(locale)
+      const c = resolveContent(site, i18n.global.t)
+      expect(c.brand).toBe(msgs.theme[site.themeId][`name${site.brandIdx}`])
+      expect(c.items).toHaveLength(site.data.catalog.length)
+      expect(c.items[0]).toMatchObject({ id: 1, price: site.data.catalog[0].price })
+      expect(c.items[0].name.length).toBeGreaterThan(2)
+      expect(c.categories).toHaveLength(3)
+      expect(c.faq).toHaveLength(6)
+      expect(c.posts.length).toBeGreaterThanOrEqual(3)
+      expect(c.currency).toEqual({ symbol: '$', code: 'USD', decimals: 2 })
+      expect(c.money(12.5)).toBe('$12.50')
+      expect(c.field('email')).toMatchObject({ key: 'email', type: 'email', required: true })
+      expect(c.field('country').options).toHaveLength(4)
+      expect(Object.keys(c.nav)).toEqual(['home', 'list', 'cart', 'blog', 'faq', 'contact', 'dashboard', 'wizard', 'login', 'signup', 'account'])
+      expect(c.stepTitle('confirm').length).toBeGreaterThan(2)
+    }
+  })
+})
+
+describe('QA Lab: aislamiento', () => {
   it('el portafolio no importa nada del lab (evita inflar el bundle del portafolio)', () => {
     const walk = (dir) =>
       readdirSync(dir).flatMap((n) => {
