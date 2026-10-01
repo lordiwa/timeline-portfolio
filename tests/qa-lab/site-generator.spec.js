@@ -95,7 +95,7 @@ describe('generateSite: bugs', () => {
     let short = 0
     for (const s of seeds) {
       const site = generateSite(s, level)
-      const pool = bugPool(site.pages, level).length
+      const pool = bugPool(site.pages, level, site.capabilities, site.data).length
       expect(site.bugs.length).toBeLessThanOrEqual(Math.min(hi, pool))
       if (pool >= lo) expect(site.bugs.length).toBeGreaterThanOrEqual(lo)
       else { short += 1; expect(site.bugs.length).toBe(pool) }

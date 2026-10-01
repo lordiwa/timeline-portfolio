@@ -6,8 +6,10 @@ import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
 import { bugLocation } from '../../src/qa-lab/bugs/locations.js'
+import { formKeys } from '../../src/qa-lab/generator/capabilities.js'
 import App from '../../src/qa-lab/App.vue'
 import es from '../../src/qa-lab/i18n/es.json'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
 import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, track, cleanup } from './helpers.js'
 
 afterEach(cleanup)
@@ -152,7 +154,10 @@ describe('R-4 / R-5 / R-6 / R-7: navbar, solucionario, login y foco', () => {
     expect(bugLocation(co, 'email-no-at')).toMatchObject({ n: 1 })
     expect(bugLocation(co, 'button-covered')).toBeNull()
     const wz = forceSite({ pages: ALL_PAGES, bugs: { 'age-off-by-one': 'wizard', 'double-submit': 'wizard' } })
-    expect(bugLocation(wz, 'age-off-by-one')).toMatchObject({ stepKey: 'wizard.step.security' })
+    // los pasos del wizard vienen del pack (s1..sN): el de age-off-by-one es el que tiene el campo numerico visible
+    const numKey = formKeys(wz.data, 'wizard').find((k) => wz.data.fieldMeta[k].type === 'number')
+    const numStep = wz.data.wizard.steps.find((s) => s.fields.includes(numKey)).id
+    expect(bugLocation(wz, 'age-off-by-one')).toMatchObject({ stepKey: `wizard.step.${numStep}` })
     expect(bugLocation(wz, 'double-submit')).toMatchObject({ stepKey: 'wizard.step.confirm' })
     expect(bugLocation(forceSite({ pages: ALL_PAGES, bugs: { 'console-error': 'faq' } }), 'console-error')).toEqual({ key: 'lab.where.helpButton' })
   })
@@ -215,12 +220,12 @@ describe('R-8: typo en el blog', () => {
   it('con el flag el titulo del listado y del post difiere del correcto; sin flag coincide', async () => {
     for (const flag of [false, true]) {
       const site = forceSite({ pages: ALL_PAGES, bugs: flag ? { typo: 'blog' } : {} })
-      const brand = es.theme[site.themeId][`name${site.brandIdx}`]
+      const pack = getThemePack(site.themeId)
+      const brand = pack.name.es
       const list = await mountSite(site, { hash: '#/blog' })
       expect(list.w.find('h1').text() !== es.tpl.blog.title.replace('{brand}', brand)).toBe(flag)
       await go('/blog/1')
-      const first = site.data.posts[0]
-      const expected = first.titleIdx < 0 ? es.theme[site.themeId].article : es.blog[`title${first.titleIdx}`]
+      const expected = pack.posts[site.data.posts[0].postIdx].title.es
       expect(list.w.find('h1').text() !== expected).toBe(flag)
       list.w.unmount()
     }

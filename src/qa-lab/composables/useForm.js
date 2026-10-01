@@ -8,7 +8,7 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 export function checkField(f, value, has, clock = systemClock) {
   const empty = f.type === 'checkbox' ? !value : String(value ?? '').trim() === ''
   if (f.required && empty) {
-    if (has('required-not-validated') && f.key === 'name') return null // BUG
+    if (has('required-not-validated') && (f.key === 'name' || f.nameLike)) return null // BUG (nameLike: el "nombre" del pack)
     return { key: 'err.required' }
   }
   if (empty) return null
@@ -18,14 +18,15 @@ export function checkField(f, value, has, clock = systemClock) {
   }
   if (f.type === 'password') {
     const min = has('password-off-by-one') ? f.min - 1 : f.min // BUG
-    return String(value).length < min ? { key: 'err.password' } : null
+    return String(value).length < min ? { key: 'err.password', params: { min: f.min } } : null
   }
   if (f.type === 'number') {
     const n = Number(value)
     const tooYoung = has('age-off-by-one') ? n <= f.min : n < f.min // BUG
-    return Number.isNaN(n) || tooYoung || n > f.max ? { key: 'err.age' } : null
+    return Number.isNaN(n) || tooYoung || n > f.max ? { key: 'err.number', params: { min: f.min, max: f.max } } : null
   }
   if (f.type === 'date') {
+    if (f.noFuture === false) return null // fecha de plazo/turno (campos de los packs): una fecha futura es valida
     return Date.parse(value) > clock.now() ? { key: 'err.date' } : null
   }
   // Reglas de los content packs (rules.minLength / maxLength / pattern como string con la fuente de la regex).

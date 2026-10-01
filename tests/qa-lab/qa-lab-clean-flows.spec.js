@@ -8,14 +8,19 @@ import { LEVELS } from '../../src/qa-lab/generator/levels.js'
 import { compatible } from '../../src/qa-lab/generator/compat.js'
 import { concretePath } from '../../src/qa-lab/generator/pages.js'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
-import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, fillVisible, click, here, cleanup, watchConsole } from './helpers.js'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
+import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, fillVisible, click, here, moneyOf, cleanup, watchConsole } from './helpers.js'
 
 vi.setConfig({ testTimeout: 300000 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
 
 const SEEDS = Array.from({ length: 12 }, (_, i) => `clean-${i}`)
-const cents = (n) => Math.round(n * 100)
-const fmt = (c) => `$${(c / 100).toFixed(2)}`
+/** Unidad menor y formato de dinero de la moneda del pack del sitio (los packs traen monedas con 0 y 2 decimales). */
+const moneyUnits = (site) => {
+  const u = 10 ** getThemePack(site.themeId).currency.decimals
+  const money = moneyOf(site)
+  return { cents: (n) => Math.round(n * u), fmt: (c) => money(c / u) }
+}
 const text = (w, id) => w.find(`[data-testid="${id}"]`).text()
 const cartCount = (w) => text(w, 'cart-count')
 const submissions = (w) => Number(text(w, 'submissions').match(/\d+/)[0])
@@ -77,7 +82,7 @@ async function exerciseList(w, site) {
   // orden por precio ascendente (dentro de la pagina)
   await w.find('.qa-dd-toggle').trigger('click')
   await w.findAll('.qa-dd-menu button').find((b) => b.text().includes('menor a mayor')).trigger('click')
-  const prices = w.findAll('[data-testid="item-card"] .qa-price').map((p) => Number(p.text().slice(1)))
+  const prices = w.findAll('[data-testid="item-card"] .qa-price').map((p) => Number(p.text().match(/\d+(?:\.\d+)?/)[0]))
   expect(prices).toEqual([...prices].sort((a, b) => a - b))
   await click(w, 'Limpiar filtros').trigger('click')
   expect(text(w, 'result-count')).toBe(`${total} resultados`)
@@ -124,6 +129,7 @@ async function exerciseCart(w, site) {
 /** R-1.4 + R-1.8: checkout completo con cupon valido e invalido, envio e impuestos contra la formula de referencia; doble click no duplica. */
 async function exerciseCheckout(w, site, storage) {
   const { catalog, coupon, shipping, taxRate } = site.data
+  const { cents, fmt } = moneyUnits(site)
   await go('/catalog')
   const adds = w.findAll('[data-testid="add-to-cart"]')
   await adds[0].trigger('click')
@@ -183,11 +189,12 @@ async function exerciseAuth(w, site, n) {
   }
   if (site.pages.includes('signup')) {
     await go('/signup')
-    await fillVisible(w, n)
+    const birthKey = site.data.signupFields.find((k) => site.data.fieldMeta[k].type === 'date' && /birth/i.test(k))
+    await fillVisible(w, site, { email: `qa${n}@example.com`, ...(birthKey ? { [birthKey]: '2000-05-10' } : {}) })
     await w.find('form').trigger('submit')
     await tick(10)
     expect(w.find('[data-testid="session-user"]').exists()).toBe(true)
-    if (hasAccount && site.data.signupFields.includes('birth')) {
+    if (hasAccount && birthKey) {
       expect(w.find('[data-testid="account-birth"]').text()).toBe('Fecha de nacimiento: 10/05/2000') // misma fecha que se escribio
     }
     await w.find('[data-testid="nav-logout"]').trigger('click')
@@ -209,14 +216,14 @@ async function exerciseContent(w, site) {
   if (site.pages.includes('wizard')) {
     await go('/wizard')
     for (let i = 0; i < 8 && submissions(w) === 0; i++) {
-      await fillVisible(w)
+      await fillVisible(w, site)
       await w.find('form').trigger('submit')
     }
     expect(submissions(w)).toBe(1)
   }
   if (site.pages.includes('contact')) {
     await go('/contact')
-    await fillVisible(w)
+    await fillVisible(w, site)
     vi.useFakeTimers() // la ventana de reenvio (1 s) usa el reloj del sitio
     for (let i = 1; i <= 10; i++) {
       await w.find('form').trigger('submit')
@@ -315,10 +322,10 @@ describe('todos los flags compatibles a la vez no crashean (R-5)', () => {
       await back()
       await go('/checkout')
       await w.find('form').trigger('submit')
-      await fillVisible(w)
+      await fillVisible(w, site)
       await w.find('form').trigger('submit')
       await go('/contact')
-      await fillVisible(w)
+      await fillVisible(w, site)
       for (let i = 0; i < 3; i++) await w.find('form').trigger('submit')
       await go('/login')
       const d = site.data.demoUser
@@ -336,7 +343,7 @@ describe('todos los flags compatibles a la vez no crashean (R-5)', () => {
       await go('/dashboard')
       await w.find('input[type=search]').setValue('zzzz')
       await go('/wizard')
-      await fillVisible(w)
+      await fillVisible(w, site)
       await w.find('form').trigger('submit')
       w.unmount()
     } finally {

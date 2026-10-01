@@ -15,7 +15,7 @@ const meta = (ids) => ids.map((id) => BUG_BY_ID[id])
 const count = (list, pred) => list.filter(pred).length
 const CAPS = ['list', 'list-search', 'list-filter', 'list-sort', 'list-pagination', 'detail', 'cart', 'checkout', 'coupon', 'shipping', 'tax',
   'auth', 'register', 'protected-routes', 'account', 'orders', 'contact', 'faq', 'dashboard', 'blog-comments', 'wizard', 'wizard-conditional',
-  'dates', 'modal', 'mobile-nav', 'forms']
+  'dates', 'modal', 'mobile-nav', 'forms', 'field-email', 'field-number', 'field-password', 'field-name']
 
 describe('catalogo v2: metadatos y totales de la spec', () => {
   it('36 bugs con id unico; cada uno con categoria, dificultad, nivel, paginas validas y requires conocidos (evita un bug que ningun sitio pueda activar)', () => {
@@ -169,17 +169,18 @@ describe('bugParams y determinismo del sub-stream', () => {
     expect([...ns['nth-submit-server-error']].sort()).toEqual([2, 3, 4])
   })
 
-  it('el contenido y el set de paginas de una semilla son los de master: agregar bugs al catalogo no los cambia (evita romper URLs ya compartidas)', () => {
-    // hash de {tema, marca, estilo, paginas, zona, datos} calculado con el generador de master (HEAD 289a2a8, 19 bugs) para 12 semillas x 3 niveles.
+  it('el contenido y el set de paginas de una semilla no cambian al agregar bugs al catalogo (determinismo del sub-stream; evita romper URLs ya compartidas)', () => {
+    // hash de {tema, estilo, paginas, zona, datos} de 12 semillas x 3 niveles, calculado con el generador SIN los 17 bugs
+    // nuevos: el de master con los packs de temas (TASK-048, commit 05ba4d5; antes de TASK-049 el contenido de master era otro).
     const golden = {
-      junior: [2945134260, 3900698150, 295950636, 256685534, 891019674, 919004786, 3704695666, 1463159026, 3377962934, 1535913495, 191951392, 2028718960],
-      semi: [234784504, 2395101046, 1951546084, 1568245747, 1709332856, 2127892909, 1479088793, 2317072201, 4172156713, 3926208885, 1484157440, 3489845283],
-      senior: [2970876345, 2201462182, 3123497695, 2729594857, 1496666327, 4212097641, 3117390458, 1552677699, 4261652385, 581773446, 3416365062, 2770622996],
+      junior: [1119930580, 2885334909, 2536555719, 849501968, 808514393, 2648613156, 3988243244, 3990415866, 1631058286, 2341478045, 2401298586, 411968668],
+      semi: [4220218802, 3726789121, 2476595792, 2859653560, 76814492, 3521869177, 3276138011, 1109664116, 1877182854, 1551279580, 3118017028, 2163559929],
+      senior: [3031223351, 1799079823, 3569448068, 2863810893, 46251837, 932825717, 2138019216, 4275753085, 4219331508, 78554181, 16278505, 4090382111],
     }
     for (const level of LEVELS) {
       golden[level].forEach((h, i) => {
         const s = generateSite(`golden-${i}`, level)
-        expect(hashString(JSON.stringify({ themeId: s.themeId, brandIdx: s.brandIdx, style: s.style, pages: s.pages, tz: s.tzOffsetMinutes, data: s.data })), `${level} golden-${i}`).toBe(h)
+        expect(hashString(JSON.stringify({ themeId: s.themeId, style: s.style, pages: s.pages, tz: s.tzOffsetMinutes, data: s.data })), `${level} golden-${i}`).toBe(h)
       })
     }
   })

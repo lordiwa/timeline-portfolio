@@ -6,8 +6,10 @@ import { join } from 'node:path'
 import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { concretePath } from '../../src/qa-lab/generator/pages.js'
 import { BUGS, BUG_BY_ID, CATEGORIES, DIFFICULTIES } from '../../src/qa-lab/bugs/catalog.js'
+import { describeBug } from '../../src/qa-lab/bugs/describe.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { resolveContent } from '../../src/qa-lab/content/index.js'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
 import App from '../../src/qa-lab/App.vue'
 import es from '../../src/qa-lab/i18n/es.json'
 import en from '../../src/qa-lab/i18n/en.json'
@@ -50,13 +52,13 @@ describe('QA Lab: shell', () => {
     expect(items.map((li) => li.attributes('data-bug-page'))).toEqual(site.bugs.map((id) => site.bugPages[id]))
     items.forEach((li, i) => {
       const id = site.bugs[i]
-      expect(li.find('span').text()).toBe(BUG_BY_ID[id].description.es)
+      expect(li.find('span').text()).toBe(describeBug(site, id, 'es')) // la descripcion usa el campo real del sitio (los 4 bugs de validacion)
       expect(li.find('[data-testid="bug-link"]').attributes('href')).toBe(`#${concretePath(site, site.bugPages[id])}`)
     })
     expect(w.find('[data-testid="site-pages"]').text()).toContain(`(${site.pages.length})`)
 
     await w.find('[data-testid="lang"]').setValue('en')
-    expect(w.find('[data-testid="solution"] li span').text()).toBe(BUG_BY_ID[site.bugs[0]].description.en)
+    expect(w.find('[data-testid="solution"] li span').text()).toBe(describeBug(site, site.bugs[0], 'en'))
     expect(window.location.search).toContain('lang=en')
     w.unmount()
   })
@@ -115,11 +117,11 @@ describe('QA Lab: shell', () => {
   it('el idioma traduce la UI y el contenido sin cambiar el sitio (caso 8)', async () => {
     const w = mountApp({ initialSeed: 'lang-4', initialLevel: 'semi' })
     const site = generateSite('lang-4', 'semi')
-    const brandEs = es.theme[site.themeId][`name${site.brandIdx}`]
-    expect(w.find('.brand').text()).toBe(brandEs)
+    const pack = getThemePack(site.themeId)
+    expect(w.find('.brand').text()).toBe(pack.name.es)
     await w.find('[data-testid="lang"]').setValue('en')
-    expect(w.find('.brand').text()).toBe(en.theme[site.themeId][`name${site.brandIdx}`])
-    expect(w.find('h1').text()).toBe(en.tpl.home.title.replace('{brand}', en.theme[site.themeId][`name${site.brandIdx}`]))
+    expect(w.find('.brand').text()).toBe(pack.name.en)
+    expect(w.find('h1').text()).toBe(en.tpl.home.title.replace('{brand}', pack.name.en))
     expect(w.find('[data-testid="level"]').element.value).toBe('semi')
     w.unmount()
   })
@@ -128,20 +130,22 @@ describe('QA Lab: shell', () => {
 describe('QA Lab: capa de contenido', () => {
   it('resolveContent entrega la interfaz documentada en es y en (evita que cablear los packs rompa las paginas)', () => {
     const site = generateSite('content-1', 'semi')
-    for (const [locale, msgs] of [['es', es], ['en', en]]) {
+    const pack = getThemePack(site.themeId)
+    for (const locale of ['es', 'en']) {
       const i18n = createLabI18n(locale)
       const c = resolveContent(site, i18n.global.t)
-      expect(c.brand).toBe(msgs.theme[site.themeId][`name${site.brandIdx}`])
+      expect(c.brand).toBe(pack.name[locale])
       expect(c.items).toHaveLength(site.data.catalog.length)
       expect(c.items[0]).toMatchObject({ id: 1, price: site.data.catalog[0].price })
       expect(c.items[0].name.length).toBeGreaterThan(2)
-      expect(c.categories).toHaveLength(3)
-      expect(c.faq).toHaveLength(6)
+      expect(c.categories).toEqual(pack.categories.map((k) => k[locale]))
+      expect(c.faq).toHaveLength(Math.min(6, pack.faq.length))
       expect(c.posts.length).toBeGreaterThanOrEqual(3)
-      expect(c.currency).toEqual({ symbol: '$', code: 'USD', decimals: 2, position: 'before' })
-      expect(c.money(12.5)).toBe('$12.50')
+      expect(c.currency).toEqual(pack.currency)
+      expect(c.money(12.5)).toBe(pack.currency.position === 'after' ? `${(12.5).toFixed(pack.currency.decimals)} ${pack.currency.symbol}` : `${pack.currency.symbol}${(12.5).toFixed(pack.currency.decimals)}`)
       expect(c.field('email')).toMatchObject({ key: 'email', type: 'email', required: true })
-      expect(c.field('country').options).toHaveLength(4)
+      expect(c.field('subject').options).toHaveLength(4)
+      for (const f of pack.signupFields) expect(c.field(f.key)).toMatchObject({ key: f.key, type: f.type, required: f.required, label: f.label[locale] })
       expect(Object.keys(c.nav)).toEqual(['home', 'list', 'cart', 'blog', 'faq', 'contact', 'dashboard', 'wizard', 'login', 'signup', 'account'])
       expect(c.stepTitle('confirm').length).toBeGreaterThan(2)
     }

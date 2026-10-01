@@ -20,7 +20,9 @@ function submit() {
   serverError.value = nthHit('nth-submit-server-error')
   if (serverError.value) return
   store.bump('submit')
-  store.register({ name: values.name, email: values.email, password: values.password, birth: values.birth })
+  const nameKey = fields.value.find((f) => f.nameLike)?.key // el campo de nombre del pack (no siempre se llama 'name')
+  const dateKey = fields.value.find((f) => f.type === 'date' && /birth/i.test(f.key))?.key // fecha de nacimiento: se guarda tal cual 'YYYY-MM-DD'
+  store.register({ name: values[nameKey] || values.email, email: values.email, password: values.password, birth: dateKey ? values[dateKey] : undefined })
   toast(t('signup.created'))
   router.replace(site.pages.includes('account') ? routePath('account') : '/') // queda con sesion iniciada
 }

@@ -8,6 +8,7 @@ import { concretePath } from './generator/pages.js'
 import { newSeed } from './generator/prng.js'
 import { BUG_BY_ID } from './bugs/catalog.js'
 import { bugLocation } from './bugs/locations.js'
+import { describeBug } from './bugs/describe.js'
 import { LOCALES } from './i18n/index.js'
 import { readParams } from './boot.js'
 import SiteRoot from './components/SiteRoot.vue'
@@ -22,6 +23,8 @@ const bugWhere = (b) => {
   return w ? t(w.key, { n: w.n, step: w.stepKey ? t(w.stepKey) : '' }) : ''
 }
 const site = computed(() => generateSite(seed.value, level.value))
+// Descripcion con el campo REAL del sitio (los bugs de validacion afectan campos del pack: bugs/describe.js).
+const describe = (id) => describeBug(site.value, id, locale.value)
 const revealed = ref(false)
 // Solucionario: los bugs activos (misma fuente que los flags) + la pagina donde se manifiesta cada uno.
 const solution = computed(() =>
@@ -116,7 +119,7 @@ onBeforeUnmount(() => {
         <li v-for="b in solution" :key="b.id" :data-bug-id="b.id" :data-bug-page="b.page">
           <code>{{ b.id }}</code>
           <em>{{ t(`lab.category.${b.category}`) }} · {{ t(`lab.difficulty.${b.difficulty}`) }}</em>
-          <span>{{ b.description[locale] }}</span>
+          <span>{{ describe(b.id) }}</span>
           <small v-if="bugWhere(b)" class="lab-where" data-testid="bug-where">{{ bugWhere(b) }}</small>
           <a :href="`#${b.path}`" data-testid="bug-link">{{ t('lab.page') }}: {{ t(`pageName.${b.page}`) }} (#{{ b.path }})</a>
         </li>

@@ -3,7 +3,7 @@
 // Los filtros viven en el store: al volver desde el detalle el listado queda como estaba.
 import { computed, ref } from 'vue'
 import { useSite } from '../composables/useSite.js'
-import { useListing, PRICE_BANDS } from '../composables/useListing.js'
+import { useListing } from '../composables/useListing.js'
 import { routePath } from '../generator/pages.js'
 import PageShell from '../ui/PageShell.vue'
 import Pager from '../ui/Pager.vue'
@@ -71,7 +71,7 @@ function add(item) {
       </select>
       <select data-testid="filter-price" :value="L.state.price" :aria-label="t('list.anyPrice')" @change="L.set('price', $event.target.value)">
         <option value="">{{ t('list.anyPrice') }}</option>
-        <option v-for="p in PRICE_BANDS" :key="p" :value="String(p)">{{ t('list.upTo', { n: p }) }}</option>
+        <option v-for="p in c.priceBands" :key="p" :value="String(p)">{{ t('list.upTo', { n: c.money(p) }) }}</option>
       </select>
       <Dropdown :label="t('list.sortBy')" :items="sortItems" :active="L.state.sort" class="on-light" @select="(id) => L.set('sort', id)" />
       <button type="button" class="qa-btn secondary" @click="clear">{{ t('list.clear') }}</button>

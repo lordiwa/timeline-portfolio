@@ -9,7 +9,10 @@ import { createLatency } from '../../src/qa-lab/services/clock.js'
 import { computeTotals } from '../../src/qa-lab/state/pricing.js'
 import { formatDate, relTime } from '../../src/qa-lab/state/dates.js'
 import { createStore, memoryStorage, storageKey } from '../../src/qa-lab/state/store.js'
-import { forceSite, ALL_PAGES, mountSite, go, back, tick, fill, fillVisible, click, here, cleanup } from './helpers.js'
+import { resolveContent } from '../../src/qa-lab/content/index.js'
+import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
+import { forceSite, ALL_PAGES, mountSite, go, back, tick, fill, fillVisible, click, here, moneyOf, cleanup } from './helpers.js'
 
 vi.setConfig({ testTimeout: 60000 })
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks() })
@@ -87,23 +90,29 @@ describe('estado y entre paginas', () => {
     expect(bug).toBe('(3)')
   })
 
-  it('filter-lost-on-paginate: al paginar con un filtro de categoria el filtro se pierde y la pagina sigue en 2 solo con el flag', async () => {
+  it('filter-lost-on-paginate: al paginar se pierden el orden y el filtro de categoria y la pagina sigue en 2 solo con el flag', async () => {
     const seed = seedWith((s) => BUG_BY_ID['filter-lost-on-paginate'].witness(s))
     const base = generateSite(seed, 'senior')
     const pop = {}
     for (const r of base.data.catalog) pop[r.cat] = (pop[r.cat] || 0) + 1
-    const cat = Number(Object.keys(pop).find((c) => pop[c] > base.data.list.pageSize))
+    const cat = Number(Object.keys(pop).sort((a, b) => pop[b] - pop[a])[0])
     const [clean, bug] = await bothWays(
       (flag) => mountSite(forceSite({ seed, pages: ALL_PAGES, bugs: flag ? { 'filter-lost-on-paginate': 'list' } : {} }), { hash: '#/catalog' }),
       async ({ w }) => {
+        await w.find('.qa-dd-toggle').trigger('click')
+        await w.findAll('.qa-dd-menu button').find((b) => b.text().includes('menor a mayor')).trigger('click') // orden por precio
         await w.find('[data-testid="filter-cat"]').setValue(String(cat))
+        // paginar con el filtro solo si deja mas de una pagina; si no, solo con el orden
+        if (pop[cat] <= base.data.list.pageSize) await w.find('[data-testid="filter-cat"]').setValue('')
         await click(w, 'Siguiente').trigger('click')
         expect(w.find('.qa-page-info').text()).toMatch(/Página 2 de/) // control: la pagina avanza en ambos
-        return w.find('[data-testid="filter-cat"]').element.value
+        return { sort: w.find('.qa-dd-toggle').text(), cat: w.find('[data-testid="filter-cat"]').element.value, keepsCat: pop[cat] > base.data.list.pageSize }
       },
     )
-    expect(clean).toBe(String(cat))
-    expect(bug).toBe('')
+    expect(clean.sort).toContain('menor a mayor')
+    expect(bug.sort).not.toContain('menor a mayor')
+    expect(bug.cat).toBe('')
+    if (clean.keepsCat) expect(clean.cat).toBe(String(cat))
   })
 
   it('cart-loses-item-on-back: agregar, ver el carrito, volver atras y agregar otro pierde el primero solo con el flag', async () => {
@@ -213,14 +222,14 @@ describe('intermitentes deterministas (solo senior, N de bugParams)', () => {
   it('nth-submit-server-error: el 2.º envio valido muestra un banner 500 (role=alert), conserva los datos y no cuenta; el siguiente pasa', async () => {
     const [clean, bug] = await bothWays(
       (flag) => mountSite(forceSite({ pages: ALL_PAGES, bugs: flag ? { 'nth-submit-server-error': 'contact' } : {}, params: { 'nth-submit-server-error': { n: 2 } } }), { hash: '#/contact' }),
-      async ({ w }) => {
-        await fillVisible(w)
+      async ({ w, site }) => {
+        await fillVisible(w, site)
         vi.useFakeTimers() // la ventana de bloqueo de reenvio (1 s) usa el reloj del sitio
         const out = []
         for (let i = 1; i <= 3; i++) {
           await w.find('form').trigger('submit')
           const banner = w.find('.qa-banner-error')
-          out.push({ n: submissions(w), banner: banner.exists() && banner.attributes('role') === 'alert', kept: w.find('[data-field="name"] input').element.value })
+          out.push({ n: submissions(w), banner: banner.exists() && banner.attributes('role') === 'alert', kept: w.find('[data-field="email"] input').element.value })
           await vi.advanceTimersByTimeAsync(1100)
         }
         vi.useRealTimers()
@@ -231,7 +240,7 @@ describe('intermitentes deterministas (solo senior, N de bugParams)', () => {
     expect(clean.some((x) => x.banner)).toBe(false)
     expect(bug.map((x) => x.n.match(/\d+/)[0])).toEqual(['1', '1', '2'])
     expect(bug.map((x) => x.banner)).toEqual([false, true, false])
-    expect(bug[1].kept).toBe('Ana Perez')
+    expect(bug[1].kept).toBe('ana@example.com') // los datos escritos se conservan tras el 500
   })
 
   it('el solucionario muestra el N concreto de cada intermitente y el offset del bug de zona (evita un solucionario sin la accion que falla)', () => {
@@ -269,17 +278,19 @@ describe('calculo y fechas', () => {
         return mountSite(site, { hash: '#/checkout', storage: seedStorage(site, { cart: [{ id: 1, qty: 1 }, { id: 2, qty: 1 }, { id: 3, qty: 1 }] }) })
       },
       async ({ w, site }) => {
-        await fill(w, { name: 'Ana Perez', email: 'ana@example.com', address: 'Calle 1', city: 'Lima' })
+        await fillVisible(w, site)
         await w.find('form').trigger('submit')
         await w.find('[data-testid="coupon-input"]').setValue(site.data.coupon.code)
         await w.find('[data-testid="coupon-apply"]').trigger('click')
         return w.find('[data-testid="sum-tax"]').text()
       },
     )
-    const { data } = generateSite(seed, 'senior')
-    const sub = data.catalog.slice(0, 3).reduce((s, r) => s + r.price * 100, 0)
+    const site = generateSite(seed, 'senior')
+    const { data } = site
+    const d = getThemePack(site.themeId).currency.decimals // unidad menor de la moneda del pack
+    const sub = data.catalog.slice(0, 3).reduce((s, r) => s + Math.round(r.price * 10 ** d), 0)
     const disc = Math.round((sub * data.coupon.pct) / 100)
-    expect(clean).toBe(`$${(Math.round(((sub - disc) * data.taxRate) / 100) / 100).toFixed(2)}`)
+    expect(clean).toBe(moneyOf(site)(Math.round(((sub - disc) * data.taxRate) / 100) / 10 ** d))
     expect(bug).not.toBe(clean)
   })
 
@@ -304,10 +315,11 @@ describe('calculo y fechas', () => {
   })
 
   it('el registro guarda la fecha de nacimiento tal cual se escribio y la cuenta la muestra igual (sin flag, con zona simulada distinta de 0)', async () => {
-    const seed = seedWith((s) => s.data.signupFields.includes('birth') && s.tzOffsetMinutes !== 0)
+    const dateKeyOf = (s) => s.data.signupFields.find((k) => s.data.fieldMeta[k].type === 'date' && /birth/i.test(k)) // fecha de nacimiento del pack
+    const seed = seedWith((s) => dateKeyOf(s) && s.tzOffsetMinutes !== 0)
     const site = forceSite({ seed, pages: ALL_PAGES })
     const { w } = await mountSite(site, { hash: '#/signup' })
-    await fillVisible(w, 7)
+    await fillVisible(w, site, { email: 'qa7@example.com', [dateKeyOf(site)]: '2000-05-10' })
     await w.find('form').trigger('submit')
     await tick(10)
     expect(here()).toBe('#/account')
@@ -376,26 +388,28 @@ describe('asincronia', () => {
   it('stale-response-overwrites: con respuestas invertidas la ultima en llegar gana (resultados de la consulta vieja) solo con el flag; el input es el de la 2.ª en ambos', async () => {
     // semilla donde la 1.ª respuesta de busqueda tarda mas que la 2.ª
     const seed = seedWith((s) => { const l = createLatency({ seed: s.seed }); return l.latencyMs('search', 1) > l.latencyMs('search', 2) + 100 })
-    const base = generateSite(seed, 'senior')
-    const full = (name) => name // nombre completo de un producto: 1 resultado
+    const site0 = generateSite(seed, 'senior')
+    const names = resolveContent(site0, createLabI18n('es').global.t).items.map((i) => i.name.toLowerCase())
+    const countOf = (q) => names.filter((n) => n.includes(q)).length
+    const q2 = names[0] // consulta final: el nombre completo del 1.er producto
+    const q1 = 'aeiourstnlcmpdb'.split('').find((ch) => countOf(ch) > countOf(q2)) // consulta previa con mas resultados
+    expect(q1).toBeTruthy()
     const [clean, bug] = await bothWays(
       (flag) => mountSite(forceSite({ seed, pages: ALL_PAGES, bugs: flag ? { 'stale-response-overwrites': 'list' } : {} }), { hash: '#/catalog' }),
       async ({ w }) => {
-        const name = full(w.find('[data-testid="item-card"] h3').text())
         vi.useFakeTimers()
         const search = w.find('input[type=search]')
-        await search.setValue('a') // consulta 1 (muchos resultados, responde tarde)
-        await search.setValue(name.toLowerCase()) // consulta 2 (1 resultado, responde antes)
+        await search.setValue(q1) // consulta 1: responde tarde
+        await search.setValue(q2) // consulta 2: responde antes
         await vi.advanceTimersByTimeAsync(700)
         vi.useRealTimers()
-        return { input: w.find('input[type=search]').element.value, results: w.find('[data-testid="result-count"]').text(), name: name.toLowerCase() }
+        return { input: w.find('input[type=search]').element.value, results: w.find('[data-testid="result-count"]').text() }
       },
     )
-    expect(clean.input).toBe(clean.name)
-    expect(bug.input).toBe(bug.name)
-    expect(clean.results).toBe('1 resultados')
-    expect(bug.results).not.toBe('1 resultados')
-    expect(base.data.catalog.length).toBeGreaterThan(1)
+    expect(clean.input).toBe(q2)
+    expect(bug.input).toBe(q2) // el campo muestra la 2.ª consulta en ambos
+    expect(clean.results).toBe(`${countOf(q2)} resultados`)
+    expect(bug.results).toBe(`${countOf(q1)} resultados`) // con el flag la respuesta vieja llego despues y piso a la nueva
   })
 })
 

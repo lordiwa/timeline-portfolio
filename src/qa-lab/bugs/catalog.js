@@ -3,6 +3,8 @@
 //
 // Campos de cada entrada:
 //   id, category, difficulty, description {es,en}   identidad, familia, dificultad y texto con pagina y pasos
+//   template   {es,en} opcional: la descripcion con parametros ({field}, {min}, {max}, {prev}) que describeBug() resuelve
+//              contra el campo REAL del sitio (los campos vienen del pack del tema: no se asume "edad" ni "nombre")
 //   level      'junior'|'semi'|'senior'              nivel MINIMO: un bug de nivel X aparece en X y en los superiores
 //   pages      tipos de pagina donde se puede manifestar (el generador elige UNA: site.bugPages[id])
 //   requires   capacidades del sitio (generator/capabilities.js) que el sitio debe tener
@@ -16,6 +18,7 @@
 import { PAGE_TYPES } from '../generator/pages.js'
 import { createLatency } from '../services/clock.js'
 import { computeTotals } from '../state/pricing.js'
+import { getThemePack } from '../themes/index.js'
 
 // Paginas (tipos de generator/pages.js) donde cada bug PUEDE manifestarse. El generador elige una.
 const FORM_PAGES = ['signup', 'checkout', 'contact', 'wizard']
@@ -27,15 +30,14 @@ export const DIFFICULTIES = ['easy', 'medium', 'hard']
 export const BUG_LEVELS = ['junior', 'semi', 'senior']
 
 // --- witness: el contenido de la semilla permite manifestar el bug ---
-const catPopulation = (site) => {
-  const n = {}
-  for (const r of site.data.catalog) n[r.cat] = (n[r.cat] || 0) + 1
-  return Object.values(n)
-}
 const taxWitness = (site) => {
   // Con los 3 primeros productos (los destacados de la home), 1 unidad de cada uno y el cupon del sitio:
   // el impuesto redondeado linea por linea difiere del calculado sobre la base.
-  const base = { lines: site.data.catalog.slice(0, 3).map((r) => ({ price: r.price, qty: 1 })), couponPct: site.data.coupon.pct, taxRate: site.data.taxRate }
+  // Los decimales son los de la moneda del pack (el checkout calcula en la unidad menor de esa moneda).
+  const base = {
+    lines: site.data.catalog.slice(0, 3).map((r) => ({ price: r.price, qty: 1 })), couponPct: site.data.coupon.pct, taxRate: site.data.taxRate,
+    decimals: getThemePack(site.themeId).currency.decimals,
+  }
   return computeTotals({ ...base, taxPerLine: true }).tax !== computeTotals(base).tax
 }
 const searchInversionWitness = (site) => {
@@ -47,31 +49,48 @@ const nthParams = (min) => (rng) => ({ n: min + rng.int(0, min === 3 ? 3 : 2) })
 
 export const BUGS = [
   {
-    id: 'email-no-at', category: 'validation', difficulty: 'easy', level: 'junior', pages: FORM_PAGES, requires: ['forms'],
+    id: 'email-no-at', category: 'validation', difficulty: 'easy', level: 'junior', pages: FORM_PAGES, requires: ['forms', 'field-email'],
     description: {
-      es: 'El campo email acepta valores sin @ (solo exige 5 caracteres o más).',
+      es: 'El campo de email acepta valores sin @ (solo exige 5 caracteres o más).',
       en: 'The email field accepts values without an @ (it only requires 5 or more characters).',
     },
-  },
-  {
-    id: 'age-off-by-one', category: 'validation', difficulty: 'medium', level: 'semi', pages: ['signup', 'wizard'],
-    description: {
-      es: 'Off-by-one en la edad: con mínimo 18, la edad exacta 18 es rechazada.',
-      en: 'Off-by-one on age: with a minimum of 18, exactly 18 is rejected.',
+    // template: el texto con el campo REAL del sitio (describeBug); {field} = etiqueta del campo del pack en el idioma activo
+    template: {
+      es: 'El campo «{field}» (email) acepta valores sin @: solo exige 5 caracteres o más.',
+      en: 'The «{field}» field (email) accepts values without an @: it only requires 5 or more characters.',
     },
   },
   {
-    id: 'password-off-by-one', category: 'validation', difficulty: 'medium', level: 'semi', pages: ['signup', 'wizard'],
+    id: 'age-off-by-one', category: 'validation', difficulty: 'medium', level: 'semi', pages: ['signup', 'wizard'], requires: ['field-number'],
     description: {
-      es: 'Off-by-one en la contraseña: el mínimo es 8 pero una de 7 caracteres es aceptada.',
-      en: 'Off-by-one on password: the minimum is 8 but a 7-character password is accepted.',
+      es: 'Off-by-one en el campo numérico con mínimo: el valor exactamente igual al mínimo es rechazado.',
+      en: 'Off-by-one on the numeric field with a minimum: a value exactly equal to the minimum is rejected.',
+    },
+    template: {
+      es: 'Off-by-one en «{field}»: el rango permitido es {min}–{max}, pero el valor exacto {min} es rechazado.',
+      en: 'Off-by-one on «{field}»: the allowed range is {min}–{max}, but exactly {min} is rejected.',
     },
   },
   {
-    id: 'required-not-validated', category: 'validation', difficulty: 'easy', level: 'junior', pages: FORM_PAGES, requires: ['forms'],
+    id: 'password-off-by-one', category: 'validation', difficulty: 'medium', level: 'semi', pages: ['signup', 'wizard'], requires: ['field-password'],
     description: {
-      es: 'El campo nombre está marcado como obligatorio pero se puede enviar vacío.',
+      es: 'Off-by-one en la contraseña: una de un caracter menos que el mínimo es aceptada.',
+      en: 'Off-by-one on password: one with a single character less than the minimum is accepted.',
+    },
+    template: {
+      es: 'Off-by-one en «{field}»: el mínimo es {min} caracteres pero una de {prev} es aceptada.',
+      en: 'Off-by-one on «{field}»: the minimum is {min} characters but one of {prev} is accepted.',
+    },
+  },
+  {
+    id: 'required-not-validated', category: 'validation', difficulty: 'easy', level: 'junior', pages: FORM_PAGES, requires: ['forms', 'field-name'],
+    description: {
+      es: 'El campo de nombre está marcado como obligatorio pero se puede enviar vacío.',
       en: 'The name field is marked as required but the form can be submitted with it empty.',
+    },
+    template: {
+      es: 'El campo «{field}» está marcado como obligatorio pero se puede enviar vacío.',
+      en: 'The «{field}» field is marked as required but the form can be submitted with it empty.',
     },
   },
   {
@@ -195,10 +214,10 @@ export const BUGS = [
   {
     id: 'filter-lost-on-paginate', category: 'state', difficulty: 'medium', level: 'junior', pages: ['list'], requires: ['list-filter', 'list-pagination'], crossPage: true,
     groups: ['list-paging'], excludes: ['pagination-skips'],
-    witness: (site) => catPopulation(site).some((n) => n > site.data.list.pageSize),
+    witness: (site) => site.data.catalog.length > site.data.list.pageSize, // hay una pagina 2 (con o sin filtro de categoria/precio, el orden tambien se pierde)
     description: {
-      es: 'Listado: aplicá un filtro de categoría (elegí la que tenga más de una página de productos), andá a la página 2 con «Siguiente» y notá que el filtro se perdió: vuelve a mostrar todos los productos y la página sigue en 2.',
-      en: 'Listing: apply a category filter (pick the one with more than one page of products), go to page 2 with «Next» and notice the filter is gone: all products are shown again while the page stays at 2.',
+      es: 'Listado: ordená por precio (o aplicá un filtro de categoría/precio que deje más de una página), andá a la página 2 con «Siguiente» y notá que el orden y los filtros se perdieron: vuelve a mostrar todos los productos en el orden por defecto y la página sigue en 2.',
+      en: 'Listing: sort by price (or apply a category/price filter that leaves more than one page), go to page 2 with «Next» and notice the sort and filters are gone: all products are shown again in the default order while the page stays at 2.',
     },
   },
   {
@@ -261,7 +280,7 @@ export const BUGS = [
   {
     id: 'date-timezone-shift', category: 'date', difficulty: 'hard', level: 'senior', pages: ['account'], requires: ['register', 'account', 'dates'],
     params: (rng) => ({ tz: rng.pick([-480, -300, -180]) }),
-    witness: (site) => site.data.signupFields.includes('birth'),
+    witness: (site) => site.data.signupFields.some((k) => site.data.fieldMeta[k].type === 'date' && /birth/i.test(k)), // el registro pide la fecha de nacimiento
     description: {
       es: 'Cuenta: registrate cargando la fecha de nacimiento 2000-05-10 y abrí «Mi cuenta»: la fecha de nacimiento aparece un día antes (09/05/2000).',
       en: 'Account: sign up entering the birth date 2000-05-10 and open «My account»: the birth date shows one day earlier (09/05/2000).',
