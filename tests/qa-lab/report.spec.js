@@ -78,6 +78,8 @@ describe('schema', () => {
     ['email invalido', (d) => { d.candidate.email = 'sin-arroba' }],
     ['21 findings', (d) => { const a = Array.from({ length: 21 }, (_, i) => F(String(i))); d.findingsJson = JSON.stringify(a); d.findingsCount = 21 }],
     ['findingsCount que no coincide', (d) => { d.findingsCount = 2 }],
+    ['findingsJson = null (JSON valido pero no array)', (d) => { d.findingsJson = 'null'; d.findingsCount = 0 }],
+    ['findingsJson es un objeto', (d) => { d.findingsJson = '{}'; d.findingsCount = 0 }],
     ['findingsJson no es JSON', (d) => { d.findingsJson = '{no' }],
     ['findingsJson demasiado grande', (d) => { d.findingsJson = 'x'.repeat(FINDINGS_JSON_MAX + 1) }],
     ['description > 1000', (d) => { d.findingsJson = mutF(d, (f) => { f.description = 'x'.repeat(1001) }) }],
@@ -118,6 +120,34 @@ describe('useAttempt', () => {
     expect(useAttempt('s1', 'junior', { storage }).findings.value).toHaveLength(0)
     expect(useAttempt('s1', 'senior', { storage }).started.value).toBe(false)
     expect(useAttempt('s2', 'junior', { storage }).started.value).toBe(false)
+  })
+  it('un doc pendiente con el formato viejo (lista findings) se rearma al reintentar (evita un reintento que falla para siempre)', async () => {
+    const send = vi.fn().mockResolvedValue({ ok: true, id: 'doc9' })
+    const a = useAttempt('s1', 'junior', { storage, send })
+    a.start({ name: 'Ana', email: 'ana@x.io' })
+    a.addFinding({ description: 'roto', guessedBugId: 'a' })
+    const saved = JSON.parse(store['qa-lab:attempt:s1:junior'])
+    const good = buildSubmission({ seed: 's1', level: 'junior', lang: 'es', candidate: saved.candidate, startedAt: saved.startedAt, finishedAt: saved.startedAt + 10, findings: saved.findings, scoreResult: score(['a'], saved.findings), solutionViewed: false })
+    const { findingsJson, findingsCount, ...old } = good
+    saved.result = { doc: { ...old, findings: JSON.parse(findingsJson) }, score: score(['a'], saved.findings), id: null, pending: true }
+    store['qa-lab:attempt:s1:junior'] = JSON.stringify(saved)
+    const b = useAttempt('s1', 'junior', { storage, send })
+    const res = await b.submit(ctx)
+    expect(res.ok).toBe(true)
+    expect(validateSubmission(send.mock.calls[0][0]).ok).toBe(true)
+    expect(b.result.value.pending).toBe(false)
+  })
+  it('un doc pendiente irrecuperable limpia pending y no reintenta (evita un bucle de reintentos)', async () => {
+    const send = vi.fn()
+    const a = useAttempt('s1', 'junior', { storage, send })
+    a.start({ name: 'Ana', email: 'ana@x.io' })
+    const saved = JSON.parse(store['qa-lab:attempt:s1:junior'])
+    saved.result = { doc: { basura: 1 }, score: null, id: null, pending: true }
+    store['qa-lab:attempt:s1:junior'] = JSON.stringify(saved)
+    const b = useAttempt('s1', 'junior', { storage, send })
+    await b.submit(ctx)
+    expect(send).not.toHaveBeenCalled()
+    expect(b.result.value.pending).toBe(false)
   })
   it('submit guarda el doc con solutionViewed y, si falla el envio, conserva el intento para reintentar', async () => {
     const send = vi.fn().mockResolvedValueOnce({ ok: false, error: 'network', message: 'x' }).mockResolvedValueOnce({ ok: true, id: 'doc1' })

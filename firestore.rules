@@ -34,7 +34,7 @@ service cloud.firestore {
         && d.score.halfHits is int && d.score.halfHits >= 0 && d.score.halfHits <= 20
         && d.score.falsePositives is int && d.score.falsePositives >= 0 && d.score.falsePositives <= 20
         && d.score.missed is int && d.score.missed >= 0 && d.score.missed <= 36
-        && d.createdAt == request.time // al final: asi el Playground evalua antes todos los findings
+        && d.createdAt == request.time
         && d.solutionViewed is bool
         && d.labVersion is string && d.labVersion.size() > 0 && d.labVersion.size() <= 20
         && d.userAgent is string && d.userAgent.size() <= 200;

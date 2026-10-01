@@ -60,13 +60,13 @@ export function validateSubmission(doc) {
   if (!int(doc.startedAt, 1)) bad('startedAt')
   if (!int(doc.finishedAt, 1) || doc.finishedAt < doc.startedAt) bad('finishedAt')
   if (!int(doc.durationMs, 0) || doc.durationMs !== doc.finishedAt - doc.startedAt) bad('durationMs')
-  let findings = null
+  let findings
   if (typeof doc.findingsJson !== 'string' || doc.findingsJson.length > FINDINGS_JSON_MAX) bad('findingsJson')
   else {
-    try { findings = JSON.parse(doc.findingsJson) } catch { bad('findingsJson') }
+    try { findings = JSON.parse(doc.findingsJson) } catch { findings = undefined; bad('findingsJson') }
   }
-  if (findings !== null) {
-    if (!Array.isArray(findings) || findings.length > LIMITS.findings) bad('findings')
+  if (findings !== undefined) {
+    if (!Array.isArray(findings) || findings.length > LIMITS.findings) bad('findings') // 'null' u otro JSON no-array
     else {
       if (!int(doc.findingsCount, 0, LIMITS.findings) || doc.findingsCount !== findings.length) bad('findingsCount')
       findings.forEach((f, i) => {

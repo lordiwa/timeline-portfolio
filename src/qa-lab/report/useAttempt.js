@@ -1,7 +1,7 @@
 // Estado de la prueba. Persiste en sessionStorage por (seed, level): un reload no pierde los hallazgos.
 import { ref, computed, toValue, getCurrentScope, onScopeDispose } from 'vue'
 import { scoreReport } from './scorer.js'
-import { buildSubmission } from './schema.js'
+import { buildSubmission, validateSubmission } from './schema.js'
 import { submitReport } from './firebase.js'
 
 const PREFIX = 'qa-lab:attempt:'
@@ -83,6 +83,20 @@ export function useAttempt(seedSource, levelSource, { send = submitReport, now =
   async function submit({ activeBugIds, categoryOf, lang }) {
     if (!started.value || sending.value) return null
     if (result.value?.pending) {
+      if (!validateSubmission(result.value.doc).ok) {
+        // doc pendiente guardado con un formato anterior (p. ej. lista `findings`): se rearma desde el estado guardado
+        let fixed = null
+        try {
+          const old = result.value.doc
+          fixed = buildSubmission({
+            seed: old.seed, level: old.level, lang: old.lang, candidate: candidate.value ?? old.candidate,
+            startedAt: old.startedAt, finishedAt: old.finishedAt, findings: findings.value, scoreResult: result.value.score,
+            solutionViewed: old.solutionViewed, userAgent: old.userAgent ?? '',
+          })
+        } catch { fixed = null }
+        if (fixed && validateSubmission(fixed).ok) result.value = { ...result.value, doc: fixed }
+        else { result.value = { ...result.value, pending: false }; error.value = null; persist(); return { ok: false, error: 'invalid-pending' } }
+      }
       sending.value = true
       const res = await send(result.value.doc)
       sending.value = false

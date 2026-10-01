@@ -47,7 +47,7 @@ service cloud.firestore {
         && d.score is map
         && d.score.keys().hasOnly(${q(SCORE_KEYS)})
         && ${score}
-        && d.createdAt == request.time // al final: asi el Playground evalua antes todos los findings
+        && d.createdAt == request.time
         && d.solutionViewed is bool
         && d.labVersion is string && d.labVersion.size() > 0 && d.labVersion.size() <= ${LIMITS.labVersion}
         && d.userAgent is string && d.userAgent.size() <= ${LIMITS.userAgent};
