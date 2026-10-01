@@ -28,7 +28,7 @@ const all = computed(() => D.value.rows)
   <PageShell type="dashboard">
     <div class="qa-kpis">
       <div class="qa-kpi">{{ t('list.kpiTotal') }}<b>{{ all.length }}</b></div>
-      <div class="qa-kpi">{{ t('list.kpiAmount') }}<b>{{ all.reduce((s, r) => s + r.amount, 0) }}</b></div>
+      <div class="qa-kpi">{{ t('list.kpiAmount') }}<b>{{ content.money(all.reduce((s, r) => s + r.amount, 0)) }}</b></div>
       <div class="qa-kpi">{{ t('list.kpiOpen') }}<b>{{ all.filter((r) => r.status === 1).length }}</b></div>
     </div>
     <Tabs v-model="view" :tabs="tabs">
@@ -55,12 +55,12 @@ const all = computed(() => D.value.rows)
               <tbody>
                 <tr v-for="r in rows" :key="r.id">
                   <td>{{ r.id }}</td>
-                  <td v-for="col in D.columns" :key="col.key" :class="{ num: col.type === 'money' || col.type === 'number' }">{{ r[col.key] }}</td>
+                  <td v-for="col in D.columns" :key="col.key" :class="{ num: col.type === 'money' || col.type === 'number' }">{{ col.type === 'money' ? content.money(r[col.key]) : r[col.key] }}</td>
                   <td><span class="qa-badge">{{ D.statuses[r.status] }}</span></td>
                 </tr>
               </tbody>
               <tfoot>
-                <tr><td :colspan="D.columns.length + 1">{{ t('list.total') }}</td><td class="num" data-testid="page-total">{{ pageTotal }}</td></tr>
+                <tr><td :colspan="D.columns.length + 1">{{ t('list.total') }}</td><td class="num" data-testid="page-total">{{ content.money(pageTotal) }}</td></tr>
               </tfoot>
             </table>
           </div>

@@ -43,17 +43,8 @@
       "pageEnd": "Location: at the bottom of the page (visible on mobile)",
       "dashboardFooter": "Location: Dashboard, total row at the table foot",
       "checkoutSummary": "Location: Checkout, order summary (with quantity greater than 1 on the first line)"
-    }
-  },
-  "themeName": {
-    "store": "Store",
-    "clinic": "Clinic",
-    "gym": "Gym",
-    "travel": "Travel",
-    "restaurant": "Restaurant",
-    "library": "Library",
-    "bank": "Bank",
-    "school": "School"
+    },
+    "locale": "en"
   },
   "site": {
     "menu": "Menu",
@@ -79,12 +70,7 @@
     "name": "Full name",
     "email": "Email address",
     "password": "Password",
-    "age": "Age",
-    "birth": "Date of birth",
     "phone": "Phone",
-    "country": "Country",
-    "plan": "Plan",
-    "bio": "About you",
     "newsletter": "I want to receive news",
     "terms": "I accept the terms and conditions",
     "subject": "Subject",
@@ -96,42 +82,24 @@
     "giftwrap": "Gift wrap",
     "search": "Search",
     "comment": "Your comment",
-    "hintPassword": "At least 8 characters",
-    "hintAge": "You must be over 18",
-    "hintEmail": "We will use this email to contact you",
-    "isCompany": "I am buying on behalf of a company",
-    "company": "Company name",
-    "frequency": "News frequency"
+    "hintPassword": "At least {min} characters",
+    "hintRange": "Between {min} and {max}"
   },
   "opt": {
-    "country_0": "Argentina",
-    "country_1": "Spain",
-    "country_2": "Mexico",
-    "country_3": "Chile",
-    "plan_0": "Basic",
-    "plan_1": "Standard",
-    "plan_2": "Premium",
-    "subject_0": "General inquiry",
-    "subject_1": "Complaint",
-    "subject_2": "Suggestion",
-    "subject_3": "Other",
-    "choose": "Choose an option",
-    "frequency_0": "Daily",
-    "frequency_1": "Weekly",
-    "frequency_2": "Monthly"
+    "choose": "Choose an option"
   },
   "err": {
     "required": "This field is required.",
     "email": "Enter a valid email address.",
-    "password": "Password must be at least 8 characters long.",
-    "age": "You must be at least 18 years old.",
+    "password": "Password must be at least {min} characters long.",
     "date": "The date cannot be in the future.",
     "card": "Enter a card number of 13 to 19 digits.",
     "credentials": "Wrong email or password.",
     "exists": "An account with that email already exists.",
     "minLength": "Must be at least {n} characters.",
     "maxLength": "Must be at most {n} characters.",
-    "pattern": "The format is not valid."
+    "pattern": "The format is not valid.",
+    "number": "Enter a value between {min} and {max}."
   },
   "tpl": {
     "signup": {
@@ -267,144 +235,6 @@
     "you": "You",
     "commentPosted": "Comment posted."
   },
-  "theme": {
-    "store": {
-      "name0": "Cloud House",
-      "name1": "North Market",
-      "name2": "Olm Store",
-      "tagline": "Everything for your home and your day",
-      "item0": "Backpack",
-      "item1": "Lamp",
-      "item2": "Sneakers",
-      "item3": "Headphones",
-      "item4": "Mug",
-      "item5": "Watch",
-      "cat0": "Home",
-      "cat1": "Fashion",
-      "cat2": "Technology",
-      "cta": "Buy",
-      "article": "The new season arrivals are here"
-    },
-    "clinic": {
-      "name0": "Aurora Clinic",
-      "name1": "South Medical Center",
-      "name2": "Full Health",
-      "tagline": "We take care of your health, close to you",
-      "item0": "General checkup",
-      "item1": "Pediatrics",
-      "item2": "Dermatology",
-      "item3": "Cardiology",
-      "item4": "Blood test",
-      "item5": "Physiotherapy",
-      "cat0": "Consultations",
-      "cat1": "Studies",
-      "cat2": "Therapies",
-      "cta": "Book appointment",
-      "article": "How to prepare for an annual checkup"
-    },
-    "gym": {
-      "name0": "Forge Fitness",
-      "name1": "Vertex Gym",
-      "name2": "Pulse Club",
-      "tagline": "Train at your own pace",
-      "item0": "Spinning class",
-      "item1": "Yoga",
-      "item2": "Functional training",
-      "item3": "Boxing",
-      "item4": "Pilates",
-      "item5": "Personal plan",
-      "cat0": "Cardio",
-      "cat1": "Strength",
-      "cat2": "Wellness",
-      "cta": "Join",
-      "article": "Five routines to start the year"
-    },
-    "travel": {
-      "name0": "Compass Travel",
-      "name1": "Horizon Tours",
-      "name2": "Blue Map",
-      "tagline": "Your next destination is waiting",
-      "item0": "Beach getaway",
-      "item1": "Mountain tour",
-      "item2": "Historic city",
-      "item3": "Photo safari",
-      "item4": "River cruise",
-      "item5": "Countryside weekend",
-      "cat0": "Nature",
-      "cat1": "City",
-      "cat2": "Adventure",
-      "cta": "Book now",
-      "article": "Destinations to visit in the off season"
-    },
-    "restaurant": {
-      "name0": "The Grill",
-      "name1": "Olive House",
-      "name2": "Neighborhood Flavor",
-      "tagline": "Home cooking, open table",
-      "item0": "Breaded cutlet",
-      "item1": "Mixed salad",
-      "item2": "Oven pizza",
-      "item3": "Risotto",
-      "item4": "Fruit tart",
-      "item5": "Empanadas",
-      "cat0": "Starters",
-      "cat1": "Mains",
-      "cat2": "Desserts",
-      "cta": "Book a table",
-      "article": "The story behind our house recipe"
-    },
-    "library": {
-      "name0": "Central Library",
-      "name1": "Book House",
-      "name2": "Open Letters",
-      "tagline": "Reading is traveling without moving",
-      "item0": "Novel",
-      "item1": "Essay",
-      "item2": "Poetry",
-      "item3": "Comic",
-      "item4": "Atlas",
-      "item5": "Dictionary",
-      "cat0": "Fiction",
-      "cat1": "Non-fiction",
-      "cat2": "Reference",
-      "cta": "Borrow",
-      "article": "The most read books of the month"
-    },
-    "bank": {
-      "name0": "Delta Bank",
-      "name1": "North Savings",
-      "name2": "Nearby Finance",
-      "tagline": "Your money, simpler",
-      "item0": "Checking account",
-      "item1": "Credit card",
-      "item2": "Personal loan",
-      "item3": "Home insurance",
-      "item4": "Fixed-term deposit",
-      "item5": "Savings account",
-      "cat0": "Accounts",
-      "cat1": "Loans",
-      "cat2": "Insurance",
-      "cta": "Apply",
-      "article": "Tips to organize your personal finances"
-    },
-    "school": {
-      "name0": "Beacon Academy",
-      "name1": "Compass Institute",
-      "name2": "Lookout School",
-      "tagline": "Learning has never been clearer",
-      "item0": "English course",
-      "item1": "Programming",
-      "item2": "Drawing",
-      "item3": "Photography",
-      "item4": "Mathematics",
-      "item5": "Music",
-      "cat0": "Languages",
-      "cat1": "Technology",
-      "cat2": "Art",
-      "cta": "Enroll",
-      "article": "How to choose the course that suits you best"
-    }
-  },
   "text": {
     "p0": "Over the last few months the team worked on improving every detail of the experience.",
     "p1": "Feedback from the community was key to defining this year's priorities.",
@@ -424,28 +254,6 @@
     "c5": "I have a question: does this apply in other regions too?",
     "c6": "Amazing, I did not know that. Thanks.",
     "c7": "A bit short, but clear and to the point."
-  },
-  "faq": {
-    "q0": "How can I create an account?",
-    "a0": "From the sign-up form, by filling in your basic details.",
-    "q1": "What payment methods do you accept?",
-    "a1": "We accept credit cards, debit cards and bank transfer.",
-    "q2": "Can I cancel my order?",
-    "a2": "Yes, up to 24 hours after confirming it, at no cost.",
-    "q3": "How long does shipping take?",
-    "a3": "Between 2 and 5 business days depending on your location.",
-    "q4": "How do I change my password?",
-    "a4": "From your profile, in the security section.",
-    "q5": "Do you offer phone support?",
-    "a5": "Yes, Monday to Friday from 9 am to 6 pm.",
-    "q6": "Do you issue invoices to companies?",
-    "a6": "Yes, just request it at the time of purchase.",
-    "q7": "Can I edit my details?",
-    "a7": "You can update them at any time from your account.",
-    "q8": "How do I close my account?",
-    "a8": "Write to us from the contact form and we will handle it.",
-    "q9": "Where can I see the status of my request?",
-    "a9": "In the activity section of your account."
   },
   "pageName": {
     "home": "Home",
@@ -477,16 +285,6 @@
     "account": "My account",
     "logout": "Sign out"
   },
-  "nouns": {
-    "item": "product",
-    "customer": "customer",
-    "order": "order",
-    "category": "category",
-    "itemPlural": "products",
-    "customerPlural": "customers",
-    "orderPlural": "orders",
-    "categoryPlural": "categories"
-  },
   "home": {
     "explore": "Explore the site"
   },
@@ -496,20 +294,7 @@
   "detail": {
     "back": "Back to the catalog"
   },
-  "desc": {
-    "d0": "{item}: a practical choice for every day.",
-    "d1": "{item}: built to last and easy to use.",
-    "d2": "{item}: one of our community favorites.",
-    "d3": "{item}: proven quality at a fair price.",
-    "d4": "{item}: great as a gift or a treat for yourself.",
-    "d5": "{item}: simple, reliable and always available."
-  },
   "blog": {
-    "title0": "Behind the scenes",
-    "title1": "What we learned this year",
-    "title2": "Questions we get often",
-    "title3": "Plans for next month",
-    "title4": "Thanks for being with us",
     "back": "Back to the blog"
   },
   "checkout": {
@@ -535,7 +320,8 @@
     "placed": "Order placed!",
     "thanks": "Thank you for your purchase. Order number: {id}",
     "paid": "Total paid",
-    "toCart": "Back to the cart"
+    "toCart": "Back to the cart",
+    "cta": "Confirm {order}"
   },
   "login": {
     "demo": "Practice account: {email} / {password}",
@@ -561,7 +347,13 @@
       "profile": "Profile",
       "prefs": "Preferences",
       "payment": "Payment",
-      "confirm": "Confirmation"
+      "confirm": "Confirmation",
+      "s1": "Step 1",
+      "s2": "Step 2",
+      "s3": "Step 3",
+      "s4": "Step 4",
+      "s5": "Step 5",
+      "s6": "Step 6"
     },
     "yes": "Yes",
     "no": "No"

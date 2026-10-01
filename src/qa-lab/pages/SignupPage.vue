@@ -15,7 +15,8 @@ function submit() {
   if (!validate(fields.value)) return
   if (store.emailTaken(values.email)) { errors.email = { key: 'err.exists' }; return }
   store.bump('submit')
-  store.register({ name: values.name, email: values.email, password: values.password })
+  const nameKey = fields.value.find((f) => f.nameLike)?.key // el campo de nombre del pack (no siempre se llama 'name')
+  store.register({ name: values[nameKey] || values.email, email: values.email, password: values.password })
   toast(t('signup.created'))
   router.replace(site.pages.includes('account') ? routePath('account') : '/') // queda con sesion iniciada
 }

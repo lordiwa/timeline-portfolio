@@ -8,7 +8,8 @@ import { checkField } from '../../src/qa-lab/composables/useForm.js'
 import es from '../../src/qa-lab/i18n/es.json'
 import en from '../../src/qa-lab/i18n/en.json'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
-import { forceSite, ALL_PAGES, mountSite, go, tick, fill, click , cleanup } from './helpers.js'
+import { getThemePack, THEME_PACKS } from '../../src/qa-lab/themes/index.js'
+import { forceSite, ALL_PAGES, mountSite, go, tick, fill, click, cleanup, moneyOf, fieldOf, validValue, validValues, fillVisible, advanceWizardTo } from './helpers.js'
 
 vi.setConfig({ testTimeout: 120000 }) // recorren las 13 paginas x con/sin flag
 
@@ -69,10 +70,10 @@ describe('bugs funcionales con y sin flag', () => {
       await go('/cart')
       await w.find('[data-testid="cart-line"] input').setValue('3')
       await w.find('[data-testid="cart-line"] input').trigger('change')
-      expect(w.find('[data-testid="cart-subtotal"]').text()).toBe(`$${(site.data.catalog[0].price * 3 + site.data.catalog[1].price).toFixed(2)}`) // el carrito siempre bien
+      expect(w.find('[data-testid="cart-subtotal"]').text()).toBe(moneyOf(site)(site.data.catalog[0].price * 3 + site.data.catalog[1].price)) // el carrito siempre bien
       await go('/checkout')
       const sub = w.find('[data-testid="sum-subtotal"]').text()
-      const real = `$${(site.data.catalog[0].price * 3 + site.data.catalog[1].price).toFixed(2)}`
+      const real = moneyOf(site)(site.data.catalog[0].price * 3 + site.data.catalog[1].price)
       expect(sub === real).toBe(!flag)
       w.unmount()
     }
@@ -81,8 +82,8 @@ describe('bugs funcionales con y sin flag', () => {
   it('total-wrong en el dashboard: el total de la pagina omite la ultima fila solo con el flag', async () => {
     await bothWays('dashboard', 'total-wrong', ({ w, site }) => {
       const rows = site.data.dashboard.rows.slice(0, site.data.dashboard.pageSize)
-      const real = rows.reduce((s, r) => s + r.price, 0)
-      return Number(w.find('[data-testid="page-total"]').text()) !== real
+      const real = rows.reduce((s, r) => s + r.amount, 0)
+      return w.find('[data-testid="page-total"]').text() !== moneyOf(site)(real)
     })
   })
 
@@ -90,18 +91,10 @@ describe('bugs funcionales con y sin flag', () => {
     for (const flag of [false, true]) {
       const { w, site } = await open(page, flag ? 'double-submit' : null)
       if (page === 'wizard') {
-        // wizard con un solo paso visible equivalente: se recorre el flujo corto (sin Premium, sin empresa)
-        const spec = site.data.wizard
-        await fill(w, { name: 'Ana Perez', email: 'a@b.co' }); await w.find('form').trigger('submit')
-        await fill(w, { password: 'abcdefgh', age: '30' }); await w.find('form').trigger('submit')
-        await fill(w, { plan: '0', country: '1' }); await w.find('form').trigger('submit')
-        if (spec.steps.some((s) => s.id === 'prefs')) await w.find('form').trigger('submit')
+        await advanceWizardTo(w, site, 'terms') // recorre los pasos del pack (relleno valido) hasta la confirmacion
         await fill(w, { terms: true })
       } else {
-        for (const f of site.data.contactFields) {
-          const key = f
-          await fill(w, { [key]: key === 'email' ? 'a@b.co' : key === 'subject' ? '1' : 'Ana Perez' })
-        }
+        await fillVisible(w, site)
       }
       await w.find('form').trigger('submit')
       await w.find('form').trigger('submit')
@@ -135,8 +128,7 @@ describe('bugs de validacion con y sin flag', () => {
   ])('%s en %s: el formulario real envia datos invalidos solo con el flag', async (bugId, page, bad) => {
     for (const flag of [false, true]) {
       const { w, site } = await open(page, flag ? bugId : null)
-      const good = { name: 'Ana Perez', email: 'a@b.co', subject: '1', message: 'hola', phone: '123' }
-      for (const k of site.data.contactFields) await fill(w, { [k]: k in bad ? bad[k] : good[k] })
+      for (const k of site.data.contactFields) await fill(w, validValues(site, [k], k in bad ? { [k]: bad[k] } : {}))
       await w.find('form').trigger('submit')
       expect(w.find('[data-testid="submissions"]').text()).toContain(flag ? '1' : '0')
       w.unmount()
@@ -147,11 +139,14 @@ describe('bugs de validacion con y sin flag', () => {
     for (const bugId of ['age-off-by-one', 'password-off-by-one']) {
       for (const flag of [false, true]) {
         const { w, site } = await open('signup', flag ? bugId : null)
-        for (const k of site.data.signupFields) if (['country', 'plan'].includes(k)) await fill(w, { [k]: '1' })
-        await fill(w, {
-          name: 'Ana Perez', email: `x${Math.random()}@b.co`, terms: true,
-          age: bugId === 'age-off-by-one' ? '18' : '30',
-          password: bugId === 'password-off-by-one' ? '1234567' : 'abcdefgh',
+        const numKey = site.data.signupFields.find((k) => site.data.fieldMeta[k].type === 'number')
+        const pwKey = site.data.signupFields.find((k) => site.data.fieldMeta[k].type === 'password')
+        const num = fieldOf(site, numKey)
+        const pw = fieldOf(site, pwKey)
+        await fillVisible(w, site, {
+          email: `x${Math.random()}@b.co`,
+          [numKey]: bugId === 'age-off-by-one' ? String(num.min) : validValue(num), // el minimo exacto es valido
+          [pwKey]: bugId === 'password-off-by-one' ? 'x'.repeat(pw.min - 1) : validValue(pw), // un caracter menos del minimo es invalido
         })
         await w.find('form').trigger('submit')
         await tick()
@@ -186,14 +181,14 @@ describe('bugs de pagina: con y sin flag, en cada pagina asignable', () => {
     for (const page of PAGE_TYPES.filter((p) => p !== 'detail' && p !== 'blog')) {
       for (const flag of [false, true]) {
         const m = await open(page, flag ? 'typo' : null)
-        const expected = es.tpl[page].title.replace('{brand}', es.theme[m.site.themeId][`name${m.site.brandIdx}`])
+        const expected = es.tpl[page].title.replace('{brand}', getThemePack(m.site.themeId).name.es)
         expect(m.w.find('h1').text() !== expected, `${page} flag=${flag}`).toBe(flag)
         m.w.unmount()
       }
     }
     const d = await open('detail', 'typo')
     const name = d.w.find('h1').text()
-    expect(name).not.toBe(`${es.theme[d.site.themeId][`item${d.site.data.catalog[0].itemIdx}`]} ${d.site.data.catalog[0].variant}`)
+    expect(name).not.toBe(getThemePack(d.site.themeId).items[d.site.data.catalog[0].itemIdx].name.es)
     d.w.unmount()
   })
 
@@ -201,7 +196,7 @@ describe('bugs de pagina: con y sin flag, en cada pagina asignable', () => {
     for (const page of PAGE_TYPES) {
       for (const flag of [false, true]) {
         const m = await open(page, flag ? 'untranslated' : null, { locale: 'es' })
-        const brand = es.theme[m.site.themeId][`name${m.site.brandIdx}`]
+        const brand = getThemePack(m.site.themeId).name.es
         const lead = m.w.find('.site-lead').text()
         expect(lead === es.tpl[page].lead.replace('{brand}', brand), `${page} flag=${flag}`).toBe(!flag)
         expect(lead === en.tpl[page].lead.replace('{brand}', brand), `${page} flag=${flag}`).toBe(flag)
@@ -224,7 +219,7 @@ describe('bugs de pagina: con y sin flag, en cada pagina asignable', () => {
   })
 
   it('missing-label: el campo objetivo queda sin label ni aria-label solo con el flag (todas las paginas con campos)', async () => {
-    const targets = { contact: 'name', signup: 'email', wizard: 'name', checkout: 'name', list: 'search', dashboard: 'search', faq: 'search', blog: 'comment' }
+    const targets = { contact: 'name', signup: 'email', wizard: forceSite({ pages: ALL_PAGES }).data.labelTargets.wizard, checkout: 'name', list: 'search', dashboard: 'search', faq: 'search', blog: 'comment' }
     const probe = (page) => ({ w }) => {
       if (page === 'blog') return !w.find('label[for="qa-comment"]').exists() && !w.find('#qa-comment').attributes('aria-label')
       const id = targets[page] === 'search' ? 'qa-search' : `qa-${targets[page]}`
@@ -245,6 +240,7 @@ describe('bugs de pagina: con y sin flag, en cada pagina asignable', () => {
           continue
         }
         if (page === 'blog') { await go('/blog/1'); await m.w.findAll('.qa-tablist button')[1].trigger('click') }
+        if (page === 'wizard') await advanceWizardTo(m.w, m.site, targets.wizard) // el campo objetivo puede estar en un paso posterior
         expect(probe(page)(m), `${page} flag=${flag}`).toBe(flag)
         m.w.unmount()
       }
@@ -312,21 +308,19 @@ describe('bugs de a11y y consola (modal de ayuda) en cada pagina', () => {
 })
 
 describe('typo: invariantes del helper', () => {
-  it('la errata siempre difiere del original en TODOS los nombres y titulos de los 8 temas x 2 idiomas (evita un bug typo invisible)', () => {
+  it('la errata siempre difiere del original en TODOS los nombres y titulos de los 63 temas x 2 idiomas (evita un bug typo invisible)', () => {
     let checked = 0
-    for (const msgs of [es, en]) {
+    for (const [lang, msgs] of [['es', es], ['en', en]]) {
       const titles = Object.values(msgs.tpl).map((x) => x.title)
-      for (const theme of Object.values(msgs.theme)) {
-        for (const n of [theme.name0, theme.name1, theme.name2]) {
-          for (const title of titles) {
-            const text = title.replace('{brand}', n)
-            expect(withTypo(text)).not.toBe(text)
-            checked++
-          }
+      for (const pack of THEME_PACKS) {
+        for (const title of titles) {
+          const text = title.replace('{brand}', pack.name[lang])
+          expect(withTypo(text)).not.toBe(text)
+          checked++
         }
       }
     }
-    expect(checked).toBeGreaterThan(8 * 3 * 13)
+    expect(checked).toBeGreaterThan(63 * 13)
     expect(withTypo('oo')).not.toBe('oo')
   })
 

@@ -8,6 +8,7 @@ import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
 import { bugLocation } from '../../src/qa-lab/bugs/locations.js'
 import App from '../../src/qa-lab/App.vue'
 import es from '../../src/qa-lab/i18n/es.json'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
 import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, track, cleanup } from './helpers.js'
 
 afterEach(cleanup)
@@ -215,12 +216,12 @@ describe('R-8: typo en el blog', () => {
   it('con el flag el titulo del listado y del post difiere del correcto; sin flag coincide', async () => {
     for (const flag of [false, true]) {
       const site = forceSite({ pages: ALL_PAGES, bugs: flag ? { typo: 'blog' } : {} })
-      const brand = es.theme[site.themeId][`name${site.brandIdx}`]
+      const pack = getThemePack(site.themeId)
+      const brand = pack.name.es
       const list = await mountSite(site, { hash: '#/blog' })
       expect(list.w.find('h1').text() !== es.tpl.blog.title.replace('{brand}', brand)).toBe(flag)
       await go('/blog/1')
-      const first = site.data.posts[0]
-      const expected = first.titleIdx < 0 ? es.theme[site.themeId].article : es.blog[`title${first.titleIdx}`]
+      const expected = pack.posts[site.data.posts[0].postIdx].title.es
       expect(list.w.find('h1').text() !== expected).toBe(flag)
       list.w.unmount()
     }
