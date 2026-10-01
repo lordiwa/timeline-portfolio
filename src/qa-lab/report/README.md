@@ -32,7 +32,7 @@ Sin ellas `submitReport` devuelve `{ ok: false, error: 'not-configured' }` y no 
 
 `/firestore.rules`: solo `create` en `qa_lab_attempts/{id}` con claves exactas, tipos y tamanos; todo lo demas denegado.
 `firestore.rules` es GENERADO: no editar a mano. Editar `scripts/gen-firestore-rules.mjs` (o `LIMITS` en `schema.js`) y correr `node scripts/gen-firestore-rules.mjs`; `tests/qa-lab/report-rules-gen.spec.js` falla si el archivo y el generador se desincronizan.
-Las reglas no iteran listas: `findings` se acota a 20 y cada indice 0..19 se valida EN LINEA, sin llamadas a funciones por finding. Motivo (medido en produccion): Firestore limita las LLAMADAS A FUNCIONES por evaluacion (no solo las expresiones); con `validFinding` + 2 `optStr` por finding, 4 findings ya daban `permission-denied`. Solo existe `validAttempt` (1 llamada); candidate, score y findings van en linea. Limite secundario: ~1000 expresiones (probar `playground-20.json`). Ademas: `createdAt == request.time` (el cliente manda `serverTimestamp()`), `durationMs == finishedAt - startedAt` y `finishedAt <= request.time + 5 min`.
+Las reglas NO validan los findings por elemento: ni con una funcion por finding ni escritos en linea cabian en el presupuesto de evaluacion de Firestore (medido en produccion: permission-denied desde 3-4 findings; limite de llamadas a funciones y de expresiones). Por eso el documento guarda `findingsJson` (string, `JSON.stringify` del array) y `findingsCount` (0..20) en lugar de `findings`; las reglas solo acotan `findingsJson.size() <= FINDINGS_JSON_MAX` (151000, peor caso de 20 findings al tope con todo escapado) y `findingsCount`. El cliente valida cada finding y que `findingsCount` coincida (`validateSubmission`). **En la consola de Firebase el detalle de los findings se lee en `findingsJson`.** Solo existe `validAttempt` (1 llamada). Ademas: `createdAt == request.time` (el cliente manda `serverTimestamp()`), `durationMs == finishedAt - startedAt` y `finishedAt <= request.time + 5 min`.
 
 **Test de reglas con emulador: PENDIENTE** (requiere Java; no disponible donde se desarrollo). Comando exacto, en una
 maquina con Java 11+ y `npm i -D @firebase/rules-unit-testing firebase-tools`:
@@ -61,7 +61,7 @@ Las reglas no cambian: el **enforcement es de consola**.
 
 ## Probar el peor caso en el Rules Playground (antes del deploy)
 
-`playground-20.json`: documento con 20 findings completos (todos los campos al maximo, guessedBugId y guessedCategory no nulos).
+`playground-20.json`: documento con 20 findings completos serializados en `findingsJson` (todos los campos al maximo, guessedBugId y guessedCategory no nulos).
 En Firebase console > Firestore > Reglas > Rules Playground: simular **create** en `/qa_lab_attempts/x`, pegar el JSON como
 datos del documento y publicar las reglas en el Playground. `createdAt` no se puede igualar a `request.time` desde el JSON, asi que
 el resultado esperado es un rechazo **solo** por esa linea (esta al final de `validAttempt`, despues de evaluar los 20 findings).

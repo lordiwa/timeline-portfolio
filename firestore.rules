@@ -5,16 +5,15 @@ rules_version = '2';
 //
 // QA Lab: el cliente solo puede CREAR intentos. Lectura, update y delete denegados (los resultados se
 // ven en la consola de Firebase). Alineado con src/qa-lab/report/schema.js.
-// Las reglas no iteran listas: `findings` se acota a 20 y cada indice 0..19 se valida EN LINEA.
-// Limite que importa: LLAMADAS A FUNCIONES por evaluacion (medido en produccion: con una funcion por finding, 4 findings
-// ya daban permission-denied). Por eso aqui hay UNA sola funcion (validAttempt) y candidate, score y los findings van en linea.
-// Segundo limite: ~1000 expresiones por evaluacion; probar playground-20.json (20 findings completos) en el Rules Playground.
+// Los findings no se validan por elemento (ni con funciones ni en linea: ambas variantes excedieron el presupuesto de
+// evaluacion en produccion). Se guardan como `findingsJson` (string <= 151000, peor caso de 20 findings) y
+// `findingsCount` (0..20); el cliente valida cada finding antes de enviar. Solo hay una funcion (validAttempt).
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function validAttempt(d) {
-      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
-        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
+      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findingsJson', 'findingsCount', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
+        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findingsJson', 'findingsCount', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
         && d.seed is string && d.seed.size() > 0 && d.seed.size() <= 100
         && d.level in ['junior', 'semi', 'senior']
         && d.lang in ['es', 'en']
@@ -26,167 +25,8 @@ service cloud.firestore {
         && d.startedAt is int && d.startedAt > 0
         && d.finishedAt is int && d.finishedAt >= d.startedAt && d.finishedAt <= request.time.toMillis() + 300000
         && d.durationMs is int && d.durationMs == d.finishedAt - d.startedAt
-        && d.findings is list && d.findings.size() <= 20
-        && (d.findings.size() < 1 || (d.findings[0] is map
-          && d.findings[0].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[0].id is string && d.findings[0].id.size() > 0 && d.findings[0].id.size() <= 40
-          && d.findings[0].page is string && d.findings[0].page.size() <= 100
-          && d.findings[0].description is string && d.findings[0].description.size() > 0 && d.findings[0].description.size() <= 1000
-          && d.findings[0].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[0].get('guessedBugId', null) == null || (d.findings[0].get('guessedBugId', null) is string && d.findings[0].get('guessedBugId', null).size() > 0 && d.findings[0].get('guessedBugId', null).size() <= 60))
-          && (d.findings[0].get('guessedCategory', null) == null || (d.findings[0].get('guessedCategory', null) is string && d.findings[0].get('guessedCategory', null).size() > 0 && d.findings[0].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 2 || (d.findings[1] is map
-          && d.findings[1].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[1].id is string && d.findings[1].id.size() > 0 && d.findings[1].id.size() <= 40
-          && d.findings[1].page is string && d.findings[1].page.size() <= 100
-          && d.findings[1].description is string && d.findings[1].description.size() > 0 && d.findings[1].description.size() <= 1000
-          && d.findings[1].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[1].get('guessedBugId', null) == null || (d.findings[1].get('guessedBugId', null) is string && d.findings[1].get('guessedBugId', null).size() > 0 && d.findings[1].get('guessedBugId', null).size() <= 60))
-          && (d.findings[1].get('guessedCategory', null) == null || (d.findings[1].get('guessedCategory', null) is string && d.findings[1].get('guessedCategory', null).size() > 0 && d.findings[1].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 3 || (d.findings[2] is map
-          && d.findings[2].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[2].id is string && d.findings[2].id.size() > 0 && d.findings[2].id.size() <= 40
-          && d.findings[2].page is string && d.findings[2].page.size() <= 100
-          && d.findings[2].description is string && d.findings[2].description.size() > 0 && d.findings[2].description.size() <= 1000
-          && d.findings[2].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[2].get('guessedBugId', null) == null || (d.findings[2].get('guessedBugId', null) is string && d.findings[2].get('guessedBugId', null).size() > 0 && d.findings[2].get('guessedBugId', null).size() <= 60))
-          && (d.findings[2].get('guessedCategory', null) == null || (d.findings[2].get('guessedCategory', null) is string && d.findings[2].get('guessedCategory', null).size() > 0 && d.findings[2].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 4 || (d.findings[3] is map
-          && d.findings[3].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[3].id is string && d.findings[3].id.size() > 0 && d.findings[3].id.size() <= 40
-          && d.findings[3].page is string && d.findings[3].page.size() <= 100
-          && d.findings[3].description is string && d.findings[3].description.size() > 0 && d.findings[3].description.size() <= 1000
-          && d.findings[3].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[3].get('guessedBugId', null) == null || (d.findings[3].get('guessedBugId', null) is string && d.findings[3].get('guessedBugId', null).size() > 0 && d.findings[3].get('guessedBugId', null).size() <= 60))
-          && (d.findings[3].get('guessedCategory', null) == null || (d.findings[3].get('guessedCategory', null) is string && d.findings[3].get('guessedCategory', null).size() > 0 && d.findings[3].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 5 || (d.findings[4] is map
-          && d.findings[4].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[4].id is string && d.findings[4].id.size() > 0 && d.findings[4].id.size() <= 40
-          && d.findings[4].page is string && d.findings[4].page.size() <= 100
-          && d.findings[4].description is string && d.findings[4].description.size() > 0 && d.findings[4].description.size() <= 1000
-          && d.findings[4].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[4].get('guessedBugId', null) == null || (d.findings[4].get('guessedBugId', null) is string && d.findings[4].get('guessedBugId', null).size() > 0 && d.findings[4].get('guessedBugId', null).size() <= 60))
-          && (d.findings[4].get('guessedCategory', null) == null || (d.findings[4].get('guessedCategory', null) is string && d.findings[4].get('guessedCategory', null).size() > 0 && d.findings[4].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 6 || (d.findings[5] is map
-          && d.findings[5].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[5].id is string && d.findings[5].id.size() > 0 && d.findings[5].id.size() <= 40
-          && d.findings[5].page is string && d.findings[5].page.size() <= 100
-          && d.findings[5].description is string && d.findings[5].description.size() > 0 && d.findings[5].description.size() <= 1000
-          && d.findings[5].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[5].get('guessedBugId', null) == null || (d.findings[5].get('guessedBugId', null) is string && d.findings[5].get('guessedBugId', null).size() > 0 && d.findings[5].get('guessedBugId', null).size() <= 60))
-          && (d.findings[5].get('guessedCategory', null) == null || (d.findings[5].get('guessedCategory', null) is string && d.findings[5].get('guessedCategory', null).size() > 0 && d.findings[5].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 7 || (d.findings[6] is map
-          && d.findings[6].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[6].id is string && d.findings[6].id.size() > 0 && d.findings[6].id.size() <= 40
-          && d.findings[6].page is string && d.findings[6].page.size() <= 100
-          && d.findings[6].description is string && d.findings[6].description.size() > 0 && d.findings[6].description.size() <= 1000
-          && d.findings[6].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[6].get('guessedBugId', null) == null || (d.findings[6].get('guessedBugId', null) is string && d.findings[6].get('guessedBugId', null).size() > 0 && d.findings[6].get('guessedBugId', null).size() <= 60))
-          && (d.findings[6].get('guessedCategory', null) == null || (d.findings[6].get('guessedCategory', null) is string && d.findings[6].get('guessedCategory', null).size() > 0 && d.findings[6].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 8 || (d.findings[7] is map
-          && d.findings[7].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[7].id is string && d.findings[7].id.size() > 0 && d.findings[7].id.size() <= 40
-          && d.findings[7].page is string && d.findings[7].page.size() <= 100
-          && d.findings[7].description is string && d.findings[7].description.size() > 0 && d.findings[7].description.size() <= 1000
-          && d.findings[7].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[7].get('guessedBugId', null) == null || (d.findings[7].get('guessedBugId', null) is string && d.findings[7].get('guessedBugId', null).size() > 0 && d.findings[7].get('guessedBugId', null).size() <= 60))
-          && (d.findings[7].get('guessedCategory', null) == null || (d.findings[7].get('guessedCategory', null) is string && d.findings[7].get('guessedCategory', null).size() > 0 && d.findings[7].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 9 || (d.findings[8] is map
-          && d.findings[8].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[8].id is string && d.findings[8].id.size() > 0 && d.findings[8].id.size() <= 40
-          && d.findings[8].page is string && d.findings[8].page.size() <= 100
-          && d.findings[8].description is string && d.findings[8].description.size() > 0 && d.findings[8].description.size() <= 1000
-          && d.findings[8].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[8].get('guessedBugId', null) == null || (d.findings[8].get('guessedBugId', null) is string && d.findings[8].get('guessedBugId', null).size() > 0 && d.findings[8].get('guessedBugId', null).size() <= 60))
-          && (d.findings[8].get('guessedCategory', null) == null || (d.findings[8].get('guessedCategory', null) is string && d.findings[8].get('guessedCategory', null).size() > 0 && d.findings[8].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 10 || (d.findings[9] is map
-          && d.findings[9].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[9].id is string && d.findings[9].id.size() > 0 && d.findings[9].id.size() <= 40
-          && d.findings[9].page is string && d.findings[9].page.size() <= 100
-          && d.findings[9].description is string && d.findings[9].description.size() > 0 && d.findings[9].description.size() <= 1000
-          && d.findings[9].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[9].get('guessedBugId', null) == null || (d.findings[9].get('guessedBugId', null) is string && d.findings[9].get('guessedBugId', null).size() > 0 && d.findings[9].get('guessedBugId', null).size() <= 60))
-          && (d.findings[9].get('guessedCategory', null) == null || (d.findings[9].get('guessedCategory', null) is string && d.findings[9].get('guessedCategory', null).size() > 0 && d.findings[9].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 11 || (d.findings[10] is map
-          && d.findings[10].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[10].id is string && d.findings[10].id.size() > 0 && d.findings[10].id.size() <= 40
-          && d.findings[10].page is string && d.findings[10].page.size() <= 100
-          && d.findings[10].description is string && d.findings[10].description.size() > 0 && d.findings[10].description.size() <= 1000
-          && d.findings[10].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[10].get('guessedBugId', null) == null || (d.findings[10].get('guessedBugId', null) is string && d.findings[10].get('guessedBugId', null).size() > 0 && d.findings[10].get('guessedBugId', null).size() <= 60))
-          && (d.findings[10].get('guessedCategory', null) == null || (d.findings[10].get('guessedCategory', null) is string && d.findings[10].get('guessedCategory', null).size() > 0 && d.findings[10].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 12 || (d.findings[11] is map
-          && d.findings[11].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[11].id is string && d.findings[11].id.size() > 0 && d.findings[11].id.size() <= 40
-          && d.findings[11].page is string && d.findings[11].page.size() <= 100
-          && d.findings[11].description is string && d.findings[11].description.size() > 0 && d.findings[11].description.size() <= 1000
-          && d.findings[11].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[11].get('guessedBugId', null) == null || (d.findings[11].get('guessedBugId', null) is string && d.findings[11].get('guessedBugId', null).size() > 0 && d.findings[11].get('guessedBugId', null).size() <= 60))
-          && (d.findings[11].get('guessedCategory', null) == null || (d.findings[11].get('guessedCategory', null) is string && d.findings[11].get('guessedCategory', null).size() > 0 && d.findings[11].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 13 || (d.findings[12] is map
-          && d.findings[12].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[12].id is string && d.findings[12].id.size() > 0 && d.findings[12].id.size() <= 40
-          && d.findings[12].page is string && d.findings[12].page.size() <= 100
-          && d.findings[12].description is string && d.findings[12].description.size() > 0 && d.findings[12].description.size() <= 1000
-          && d.findings[12].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[12].get('guessedBugId', null) == null || (d.findings[12].get('guessedBugId', null) is string && d.findings[12].get('guessedBugId', null).size() > 0 && d.findings[12].get('guessedBugId', null).size() <= 60))
-          && (d.findings[12].get('guessedCategory', null) == null || (d.findings[12].get('guessedCategory', null) is string && d.findings[12].get('guessedCategory', null).size() > 0 && d.findings[12].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 14 || (d.findings[13] is map
-          && d.findings[13].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[13].id is string && d.findings[13].id.size() > 0 && d.findings[13].id.size() <= 40
-          && d.findings[13].page is string && d.findings[13].page.size() <= 100
-          && d.findings[13].description is string && d.findings[13].description.size() > 0 && d.findings[13].description.size() <= 1000
-          && d.findings[13].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[13].get('guessedBugId', null) == null || (d.findings[13].get('guessedBugId', null) is string && d.findings[13].get('guessedBugId', null).size() > 0 && d.findings[13].get('guessedBugId', null).size() <= 60))
-          && (d.findings[13].get('guessedCategory', null) == null || (d.findings[13].get('guessedCategory', null) is string && d.findings[13].get('guessedCategory', null).size() > 0 && d.findings[13].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 15 || (d.findings[14] is map
-          && d.findings[14].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[14].id is string && d.findings[14].id.size() > 0 && d.findings[14].id.size() <= 40
-          && d.findings[14].page is string && d.findings[14].page.size() <= 100
-          && d.findings[14].description is string && d.findings[14].description.size() > 0 && d.findings[14].description.size() <= 1000
-          && d.findings[14].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[14].get('guessedBugId', null) == null || (d.findings[14].get('guessedBugId', null) is string && d.findings[14].get('guessedBugId', null).size() > 0 && d.findings[14].get('guessedBugId', null).size() <= 60))
-          && (d.findings[14].get('guessedCategory', null) == null || (d.findings[14].get('guessedCategory', null) is string && d.findings[14].get('guessedCategory', null).size() > 0 && d.findings[14].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 16 || (d.findings[15] is map
-          && d.findings[15].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[15].id is string && d.findings[15].id.size() > 0 && d.findings[15].id.size() <= 40
-          && d.findings[15].page is string && d.findings[15].page.size() <= 100
-          && d.findings[15].description is string && d.findings[15].description.size() > 0 && d.findings[15].description.size() <= 1000
-          && d.findings[15].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[15].get('guessedBugId', null) == null || (d.findings[15].get('guessedBugId', null) is string && d.findings[15].get('guessedBugId', null).size() > 0 && d.findings[15].get('guessedBugId', null).size() <= 60))
-          && (d.findings[15].get('guessedCategory', null) == null || (d.findings[15].get('guessedCategory', null) is string && d.findings[15].get('guessedCategory', null).size() > 0 && d.findings[15].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 17 || (d.findings[16] is map
-          && d.findings[16].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[16].id is string && d.findings[16].id.size() > 0 && d.findings[16].id.size() <= 40
-          && d.findings[16].page is string && d.findings[16].page.size() <= 100
-          && d.findings[16].description is string && d.findings[16].description.size() > 0 && d.findings[16].description.size() <= 1000
-          && d.findings[16].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[16].get('guessedBugId', null) == null || (d.findings[16].get('guessedBugId', null) is string && d.findings[16].get('guessedBugId', null).size() > 0 && d.findings[16].get('guessedBugId', null).size() <= 60))
-          && (d.findings[16].get('guessedCategory', null) == null || (d.findings[16].get('guessedCategory', null) is string && d.findings[16].get('guessedCategory', null).size() > 0 && d.findings[16].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 18 || (d.findings[17] is map
-          && d.findings[17].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[17].id is string && d.findings[17].id.size() > 0 && d.findings[17].id.size() <= 40
-          && d.findings[17].page is string && d.findings[17].page.size() <= 100
-          && d.findings[17].description is string && d.findings[17].description.size() > 0 && d.findings[17].description.size() <= 1000
-          && d.findings[17].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[17].get('guessedBugId', null) == null || (d.findings[17].get('guessedBugId', null) is string && d.findings[17].get('guessedBugId', null).size() > 0 && d.findings[17].get('guessedBugId', null).size() <= 60))
-          && (d.findings[17].get('guessedCategory', null) == null || (d.findings[17].get('guessedCategory', null) is string && d.findings[17].get('guessedCategory', null).size() > 0 && d.findings[17].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 19 || (d.findings[18] is map
-          && d.findings[18].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[18].id is string && d.findings[18].id.size() > 0 && d.findings[18].id.size() <= 40
-          && d.findings[18].page is string && d.findings[18].page.size() <= 100
-          && d.findings[18].description is string && d.findings[18].description.size() > 0 && d.findings[18].description.size() <= 1000
-          && d.findings[18].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[18].get('guessedBugId', null) == null || (d.findings[18].get('guessedBugId', null) is string && d.findings[18].get('guessedBugId', null).size() > 0 && d.findings[18].get('guessedBugId', null).size() <= 60))
-          && (d.findings[18].get('guessedCategory', null) == null || (d.findings[18].get('guessedCategory', null) is string && d.findings[18].get('guessedCategory', null).size() > 0 && d.findings[18].get('guessedCategory', null).size() <= 30))))
-        && (d.findings.size() < 20 || (d.findings[19] is map
-          && d.findings[19].keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-          && d.findings[19].id is string && d.findings[19].id.size() > 0 && d.findings[19].id.size() <= 40
-          && d.findings[19].page is string && d.findings[19].page.size() <= 100
-          && d.findings[19].description is string && d.findings[19].description.size() > 0 && d.findings[19].description.size() <= 1000
-          && d.findings[19].severity in ['low', 'medium', 'high', 'critical']
-          && (d.findings[19].get('guessedBugId', null) == null || (d.findings[19].get('guessedBugId', null) is string && d.findings[19].get('guessedBugId', null).size() > 0 && d.findings[19].get('guessedBugId', null).size() <= 60))
-          && (d.findings[19].get('guessedCategory', null) == null || (d.findings[19].get('guessedCategory', null) is string && d.findings[19].get('guessedCategory', null).size() > 0 && d.findings[19].get('guessedCategory', null).size() <= 30))))
+        && d.findingsJson is string && d.findingsJson.size() <= 151000
+        && d.findingsCount is int && d.findingsCount >= 0 && d.findingsCount <= 20
         && d.score is map
         && d.score.keys().hasOnly(['value', 'hits', 'halfHits', 'falsePositives', 'missed'])
         && d.score.value is int && d.score.value >= 0 && d.score.value <= 100

@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { scoreReport } from '../../src/qa-lab/report/scorer.js'
-import { buildSubmission, validateSubmission, DOC_KEYS, SCORE_KEYS, LIMITS } from '../../src/qa-lab/report/schema.js'
+import { buildSubmission, validateSubmission, DOC_KEYS, SCORE_KEYS, LIMITS, FINDINGS_JSON_MAX } from '../../src/qa-lab/report/schema.js'
 import { useAttempt } from '../../src/qa-lab/report/useAttempt.js'
 import { submitReport, getFirebaseConfig } from '../../src/qa-lab/report/firebase.js'
 import ReportPanel from '../../src/qa-lab/report/ReportPanel.vue'
@@ -54,6 +54,8 @@ const goodDoc = () => {
   })
 }
 
+const mutF = (d, fn) => { const a = JSON.parse(d.findingsJson); fn(a[0]); return JSON.stringify(a) }
+
 describe('schema', () => {
   it('un documento bien armado valida y trunca userAgent (evita guardar datos de mas)', () => {
     const d = goodDoc()
@@ -62,13 +64,24 @@ describe('schema', () => {
     expect(d.durationMs).toBe(4000)
     expect(Object.keys(d).sort()).toEqual([...DOC_KEYS].sort())
   })
+  it('20 findings al tope (todos los strings al maximo y escapados) caben en FINDINGS_JSON_MAX (evita rechazar un intento valido en reglas)', () => {
+    const big = (n) => ''.repeat(n)
+    const f = { id: big(LIMITS.id), page: big(LIMITS.page), description: big(LIMITS.description), severity: 'critical', guessedBugId: big(LIMITS.bugId), guessedCategory: big(LIMITS.category) }
+    const json = JSON.stringify(Array(LIMITS.findings).fill(f))
+    expect(json.length).toBeLessThanOrEqual(FINDINGS_JSON_MAX)
+    const d = goodDoc(); d.findingsJson = json; d.findingsCount = LIMITS.findings
+    expect(validateSubmission(d).ok).toBe(true)
+  })
   it.each([
     ['clave extra (IP)', (d) => { d.ip = '1.1.1.1' }],
     ['nombre > 80', (d) => { d.candidate.name = 'x'.repeat(81) }],
     ['email invalido', (d) => { d.candidate.email = 'sin-arroba' }],
-    ['21 findings', (d) => { d.findings = Array.from({ length: 21 }, (_, i) => F(String(i))) }],
-    ['description > 1000', (d) => { d.findings[0].description = 'x'.repeat(1001) }],
-    ['severidad invalida', (d) => { d.findings[0].severity = 'x' }],
+    ['21 findings', (d) => { const a = Array.from({ length: 21 }, (_, i) => F(String(i))); d.findingsJson = JSON.stringify(a); d.findingsCount = 21 }],
+    ['findingsCount que no coincide', (d) => { d.findingsCount = 2 }],
+    ['findingsJson no es JSON', (d) => { d.findingsJson = '{no' }],
+    ['findingsJson demasiado grande', (d) => { d.findingsJson = 'x'.repeat(FINDINGS_JSON_MAX + 1) }],
+    ['description > 1000', (d) => { d.findingsJson = mutF(d, (f) => { f.description = 'x'.repeat(1001) }) }],
+    ['severidad invalida', (d) => { d.findingsJson = mutF(d, (f) => { f.severity = 'x' }) }],
     ['score fuera de rango', (d) => { d.score.value = 101 }],
     ['solutionViewed no booleano', (d) => { d.solutionViewed = 'si' }],
   ])('rechaza %s (evita que entre basura o abuso de tamano)', (_n, mutate) => {

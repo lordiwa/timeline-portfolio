@@ -9,9 +9,15 @@ export const LIMITS = {
 }
 export const SEVERITIES = ['low', 'medium', 'high', 'critical']
 export const LANGS = ['es', 'en']
-export const DOC_KEYS = ['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent']
+export const DOC_KEYS = ['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findingsJson', 'findingsCount', 'score', 'solutionViewed', 'labVersion', 'userAgent']
 // Las reglas agregan createdAt (serverTimestamp() lo pone firebase.js al enviar; no forma parte del documento validado aqui).
 export const SCORE_KEYS = ['value', 'hits', 'halfHits', 'falsePositives', 'missed']
+export const FINDING_KEYS = ['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory']
+// Los findings viajan como JSON.stringify(array) en `findingsJson` (+ `findingsCount`): las reglas de Firestore no pueden
+// validar cada elemento dentro de su presupuesto de evaluacion, asi que solo acotan el tamano total y el cliente valida todo.
+// Peor caso por finding: los 5 strings al maximo con cada caracter escapado (6 chars, estilo u00XX) + ~120 de
+// claves/comillas/severidad; mas corchetes y comas. Con findings=20 da 150021; se redondea hacia arriba. Va tambien a firestore.rules.
+export const FINDINGS_JSON_MAX = 151000
 export const COLLECTION = 'qa_lab_attempts'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -26,10 +32,11 @@ export function buildSubmission({ seed, level, lang, candidate, startedAt, finis
     seed: String(seed), level: String(level), lang,
     candidate: { name: String(candidate?.name ?? '').trim(), email: String(candidate?.email ?? '').trim() },
     startedAt, finishedAt, durationMs: Math.max(0, finishedAt - startedAt),
-    findings: findings.map((f) => ({
+    findingsJson: JSON.stringify(findings.map((f) => ({
       id: f.id, page: f.page, description: f.description, severity: f.severity,
       guessedBugId: f.guessedBugId ?? null, guessedCategory: f.guessedCategory ?? null,
-    })),
+    }))),
+    findingsCount: findings.length,
     score: { value: scoreResult.score, hits: b.hits, halfHits: b.halfHits.length, falsePositives: b.falsePositives, missed: b.missed },
     solutionViewed: !!solutionViewed,
     labVersion: LAB_VERSION,
@@ -53,17 +60,25 @@ export function validateSubmission(doc) {
   if (!int(doc.startedAt, 1)) bad('startedAt')
   if (!int(doc.finishedAt, 1) || doc.finishedAt < doc.startedAt) bad('finishedAt')
   if (!int(doc.durationMs, 0) || doc.durationMs !== doc.finishedAt - doc.startedAt) bad('durationMs')
-  if (!Array.isArray(doc.findings) || doc.findings.length > LIMITS.findings) bad('findings')
+  let findings = null
+  if (typeof doc.findingsJson !== 'string' || doc.findingsJson.length > FINDINGS_JSON_MAX) bad('findingsJson')
   else {
-    doc.findings.forEach((f, i) => {
-      const ok = sameKeys(f, ['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory']) &&
-        str(f.id, LIMITS.id) && str(f.page, LIMITS.page, 0) && str(f.description, LIMITS.description) &&
-        SEVERITIES.includes(f.severity) &&
-        (f.guessedBugId === null || str(f.guessedBugId, LIMITS.bugId)) &&
-        (f.guessedCategory === null || str(f.guessedCategory, LIMITS.category))
-      if (!ok) bad(`findings[${i}]`)
-    })
+    try { findings = JSON.parse(doc.findingsJson) } catch { bad('findingsJson') }
   }
+  if (findings !== null) {
+    if (!Array.isArray(findings) || findings.length > LIMITS.findings) bad('findings')
+    else {
+      if (!int(doc.findingsCount, 0, LIMITS.findings) || doc.findingsCount !== findings.length) bad('findingsCount')
+      findings.forEach((f, i) => {
+        const ok = sameKeys(f, FINDING_KEYS) &&
+          str(f.id, LIMITS.id) && str(f.page, LIMITS.page, 0) && str(f.description, LIMITS.description) &&
+          SEVERITIES.includes(f.severity) &&
+          (f.guessedBugId === null || str(f.guessedBugId, LIMITS.bugId)) &&
+          (f.guessedCategory === null || str(f.guessedCategory, LIMITS.category))
+        if (!ok) bad(`findings[${i}]`)
+      })
+    }
+  } else if (!int(doc.findingsCount, 0, LIMITS.findings)) bad('findingsCount')
   if (!sameKeys(doc.score, SCORE_KEYS) || !int(doc.score.value, 0, 100) ||
       !['hits', 'halfHits', 'falsePositives'].every((k) => int(doc.score[k], 0, 20)) || !int(doc.score.missed, 0, 36)) bad('score')
   if (typeof doc.solutionViewed !== 'boolean') bad('solutionViewed')

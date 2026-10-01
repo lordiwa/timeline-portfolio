@@ -8,7 +8,7 @@ import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { LEVELS } from '../../src/qa-lab/generator/levels.js'
 import { BUGS, BUG_BY_ID } from '../../src/qa-lab/bugs/catalog.js'
 import { scoreReport } from '../../src/qa-lab/report/scorer.js'
-import { buildSubmission, validateSubmission, LAB_VERSION } from '../../src/qa-lab/report/schema.js'
+import { buildSubmission, validateSubmission, LAB_VERSION, FINDINGS_JSON_MAX } from '../../src/qa-lab/report/schema.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { tick, track, cleanup } from './helpers.js'
 
@@ -161,24 +161,23 @@ describe('review de TASK-050', () => {
   })
   it('validateSubmission rechaza un finding con clave extra o string demasiado largo (evita guardar basura dentro de un hallazgo)', () => {
     expect(validateSubmission(okDoc()).ok).toBe(true)
-    const a = okDoc(); a.findings[0].extra = 'x'
-    const b = okDoc(); b.findings[0].page = 'x'.repeat(101)
+    const mut = (fn) => { const d = okDoc(); const a = JSON.parse(d.findingsJson); fn(a[0]); d.findingsJson = JSON.stringify(a); return d }
+    const a = mut((f) => { f.extra = 'x' })
+    const b = mut((f) => { f.page = 'x'.repeat(101) })
     const c = okDoc(); c.durationMs = 999
     expect([a, b, c].map((d) => validateSubmission(d).ok)).toEqual([false, false, false])
   })
-  it('firestore.rules valida cada finding en linea (20 indices), createdAt y la ventana de tiempo (evita findings sin validar en el servidor)', () => {
+  it('firestore.rules acota findingsJson/findingsCount sin indexar findings, y valida createdAt y la ventana de tiempo (evita pasarse del presupuesto de evaluacion)', () => {
     const code = readFileSync(join(process.cwd(), 'firestore.rules'), 'utf8').replace(/\/\/.*$/gm, '')
     expect(code).not.toContain('validFinding')
-    for (let i = 0; i < 20; i++) expect(code).toContain(`(d.findings.size() < ${i + 1} || (d.findings[${i}] is map`)
-    expect(code).not.toContain('d.findings[20]')
-    expect(code).toContain('d.findings.size() <= 20')
+    expect(code).not.toMatch(/d\.findings/)
+    expect(code).toContain(`d.findingsJson is string && d.findingsJson.size() <= ${FINDINGS_JSON_MAX}`)
+    expect(code).toContain('d.findingsCount is int && d.findingsCount >= 0 && d.findingsCount <= 20')
     expect(code).toContain('d.createdAt == request.time')
     expect(code).toContain('d.durationMs == d.finishedAt - d.startedAt')
     expect(code).toContain('request.time.toMillis() + 300000')
     for (const k of ['hits', 'halfHits', 'falsePositives']) expect(code).toContain(`d.score.${k} <= 20`)
     expect(code).toContain('d.score.missed <= 36')
-    expect(code).not.toContain("hasAll(['id'") // finding sin hasAll (menos nodos)
-    expect(code).toContain("d.findings[0].get('guessedBugId', null)")
   })
   it('revelar antes de empezar, aunque se oculte de nuevo, marca el intento al empezar (evita un intento limpio que vio la respuesta)', async () => {
     const w = mountApp({ initialSeed: 'ev-1', initialLevel: 'junior' })
