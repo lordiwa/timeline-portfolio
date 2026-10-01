@@ -26,9 +26,8 @@ export function checkField(f, value, has, clock = systemClock) {
     return Number.isNaN(n) || tooYoung || n > f.max ? { key: 'err.number', params: { min: f.min, max: f.max } } : null
   }
   if (f.type === 'date') {
-    // Dia civil local del sitio (reloj inyectado + offset simulado): 'hoy' vale en ambos modos.
-    const l = clock.local()
-    const today = `${l.year}-${String(l.month).padStart(2, '0')}-${String(l.day).padStart(2, '0')}`
+    // Dia civil del USUARIO (no la zona simulada del sitio): 'hoy' vale en ambos modos.
+    const today = clock.viewerToday()
     const day = String(value).slice(0, 10)
     if (f.noPast) return day < today ? { key: 'err.datePast' } : null // plazo/turno: no puede ser pasada
     return day > today ? { key: 'err.date' } : null // noFuture (o campo sin regla explicita: comportamiento clasico)

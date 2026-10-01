@@ -198,8 +198,7 @@ describe('revision del cableado (C-1, L-1, L-2)', () => {
   })
 
   it.each([[-300, 23, 30], [540, 0, 30]])('las fechas se comparan por dia civil local (offset %i, %i:%i): hoy vale en noPast y noFuture; ayer y manana segun el modo (evita rechazar "hoy" o aceptar "manana" cerca de medianoche)', (offset, hour, minute) => {
-    const clock = createClock({ tzOffsetMinutes: offset })
-    const fixed = createClock({ tzOffsetMinutes: offset, now: () => clock.fromLocal({ year: 2026, month: 3, day: 5, hour, minute }) })
+    const fixed = createClock({ viewerOffsetMinutes: offset, now: () => Date.UTC(2026, 2, 5, hour, minute) - offset * 60000 })
     const has = () => false
     const noPast = { type: 'date', noPast: true }
     const noFuture = { type: 'date', noFuture: true }
@@ -209,6 +208,15 @@ describe('revision del cableado (C-1, L-1, L-2)', () => {
     expect(checkField(noFuture, '2026-03-05', has, fixed)).toBeNull()
     expect(checkField(noFuture, '2026-03-04', has, fixed)).toBeNull()
     expect(checkField(noFuture, '2026-03-06', has, fixed)).not.toBeNull()
+  })
+
+  it('la validacion usa el dia del usuario aunque la zona simulada del sitio difiera (sitio +540, usuario -300 a las 22:00: su hoy vale y su manana/ayer no)', () => {
+    const fixed = createClock({ tzOffsetMinutes: 540, viewerOffsetMinutes: -300, now: () => Date.UTC(2026, 2, 5, 22, 0) + 300 * 60000 })
+    expect(fixed.local().day).toBe(6) // en la zona simulada ya es el 6
+    const has = () => false
+    for (const mode of ['noPast', 'noFuture']) expect(checkField({ type: 'date', [mode]: true }, '2026-03-05', has, fixed), mode).toBeNull()
+    expect(checkField({ type: 'date', noFuture: true }, '2026-03-06', has, fixed)).not.toBeNull()
+    expect(checkField({ type: 'date', noPast: true }, '2026-03-04', has, fixed)).not.toBeNull()
   })
 
   it('el checkout y el contacto usan sus campos fijos aunque el pack tenga un campo con la misma clave (evita que el checkout herede un campo del registro)', () => {
