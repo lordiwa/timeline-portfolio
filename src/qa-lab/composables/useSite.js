@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 const KEY = Symbol('qaSite')
 
-/** ctx = { site, bugSet, route, router, store, content (computed), toast } */
+/** ctx = { site, env, bugSet, route, router, store, content (computed), toast, nav } (nav.last: 'push' | 'back') */
 export function provideSite(ctx) {
   provide(KEY, ctx)
 }
@@ -18,12 +18,17 @@ export function useSite() {
    * (site.bugPages[id]); asi el solucionario puede decir exactamente donde esta cada uno.
    */
   const has = (id) => ctx.bugSet.has(id) && ctx.site.bugPages[id] === ctx.route.value.type
+  /**
+   * Bugs intermitentes (nth-*): true en la N-esima accion hecha en la pagina del bug, con N = site.bugParams[id].n.
+   * El contador vive en memoria (store.actions): se reinicia al recargar, no al navegar. Solo cuenta con el flag activo.
+   */
+  const nthHit = (id) => has(id) && ctx.store.bump(`nth:${id}`) === ctx.site.bugParams[id].n
   /** t() que, con el bug 'untranslated', devuelve el texto en el OTRO idioma. */
   const tBug = (key, params = {}) =>
     has('untranslated') ? t(key, params, { locale: locale.value === 'es' ? 'en' : 'es' }) : t(key, params)
   /** Campo "objetivo" de los bugs de accesibilidad en la pagina actual. */
   const labelTarget = () => ctx.site.data.labelTargets[ctx.route.value.type]
-  return { ...ctx, has, t, tBug, locale, labelTarget }
+  return { ...ctx, has, nthHit, t, tBug, locale, labelTarget }
 }
 
 /** Errata determinista: intercambia dos letras distintas y contiguas de la 1a palabra donde se pueda.

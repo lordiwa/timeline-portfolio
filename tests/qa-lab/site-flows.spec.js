@@ -4,12 +4,16 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { computeTotals, toMinor } from '../../src/qa-lab/state/pricing.js'
 import { storageKey } from '../../src/qa-lab/state/store.js'
 import { visibleFields, visibleSteps } from '../../src/qa-lab/wizard/logic.js'
-import { forceSite, ALL_PAGES, mountSite, go, tick, fill, click , cleanup } from './helpers.js'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
+import { forceSite, themeSite, ALL_PAGES, mountSite, go, tick, fill, click, cleanup, moneyOf, fieldOf, validValue, fillVisible } from './helpers.js'
 
 afterEach(() => { cleanup() })
 
-const cents = (n) => Math.round(n * 100)
-const fmt = (c) => `$${(c / 100).toFixed(2)}`
+// Dinero en unidades menores segun la moneda del pack del sitio (decimals puede ser 0 o 2).
+const moneyFns = (site) => {
+  const d = getThemePack(site.themeId).currency.decimals
+  return { cents: (n) => Math.round(n * 10 ** d), fmt: (c) => moneyOf(site)(c / 10 ** d) }
+}
 
 describe('computeTotals (puro)', () => {
   it('orden de calculo: descuento sobre el subtotal, impuesto sobre la base sin envio, envio al final', () => {
@@ -49,6 +53,7 @@ describe('checkout (caso 6): total correcto con cupon, envio e impuestos', () =>
 
   it('subtotal, descuento, envio, impuesto y total coinciden con el calculo independiente y el pedido queda registrado', async () => {
     const site = forceSite({ pages: ALL_PAGES })
+    const { cents, fmt } = moneyFns(site)
     const { catalog, coupon, shipping, taxRate } = site.data
     const sub = cents(catalog[0].price) * 3 + cents(catalog[1].price)
     const { w, storage } = await toShipping(site)
@@ -139,6 +144,7 @@ describe('checkout (caso 6): total correcto con cupon, envio e impuestos', () =>
       await input().trigger('change')
       expect(input().element.value, v).toBe(expected)
     }
+    const { cents, fmt } = moneyFns(site)
     const price = site.data.catalog[0].price
     expect(w.find('[data-testid="cart-subtotal"]').text()).toBe(fmt(cents(price) * 2))
     await w.find('[data-testid="remove-line"]').trigger('click')
@@ -160,65 +166,46 @@ describe('checkout (caso 6): total correcto con cupon, envio e impuestos', () =>
 })
 
 describe('wizard (caso 5): validacion condicional', () => {
-  const site = (withPrefs) => {
-    const s = forceSite({ pages: ALL_PAGES })
-    const spec = JSON.parse(JSON.stringify(s.data.wizard))
-    // fija un wizard conocido: base de 4 pasos (+prefs si corresponde)
-    spec.steps = spec.steps.filter((x) => withPrefs || x.id !== 'prefs')
-    spec.conditionals = spec.conditionals.filter((c) => withPrefs || c.thenShow !== 'frequency')
-    if (withPrefs && !spec.steps.some((x) => x.id === 'prefs')) spec.steps.splice(3, 0, { id: 'prefs', fields: ['newsletter', 'frequency'] })
-    if (withPrefs && !spec.conditionals.some((c) => c.thenShow === 'frequency')) spec.conditionals.push({ ifField: 'newsletter', equals: true, thenShow: 'frequency', kind: 'field' })
-    return { ...s, data: { ...s.data, wizard: spec } }
-  }
+  // Pack del oraculo: pasos s1 (naturaleza, radio), s2 (fecha + urgencia 1-5), s3 (reino: SOLO si seekerKind === 'a-realm'), s4 (pregunta) + confirm.
+  const site = () => themeSite('oraculo-gruta-dorada', { pages: ALL_PAGES })
   const progress = (w) => w.find('[data-testid="wizard-progress"]').text()
   const next = (w) => w.find('form').trigger('submit')
 
-  it('logica pura: pasos y campos ocultos segun las respuestas previas', () => {
-    const spec = site(true).data.wizard
-    expect(visibleSteps(spec, {}).map((s) => s.id)).toEqual(['data', 'security', 'profile', 'prefs', 'confirm'])
-    expect(visibleSteps(spec, { plan: '2' }).map((s) => s.id)).toEqual(['data', 'security', 'profile', 'prefs', 'payment', 'confirm'])
-    const profile = spec.steps.find((s) => s.id === 'profile')
-    expect(visibleFields(spec, profile, {})).toEqual(['plan', 'country', 'isCompany'])
-    expect(visibleFields(spec, profile, { isCompany: true })).toEqual(['plan', 'country', 'isCompany', 'company'])
+  it('logica pura: los pasos y campos condicionales del pack se ocultan hasta que ifField === equals', () => {
+    const spec = site().data.wizard
+    expect(visibleSteps(spec, {}).map((s) => s.id)).toEqual(['s1', 's2', 's4', 'confirm'])
+    expect(visibleSteps(spec, { seekerKind: 'one-person' }).map((s) => s.id)).toEqual(['s1', 's2', 's4', 'confirm'])
+    expect(visibleSteps(spec, { seekerKind: 'a-realm' }).map((s) => s.id)).toEqual(['s1', 's2', 's3', 's4', 'confirm'])
+    const realm = spec.steps.find((s) => s.id === 's3')
+    expect(visibleFields(spec, realm, {})).toEqual([])
+    expect(visibleFields(spec, realm, { seekerKind: 'a-realm' })).toEqual(['realmName'])
   })
 
-  it('el wizard base tiene 4 pasos; Premium agrega el pago; empresa y novedades muestran su campo y lo exigen', async () => {
-    const s = site(true)
+  it('el wizard sigue los pasos del pack: "Un reino" agrega el paso del reino y lo exige con sus reglas (minLength 3)', async () => {
+    const s = site()
     const { w } = await mountSite(s, { hash: '#/wizard' })
+    expect(progress(w)).toContain('Paso 1 de 4')
+    expect(progress(w)).toContain('Naturaleza') // titulo del paso = pack.wizard.steps[0].title
+    await fill(w, { seekerKind: '1' }) // 'a-realm'
     expect(progress(w)).toContain('Paso 1 de 5')
-    await fill(w, { name: 'Ana Perez', email: 'ana@example.com' })
     await next(w)
-    await fill(w, { password: 'abcdefgh', age: '30' })
+    await fillVisible(w, s)
     await next(w)
     expect(progress(w)).toContain('Paso 3 de 5')
-    // el campo Empresa no existe hasta marcar "empresa"
-    expect(w.find('[data-field="company"]').exists()).toBe(false)
-    await fill(w, { plan: '0', country: '1', isCompany: true })
-    expect(w.find('[data-field="company"]').exists()).toBe(true)
-    await next(w) // falta empresa
-    expect(w.find('[data-field="company"] .qa-error').exists()).toBe(true)
+    expect(progress(w)).toContain('Reino')
+    await next(w) // falta el nombre del reino
+    expect(w.find('[data-field="realmName"] .qa-error').exists()).toBe(true)
     expect(progress(w)).toContain('Paso 3 de 5')
-    await fill(w, { company: 'ACME' })
-    // plan Premium: aparece el paso de pago (6 en total)
-    await fill(w, { plan: '2' })
-    expect(progress(w)).toContain('Paso 3 de 6')
+    await fill(w, { realmName: 'ab' })
+    await next(w) // minLength 3
+    expect(w.find('[data-field="realmName"] .qa-error').exists()).toBe(true)
+    await fill(w, { realmName: 'Aurea' })
     await next(w)
-    // prefs: la frecuencia aparece solo con "novedades"
-    expect(w.find('[data-field="frequency"]').exists()).toBe(false)
-    await fill(w, { newsletter: true })
-    expect(w.find('[data-field="frequency"]').exists()).toBe(true)
-    await next(w) // falta frecuencia
-    expect(w.find('[data-field="frequency"] .qa-error').exists()).toBe(true)
-    await fill(w, { frequency: '1' })
+    await fillVisible(w, s)
     await next(w)
-    expect(progress(w)).toContain('Pago')
-    await next(w) // falta tarjeta
-    expect(w.find('[data-field="card"] .qa-error').exists()).toBe(true)
-    await fill(w, { card: '4111111111111111' })
-    await next(w)
-    expect(progress(w)).toContain('Paso 6 de 6')
-    expect(w.find('[data-testid="wizard-summary"]').text()).toContain('ACME')
-    await next(w) // falta aceptar terminos
+    expect(progress(w)).toContain('Paso 5 de 5')
+    expect(w.find('[data-testid="wizard-summary"]').text()).toContain('Aurea')
+    await next(w) // falta aceptar
     expect(w.find('[data-field="terms"] .qa-error').exists()).toBe(true)
     await fill(w, { terms: true })
     await next(w)
@@ -226,18 +213,22 @@ describe('wizard (caso 5): validacion condicional', () => {
     w.unmount()
   })
 
-  it('un campo oculto no se valida: desmarcar "empresa" deja avanzar sin Empresa; sin Premium no hay pago ni tarjeta', async () => {
-    const { w } = await mountSite(site(false), { hash: '#/wizard' })
-    await fill(w, { name: 'Ana Perez', email: 'ana@example.com' })
+  it('un paso y un campo ocultos no se validan ni se resumen: con "Una persona" no hay paso del reino; las reglas min/max del numero aplican', async () => {
+    const s = site()
+    const { w } = await mountSite(s, { hash: '#/wizard' })
+    await fill(w, { seekerKind: '0' })
     await next(w)
-    await fill(w, { password: 'abcdefgh', age: '30' })
+    await fillVisible(w, s, { urgency: '9' }) // max 5
     await next(w)
-    await fill(w, { plan: '1', country: '0', isCompany: true })
-    await fill(w, { isCompany: false })
-    expect(w.find('[data-field="company"]').exists()).toBe(false)
+    expect(progress(w)).toContain('Paso 2 de 4') // sigue en el paso 2
+    expect(w.find('[data-field="urgency"] .qa-error').exists()).toBe(true)
+    await fill(w, { urgency: '5' })
     await next(w)
-    expect(progress(w)).toContain('Paso 4 de 4') // sin pago ni prefs: confirmacion
-    expect(w.find('[data-testid="wizard-summary"]').text()).not.toContain('Empresa')
+    expect(progress(w)).toContain('Paso 3 de 4') // la pregunta: el paso del reino se salto
+    await fillVisible(w, s)
+    await next(w)
+    expect(progress(w)).toContain('Paso 4 de 4')
+    expect(w.find('[data-testid="wizard-summary"]').text()).not.toContain('Reino')
     await fill(w, { terms: true })
     await next(w)
     expect(w.find('[data-testid="submissions"]').text()).toContain('1')
@@ -249,15 +240,14 @@ describe('registro y cuenta', () => {
   it('registrarse inicia sesion, rechaza un correo repetido y el usuario nuevo puede volver a ingresar', async () => {
     const site = forceSite({ pages: ALL_PAGES })
     const { w } = await mountSite(site, { hash: '#/signup' })
-    const values = { name: 'Nuevo Tester', email: 'nuevo@example.com', password: 'abcdefgh', age: '25', terms: true }
-    const fillAll = async () => {
-      for (const k of site.data.signupFields) if (['country', 'plan'].includes(k)) await fill(w, { [k]: '1' })
-      await fill(w, values)
-    }
+    const nameKey = site.data.signupFields.find((k) => site.data.fieldMeta[k].nameLike)
+    const userName = validValue(fieldOf(site, nameKey))
+    const password = validValue(fieldOf(site, 'password'))
+    const fillAll = () => fillVisible(w, site, { email: 'nuevo@example.com', password, [nameKey]: userName })
     await fillAll()
     await w.find('form').trigger('submit')
     await tick()
-    expect(w.find('[data-testid="session-user"]').text()).toBe('Nuevo Tester')
+    expect(w.find('[data-testid="session-user"]').text()).toBe(userName)
     expect(w.find('main [data-page]').attributes('data-page')).toBe('account')
     await w.find('[data-testid="nav-logout"]').trigger('click')
     // el mismo correo ya existe
@@ -267,10 +257,10 @@ describe('registro y cuenta', () => {
     expect(w.find('[data-field="email"] .qa-error').text()).toContain('Ya existe')
     // y puede ingresar con esa cuenta
     await go('/login')
-    await fill(w, { email: 'NUEVO@example.com', password: 'abcdefgh' })
+    await fill(w, { email: 'NUEVO@example.com', password })
     await w.find('form').trigger('submit')
     await tick()
-    expect(w.find('[data-testid="session-user"]').text()).toBe('Nuevo Tester')
+    expect(w.find('[data-testid="session-user"]').text()).toBe(userName)
     w.unmount()
   })
 })
@@ -290,8 +280,9 @@ describe('listado: busqueda + filtros combinados + orden + paginacion', () => {
     expect(w.find('.qa-page-info').text()).toContain('Página 1')
     expect(total()).toBe(catalog.filter((r) => r.cat === 1).length)
 
-    await w.find('[data-testid="filter-price"]').setValue('150')
-    expect(total()).toBe(catalog.filter((r) => r.cat === 1 && r.price <= 150).length)
+    const band = w.find('[data-testid="filter-price"]').findAll('option')[2].element.value // 2o umbral (calculado de los precios del pack)
+    await w.find('[data-testid="filter-price"]').setValue(band)
+    expect(total()).toBe(catalog.filter((r) => r.cat === 1 && r.price <= Number(band)).length)
 
     await w.find('input[type=search]').setValue('zzzz')
     expect(total()).toBe(0)
@@ -304,7 +295,7 @@ describe('listado: busqueda + filtros combinados + orden + paginacion', () => {
     // orden por precio ascendente (el 1er elemento es el mas barato)
     await w.find('.qa-dd-toggle').trigger('click')
     await w.findAll('.qa-dd-menu button').find((b) => b.text().includes('menor a mayor')).trigger('click')
-    const prices = w.findAll('[data-testid="item-card"] .qa-price').map((p) => Number(p.text().replace('$', '')))
+    const prices = w.findAll('[data-testid="item-card"] .qa-price').map((p) => Number(p.text().replace(/[^\d.]/g, '')))
     expect(prices).toEqual([...prices].sort((a, b) => a - b))
     expect(prices[0]).toBe(Math.min(...catalog.map((r) => r.price)))
     w.unmount()

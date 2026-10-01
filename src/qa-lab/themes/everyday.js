@@ -49,7 +49,7 @@ const specs = [
       title: 'Armá tu canasta semanal|Build your weekly basket',
       steps: [
         ['Tipo de hogar|Household type', [rad('hogar', 'Tipo de hogar|Household type', ['Soltero o pareja|Single or couple', 'Familia con chicos|Family with kids'])]],
-        ['Cantidad y fecha|Amount and date', [num('mealsPerWeek', 'Cenas en casa por semana|Dinners at home per week', 1, 7), date('startDate', 'Primera entrega|First delivery')]],
+        ['Cantidad y fecha|Amount and date', [num('mealsPerWeek', 'Cenas en casa por semana|Dinners at home per week', 1, 7), date('startDate', 'Primera entrega|First delivery', 'noPast')]],
         ['Detalles para chicos|Details for kids', [area('kidsNotes', 'Alergias o gustos de los chicos|Kids allergies or tastes', 200)]],
         ['Confirmación|Confirmation', [chk('substitutions', 'Acepto reemplazos de productos|I accept product substitutions', true)]],
       ],
@@ -83,7 +83,7 @@ const specs = [
     fields: [
       text('fullName', 'Nombre completo|Full name', { minLength: 3, maxLength: 70 }),
       pat('chartNumber', 'Número de historia clínica|Medical chart number', '^HC-\\d{6}$', 'Seis dígitos tras HC-, ej. HC-120457|Six digits after HC-, e.g. HC-120457', false),
-      date('birthDate', 'Fecha de nacimiento|Date of birth'),
+      date('birthDate', 'Fecha de nacimiento|Date of birth', 'noFuture'),
       sel('coverage', 'Cobertura médica|Insurance coverage', ['Obra social|Public plan', 'Prepaga|Private plan', 'Particular|Self-pay']),
       num('weightKg', 'Peso en kilos|Weight in kilograms', 2, 250, false),
     ],
@@ -104,7 +104,7 @@ const specs = [
       title: 'Reservá tu turno|Book your appointment',
       steps: [
         ['Motivo|Reason', [sel('reason', 'Motivo de consulta|Reason for visit', ['Control de rutina|Routine check', 'Un síntoma nuevo|A new symptom', 'Estudio indicado|Prescribed test'])]],
-        ['Fecha y duración|Date and length', [date('preferredDay', 'Día preferido|Preferred day'), num('daysSymptom', 'Días con síntomas|Days with symptoms', 0, 90)]],
+        ['Fecha y duración|Date and length', [date('preferredDay', 'Día preferido|Preferred day', 'noPast'), num('daysSymptom', 'Días con síntomas|Days with symptoms', 0, 90)]],
         ['Síntoma|Symptom', [area('symptomNotes', 'Describí el síntoma|Describe the symptom', 250)]],
         ['Confirmación|Confirmation', [chk('reminder', 'Enviarme un recordatorio por correo|Send me an email reminder')]],
       ],
@@ -159,7 +159,7 @@ const specs = [
       title: 'Diseñá tu rutina inicial|Design your starter routine',
       steps: [
         ['Experiencia|Experience', [rad('level', 'Experiencia previa|Previous experience', ['Primera vez|First time', 'Ya entrené antes|Trained before'])]],
-        ['Frecuencia y arranque|Frequency and start', [num('daysPerWeek', 'Días por semana|Days per week', 1, 7), date('startOn', 'Fecha de inicio|Start date')]],
+        ['Frecuencia y arranque|Frequency and start', [num('daysPerWeek', 'Días por semana|Days per week', 1, 7), date('startOn', 'Fecha de inicio|Start date', 'noPast')]],
         ['Lesiones|Injuries', [area('injuryNotes', 'Lesiones o molestias previas|Previous injuries or aches', 250)]],
         ['Confirmación|Confirmation', [chk('newsletter', 'Quiero recibir consejos semanales|I want weekly tips')]],
       ],
@@ -193,7 +193,7 @@ const specs = [
     fields: [
       text('fullName', 'Nombre como figura en el pasaporte|Name as on passport', { minLength: 3, maxLength: 70 }),
       pat('passport', 'Número de pasaporte|Passport number', '^[A-Z]{2}\\d{7}$', 'Dos letras mayúsculas y siete dígitos, ej. PA1234567|Two capital letters and seven digits, e.g. PA1234567'),
-      date('passportExpiry', 'Vencimiento del pasaporte|Passport expiry'),
+      date('passportExpiry', 'Vencimiento del pasaporte|Passport expiry', 'noPast'),
       sel('seat', 'Preferencia de asiento|Seat preference', ['Ventanilla|Window', 'Pasillo|Aisle', 'Me da igual|No preference']),
       num('travelers', 'Cantidad de viajeros|Number of travelers', 1, 12),
     ],
@@ -214,7 +214,7 @@ const specs = [
       title: 'Armá tu viaje a medida|Shape your tailor-made trip',
       steps: [
         ['Tipo de viaje|Trip type', [rad('tripKind', 'Con quién viajás|Who you travel with', ['Solo o en pareja|Solo or as a couple', 'Con niños|With children'])]],
-        ['Fechas y presupuesto|Dates and budget', [date('leaveOn', 'Fecha de salida|Departure date'), num('budget', 'Presupuesto por persona|Budget per person', 100000, 3000000)]],
+        ['Fechas y presupuesto|Dates and budget', [date('leaveOn', 'Fecha de salida|Departure date', 'noPast'), num('budget', 'Presupuesto por persona|Budget per person', 100000, 3000000)]],
         ['Niños|Children', [num('kidsAge', 'Edad del menor|Age of the youngest', 0, 17)]],
         ['Notas|Notes', [area('wishes', 'Algo que no te podés perder|Something you cannot miss', 300)]],
       ],
@@ -269,7 +269,7 @@ const specs = [
       title: 'Organizá tu cena|Plan your dinner',
       steps: [
         ['Ocasión|Occasion', [sel('occasion', 'Ocasión|Occasion', ['Cena común|Regular dinner', 'Cumpleaños|Birthday', 'Reunión de trabajo|Business meeting'])]],
-        ['Fecha y grupo|Date and party', [date('dinnerDate', 'Día de la cena|Dinner date'), num('partySize', 'Personas|People', 2, 40)]],
+        ['Fecha y grupo|Date and party', [date('dinnerDate', 'Día de la cena|Dinner date', 'noPast'), num('partySize', 'Personas|People', 2, 40)]],
         ['Torta y velas|Cake and candles', [text('birthdayName', 'Nombre del cumpleañero|Birthday guest name', { maxLength: 40 })]],
         ['Restricciones|Restrictions', [chk('glutenFree', 'Hay celíacos en el grupo|Celiacs in the group')]],
       ],
@@ -358,7 +358,7 @@ const specs = [
     fields: [
       text('fullName', 'Nombre y apellido|Full name', { minLength: 3, maxLength: 70 }),
       pat('taxId', 'Clave de identificación fiscal|Tax ID', '^[A-Z]{4}\\d{6}[A-Z0-9]{3}$', 'Cuatro letras, seis dígitos y tres caracteres, ej. LOPA850412H7K|Four letters, six digits and three characters, e.g. LOPA850412H7K'),
-      date('birthDate', 'Fecha de nacimiento|Date of birth'),
+      date('birthDate', 'Fecha de nacimiento|Date of birth', 'noFuture'),
       num('monthlyIncome', 'Ingreso mensual aproximado|Approximate monthly income', 0, 500000),
       sel('purpose', 'Para qué querés la cuenta|What the account is for', ['Ahorro personal|Personal savings', 'Cobro de sueldo|Salary deposit', 'Pequeño negocio|Small business']),
     ],
@@ -435,13 +435,13 @@ const specs = [
       title: 'Inscribí a un alumno|Enroll a student',
       steps: [
         ['Tipo de ingreso|Entry type', [rad('entry', 'Tipo de ingreso|Entry type', ['Alumno nuevo|New student', 'Pase de otra escuela|Transfer from another school'])]],
-        ['Edad y fecha|Age and date', [num('childAge', 'Edad en años|Age in years', 5, 13), date('startDate', 'Fecha de ingreso|Start date')]],
+        ['Edad y fecha|Age and date', [num('childAge', 'Edad en años|Age in years', 5, 13), date('startDate', 'Fecha de ingreso|Start date', 'noPast')]],
         ['Escuela anterior|Previous school', [text('previousSchool', 'Escuela de procedencia|Previous school', { minLength: 3, maxLength: 80 })]],
         ['Salud|Health', [area('health', 'Alergias o cuidados especiales|Allergies or special care', 250)]],
       ],
       cond: ['entry', 'transfer-from-another-school', ['previousSchool']],
     },
-    dash: { cols: ['Taller|Workshop', 'Inscriptos|Enrolled', 'Fecha de inicio|Start date', 'Aportes cobrados|Fees collected'], pool: ['Murga infantil|Children\'s street band', 'Cerámica|Pottery', 'Huerta|Garden', 'Robótica con cartón|Cardboard robotics', 'Handball|Handball', 'Apoyo en lectura|Reading support'], n: [4, 32], m: [0, 20000] },
+    dash: { cols: ['Taller|Workshop', 'Inscriptos|Enrolled', 'Fecha de inicio|Start date', 'Aportes cobrados|Fees collected'], pool: ['Murga infantil|Children\'s street band', 'Cerámica|Pottery', 'Huerta|Garden', 'Robótica con cartón|Cardboard robotics', 'Balonmano|Handball', 'Apoyo en lectura|Reading support'], n: [4, 32], m: [0, 20000] },
   },
   {
     id: 'veterinaria-cola-feliz',
@@ -490,7 +490,7 @@ const specs = [
       title: 'Prepará la primera visita|Prepare the first visit',
       steps: [
         ['Mascota|Pet', [rad('petKind', 'Tipo de mascota|Pet type', ['Cachorro o gatito|Puppy or kitten', 'Adulto o senior|Adult or senior'])]],
-        ['Fecha y peso|Date and weight', [date('visitDate', 'Día de la visita|Visit date'), num('petWeight', 'Peso aproximado en kilos|Approximate weight in kilos', 1, 80)]],
+        ['Fecha y peso|Date and weight', [date('visitDate', 'Día de la visita|Visit date', 'noPast'), num('petWeight', 'Peso aproximado en kilos|Approximate weight in kilos', 1, 80)]],
         ['Antecedentes|History', [area('medicalHistory', 'Enfermedades o medicación actual|Illnesses or current medication', 300)]],
         ['Confirmación|Confirmation', [chk('reminder', 'Recordarme las vacunas por correo|Remind me of vaccines by email')]],
       ],
@@ -545,7 +545,7 @@ const specs = [
       title: 'Contanos qué buscás|Tell us what you are looking for',
       steps: [
         ['Operación|Operation', [rad('wantTo', 'Qué querés hacer|What you want to do', ['Comprar|Buy', 'Alquilar|Rent'])]],
-        ['Presupuesto y fecha|Budget and date', [num('maxPrice', 'Presupuesto máximo|Maximum budget', 300, 600000), date('moveBy', 'Mudanza antes de|Move before')]],
+        ['Presupuesto y fecha|Budget and date', [num('maxPrice', 'Presupuesto máximo|Maximum budget', 300, 600000), date('moveBy', 'Mudanza antes de|Move before', 'noPast')]],
         ['Alquiler|Rental', [num('rentMonths', 'Meses de contrato deseados|Desired lease months', 6, 60)]],
         ['Preferencias|Preferences', [area('musts', 'Lo que no puede faltar|Must-haves', 250)]],
       ],
@@ -600,7 +600,7 @@ const specs = [
       title: 'Reservá tu horneada|Reserve your bake',
       steps: [
         ['Ocasión|Occasion', [rad('forWhat', 'Para qué es el encargo|What the order is for', ['Uso diario|Everyday use', 'Una celebración|A celebration'])]],
-        ['Cantidad y día|Amount and day', [num('portions', 'Porciones|Portions', 2, 100), date('needDate', 'Día de retiro|Pick-up day')]],
+        ['Cantidad y día|Amount and day', [num('portions', 'Porciones|Portions', 2, 100), date('needDate', 'Día de retiro|Pick-up day', 'noPast')]],
         ['Celebración|Celebration', [text('message', 'Mensaje para la torta|Cake message', { maxLength: 40 })]],
         ['Sabores|Flavors', [chk('noNuts', 'Sin frutos secos|No nuts')]],
       ],
@@ -655,7 +655,7 @@ const specs = [
       title: 'Pedí tu presupuesto|Request your quote',
       steps: [
         ['Tipo de problema|Problem type', [sel('problem', 'Qué le pasa al vehículo|What is wrong with the vehicle', ['Ruido extraño|Strange noise', 'Luz en el tablero|Dashboard light', 'Service de rutina|Routine service'])]],
-        ['Fecha y uso|Date and use', [date('dropOff', 'Día para dejarlo|Drop-off day'), num('dailyKm', 'Kilómetros por día|Kilometers per day', 0, 500)]],
+        ['Fecha y uso|Date and use', [date('dropOff', 'Día para dejarlo|Drop-off day', 'noPast'), num('dailyKm', 'Kilómetros por día|Kilometers per day', 0, 500)]],
         ['Ruido|Noise', [area('noiseWhen', 'Cuándo se escucha el ruido|When the noise happens', 250)]],
         ['Contacto|Contact', [chk('callBack', 'Llamarme antes de cualquier trabajo extra|Call me before any extra work', true)]],
       ],
@@ -710,7 +710,7 @@ const specs = [
       title: 'Diseñá un ramo a tu gusto|Design a bouquet to your taste',
       steps: [
         ['Ocasión|Occasion', [rad('forWhom', 'Para quién es|Who it is for', ['Para mí|For myself', 'Para regalar|As a gift'])]],
-        ['Presupuesto y fecha|Budget and date', [num('spend', 'Presupuesto|Budget', 15, 200), date('onDay', 'Día de entrega|Delivery day')]],
+        ['Presupuesto y fecha|Budget and date', [num('spend', 'Presupuesto|Budget', 15, 200), date('onDay', 'Día de entrega|Delivery day', 'noPast')]],
         ['Regalo|Gift', [text('giftName', 'Nombre de quien recibe|Recipient name', { minLength: 2, maxLength: 50 })]],
         ['Paleta|Palette', [sel('palette', 'Paleta|Palette', ['Pasteles|Pastels', 'Colores vivos|Bright colors', 'Blanco y verde|White and green'])]],
       ],
@@ -743,7 +743,7 @@ const specs = [
     ],
     fields: [
       text('fullName', 'Nombre del huésped|Guest name', { minLength: 3, maxLength: 70 }),
-      date('checkIn', 'Llegada|Check-in date'),
+      date('checkIn', 'Llegada|Check-in date', 'noPast'),
       num('nights', 'Noches|Nights', 1, 30),
       num('adults', 'Adultos|Adults', 1, 6),
       sel('bed', 'Tipo de cama|Bed type', ['Una cama grande|One large bed', 'Dos camas simples|Two single beds']),
@@ -766,7 +766,7 @@ const specs = [
       title: 'Planificá tu estadía|Plan your stay',
       steps: [
         ['Motivo del viaje|Purpose of the trip', [rad('trip', 'Motivo del viaje|Purpose of the trip', ['Descanso|Leisure', 'Trabajo|Business'])]],
-        ['Fechas y huéspedes|Dates and guests', [date('arrival', 'Fecha de llegada|Arrival date'), num('party', 'Huéspedes|Guests', 1, 8)]],
+        ['Fechas y huéspedes|Dates and guests', [date('arrival', 'Fecha de llegada|Arrival date', 'noPast'), num('party', 'Huéspedes|Guests', 1, 8)]],
         ['Factura|Invoice', [text('company', 'Razón social para la factura|Company name for the invoice', { minLength: 3, maxLength: 80 })]],
         ['Extras|Extras', [chk('airportPickup', 'Quiero traslado desde la estación|I want a station pickup')]],
       ],
@@ -821,7 +821,7 @@ const specs = [
       title: 'Organizá una función privada|Organize a private screening',
       steps: [
         ['Tipo de grupo|Group type', [rad('groupKind', 'Tipo de grupo|Group type', ['Una escuela|A school', 'Amigos o empresa|Friends or company'])]],
-        ['Fecha y tamaño|Date and size', [date('screeningDate', 'Día deseado|Desired day'), num('headcount', 'Cantidad de personas|Number of people', 10, 120)]],
+        ['Fecha y tamaño|Date and size', [date('screeningDate', 'Día deseado|Desired day', 'noPast'), num('headcount', 'Cantidad de personas|Number of people', 10, 120)]],
         ['Escuela|School', [text('schoolName', 'Nombre de la escuela|School name', { minLength: 3, maxLength: 80 })]],
         ['Película|Film', [text('filmWish', 'Película que quieren ver|Film they want to see', { minLength: 2, maxLength: 80 })]],
       ],

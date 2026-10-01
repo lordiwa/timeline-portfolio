@@ -4,6 +4,7 @@
 import { computed, ref } from 'vue'
 import { useSite } from '../composables/useSite.js'
 import { routePath } from '../generator/pages.js'
+import { relTime } from '../state/dates.js'
 import PageShell from '../ui/PageShell.vue'
 import Tabs from '../components/Tabs.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
@@ -17,6 +18,15 @@ const comments = computed(() => [
   ...(store.state.comments[post.value?.id] || []),
   ...(post.value?.comments || []),
 ])
+// BUG relative-time-wrong: con el flag muestra solo el resto de dividir por 60 (125 min -> "hace 5 min").
+const timeAgo = (minutes) => {
+  const r = relTime(minutes, { wrong: has('relative-time-wrong') })
+  return t(r.key, { n: r.n })
+}
+// Escapa todo y deja "vivas" solo las etiquetas inertes <b> e <i>: el bug es real (HTML sin escapar) pero acotado: un
+// payload con handlers (onerror=...) queda como texto, nunca se ejecuta en el propio lab.
+const HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+const inertHtml = (s) => s.replace(/[&<>"']/g, (c) => HTML_ESC[c]).replace(/&lt;(\/?)(b|i)&gt;/gi, '<$1$2>')
 const tabs = computed(() => [
   { id: 'article', label: t('article.tabArticle') },
   { id: 'comments', label: t('article.tabComments', { n: comments.value.length }) },
@@ -46,8 +56,10 @@ function publish() {
         </article>
         <section v-else>
           <div v-for="(m, i) in comments" :key="i" class="qa-comment" data-testid="comment">
-            <strong>{{ m.author || t('article.you') }}</strong> <small>{{ t('article.minutesAgo', { n: m.minutes }) }}</small>
-            <p>{{ m.text }}</p>
+            <strong>{{ m.author || t('article.you') }}</strong> <small data-testid="comment-time">{{ timeAgo(m.minutes) }}</small>
+            <!-- BUG unescaped-comment-html: solo comentarios de ESTA sesion y solo <b>/<i> (el resto sigue escapado). -->
+            <p v-if="m.live && has('unescaped-comment-html')" v-html="inertHtml(m.text)" />
+            <p v-else>{{ m.text }}</p>
           </div>
           <form class="qa-form" @submit.prevent="publish">
             <div class="qa-field">

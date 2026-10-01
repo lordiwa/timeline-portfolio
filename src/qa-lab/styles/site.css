@@ -17,6 +17,8 @@
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
 }
 .site.font-serif { font-family: Georgia, "Times New Roman", serif; }
+.site.font-mono { font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace; }
+.site.font-rounded { font-family: "Trebuchet MS", "Segoe UI Rounded", "Arial Rounded MT Bold", system-ui, sans-serif; }
 .site *, .site *::before, .site *::after { box-sizing: border-box; }
 .site button, .site input, .site select, .site textarea { font: inherit; color: inherit; }
 

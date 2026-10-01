@@ -8,10 +8,10 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, route, router, has, t, store, env } = useSite()
+const { site, content, route, router, has, nthHit, t, store, env } = useSite()
 // En el login la contrasena no tiene largo minimo: se compara contra la cuenta.
 const keys = ['email', 'password']
-const fieldsOf = () => [content.value.field('email', { autocomplete: 'username' }), content.value.field('password', { min: 1, hint: '', autocomplete: 'current-password' })]
+const fieldsOf = () => [content.value.generic('email', { autocomplete: 'username' }), content.value.generic('password', { min: 1, hint: '', autocomplete: 'current-password' })]
 const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 const failed = ref(false)
@@ -21,9 +21,14 @@ const demo = site.data.demoUser
 function submit() {
   failed.value = false
   if (!validate(fields.value)) return
+  // BUG nth-login-rejected: el N-esimo intento con credenciales VALIDAS responde "credenciales invalidas" (el siguiente pasa).
+  if (store.credentialsValid(values.email, values.password) && nthHit('nth-login-rejected')) { failed.value = true; return }
   const r = store.login(values.email, values.password)
   if (!r.ok) { failed.value = true; return }
-  router.replace(safeNext(site, route.value.query.next) || (site.pages.includes('account') ? routePath('account') : '/'))
+  const target = safeNext(site, route.value.query.next) || (site.pages.includes('account') ? routePath('account') : '/')
+  // BUG password-in-url: la contrasena viaja en la URL de destino (barra de direcciones e historial).
+  const leak = has('password-in-url') ? `${target.includes('?') ? '&' : '?'}email=${encodeURIComponent(values.email)}&password=${encodeURIComponent(values.password)}` : ''
+  router.replace(target + leak)
 }
 </script>
 

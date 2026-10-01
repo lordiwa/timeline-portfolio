@@ -9,18 +9,20 @@ import { routePath } from '../generator/pages.js'
 import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
+import ErrorBanner from '../ui/ErrorBanner.vue'
 
-const { site, content, has, t, store, toast, env } = useSite()
+const { site, content, has, nthHit, t, store, toast, env } = useSite()
+const serverError = ref(false)
 const STEPS = ['data', 'shipping', 'payment', 'done']
 const stepKeys = { data: ['name', 'email', 'address', 'city'], shipping: site.data.checkoutExtras, payment: ['card'] }
 const allKeys = Object.values(stepKeys).flat()
 
-const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has, env.clock)
+const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.generic(k)), has, env.clock)
 if (store.state.user) { values.name = store.state.user.name; values.email = store.state.user.email } // datos de la sesion
 
 const step = ref(0)
 const stepId = computed(() => STEPS[step.value])
-const stepFields = computed(() => (stepKeys[stepId.value] || []).map((k) => content.value.field(k)))
+const stepFields = computed(() => (stepKeys[stepId.value] || []).map((k) => content.value.generic(k)))
 const method = ref('standard')
 const couponInput = ref('')
 const couponError = ref('')
@@ -40,6 +42,7 @@ const totals = computed(() =>
     taxRate: site.data.taxRate,
     decimals: content.value.currency.decimals,
     firstLineIgnoresQty: has('total-wrong'), // BUG total-wrong: ignora la cantidad de la primera linea
+    taxPerLine: has('tax-rounding-per-line'), // BUG tax-rounding-per-line: descuento e impuesto redondeados linea por linea
   }),
 )
 const money = (minor, d = content.value.currency.decimals) => content.value.money(fromMinor(minor, d))
@@ -55,18 +58,34 @@ function next() {
   step.value += 1
 }
 
+/** Dia del pedido (YYYY-MM-DD): el dia civil del USUARIO (la zona simulada del sitio solo la usan los bugs de fecha). */
+const orderDate = () => env.clock.viewerToday()
+
 function place() {
   if (!validate(stepFields.value) || placing.value || !lines.value.length) return
-  placing.value = true
+  // BUG nth-submit-server-error: el N-esimo envio valido responde 500 (los datos y el carrito se conservan).
+  serverError.value = nthHit('nth-submit-server-error')
+  if (serverError.value) return
   store.bump('submit')
-  order.value = store.placeOrder({
-    lines: lines.value,
-    totals: totals.value,
+  const payload = {
+    lines: lines.value.map((l) => ({ ...l })),
+    totals: { ...totals.value },
     shipping: method.value,
     customer: { name: values.name, email: values.email },
-  })
-  toast(t('checkout.placed'))
-  step.value = STEPS.indexOf('done')
+    date: orderDate(),
+  }
+  const done = (o) => {
+    order.value = o
+    toast(t('checkout.placed'))
+    step.value = STEPS.indexOf('done')
+  }
+  if (has('place-order-twice')) {
+    // BUG place-order-twice: la confirmacion es asincrona y no hay guarda: cada click registra su propio pedido.
+    env.latency.request('order', () => store.placeOrder(payload)).then(done)
+    return
+  }
+  placing.value = true
+  done(store.placeOrder(payload))
 }
 function submit() {
   if (stepId.value === 'payment') place()
@@ -114,6 +133,7 @@ function submit() {
           </div>
         </template>
 
+        <ErrorBanner :show="serverError && stepId === 'payment'" />
         <div class="qa-actions">
           <button v-if="step > 0" type="button" class="qa-btn secondary" @click="step -= 1">{{ t('site.back') }}</button>
           <PrimaryButton type="submit" :disabled="placing">{{ stepId === 'payment' ? content.cta : t('site.next') }}</PrimaryButton>

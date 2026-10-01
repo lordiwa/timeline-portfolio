@@ -4,7 +4,8 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { provideSite } from '../composables/useSite.js'
-import { createRouter } from '../router/index.js'
+import { createRouter, parseHash } from '../router/index.js'
+import { matchPath } from '../generator/pages.js'
 import { createStore } from '../state/store.js'
 import { resolveContent } from '../content/index.js'
 import { createEnv } from '../services/clock.js'
@@ -22,9 +23,40 @@ const { t } = useI18n()
 // env: reloj, zona horaria simulada y latencia inyectables (los tests pasan su propio reloj por prop).
 const env = props.env || createEnv({ seed: props.site.seed, tzOffsetMinutes: props.site.tzOffsetMinutes })
 const store = createStore(props.site, props.storage)
-const router = createRouter(props.site, { isAuthed: () => !!store.state.user })
-const content = computed(() => resolveContent(props.site, t))
 const bugSet = new Set(props.site.bugs)
+// BUG protected-deeplink: el guard no corre en la resolucion INICIAL (deep link pegado en una pestana nueva) si esa
+// ruta es la pagina del bug; las navegaciones posteriores si pasan por el guard.
+const initialType = matchPath(props.site, parseHash(window.location.hash).path).type
+let booting = true
+const skipGuard = bugSet.has('protected-deeplink') && props.site.bugPages['protected-deeplink'] === initialType
+const router = createRouter(props.site, { isAuthed: () => !!store.state.user || (skipGuard && booting) })
+const content = computed(() => resolveContent(props.site, t))
+
+// Direccion de la ultima navegacion: 'back' si la ruta nueva es la anterior del historial recorrido (boton atras).
+// Un click en un enlace interno (#/...) tambien dispara popstate en el navegador: no es "atras". Solo la navegacion
+// por el historial (boton atras del navegador) cuenta como 'back'.
+const nav = { last: 'push', armed: false }
+// Se guarda el path DESTINO del enlace clickeado (o de router.push/replace) y el watch de ruta lo compara: si coincide
+// es navegacion por enlace o por codigo, no 'atras'. Se descarta en cada cambio de ruta (sin timers).
+let linkTarget = null
+const pathOf = (href) => parseHash(href).path
+const onLinkClick = (e) => {
+  const a = e.target.closest?.('a[href^="#"]')
+  if (a) linkTarget = pathOf(a.getAttribute('href'))
+}
+for (const m of ['push', 'replace']) {
+  const orig = router[m]
+  router[m] = (p) => { linkTarget = pathOf(`#${p}`); return orig(p) }
+}
+document.addEventListener('click', onLinkClick, true)
+onBeforeUnmount(() => document.removeEventListener('click', onLinkClick, true))
+const visited = [router.route.value.path]
+watch(router.route, (r) => {
+  if (r.path === visited.at(-1)) return
+  const byLink = linkTarget === r.path
+  linkTarget = null
+  if (r.path === visited.at(-2) && !byLink) { visited.pop(); nav.last = 'back' } else { visited.push(r.path); nav.last = 'push' }
+}, { flush: 'sync' })
 
 const messages = ref([])
 let nextId = 1
@@ -34,8 +66,9 @@ function toast(text) {
   env.clock.setTimeout(() => { messages.value = messages.value.filter((m) => m.id !== id) }, 3500)
 }
 
-provideSite({ site: props.site, env, caps: capFlags(props.site), bugSet, route: router.route, router, store, content, toast })
+provideSite({ site: props.site, env, caps: capFlags(props.site), bugSet, route: router.route, router, store, content, toast, nav })
 router.start()
+booting = false
 watch(() => !!store.state.user, () => router.refresh()) // la sesion cambio: re-evaluar el guard
 onBeforeUnmount(() => router.stop())
 </script>

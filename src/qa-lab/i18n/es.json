@@ -17,7 +17,12 @@
       "a11y": "Accesibilidad",
       "console": "Consola",
       "content": "Contenido",
-      "responsive": "Responsive"
+      "responsive": "Responsive",
+      "state": "Estado / entre páginas",
+      "async": "Asincronía",
+      "security": "Seguridad",
+      "calc": "Cálculo",
+      "date": "Fechas"
     },
     "difficulty": {
       "easy": "Fácil",
@@ -42,18 +47,12 @@
       "helpButton": "Ubicación: botón «Ayuda» del navbar (abre el modal)",
       "pageEnd": "Ubicación: al final de la página (se ve en mobile)",
       "dashboardFooter": "Ubicación: Panel, fila de total al pie de la tabla",
-      "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)"
-    }
-  },
-  "themeName": {
-    "store": "Tienda",
-    "clinic": "Clínica",
-    "gym": "Gimnasio",
-    "travel": "Viajes",
-    "restaurant": "Restaurante",
-    "library": "Biblioteca",
-    "bank": "Banco",
-    "school": "Academia"
+      "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)",
+      "nth": "Ubicación: falla en la acción n.º {n} de esa página (el contador se reinicia al recargar)",
+      "timezone": "Ubicación: Mi cuenta, fecha de nacimiento (zona horaria simulada de este bug: {n} min respecto de UTC)",
+      "taxSummary": "Ubicación: Checkout, resumen del pedido (con cupón aplicado y varias líneas)"
+    },
+    "locale": "es"
   },
   "site": {
     "menu": "Menú",
@@ -73,18 +72,14 @@
     "strip": "Envío gratis en compras superiores a 50 — solo por esta semana — consultá condiciones en tienda",
     "footer": "© {brand}. Todos los derechos reservados.",
     "loggedOut": "Sesión cerrada.",
-    "skip": "Saltar al contenido"
+    "skip": "Saltar al contenido",
+    "loading": "Cargando…"
   },
   "fields": {
     "name": "Nombre completo",
     "email": "Correo electrónico",
     "password": "Contraseña",
-    "age": "Edad",
-    "birth": "Fecha de nacimiento",
     "phone": "Teléfono",
-    "country": "País",
-    "plan": "Plan",
-    "bio": "Sobre vos",
     "newsletter": "Quiero recibir novedades",
     "terms": "Acepto los términos y condiciones",
     "subject": "Asunto",
@@ -96,42 +91,26 @@
     "giftwrap": "Envolver para regalo",
     "search": "Buscar",
     "comment": "Tu comentario",
-    "hintPassword": "Mínimo 8 caracteres",
-    "hintAge": "Debés ser mayor de 18 años",
-    "hintEmail": "Usaremos este correo para contactarte",
-    "isCompany": "Compro en nombre de una empresa",
-    "company": "Nombre de la empresa",
-    "frequency": "Frecuencia de novedades"
+    "hintPassword": "Mínimo {min} caracteres",
+    "hintRange": "Entre {min} y {max}"
   },
   "opt": {
-    "country_0": "Argentina",
-    "country_1": "España",
-    "country_2": "México",
-    "country_3": "Chile",
-    "plan_0": "Básico",
-    "plan_1": "Estándar",
-    "plan_2": "Premium",
-    "subject_0": "Consulta general",
-    "subject_1": "Reclamo",
-    "subject_2": "Sugerencia",
-    "subject_3": "Otro",
-    "choose": "Elegí una opción",
-    "frequency_0": "Diaria",
-    "frequency_1": "Semanal",
-    "frequency_2": "Mensual"
+    "choose": "Elegí una opción"
   },
   "err": {
     "required": "Este campo es obligatorio.",
     "email": "Ingresá un correo válido.",
-    "password": "La contraseña debe tener al menos 8 caracteres.",
-    "age": "Debés tener al menos 18 años.",
+    "password": "La contraseña debe tener al menos {min} caracteres.",
     "date": "La fecha no puede ser futura.",
     "card": "Ingresá un número de tarjeta de 13 a 19 dígitos.",
     "credentials": "Correo o contraseña incorrectos.",
     "exists": "Ya existe una cuenta con ese correo.",
     "minLength": "Debe tener al menos {n} caracteres.",
     "maxLength": "Debe tener como máximo {n} caracteres.",
-    "pattern": "El formato no es válido."
+    "pattern": "El formato no es válido.",
+    "number": "Ingresá un valor entre {min} y {max}.",
+    "datePast": "La fecha no puede ser pasada.",
+    "server500": "Error 500: el servidor no pudo procesar el envío. Probá de nuevo."
   },
   "tpl": {
     "signup": {
@@ -264,146 +243,9 @@
     "publish": "Publicar comentario",
     "by": "Por la redacción",
     "minutesAgo": "hace {n} min",
+    "hoursAgo": "hace {n} h",
     "you": "Vos",
     "commentPosted": "Comentario publicado."
-  },
-  "theme": {
-    "store": {
-      "name0": "Casa Nube",
-      "name1": "Mercado Norte",
-      "name2": "Tienda Olmo",
-      "tagline": "Todo para tu casa y tu día a día",
-      "item0": "Mochila",
-      "item1": "Lámpara",
-      "item2": "Zapatillas",
-      "item3": "Auriculares",
-      "item4": "Taza",
-      "item5": "Reloj",
-      "cat0": "Hogar",
-      "cat1": "Moda",
-      "cat2": "Tecnología",
-      "cta": "Comprar",
-      "article": "Llegaron las novedades de temporada"
-    },
-    "clinic": {
-      "name0": "Clínica Aurora",
-      "name1": "Centro Médico Sur",
-      "name2": "Salud Plena",
-      "tagline": "Cuidamos tu salud con cercanía",
-      "item0": "Consulta general",
-      "item1": "Pediatría",
-      "item2": "Dermatología",
-      "item3": "Cardiología",
-      "item4": "Análisis de sangre",
-      "item5": "Fisioterapia",
-      "cat0": "Consultas",
-      "cat1": "Estudios",
-      "cat2": "Terapias",
-      "cta": "Pedir turno",
-      "article": "Cómo prepararte para un chequeo anual"
-    },
-    "gym": {
-      "name0": "Forja Fitness",
-      "name1": "Gimnasio Vértice",
-      "name2": "Pulso Club",
-      "tagline": "Entrená a tu ritmo",
-      "item0": "Clase de spinning",
-      "item1": "Yoga",
-      "item2": "Entrenamiento funcional",
-      "item3": "Boxeo",
-      "item4": "Pilates",
-      "item5": "Plan personalizado",
-      "cat0": "Cardio",
-      "cat1": "Fuerza",
-      "cat2": "Bienestar",
-      "cta": "Anotarme",
-      "article": "Cinco rutinas para empezar el año"
-    },
-    "travel": {
-      "name0": "Rumbo Viajes",
-      "name1": "Horizonte Tours",
-      "name2": "Mapa Azul",
-      "tagline": "El próximo destino te espera",
-      "item0": "Escapada a la playa",
-      "item1": "Tour por la montaña",
-      "item2": "Ciudad histórica",
-      "item3": "Safari fotográfico",
-      "item4": "Crucero por el río",
-      "item5": "Fin de semana rural",
-      "cat0": "Naturaleza",
-      "cat1": "Ciudad",
-      "cat2": "Aventura",
-      "cta": "Reservar",
-      "article": "Destinos para viajar fuera de temporada"
-    },
-    "restaurant": {
-      "name0": "La Brasa",
-      "name1": "Casa Olivo",
-      "name2": "Sabor de Barrio",
-      "tagline": "Cocina casera, mesa abierta",
-      "item0": "Milanesa",
-      "item1": "Ensalada mixta",
-      "item2": "Pizza de horno",
-      "item3": "Risotto",
-      "item4": "Tarta de frutas",
-      "item5": "Empanadas",
-      "cat0": "Entradas",
-      "cat1": "Platos",
-      "cat2": "Postres",
-      "cta": "Reservar mesa",
-      "article": "La historia detrás de nuestra receta de la casa"
-    },
-    "library": {
-      "name0": "Biblioteca Central",
-      "name1": "Casa del Libro",
-      "name2": "Letras Abiertas",
-      "tagline": "Leer es viajar sin moverse",
-      "item0": "Novela",
-      "item1": "Ensayo",
-      "item2": "Poesía",
-      "item3": "Cómic",
-      "item4": "Atlas",
-      "item5": "Diccionario",
-      "cat0": "Ficción",
-      "cat1": "No ficción",
-      "cat2": "Referencia",
-      "cta": "Pedir prestado",
-      "article": "Los libros más leídos del mes"
-    },
-    "bank": {
-      "name0": "Banco Delta",
-      "name1": "Caja Norte",
-      "name2": "Finanzas Cercanas",
-      "tagline": "Tu dinero, más simple",
-      "item0": "Cuenta corriente",
-      "item1": "Tarjeta de crédito",
-      "item2": "Préstamo personal",
-      "item3": "Seguro de hogar",
-      "item4": "Plazo fijo",
-      "item5": "Caja de ahorro",
-      "cat0": "Cuentas",
-      "cat1": "Créditos",
-      "cat2": "Seguros",
-      "cta": "Solicitar",
-      "article": "Consejos para ordenar tus finanzas personales"
-    },
-    "school": {
-      "name0": "Academia Faro",
-      "name1": "Instituto Brújula",
-      "name2": "Escuela Mirador",
-      "tagline": "Aprender nunca fue tan claro",
-      "item0": "Curso de inglés",
-      "item1": "Programación",
-      "item2": "Dibujo",
-      "item3": "Fotografía",
-      "item4": "Matemática",
-      "item5": "Música",
-      "cat0": "Idiomas",
-      "cat1": "Tecnología",
-      "cat2": "Arte",
-      "cta": "Inscribirme",
-      "article": "Cómo elegir el curso que mejor te sirve"
-    }
   },
   "text": {
     "p0": "Durante los últimos meses el equipo trabajó en mejorar cada detalle de la experiencia.",
@@ -424,28 +266,6 @@
     "c5": "Tengo una duda: ¿esto aplica también en otras regiones?",
     "c6": "Increíble, no lo sabía. Gracias.",
     "c7": "Me pareció un poco corto, pero claro y directo."
-  },
-  "faq": {
-    "q0": "¿Cómo puedo crear una cuenta?",
-    "a0": "Desde el formulario de registro, completando tus datos básicos.",
-    "q1": "¿Cuáles son los medios de pago?",
-    "a1": "Aceptamos tarjetas de crédito, débito y transferencia bancaria.",
-    "q2": "¿Puedo cancelar mi pedido?",
-    "a2": "Sí, hasta 24 horas después de confirmarlo, sin costo.",
-    "q3": "¿Cuánto tarda el envío?",
-    "a3": "Entre 2 y 5 días hábiles según tu ubicación.",
-    "q4": "¿Cómo cambio mi contraseña?",
-    "a4": "Desde tu perfil, en la sección de seguridad.",
-    "q5": "¿Tienen atención telefónica?",
-    "a5": "Sí, de lunes a viernes de 9 a 18 hs.",
-    "q6": "¿Hacen facturas a nombre de empresas?",
-    "a6": "Sí, solicitándolo al momento de la compra.",
-    "q7": "¿Puedo modificar mis datos?",
-    "a7": "Podés actualizarlos en cualquier momento desde tu cuenta.",
-    "q8": "¿Cómo doy de baja mi cuenta?",
-    "a8": "Escribinos desde el formulario de contacto y lo gestionamos.",
-    "q9": "¿Dónde veo el estado de mi solicitud?",
-    "a9": "En la sección de actividad de tu cuenta."
   },
   "pageName": {
     "home": "Inicio",
@@ -477,16 +297,6 @@
     "account": "Mi cuenta",
     "logout": "Salir"
   },
-  "nouns": {
-    "item": "producto",
-    "customer": "cliente",
-    "order": "pedido",
-    "category": "categoría",
-    "itemPlural": "productos",
-    "customerPlural": "clientes",
-    "orderPlural": "pedidos",
-    "categoryPlural": "categorías"
-  },
   "home": {
     "explore": "Explorá el sitio"
   },
@@ -494,22 +304,10 @@
     "home": "Ir al inicio"
   },
   "detail": {
-    "back": "Volver al catálogo"
-  },
-  "desc": {
-    "d0": "{item}: una opción práctica para el día a día.",
-    "d1": "{item}: pensado para durar y fácil de usar.",
-    "d2": "{item}: uno de los favoritos de nuestra comunidad.",
-    "d3": "{item}: calidad probada con un precio justo.",
-    "d4": "{item}: ideal para regalar o para darte un gusto.",
-    "d5": "{item}: simple, confiable y siempre disponible."
+    "back": "Volver al catálogo",
+    "related": "Productos relacionados"
   },
   "blog": {
-    "title0": "Detrás de escena",
-    "title1": "Lo que aprendimos este año",
-    "title2": "Preguntas que nos hacen seguido",
-    "title3": "Planes para el próximo mes",
-    "title4": "Gracias por acompañarnos",
     "back": "Volver al blog"
   },
   "checkout": {
@@ -535,7 +333,8 @@
     "placed": "¡Pedido realizado!",
     "thanks": "Gracias por tu compra. Número de pedido: {id}",
     "paid": "Total pagado",
-    "toCart": "Volver al carrito"
+    "toCart": "Volver al carrito",
+    "cta": "Confirmar {order}"
   },
   "login": {
     "demo": "Cuenta de práctica: {email} / {password}",
@@ -552,7 +351,8 @@
     "saved": "Cambios guardados.",
     "orders": "Mis pedidos",
     "noOrders": "Todavía no hiciste pedidos.",
-    "items": "{n} unidades"
+    "items": "{n} unidades",
+    "birth": "Fecha de nacimiento"
   },
   "wizard": {
     "step": {
@@ -561,7 +361,13 @@
       "profile": "Perfil",
       "prefs": "Preferencias",
       "payment": "Pago",
-      "confirm": "Confirmación"
+      "confirm": "Confirmación",
+      "s1": "Paso 1",
+      "s2": "Paso 2",
+      "s3": "Paso 3",
+      "s4": "Paso 4",
+      "s5": "Paso 5",
+      "s6": "Paso 6"
     },
     "yes": "Sí",
     "no": "No"

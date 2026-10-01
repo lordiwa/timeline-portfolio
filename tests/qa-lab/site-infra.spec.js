@@ -12,6 +12,7 @@ import { createStore, memoryStorage } from '../../src/qa-lab/state/store.js'
 import { checkField } from '../../src/qa-lab/composables/useForm.js'
 import { visibleFields } from '../../src/qa-lab/wizard/logic.js'
 import { isoFromOffset, resolveContent } from '../../src/qa-lab/content/index.js'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { forceSite, ALL_PAGES, mountSite, go, tick, fill, cleanup } from './helpers.js'
 
@@ -99,7 +100,8 @@ describe('bugParams en un sub-stream propio', () => {
     rng2.fork('bug:nth-x').int(0, 9)
     expect([rng2.next(), rng2.next()]).toEqual(before)
     const site = generateSite('abc', 'semi')
-    expect(site.bugParams).toEqual({}) // el catalogo actual no declara params
+    // el catalogo v2 declara params en 4 bugs; estan en el sitio aunque no esten activos (TASK-049)
+    expect(Object.keys(site.bugParams).sort()).toEqual(['date-timezone-shift', 'nth-add-to-cart-fails', 'nth-login-rejected', 'nth-submit-server-error'])
     expect(createRng('abc').fork('bug:nth-x').int(0, 1e9)).toBe(createRng('abc').fork('bug:nth-x').int(0, 1e9))
     expect(createRng('abc').fork('a').next()).not.toBe(createRng('abc').fork('b').next())
   })
@@ -252,7 +254,7 @@ describe('reglas de los packs en el motor', () => {
     const site = generateSite('pk-1', 'semi')
     for (const locale of ['es', 'en']) {
       const c = resolveContent(site, createLabI18n(locale).global.t)
-      expect(c.currency.position).toBe('before')
+      expect(c.currency.position).toBe(getThemePack(site.themeId).currency.position)
       for (const k of ['item', 'customer', 'order', 'category']) {
         expect(c.nouns[k].one.length).toBeGreaterThan(2)
         expect(c.nouns[k].many).not.toBe(c.nouns[k].one)
@@ -270,9 +272,10 @@ describe('reglas de los packs en el motor', () => {
   })
 
   it('el dashboard muestra las 4 columnas fijas en la tabla', async () => {
-    const { w } = await mountSite(forceSite({ pages: ALL_PAGES }), { hash: '#/dashboard' })
+    const site = forceSite({ pages: ALL_PAGES })
+    const { w } = await mountSite(site, { hash: '#/dashboard' })
     const heads = w.findAll('.qa-table thead th').map((t) => t.text())
-    expect(heads).toEqual(['ID', 'Concepto', 'Cantidad', 'Fecha', 'Importe', 'Estado'])
+    expect(heads).toEqual(['ID', ...getThemePack(site.themeId).dashboard.columns.map((c) => c.es), 'Estado'])
   })
 })
 

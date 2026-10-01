@@ -1,60 +1,98 @@
 // generateSite(seed, level): funcion pura y determinista. Devuelve la descripcion JSON-serializable
-// de un SITIO multi-pagina (sin textos: los textos salen de i18n / content segun idioma).
+// de un SITIO multi-pagina (sin textos: los textos salen de los content packs / i18n segun idioma).
 //
 // Dos flujos de azar para que (seed) fije el "mundo" y (seed, level) fije la estructura:
-//   - base  = createRng(seed)            -> tema, estilo y datos (catalogo, posts, cupon...). Igual en los 3 niveles.
+//   - base  = createRng(seed)            -> tema (UNA de las 63 packs), estilo y datos. Igual en los 3 niveles.
 //   - level = createRng(`${seed}|${level}`) -> que paginas hay, que bugs hay y en que pagina vive cada uno.
+// El tema sale SIEMPRE del primer sorteo de `base`; los parametros de los bugs viven en sub-streams propios
+// (genBugParams), asi agregar bugs al catalogo nunca cambia el tema de una semilla.
 import { createRng } from './prng.js'
 import { THEMES } from './themes.js'
-import { NAMES } from './fields.js'
-import { LEVEL_CONFIG, normalizeLevel } from './levels.js'
+import { NAMES, fieldMeta } from './fields.js'
+import { LEVEL_CONFIG, levelRank, normalizeLevel } from './levels.js'
+import { selectBugs } from './compat.js'
 import { PAGE_TYPES, closureOf } from './pages.js'
+import { isoFromOffset, isoToOffset } from './dates.js'
 import { BUGS } from '../bugs/catalog.js'
-import { capabilitiesOf, requiresMet } from './capabilities.js'
+import { capabilitiesOf, requiresMet, bugFitsPage, formKeys } from './capabilities.js'
 
-function genData(rng) {
-  // --- catalogo (listado + detalle + carrito) ---
+const CHECKOUT_KEYS = ['name', 'email', 'address', 'city', 'card']
+const median = (arr) => arr.slice().sort((a, b) => a - b)[Math.floor(arr.length / 2)]
+
+/** Wizard desde el pack: sus pasos (ids s1..sN) + un paso final 'confirm' (resumen + terminos).
+ *  conditional.thenShow del pack = kind 'field' (visible SOLO si ifField === equals); un paso cuyos campos son todos
+ *  condicionales se oculta entero con el mismo criterio (kind 'step'), para no mostrar un paso vacio. */
+function wizardFromPack(pack) {
+  const { conditional: cd } = pack.wizard
+  const thenShow = cd.thenShow
+  const steps = pack.wizard.steps.map((s, i) => ({ id: `s${i + 1}`, fields: s.fieldKeys.slice() }))
+  const conditionals = [{ ifField: cd.ifField, equals: cd.equals, thenShow: thenShow.slice(), kind: 'field' }]
+  for (const s of steps) if (s.fields.every((k) => thenShow.includes(k))) conditionals.push({ ifField: cd.ifField, equals: cd.equals, thenShow: s.id, kind: 'step' })
+  steps.push({ id: 'confirm', fields: ['terms'] })
+  return { steps, conditionals }
+}
+
+function genData(rng, pack) {
+  const decimals = pack.currency.decimals
+  const unit = 10 ** -decimals
+  const roundC = (n) => Math.max(unit, Math.round(n * 10 ** decimals) / 10 ** decimals) // precios exactos en la moneda del pack
+
+  // --- catalogo (listado + detalle + carrito): items del pack (ordenados por la semilla); si el catalogo es mas largo
+  // que el pack, los items se repiten con `variant` (sufijo en el nombre y un poco mas caros) ---
   const pageSize = rng.pick([4, 6, 8])
   const total = pageSize * rng.int(3, 5) + rng.int(1, pageSize - 1) // 4..6 paginas, la ultima parcial
-  const seen = new Set()
-  const catalog = []
-  while (catalog.length < total) {
-    const itemIdx = rng.int(0, 5)
-    const variant = rng.int(1, 99)
-    const key = `${itemIdx}:${variant}`
-    if (seen.has(key)) continue // nombre unico por item
-    seen.add(key)
-    catalog.push({ id: catalog.length + 1, itemIdx, variant, price: rng.int(5, 480), cat: rng.int(0, 2) })
-  }
+  const order = rng.shuffle(pack.items.map((_, i) => i))
+  const catIdx = Object.fromEntries(pack.categories.map((c, i) => [c.id, i]))
+  const catalog = Array.from({ length: total }, (_, i) => {
+    const itemIdx = order[i % order.length]
+    const variant = Math.floor(i / order.length)
+    const base = pack.items[itemIdx]
+    return { id: i + 1, itemIdx, variant, price: roundC(base.price * (1 + 0.15 * variant)), cat: catIdx[base.category] }
+  })
   const list = { pageSize, skipAt: rng.int(1, 2), cols: rng.pick([2, 3, 4]) }
 
-  // --- dashboard (tabla paginada) ---
+  // --- dashboard (tabla paginada): filas desde pack.dashboard.rowTemplate, todo desde un sub-stream propio ---
   const dPageSize = rng.pick([4, 5, 6])
-  const dx = rng.fork('dashboard') // cantidad y fecha salen de un sub-stream: no mueven el resto del contenido
+  const skipAt = rng.int(1, 2)
+  const dx = rng.fork('dashboard')
+  const { columns, rowTemplate: rt } = pack.dashboard
   const dashboard = {
     pageSize: dPageSize,
-    skipAt: rng.int(1, 2),
-    rows: Array.from({ length: dPageSize * rng.int(4, 6) }, (_, i) => ({
-      id: i + 1, itemIdx: rng.int(0, 5), person: rng.pick(NAMES), price: rng.int(5, 480), cat: rng.int(0, 2),
-    })).map((r) => ({ ...r, quantity: dx.int(1, 20), dayOffset: dx.int(0, 364) })),
+    skipAt,
+    rows: Array.from({ length: rt.count }, (_, i) => {
+      const row = { id: i + 1 }
+      for (const col of columns) {
+        if (col.type === 'text') row[col.key] = dx.int(0, rt.pools[col.key].length - 1) // indice en el pool
+        else if (col.type === 'date') {
+          const { from, to } = rt.ranges[col.key]
+          row[col.key] = isoFromOffset(dx.int(isoToOffset(from), isoToOffset(to)))
+        } else row[col.key] = dx.int(Math.round(rt.ranges[col.key].min), Math.round(rt.ranges[col.key].max))
+      }
+      // `status` NO es una columna del pack: es un derivado del lab (filtro y KPI del panel). Se sortea por fila en el
+      // sub-stream del dashboard (0 activo, 1 pendiente, 2 cerrado) y los 3 textos son genericos (i18n list.status_*).
+      row.status = dx.int(0, 2)
+      return row
+    }),
   }
 
-  // --- blog ---
-  const posts = Array.from({ length: rng.int(3, 4) }, (_, i) => ({
+  // --- blog: los posts del pack; los comentarios y los parrafos de relleno son genericos (i18n) ---
+  const postOrder = rng.shuffle(pack.posts.map((_, i) => i))
+  const posts = Array.from({ length: Math.min(rng.int(3, 4), postOrder.length) }, (_, i) => ({
     id: i + 1,
-    titleIdx: i - 1, // -1 = titulo del tema; 0.. = blog.title<n>
-    paragraphs: rng.sample([0, 1, 2, 3, 4, 5, 6, 7], 4),
+    postIdx: postOrder[i],
+    paragraphs: rng.sample([0, 1, 2, 3, 4, 5, 6, 7], 3),
     comments: Array.from({ length: rng.int(2, 5) }, () => ({ author: rng.pick(NAMES), textIdx: rng.int(0, 7), minutes: rng.int(2, 600) })),
   }))
 
-  // --- faq ---
-  const faq = { questions: rng.sample([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 6), multiple: rng.chance(0.5), openFirst: rng.chance(0.5) }
+  // --- faq: preguntas del pack ---
+  const faq = { questions: rng.sample(pack.faq.map((_, i) => i), Math.min(6, pack.faq.length)), multiple: rng.chance(0.5), openFirst: rng.chance(0.5) }
 
-  // --- checkout: cupon, envio, impuestos ---
+  // --- checkout: cupon, envio, impuestos. El envio escala con la moneda del pack (un % del precio mediano) ---
   const pct = rng.pick([5, 10, 15, 20, 25])
   const coupon = { code: `${rng.pick(['SAVE', 'PROMO', 'DEAL', 'LAB'])}${pct}`, pct }
-  const standard = rng.int(3, 8)
-  const shipping = { standard, express: standard + rng.int(5, 12), pickup: 0 }
+  const mid = median(catalog.map((r) => r.price))
+  const standard = roundC((mid * rng.int(3, 8)) / 100)
+  const shipping = { standard, express: roundC(standard + (mid * rng.int(5, 12)) / 100), pickup: 0 }
   const taxRate = rng.pick([7, 10, 16, 21])
   const checkoutExtras = rng.sample(['notes', 'newsletter', 'giftwrap'], rng.int(1, 2))
 
@@ -62,38 +100,29 @@ function genData(rng) {
   const demoName = rng.pick(NAMES)
   const demoUser = { name: demoName, email: `${demoName.toLowerCase()}@example.com`, password: `qa-${rng.int(100000, 999999)}` }
 
-  // --- formularios (solo claves: content.field(key) arma el campo con su etiqueta) ---
-  const signupFields = (rng.shuffle(['name', 'email', 'password', 'age', 'terms', ...rng.sample(['country', 'plan', 'bio', 'birth', 'newsletter'], rng.int(2, 3))]))
-  const contactFields = (rng.shuffle(['name', 'email', 'subject', 'message', ...(rng.chance(0.6) ? ['phone'] : [])]))
+  // --- formularios: solo claves (content.field(key) arma el campo con sus reglas y etiquetas). Signup y wizard = campos
+  // del pack; contacto, checkout y cuenta = campos genericos (email/password/asunto con las reglas del pack) ---
+  const signupFields = pack.signupFields.map((f) => f.key)
+  const contactFields = rng.shuffle(['name', 'email', 'subject', 'message', ...(rng.chance(0.6) ? ['phone'] : [])])
+  const wizard = wizardFromPack(pack)
 
-  // --- wizard con validacion condicional: 4 pasos base, +1 si withPrefs, +1 si el plan es Premium (opcion 2) ---
-  const withPrefs = rng.chance(0.5)
-  const wizard = {
-    steps: [
-      { id: 'data', fields: rng.shuffle(['name', 'email']) },
-      { id: 'security', fields: rng.shuffle(['password', 'age']) },
-      { id: 'profile', fields: ['plan', 'country', 'isCompany', 'company'] },
-      ...(withPrefs ? [{ id: 'prefs', fields: ['newsletter', 'frequency'] }] : []),
-      { id: 'payment', fields: ['card'] },
-      { id: 'confirm', fields: ['terms'] },
-    ],
-    conditionals: [
-      { ifField: 'isCompany', equals: true, thenShow: 'company', kind: 'field' },
-      ...(withPrefs ? [{ ifField: 'newsletter', equals: true, thenShow: 'frequency', kind: 'field' }] : []),
-      { ifField: 'plan', equals: '2', thenShow: 'payment', kind: 'step' },
-    ],
+  const data = { catalog, list, dashboard, posts, faq, coupon, shipping, taxRate, checkoutExtras, demoUser, signupFields, contactFields, wizard }
+
+  // Tipo y obligatoriedad de cada campo usado (de ahi salen las capacidades de campo y los bugs elegibles).
+  const used = new Set([...signupFields, ...contactFields, ...CHECKOUT_KEYS, ...checkoutExtras, ...wizard.steps.flatMap((s) => s.fields), 'name', 'newsletter'])
+  data.fieldMeta = Object.fromEntries([...used].sort().map((k) => [k, fieldMeta(pack, k)]))
+
+  // Campo "objetivo" de los bugs de accesibilidad (missing-label / tab-order) por pagina. Solo campos que muestran la
+  // etiqueta/tabindex (no checkbox ni radio) y que estan visibles sin condicion.
+  const target = (page) => {
+    const keys = formKeys(data, page).filter((k) => !['checkbox', 'radio'].includes(data.fieldMeta[k].type))
+    return rng.pick(keys)
   }
-
-  // Campo "objetivo" de los bugs de accesibilidad (missing-label / tab-order) por pagina.
-  const labelTargets = {
-    signup: rng.pick(['name', 'email', 'password', 'age']),
-    contact: rng.pick(['name', 'subject', 'message']),
-    wizard: rng.pick(['name', 'password', 'country']),
-    checkout: rng.pick(['name', 'address', 'city', 'card']),
+  data.labelTargets = {
+    signup: target('signup'), contact: target('contact'), wizard: target('wizard'), checkout: rng.pick(['name', 'address', 'city', 'card']),
     list: 'search', dashboard: 'search', faq: 'search', blog: 'comment',
   }
-
-  return { catalog, list, dashboard, posts, faq, coupon, shipping, taxRate, checkoutExtras, demoUser, signupFields, contactFields, wizard, labelTargets }
+  return data
 }
 
 /** Paginas obligatorias: home y un listado siempre; al menos una con formulario (todos los niveles);
@@ -125,10 +154,25 @@ function pickPages(rng, [min, max], level) {
   return PAGE_TYPES.filter((t) => chosen.has(t))
 }
 
-/** Pool de bugs elegibles: tienen al menos una pagina presente y su dificultad no esta excluida por el nivel. */
-export function bugPool(pages, level, capabilities = capabilitiesOf(pages)) {
-  const { weights } = LEVEL_CONFIG[normalizeLevel(level)]
-  return BUGS.filter((b) => weights[b.difficulty] > 0 && b.pages.some((p) => pages.includes(p)) && requiresMet(b, capabilities))
+/**
+ * Pool de bugs elegibles: su nivel minimo <= nivel del sitio, su dificultad no esta excluida por el nivel, tienen
+ * al menos una pagina presente donde pueden manifestarse (con los campos que necesitan: tokens `field-*` del
+ * `requires` del catalogo), el sitio cumple su `requires` y, si se pasa el sitio completo, su `witness` da true: el
+ * contenido generado permite manifestarlo.
+ * `ctx` opcional: o bien `data` (solo cuentan capacidades y campos) o bien el sitio { seed, level, themeId, pages,
+ * capabilities, data, bugParams, tzOffsetMinutes } (ademas se evalua el witness).
+ */
+export function bugPool(pages, level, capabilities = capabilitiesOf(pages), ctx = null) {
+  const lvl = normalizeLevel(level)
+  const { weights } = LEVEL_CONFIG[lvl]
+  const full = ctx && ctx.data ? ctx : null
+  const data = full ? full.data : ctx
+  return BUGS.filter(
+    (b) =>
+      levelRank(b.level) <= levelRank(lvl) && weights[b.difficulty] > 0 &&
+      b.pages.some((p) => pages.includes(p) && bugFitsPage(b.id, p, data)) &&
+      requiresMet(b, capabilities) && (!full || !b.witness || b.witness(full)),
+  )
 }
 
 /**
@@ -142,57 +186,43 @@ export function genBugParams(seed, bugs = BUGS) {
   return out
 }
 
-function weightedSample(rng, items, weightOf, n) {
-  const pool = items.map((it) => ({ it, w: weightOf(it) }))
-  const out = []
-  while (out.length < n && pool.length) {
-    const sum = pool.reduce((s, x) => s + x.w, 0)
-    let r = rng.next() * sum
-    let i = 0
-    for (; i < pool.length - 1; i++) {
-      r -= pool[i].w
-      if (r < 0) break
-    }
-    out.push(pool.splice(i, 1)[0].it)
-  }
-  return out
-}
-
 export function generateSite(seed, level) {
   const lvl = normalizeLevel(level)
   const cfg = LEVEL_CONFIG[lvl]
   const base = createRng(String(seed))
   const lrng = createRng(`${seed}|${lvl}`)
 
-  const theme = base.pick(THEMES)
+  const theme = base.pick(THEMES) // PRIMER sorteo del stream de contenido: el tema no depende de los bugs ni del nivel
   const style = {
-    hue: (theme.hue + base.int(-18, 18) + 360) % 360,
-    font: theme.font,
-    radius: theme.radius + base.int(0, 4),
+    hue: (theme.style.hue + base.int(-18, 18) + 360) % 360,
+    font: theme.style.font,
+    radius: theme.style.radius + base.int(0, 4),
     header: base.pick(['bar', 'banner', 'minimal']),
     density: base.pick(['cozy', 'compact']),
     width: base.pick([760, 880, 1000]),
   }
-  const brandIdx = base.int(0, 2)
-  const data = genData(base)
+  const data = genData(base, theme)
 
   const pages = pickPages(lrng, cfg.pages, lvl)
   const capabilities = capabilitiesOf(pages, data)
 
-  // Bugs: cantidad del rango del nivel, acotada al pool compatible (el catalogo tiene bugs unicos por id).
-  const pool = bugPool(pages, lvl, capabilities)
+  // Zona horaria simulada del sitio (la maquina no cuenta) y parametros de bugs: sub-streams propios.
+  const tzOffsetMinutes = base.fork('tz').pick([-480, -300, -180, 0, 60, 330, 540])
+  const bugParams = genBugParams(seed)
+
+  // Bugs: cantidad del rango del nivel, acotada al pool compatible (el catalogo tiene bugs unicos por id). El pool
+  // filtra por nivel, capacidades, campos y witness; el sorteo respeta cuotas por dificultad e incompatibilidades (compat.js).
+  // Los bugs se eligen DESPUES de las paginas y no tocan `base`: el contenido y el set de paginas no dependen del catalogo.
+  const pool = bugPool(pages, lvl, capabilities, { seed: String(seed), level: lvl, themeId: theme.id, pages, capabilities, data, bugParams, tzOffsetMinutes })
   const count = Math.min(lrng.int(cfg.bugs[0], cfg.bugs[1]), pool.length)
-  const chosen = weightedSample(lrng, pool, (b) => cfg.weights[b.difficulty], count)
+  const chosen = selectBugs(lrng, pool, lvl, count)
   const chosenIds = new Set(chosen.map((b) => b.id))
   const bugs = BUGS.filter((b) => chosenIds.has(b.id)).map((b) => b.id) // orden estable del catalogo
   const bugPages = {}
   for (const b of BUGS) {
     if (!chosenIds.has(b.id)) continue
-    bugPages[b.id] = lrng.pick(b.pages.filter((p) => pages.includes(p))) // la pagina donde se manifiesta
+    bugPages[b.id] = lrng.pick(b.pages.filter((p) => pages.includes(p) && bugFitsPage(b.id, p, data))) // la pagina donde se manifiesta
   }
 
-  // Zona horaria simulada del sitio (la maquina no cuenta): sub-stream propio.
-  const tzOffsetMinutes = base.fork('tz').pick([-480, -300, -180, 0, 60, 330, 540])
-
-  return { seed: String(seed), level: lvl, themeId: theme.id, brandIdx, style, pages, capabilities, tzOffsetMinutes, data, bugs, bugPages, bugParams: genBugParams(seed) }
+  return { seed: String(seed), level: lvl, themeId: theme.id, style, pages, capabilities, tzOffsetMinutes, data, bugs, bugPages, bugParams }
 }

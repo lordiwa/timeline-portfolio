@@ -10,8 +10,10 @@ import { visibleFields, visibleSteps } from '../wizard/logic.js'
 import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
+import ErrorBanner from '../ui/ErrorBanner.vue'
 
-const { site, content, has, t, toast, env, store } = useSite()
+const { site, content, has, nthHit, t, toast, env, store } = useSite()
+const serverError = ref(false)
 const spec = site.data.wizard
 const allKeys = [...new Set(spec.steps.flatMap((s) => s.fields))]
 const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has, env.clock)
@@ -47,6 +49,10 @@ function next() {
   // Envio final: se valida TODO lo visible; si algo falla, se vuelve al primer paso con error.
   const bad = steps.value.find((s) => !validate(fieldsOf(s)))
   if (bad) { stepId.value = bad.id; return }
+  if (busy.value) return // reenvio dentro de la ventana de bloqueo
+  // BUG nth-submit-server-error: el N-esimo envio valido responde 500 (los datos se conservan, el contador no avanza).
+  serverError.value = nthHit('nth-submit-server-error')
+  if (serverError.value) return
   store.bump('submit')
   if (record()) toast(t('site.sent'))
 }
@@ -63,6 +69,7 @@ function next() {
         </ul>
       </template>
       <FormField v-for="f in fields" :key="f.key" v-model="values[f.key]" :field="f" :error="errors[f.key]" @blur="validateField(f)" />
+      <ErrorBanner :show="serverError && last" />
       <div class="qa-actions">
         <button v-if="idx > 0" type="button" class="qa-btn secondary" @click="stepId = steps[idx - 1].id">{{ t('site.back') }}</button>
         <PrimaryButton type="submit" :disabled="busy">{{ last ? t('site.submit') : t('site.next') }}</PrimaryButton>

@@ -5,6 +5,7 @@ import { mountLab } from '../../src/qa-lab/boot.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import App from '../../src/qa-lab/App.vue'
 import es from '../../src/qa-lab/i18n/es.json'
+import { getThemePack } from '../../src/qa-lab/themes/index.js'
 import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, click, track, cleanup } from './helpers.js'
 
 afterEach(cleanup)
@@ -121,7 +122,7 @@ describe('L-5 y nota: titulo y nivel invalido por la URL real', () => {
   it('document.title es "pagina · marca · QA Lab"', async () => {
     const site = forceSite({ pages: ALL_PAGES })
     const { w } = await mountSite(site, { hash: '#/faq' })
-    const brand = es.theme[site.themeId][`name${site.brandIdx}`]
+    const brand = getThemePack(site.themeId).name.es
     expect(document.title).toBe(`${es.pageName.faq} · ${brand} · QA Lab`)
     await go('/cart')
     expect(document.title).toBe(`${es.pageName.cart} · ${brand} · QA Lab`)
