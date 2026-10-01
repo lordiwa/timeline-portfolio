@@ -4,6 +4,8 @@ dist
 *.log
 .env
 .env.local
+.env.*.local
+.env.production
 
 # Cache local de firebase-tools: guarda hashes del ultimo deploy para subir solo
 # los archivos cambiados. Es estado por-maquina, no configuracion del proyecto
