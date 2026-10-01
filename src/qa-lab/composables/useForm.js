@@ -60,28 +60,3 @@ export function useSubmissions(has) {
   }
   return { count, busy, record }
 }
-
-/** Filtros + paginacion compartidos por productos y dashboard. */
-export function useListing(rows, opts, has) {
-  const search = ref('')
-  const cat = ref('')
-  const sort = ref('default')
-  const page = ref(1)
-
-  const filtered = () => {
-    let r = rows.filter((x) => (cat.value === '' || x.cat === Number(cat.value)) && opts.match(x, search.value.trim().toLowerCase()))
-    if (sort.value === 'priceAsc') r = r.slice().sort((a, b) => a.price - b.price)
-    if (sort.value === 'priceDesc') r = r.slice().sort((a, b) => b.price - a.price)
-    return r
-  }
-  const pages = () => Math.max(1, Math.ceil(filtered().length / opts.pageSize))
-  const pageRows = () => filtered().slice((page.value - 1) * opts.pageSize, page.value * opts.pageSize)
-  const resetPage = () => { page.value = 1 }
-  function clear() {
-    search.value = ''
-    if (!has('filter-not-reset')) cat.value = '' // BUG: el filtro de categoria queda activo
-    sort.value = 'default'
-    resetPage()
-  }
-  return { search, cat, sort, page, filtered, pages, pageRows, resetPage, clear }
-}

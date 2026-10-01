@@ -1,5 +1,5 @@
 <script setup>
-import { useLab } from '../composables/useLab.js'
+import { useSite } from '../composables/useSite.js'
 
 const props = defineProps({
   page: { type: Number, required: true },
@@ -7,7 +7,7 @@ const props = defineProps({
   skipAt: { type: Number, default: 1 },
 })
 const emit = defineEmits(['update:page'])
-const { has, t } = useLab()
+const { has, t } = useSite()
 
 function go(n) {
   emit('update:page', Math.min(props.pages, Math.max(1, n)))

@@ -1,27 +1,26 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useLab } from '../composables/useLab.js'
-import PageShell from '../components/PageShell.vue'
+import { useSite } from '../composables/useSite.js'
+import PageShell from '../ui/PageShell.vue'
 import Accordion from '../components/Accordion.vue'
 
-const { page, has, t } = useLab()
-const c = page.content
+const { site, content, has, t, labelTarget } = useSite()
 const q = ref('')
-const unlabeled = computed(() => has('missing-label')) // BUG missing-label (buscador)
+const unlabeled = computed(() => has('missing-label') && labelTarget() === 'search') // BUG missing-label (buscador)
 const items = computed(() =>
-  c.questions
-    .map((i) => ({ id: i, title: t(`faq.q${i}`), body: t(`faq.a${i}`) }))
+  content.value.faq
+    .map((f) => ({ id: f.id, title: f.q, body: f.a }))
     .filter((it) => !q.value.trim() || it.title.toLowerCase().includes(q.value.trim().toLowerCase())),
 )
 </script>
 
 <template>
-  <PageShell tpl-id="faq">
+  <PageShell type="faq">
     <div class="qa-toolbar-row">
       <label v-if="!unlabeled" class="qa-label" for="qa-search">{{ t('fields.search') }}</label>
       <input id="qa-search" v-model="q" type="search" :placeholder="unlabeled ? t('fields.search') : ''" />
     </div>
-    <Accordion :key="items.length" :items="items" :multiple="c.multiple" :open-first="c.openFirst" />
+    <Accordion :key="`${items.length}:${content.brand}`" :items="items" :multiple="site.data.faq.multiple" :open-first="site.data.faq.openFirst" />
     <p v-if="!items.length" class="qa-hint">{{ t('list.empty') }}</p>
   </PageShell>
 </template>

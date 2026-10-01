@@ -1,10 +1,10 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue'
-import { useLab } from '../composables/useLab.js'
+import { useSite } from '../composables/useSite.js'
 
 const props = defineProps({ open: Boolean, title: { type: String, default: '' } })
 const emit = defineEmits(['close'])
-const { has, t } = useLab()
+const { has, t } = useSite()
 const dialog = ref(null)
 let opener = null
 

@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import { useLab } from '../composables/useLab.js'
+import { useSite } from '../composables/useSite.js'
 
 defineProps({ type: { type: String, default: 'button' }, disabled: Boolean })
-const { has, t } = useLab()
+const { has, t } = useSite()
 const covered = computed(() => has('button-covered')) // BUG: sticker que intercepta los clicks
 const tabindex = computed(() => (has('tab-order') ? 1 : undefined)) // BUG: tabindex positivo
 </script>

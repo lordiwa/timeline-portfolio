@@ -12,3 +12,6 @@ body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Ari
 .lab-solution ul { margin: 8px 0 0; padding-left: 18px; }
 .lab-solution li { margin-bottom: 6px; }
 .lab-solution em { margin: 0 8px; color: #52606d; font-size: .85rem; }
+.lab-bar label { display: flex; gap: 6px; align-items: center; }
+.lab-solution a { color: #1a56b0; }
+.lab-pages { margin: 4px 0 8px; font-size: .85rem; color: #52606d; }

@@ -1,29 +1,29 @@
-// Acceso de los componentes del sitio generado a: pagina, flags de bugs, i18n y toast.
+// Acceso de las paginas del sitio a: sitio generado, bugs (flags), router, store, contenido, i18n y toast.
 import { inject, provide } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-const PAGE_KEY = Symbol('qaPage')
-const BUGS_KEY = Symbol('qaBugs')
-const TOAST_KEY = Symbol('qaToast')
+const KEY = Symbol('qaSite')
 
-export function provideLab(page, bugSet, toast) {
-  provide(PAGE_KEY, page)
-  provide(BUGS_KEY, bugSet)
-  provide(TOAST_KEY, toast)
+/** ctx = { site, bugSet, route, router, store, content (computed), toast } */
+export function provideSite(ctx) {
+  provide(KEY, ctx)
 }
 
-export function useLab() {
-  const page = inject(PAGE_KEY)
-  const bugSet = inject(BUGS_KEY)
-  const toast = inject(TOAST_KEY)
+export function useSite() {
+  const ctx = inject(KEY)
   const { t, locale } = useI18n()
-  /** Consulta de flag: el unico camino por el que un componente activa un bug. */
-  const has = (id) => bugSet.has(id)
+  /**
+   * Consulta de flag: el UNICO camino por el que un componente activa un bug.
+   * El bug esta activo en el sitio Y la pagina actual es aquella en la que se manifiesta
+   * (site.bugPages[id]); asi el solucionario puede decir exactamente donde esta cada uno.
+   */
+  const has = (id) => ctx.bugSet.has(id) && ctx.site.bugPages[id] === ctx.route.value.type
   /** t() que, con el bug 'untranslated', devuelve el texto en el OTRO idioma. */
   const tBug = (key, params = {}) =>
     has('untranslated') ? t(key, params, { locale: locale.value === 'es' ? 'en' : 'es' }) : t(key, params)
-  const tt = (key, params = {}) => t(`theme.${page.themeId}.${key}`, params)
-  return { page, has, t, tBug, tt, toast, locale }
+  /** Campo "objetivo" de los bugs de accesibilidad en la pagina actual. */
+  const labelTarget = () => ctx.site.data.labelTargets[ctx.route.value.type]
+  return { ...ctx, has, t, tBug, locale, labelTarget }
 }
 
 /** Errata determinista: intercambia dos letras distintas y contiguas de la 1a palabra donde se pueda.

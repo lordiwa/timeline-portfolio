@@ -116,3 +116,38 @@
   .qa-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .site-main { padding-inline: 14px; }
 }
+
+/* --- Sitio multi-pagina (TASK-047): navbar real, sesion, carrito, checkout --- */
+.site-header .brand { color: inherit; text-decoration: none; }
+.site-nav { flex-wrap: wrap; gap: 6px 14px; }
+.site-nav a { color: inherit; text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+.site-nav a:hover { border-bottom-color: currentColor; }
+.site-nav a.active { border-bottom-color: currentColor; font-weight: 600; }
+.site-session { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-left: 6px; padding-left: 14px; border-left: 1px solid currentColor; }
+.nav-toggle { display: none; margin-left: auto; background: transparent; border: 1px solid currentColor; border-radius: var(--radius); padding: 6px 12px; cursor: pointer; color: inherit; }
+.site-page > h1 { overflow-wrap: anywhere; }
+.site-main a { color: var(--accent); }
+.qa-link-btn { display: inline-block; text-decoration: none; }
+.site-main a.qa-btn { color: #fff; }
+.qa-table-wrap { overflow-x: auto; }
+.qa-qty { width: 80px; padding: 6px 8px; border: 1px solid #aeb7c0; border-radius: var(--radius); }
+.qa-post { margin-bottom: 12px; }
+.home-tagline { font-size: 1.1rem; margin: 0 0 16px; }
+.home-sub { margin: 24px 0 8px; font-size: 1.1rem; }
+.home-links { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0; margin: 0; list-style: none; }
+.qa-step-title { margin: 0 0 12px; font-size: 1.15rem; }
+.qa-shipping { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; display: grid; gap: 6px; }
+.qa-coupon { display: grid; gap: 6px; }
+.qa-coupon input { padding: 8px 10px; border: 1px solid #aeb7c0; border-radius: var(--radius); }
+.qa-summary { margin-top: 20px; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); max-width: 520px; background: var(--accent-soft); }
+.qa-summary h3 { margin: 0 0 6px; font-size: 1rem; }
+.qa-summary .grand { font-weight: 700; font-size: 1.15rem; margin-top: 4px; }
+.qa-summary-lines { margin: 0 0 8px; padding-left: 18px; }
+
+@media (max-width: 640px) {
+  .nav-toggle { display: inline-block; }
+  .site-nav { display: none; width: 100%; margin-left: 0; flex-direction: column; align-items: flex-start; }
+  .site-nav.open { display: flex; }
+  .site-session { margin-left: 0; padding-left: 0; border-left: 0; }
+  .site-header { padding-inline: 14px; }
+}

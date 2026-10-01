@@ -1,42 +1,35 @@
 {
   "lab": {
     "title": "QA Lab",
-    "tagline": "Testing practice: every seed builds a different site with injected bugs.",
+    "tagline": "Testing practice: every seed and level builds a different multi-page site with injected bugs.",
     "seed": "Seed",
     "newPage": "New page",
     "language": "Language",
     "reveal": "Reveal bugs",
     "hide": "Hide bugs",
     "bugsTitle": "Answer key",
-    "bugsCount": "Bugs injected in this seed: {n}",
-    "template": "Template",
+    "bugsCount": "Bugs injected in this seed and level: {n}",
     "theme": "Theme",
-    "category": {
-      "validation": "Validation",
-      "ui": "UI / visual",
-      "functional": "Functional",
-      "a11y": "Accessibility",
-      "console": "Console",
-      "content": "Content",
-      "responsive": "Responsive"
-    },
-    "difficulty": { "easy": "Easy", "medium": "Medium", "hard": "Hard" }
+    "category": {"validation": "Validation", "ui": "UI / visual", "functional": "Functional", "a11y": "Accessibility", "console": "Console", "content": "Content", "responsive": "Responsive"},
+    "difficulty": {"easy": "Easy", "medium": "Medium", "hard": "Hard"},
+    "level": "Level",
+    "levels": {"junior": "Junior", "semi": "Mid", "senior": "Senior"},
+    "pages": "Pages",
+    "page": "Page",
+    "pageList": "Site pages ({n})",
+    "noBugs": "This site has no active bugs."
   },
-  "themeName": {"store":"Store","clinic":"Clinic","gym":"Gym","travel":"Travel","restaurant":"Restaurant","library":"Library","bank":"Bank","school":"School"},
-  "tplName": {
-    "signup": "Sign up",
-    "checkout": "Checkout",
-    "contact": "Contact",
-    "wizard": "Multi-step wizard",
-    "products": "Product listing",
-    "article": "Article with comments",
-    "faq": "FAQ",
-    "dashboard": "Dashboard table"
+  "themeName": {
+    "store": "Store",
+    "clinic": "Clinic",
+    "gym": "Gym",
+    "travel": "Travel",
+    "restaurant": "Restaurant",
+    "library": "Library",
+    "bank": "Bank",
+    "school": "School"
   },
   "site": {
-    "home": "Home",
-    "catalog": "Catalog",
-    "contactLink": "Contact",
     "menu": "Menu",
     "help": "Help",
     "aboutText": "{brand} is a fictitious practice site for testers.",
@@ -52,7 +45,8 @@
     "sent": "Form submitted successfully!",
     "promo": "Sale!",
     "strip": "Free shipping on orders over 50 — this week only — see in-store terms and conditions",
-    "footer": "© {brand}. All rights reserved."
+    "footer": "© {brand}. All rights reserved.",
+    "loggedOut": "Signed out."
   },
   "fields": {
     "name": "Full name",
@@ -77,7 +71,10 @@
     "comment": "Your comment",
     "hintPassword": "At least 8 characters",
     "hintAge": "You must be over 18",
-    "hintEmail": "We will use this email to contact you"
+    "hintEmail": "We will use this email to contact you",
+    "isCompany": "I am buying on behalf of a company",
+    "company": "Company name",
+    "frequency": "News frequency"
   },
   "opt": {
     "country_0": "Argentina",
@@ -91,7 +88,10 @@
     "subject_1": "Complaint",
     "subject_2": "Suggestion",
     "subject_3": "Other",
-    "choose": "Choose an option"
+    "choose": "Choose an option",
+    "frequency_0": "Daily",
+    "frequency_1": "Weekly",
+    "frequency_2": "Monthly"
   },
   "err": {
     "required": "This field is required.",
@@ -99,17 +99,25 @@
     "password": "Password must be at least 8 characters long.",
     "age": "You must be at least 18 years old.",
     "date": "The date cannot be in the future.",
-    "card": "Enter a card number of 13 to 19 digits."
+    "card": "Enter a card number of 13 to 19 digits.",
+    "credentials": "Wrong email or password.",
+    "exists": "An account with that email already exists."
   },
   "tpl": {
-    "signup": { "title": "Create your {brand} account", "lead": "Join in a minute and start enjoying {brand}.", "note": "After signing up you will get a welcome email with the next steps to complete your profile and set your preferences." },
-    "checkout": { "title": "Complete your purchase at {brand}", "lead": "Review your order and fill in your details to finish.", "note": "Orders confirmed before 2 pm ship the same day; the rest ship the next business day." },
-    "contact": { "title": "Get in touch with {brand}", "lead": "We are here to help. Fill in the form and we will reply soon.", "note": "Our opening hours are Monday to Friday, 9 am to 6 pm, except national holidays." },
-    "wizard": { "title": "Set up your {brand} profile", "lead": "We guide you through three simple steps.", "note": "You can go back to a previous step at any time without losing what you already filled in." },
-    "products": { "title": "{brand} catalog", "lead": "Explore everything we have for you.", "note": "Prices include taxes. Images are illustrative and may differ from the final product." },
-    "article": { "title": "News from {brand}", "lead": "The latest from our community.", "note": "This article was published by the editorial team and reviewed before final publication." },
-    "faq": { "title": "{brand} frequently asked questions", "lead": "Find quick answers to the most common questions.", "note": "If you cannot find what you need, write to us from the contact section and we will help." },
-    "dashboard": { "title": "{brand} dashboard", "lead": "Summary of recent activity.", "note": "Data refreshes every 15 minutes and may differ slightly from monthly reports." }
+    "signup": {"title": "Create your {brand} account", "lead": "Join in a minute and start enjoying {brand}.", "note": "After signing up you will get a welcome email with the next steps to complete your profile and set your preferences."},
+    "checkout": {"title": "Complete your purchase at {brand}", "lead": "Complete the steps to finish your order.", "note": "Orders confirmed before 2 pm ship the same day; the rest ship the next business day."},
+    "contact": {"title": "Get in touch with {brand}", "lead": "We are here to help. Fill in the form and we will reply soon.", "note": "Our opening hours are Monday to Friday, 9 am to 6 pm, except national holidays."},
+    "wizard": {"title": "Set up your {brand} profile", "lead": "We guide you step by step; some questions depend on your earlier answers.", "note": "You can go back to a previous step at any time without losing what you already filled in."},
+    "faq": {"title": "{brand} frequently asked questions", "lead": "Find quick answers to the most common questions.", "note": "If you cannot find what you need, write to us from the contact section and we will help."},
+    "dashboard": {"title": "{brand} dashboard", "lead": "Summary of recent activity.", "note": "Data refreshes every 15 minutes and may differ slightly from monthly reports."},
+    "home": {"title": "Welcome to {brand}", "lead": "Everything you need, in one place.", "note": "Browse the site, add products to the cart and try every flow at your own pace."},
+    "list": {"title": "{brand} catalog", "lead": "Explore everything we have for you.", "note": "Prices include taxes. Images are illustrative and may differ from the final product."},
+    "detail": {"title": "{brand} product", "lead": "Learn the details before you decide.", "note": "Prices include taxes. You can change the quantity in the cart at any time."},
+    "cart": {"title": "Your cart at {brand}", "lead": "Review what you picked before paying.", "note": "Prices and quantities may change until you confirm the order."},
+    "login": {"title": "Sign in to {brand}", "lead": "Access your account to see your orders.", "note": "The session is only a simulation: no real data is sent."},
+    "account": {"title": "My account at {brand}", "lead": "Your details and your orders.", "note": "Only you can see this page: it requires a signed-in session."},
+    "blog": {"title": "News from {brand}", "lead": "The latest from our community.", "note": "Articles are published by the editorial team and reviewed before final publication."},
+    "notfound": {"title": "We could not find this page", "lead": "That address does not exist at {brand}.", "note": "Go back to the home page and keep browsing."}
   },
   "list": {
     "sortBy": "Sort by",
@@ -138,7 +146,10 @@
     "viewSummary": "Summary",
     "status_0": "Active",
     "status_1": "Pending",
-    "status_2": "Closed"
+    "status_2": "Closed",
+    "results": "{n} results",
+    "anyPrice": "Any price",
+    "upTo": "Up to {n}"
   },
   "cart": {
     "item": "Product",
@@ -148,7 +159,15 @@
     "tax": "Taxes ({rate}%)",
     "total": "Total",
     "summary": "Order details",
-    "shipping": "Shipping and delivery"
+    "shipping": "Shipping and delivery",
+    "add": "Add to cart",
+    "added": "{name} was added to the cart.",
+    "remove": "Remove",
+    "empty": "Your cart is empty.",
+    "goCheckout": "Go to checkout",
+    "shop": "Browse the catalog",
+    "subtotal": "Subtotal",
+    "discount": "Discount"
   },
   "article": {
     "tabArticle": "Article",
@@ -160,14 +179,14 @@
     "commentPosted": "Comment posted."
   },
   "theme": {
-    "store": { "name0": "Cloud House", "name1": "North Market", "name2": "Olm Store", "tagline": "Everything for your home and your day", "item0": "Backpack", "item1": "Lamp", "item2": "Sneakers", "item3": "Headphones", "item4": "Mug", "item5": "Watch", "cat0": "Home", "cat1": "Fashion", "cat2": "Technology", "cta": "Buy", "article": "The new season arrivals are here" },
-    "clinic": { "name0": "Aurora Clinic", "name1": "South Medical Center", "name2": "Full Health", "tagline": "We take care of your health, close to you", "item0": "General checkup", "item1": "Pediatrics", "item2": "Dermatology", "item3": "Cardiology", "item4": "Blood test", "item5": "Physiotherapy", "cat0": "Consultations", "cat1": "Studies", "cat2": "Therapies", "cta": "Book appointment", "article": "How to prepare for an annual checkup" },
-    "gym": { "name0": "Forge Fitness", "name1": "Vertex Gym", "name2": "Pulse Club", "tagline": "Train at your own pace", "item0": "Spinning class", "item1": "Yoga", "item2": "Functional training", "item3": "Boxing", "item4": "Pilates", "item5": "Personal plan", "cat0": "Cardio", "cat1": "Strength", "cat2": "Wellness", "cta": "Join", "article": "Five routines to start the year" },
-    "travel": { "name0": "Compass Travel", "name1": "Horizon Tours", "name2": "Blue Map", "tagline": "Your next destination is waiting", "item0": "Beach getaway", "item1": "Mountain tour", "item2": "Historic city", "item3": "Photo safari", "item4": "River cruise", "item5": "Countryside weekend", "cat0": "Nature", "cat1": "City", "cat2": "Adventure", "cta": "Book now", "article": "Destinations to visit in the off season" },
-    "restaurant": { "name0": "The Grill", "name1": "Olive House", "name2": "Neighborhood Flavor", "tagline": "Home cooking, open table", "item0": "Breaded cutlet", "item1": "Mixed salad", "item2": "Oven pizza", "item3": "Risotto", "item4": "Fruit tart", "item5": "Empanadas", "cat0": "Starters", "cat1": "Mains", "cat2": "Desserts", "cta": "Book a table", "article": "The story behind our house recipe" },
-    "library": { "name0": "Central Library", "name1": "Book House", "name2": "Open Letters", "tagline": "Reading is traveling without moving", "item0": "Novel", "item1": "Essay", "item2": "Poetry", "item3": "Comic", "item4": "Atlas", "item5": "Dictionary", "cat0": "Fiction", "cat1": "Non-fiction", "cat2": "Reference", "cta": "Borrow", "article": "The most read books of the month" },
-    "bank": { "name0": "Delta Bank", "name1": "North Savings", "name2": "Nearby Finance", "tagline": "Your money, simpler", "item0": "Checking account", "item1": "Credit card", "item2": "Personal loan", "item3": "Home insurance", "item4": "Fixed-term deposit", "item5": "Savings account", "cat0": "Accounts", "cat1": "Loans", "cat2": "Insurance", "cta": "Apply", "article": "Tips to organize your personal finances" },
-    "school": { "name0": "Beacon Academy", "name1": "Compass Institute", "name2": "Lookout School", "tagline": "Learning has never been clearer", "item0": "English course", "item1": "Programming", "item2": "Drawing", "item3": "Photography", "item4": "Mathematics", "item5": "Music", "cat0": "Languages", "cat1": "Technology", "cat2": "Art", "cta": "Enroll", "article": "How to choose the course that suits you best" }
+    "store": {"name0": "Cloud House", "name1": "North Market", "name2": "Olm Store", "tagline": "Everything for your home and your day", "item0": "Backpack", "item1": "Lamp", "item2": "Sneakers", "item3": "Headphones", "item4": "Mug", "item5": "Watch", "cat0": "Home", "cat1": "Fashion", "cat2": "Technology", "cta": "Buy", "article": "The new season arrivals are here"},
+    "clinic": {"name0": "Aurora Clinic", "name1": "South Medical Center", "name2": "Full Health", "tagline": "We take care of your health, close to you", "item0": "General checkup", "item1": "Pediatrics", "item2": "Dermatology", "item3": "Cardiology", "item4": "Blood test", "item5": "Physiotherapy", "cat0": "Consultations", "cat1": "Studies", "cat2": "Therapies", "cta": "Book appointment", "article": "How to prepare for an annual checkup"},
+    "gym": {"name0": "Forge Fitness", "name1": "Vertex Gym", "name2": "Pulse Club", "tagline": "Train at your own pace", "item0": "Spinning class", "item1": "Yoga", "item2": "Functional training", "item3": "Boxing", "item4": "Pilates", "item5": "Personal plan", "cat0": "Cardio", "cat1": "Strength", "cat2": "Wellness", "cta": "Join", "article": "Five routines to start the year"},
+    "travel": {"name0": "Compass Travel", "name1": "Horizon Tours", "name2": "Blue Map", "tagline": "Your next destination is waiting", "item0": "Beach getaway", "item1": "Mountain tour", "item2": "Historic city", "item3": "Photo safari", "item4": "River cruise", "item5": "Countryside weekend", "cat0": "Nature", "cat1": "City", "cat2": "Adventure", "cta": "Book now", "article": "Destinations to visit in the off season"},
+    "restaurant": {"name0": "The Grill", "name1": "Olive House", "name2": "Neighborhood Flavor", "tagline": "Home cooking, open table", "item0": "Breaded cutlet", "item1": "Mixed salad", "item2": "Oven pizza", "item3": "Risotto", "item4": "Fruit tart", "item5": "Empanadas", "cat0": "Starters", "cat1": "Mains", "cat2": "Desserts", "cta": "Book a table", "article": "The story behind our house recipe"},
+    "library": {"name0": "Central Library", "name1": "Book House", "name2": "Open Letters", "tagline": "Reading is traveling without moving", "item0": "Novel", "item1": "Essay", "item2": "Poetry", "item3": "Comic", "item4": "Atlas", "item5": "Dictionary", "cat0": "Fiction", "cat1": "Non-fiction", "cat2": "Reference", "cta": "Borrow", "article": "The most read books of the month"},
+    "bank": {"name0": "Delta Bank", "name1": "North Savings", "name2": "Nearby Finance", "tagline": "Your money, simpler", "item0": "Checking account", "item1": "Credit card", "item2": "Personal loan", "item3": "Home insurance", "item4": "Fixed-term deposit", "item5": "Savings account", "cat0": "Accounts", "cat1": "Loans", "cat2": "Insurance", "cta": "Apply", "article": "Tips to organize your personal finances"},
+    "school": {"name0": "Beacon Academy", "name1": "Compass Institute", "name2": "Lookout School", "tagline": "Learning has never been clearer", "item0": "English course", "item1": "Programming", "item2": "Drawing", "item3": "Photography", "item4": "Mathematics", "item5": "Music", "cat0": "Languages", "cat1": "Technology", "cat2": "Art", "cta": "Enroll", "article": "How to choose the course that suits you best"}
   },
   "text": {
     "p0": "Over the last few months the team worked on improving every detail of the experience.",
@@ -190,15 +209,117 @@
     "c7": "A bit short, but clear and to the point."
   },
   "faq": {
-    "q0": "How can I create an account?", "a0": "From the sign-up form, by filling in your basic details.",
-    "q1": "What payment methods do you accept?", "a1": "We accept credit cards, debit cards and bank transfer.",
-    "q2": "Can I cancel my order?", "a2": "Yes, up to 24 hours after confirming it, at no cost.",
-    "q3": "How long does shipping take?", "a3": "Between 2 and 5 business days depending on your location.",
-    "q4": "How do I change my password?", "a4": "From your profile, in the security section.",
-    "q5": "Do you offer phone support?", "a5": "Yes, Monday to Friday from 9 am to 6 pm.",
-    "q6": "Do you issue invoices to companies?", "a6": "Yes, just request it at the time of purchase.",
-    "q7": "Can I edit my details?", "a7": "You can update them at any time from your account.",
-    "q8": "How do I close my account?", "a8": "Write to us from the contact form and we will handle it.",
-    "q9": "Where can I see the status of my request?", "a9": "In the activity section of your account."
+    "q0": "How can I create an account?",
+    "a0": "From the sign-up form, by filling in your basic details.",
+    "q1": "What payment methods do you accept?",
+    "a1": "We accept credit cards, debit cards and bank transfer.",
+    "q2": "Can I cancel my order?",
+    "a2": "Yes, up to 24 hours after confirming it, at no cost.",
+    "q3": "How long does shipping take?",
+    "a3": "Between 2 and 5 business days depending on your location.",
+    "q4": "How do I change my password?",
+    "a4": "From your profile, in the security section.",
+    "q5": "Do you offer phone support?",
+    "a5": "Yes, Monday to Friday from 9 am to 6 pm.",
+    "q6": "Do you issue invoices to companies?",
+    "a6": "Yes, just request it at the time of purchase.",
+    "q7": "Can I edit my details?",
+    "a7": "You can update them at any time from your account.",
+    "q8": "How do I close my account?",
+    "a8": "Write to us from the contact form and we will handle it.",
+    "q9": "Where can I see the status of my request?",
+    "a9": "In the activity section of your account."
+  },
+  "pageName": {
+    "home": "Home",
+    "list": "Catalog",
+    "detail": "Product detail",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "login": "Sign in",
+    "signup": "Sign up",
+    "account": "My account",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "dashboard": "Dashboard",
+    "blog": "Blog",
+    "wizard": "Wizard",
+    "notfound": "Page not found"
+  },
+  "nav": {
+    "home": "Home",
+    "list": "Catalog",
+    "cart": "Cart",
+    "blog": "Blog",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
+    "wizard": "Wizard",
+    "login": "Sign in",
+    "signup": "Sign up",
+    "account": "My account",
+    "logout": "Sign out"
+  },
+  "nouns": {
+    "item": "product",
+    "customer": "customer",
+    "order": "order",
+    "category": "category"
+  },
+  "home": {
+    "explore": "Explore the site"
+  },
+  "notfound": {
+    "home": "Go to the home page"
+  },
+  "detail": {
+    "back": "Back to the catalog"
+  },
+  "desc": {
+    "d0": "{item}: a practical choice for every day.",
+    "d1": "{item}: built to last and easy to use.",
+    "d2": "{item}: one of our community favorites.",
+    "d3": "{item}: proven quality at a fair price.",
+    "d4": "{item}: great as a gift or a treat for yourself.",
+    "d5": "{item}: simple, reliable and always available."
+  },
+  "blog": {
+    "title0": "Behind the scenes",
+    "title1": "What we learned this year",
+    "title2": "Questions we get often",
+    "title3": "Plans for next month",
+    "title4": "Thanks for being with us",
+    "back": "Back to the blog"
+  },
+  "checkout": {
+    "step": {"data": "Your details", "shipping": "Shipping and coupon", "payment": "Payment", "done": "Order confirmed"},
+    "ship": {"standard": "Standard shipping", "express": "Express shipping", "pickup": "Store pickup"},
+    "coupon": {"label": "Discount coupon", "apply": "Apply", "hint": "Practice coupon: {code} ({pct}% off).", "applied": "Coupon {code} applied ({pct}%).", "err_empty": "Enter a code.", "err_invalid": "The coupon is not valid."},
+    "placed": "Order placed!",
+    "thanks": "Thank you for your purchase. Order number: {id}",
+    "paid": "Total paid",
+    "toCart": "Back to the cart"
+  },
+  "login": {
+    "demo": "Practice account: {email} / {password}",
+    "submit": "Sign in",
+    "noAccount": "Do not have an account?"
+  },
+  "signup": {
+    "created": "Account created! You are now signed in.",
+    "haveAccount": "Already have an account?"
+  },
+  "account": {
+    "signedAs": "Signed in as {name} ({email}).",
+    "save": "Save changes",
+    "saved": "Changes saved.",
+    "orders": "My orders",
+    "noOrders": "You have not placed any orders yet.",
+    "items": "{n} units"
+  },
+  "wizard": {
+    "step": {"data": "Your details", "security": "Security", "profile": "Profile", "prefs": "Preferences", "payment": "Payment", "confirm": "Confirmation"},
+    "yes": "Yes",
+    "no": "No"
   }
 }
