@@ -99,7 +99,8 @@
     "minLength": "Debe tener al menos {n} caracteres.",
     "maxLength": "Debe tener como máximo {n} caracteres.",
     "pattern": "El formato no es válido.",
-    "number": "Ingresá un valor entre {min} y {max}."
+    "number": "Ingresá un valor entre {min} y {max}.",
+    "datePast": "La fecha no puede ser pasada."
   },
   "tpl": {
     "signup": {

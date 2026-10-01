@@ -7,7 +7,7 @@ import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
 const { site, content, has, t, toast, env, store } = useSite()
-const fields = computed(() => site.data.contactFields.map((k) => content.value.field(k)))
+const fields = computed(() => site.data.contactFields.map((k) => content.value.generic(k)))
 const { values, errors, validateField, validate } = useForm(fields.value, has, env.clock)
 const { count, busy, record } = useSubmissions(has, env.clock)
 

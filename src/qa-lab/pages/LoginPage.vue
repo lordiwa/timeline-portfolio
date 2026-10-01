@@ -11,7 +11,7 @@ import PrimaryButton from '../ui/PrimaryButton.vue'
 const { site, content, route, router, has, t, store, env } = useSite()
 // En el login la contrasena no tiene largo minimo: se compara contra la cuenta.
 const keys = ['email', 'password']
-const fieldsOf = () => [content.value.field('email', { autocomplete: 'username' }), content.value.field('password', { min: 1, hint: '', autocomplete: 'current-password' })]
+const fieldsOf = () => [content.value.generic('email', { autocomplete: 'username' }), content.value.generic('password', { min: 1, hint: '', autocomplete: 'current-password' })]
 const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 const failed = ref(false)

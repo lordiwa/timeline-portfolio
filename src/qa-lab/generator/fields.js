@@ -25,9 +25,9 @@ export const NAMES = ['Ana', 'Luis', 'Marta', 'Diego', 'Sofia', 'Pablo', 'Lucia'
  * genericos de igual clave (email y password incluidos: el generico toma las reglas del pack). La etiqueta de los
  * genericos sale de i18n `fields.<key>`. Devuelve { key, type, required, rules, label?, options? } o undefined.
  */
-export function fieldDef(pack, key) {
+export function fieldDef(pack, key, generic = false) {
   const own = pack.signupFields.find((f) => f.key === key) || pack.wizardFields.find((f) => f.key === key)
-  if (own) return own
+  if (own && !(generic && key !== 'email' && key !== 'password')) return own
   const def = FIELD_DEFS[key]
   if (!def) return undefined
   if (key === 'subject') return { key, ...def, rules: {}, options: pack.contactSubjects.map((s, i) => ({ value: String(i), ...s })) }

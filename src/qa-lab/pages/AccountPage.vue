@@ -11,7 +11,7 @@ import PrimaryButton from '../ui/PrimaryButton.vue'
 
 const { content, router, has, t, store, toast, env } = useSite()
 const user = computed(() => store.state.user)
-const fieldsOf = () => [content.value.field('name'), { ...content.value.field('newsletter'), required: false }]
+const fieldsOf = () => [content.value.generic('name'), { ...content.value.generic('newsletter'), required: false }]
 const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 values.name = store.state.user?.name ?? ''

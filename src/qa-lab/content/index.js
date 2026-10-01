@@ -28,11 +28,12 @@
 //                        2 cerrado) y sus 3 etiquetas son genericas (i18n list.status_*); alimenta el filtro y el KPI.
 //                        `amount` = la primera columna 'money'. date = 'YYYY-MM-DD'.
 //   content.field(key, overrides?)  -> { key, type, required, min?, max?, minLength?, maxLength?, pattern?, patternHint?,
-//                                        label, hint, options:[{value,text}], nameLike, noFuture }
+//                                        label, hint, options:[{value,text}], nameLike, noFuture, noPast }
 //                                     campos del pack (signupFields / wizardFields, con sus rules) o genericos (contacto,
 //                                     checkout, cuenta). checkField() aplica min/max/minLength/maxLength/pattern; para un
 //                                     password, `min` = rules.minLength. nameLike = el campo que 'required-not-validated'
-//                                     deja pasar vacio; noFuture = la fecha no puede ser futura (solo las de nacimiento/perdida).
+//                                     deja pasar vacio; noFuture / noPast = fechas (dato explicito del pack).
+//   content.generic(key, overrides?) igual que field() pero SOLO con los campos fijos (contacto, checkout, cuenta, login)
 //   content.stepTitle(stepId)       titulo de un paso del wizard (pack: wizard.steps[].title; 'confirm' es generico)
 //
 // Wizard: thenShow puede ser un array de claves (wizard/logic.js); los campos condicionales aparecen en algun paso
@@ -61,8 +62,9 @@ export function resolveContent(site, t, locale = t('lab.locale')) {
   }
   const nameKeys = [nameLikeKey(pack.signupFields), nameLikeKey(pack.wizardFields), 'name']
 
-  const field = (key, overrides = {}) => {
-    const def = fieldDef(pack, key)
+  // generic = true: campos fijos de contacto/checkout/cuenta (nunca toman un campo del pack de igual clave)
+  const buildField = (key, overrides, generic) => {
+    const def = fieldDef(pack, key, generic)
     const r = def.rules
     const label = def.label ? L(def.label) : t(`fields.${key}`)
     const patternHint = r.patternHint ? L(r.patternHint) : undefined
@@ -73,8 +75,8 @@ export function resolveContent(site, t, locale = t('lab.locale')) {
       label,
       options: (def.options || []).map((o) => ({ value: o.value, text: L(o) })),
       nameLike: nameKeys.includes(key),
-      noFuture: /birth|lost/i.test(key), // fecha de nacimiento / perdida: no puede ser futura; las demas fechas del pack son plazos
     }
+    if (def.type === 'date') { out.noFuture = !!r.noFuture; out.noPast = !!r.noPast } // dato explicito del pack
     for (const k of ['min', 'max', 'minLength', 'maxLength', 'pattern']) if (r[k] != null) out[k] = r[k]
     if (patternHint) out.patternHint = patternHint
     if (def.type === 'password') out.min = r.minLength ?? 8 // checkField valida el largo del password con `min`
@@ -121,7 +123,8 @@ export function resolveContent(site, t, locale = t('lab.locale')) {
       }),
       statuses: [0, 1, 2].map((i) => t(`list.status_${i}`)),
     },
-    field,
+    field: (key, overrides = {}) => buildField(key, overrides, false),
+    generic: (key, overrides = {}) => buildField(key, overrides, true),
     stepTitle: (id) => (id === 'confirm' ? t('wizard.step.confirm') : L(pack.wizard.steps[Number(id.slice(1)) - 1].title)),
   }
 }

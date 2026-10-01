@@ -50,7 +50,7 @@ const specs = [
       title: 'Prueba de admisión|Admission test',
       steps: [
         ['Afinidad|Affinity', [rad('affinity', 'Con qué te sentís más cómodo|What you feel most at ease with', ['Fuego y chispas|Fire and sparks', 'Plantas y raíces|Plants and roots'])]],
-        ['Nivel y fecha|Level and date', [num('manaGuess', 'Nivel de maná estimado|Estimated mana level', 1, 100), date('trialDate', 'Día de la prueba|Trial day')]],
+        ['Nivel y fecha|Level and date', [num('manaGuess', 'Nivel de maná estimado|Estimated mana level', 1, 100), date('trialDate', 'Día de la prueba|Trial day', 'noPast')]],
         ['Raíces|Roots', [text('favoritePlant', 'Planta con la que te llevás bien|A plant you get along with', { minLength: 3, maxLength: 40 })]],
         ['Ensayo|Essay', [area('essay', 'Por qué querés aprender magia|Why you want to learn magic', 300, true)]],
       ],
@@ -106,7 +106,7 @@ const specs = [
       title: 'Prueba de ingreso al gremio|Guild entrance trial',
       steps: [
         ['Experiencia|Experience', [rad('background', 'Cómo llegaste a esto|How you got here', ['Soy novato|I am a rookie', 'Vengo de otro gremio|I come from another guild'])]],
-        ['Fecha y dificultad|Date and difficulty', [date('trialDay', 'Fecha de la prueba|Trial date'), num('difficulty', 'Dificultad deseada (1-10)|Desired difficulty (1-10)', 1, 10)]],
+        ['Fecha y dificultad|Date and difficulty', [date('trialDay', 'Fecha de la prueba|Trial date', 'noPast'), num('difficulty', 'Dificultad deseada (1-10)|Desired difficulty (1-10)', 1, 10)]],
         ['Gremio anterior|Previous guild', [text('oldGuild', 'Nombre del gremio anterior|Previous guild name', { minLength: 3, maxLength: 60 })]],
         ['Juramento|Oath', [chk('oath', 'Juro no abandonar a mi grupo|I swear not to abandon my party', true)]],
       ],
@@ -163,7 +163,7 @@ const specs = [
       title: 'Alta de un dragón recién nacido|Registering a newborn dragon',
       steps: [
         ['Origen|Origin', [rad('origin', 'Cómo llegó a tu cueva|How it reached your cave', ['Nació de un huevo propio|Hatched from my own egg', 'Lo encontré o adopté|Found or adopted'])]],
-        ['Fecha y tamaño|Date and size', [date('hatchDate', 'Día del nacimiento (o hallazgo)|Hatch (or finding) date'), num('lengthRods', 'Largo en varas|Length in rods', 1, 30)]],
+        ['Fecha y tamaño|Date and size', [date('hatchDate', 'Día del nacimiento (o hallazgo)|Hatch (or finding) date', 'noFuture'), num('lengthRods', 'Largo en varas|Length in rods', 1, 30)]],
         ['Hallazgo|Finding', [area('findingStory', 'Dónde y cómo lo encontraste|Where and how you found it', 300)]],
         ['Cuevas|Cave', [chk('fireproofCave', 'La cueva es ignífuga|The cave is fireproof', true)]],
       ],
@@ -219,7 +219,7 @@ const specs = [
       title: 'Receta personalizada|Custom recipe',
       steps: [
         ['Para qué sirve|Purpose', [rad('wish', 'Qué querés lograr|What you want to achieve', ['Dormir mejor|Sleep better', 'Un efecto especial|A special effect'])]],
-        ['Dosis y entrega|Dose and delivery', [num('batch', 'Frascos por lote|Vials per batch', 1, 24), date('needBy', 'Necesito antes de|Needed by')]],
+        ['Dosis y entrega|Dose and delivery', [num('batch', 'Frascos por lote|Vials per batch', 1, 24), date('needBy', 'Necesito antes de|Needed by', 'noPast')]],
         ['Efecto|Effect', [area('effectDesc', 'Describí el efecto que buscás|Describe the effect you want', 300)]],
         ['Aviso|Warning', [chk('waiver', 'Acepto que los resultados pueden variar|I accept that results may vary', true)]],
       ],
@@ -275,7 +275,7 @@ const specs = [
       title: 'Encargá una pieza a medida|Commission a bespoke piece',
       steps: [
         ['Tipo de pieza|Piece type', [sel('pieceKind', 'Qué querés encargar|What you want to commission', ['Un arma|A weapon', 'Una joya|A jewel', 'Una armadura|Armor'])]],
-        ['Fecha y presupuesto|Date and budget', [date('wantedBy', 'Plazo deseado|Desired deadline'), num('coins', 'Presupuesto en hojas|Budget in leaves', 50, 2000)]],
+        ['Fecha y presupuesto|Date and budget', [date('wantedBy', 'Plazo deseado|Desired deadline', 'noPast'), num('coins', 'Presupuesto en hojas|Budget in leaves', 50, 2000)]],
         ['Arma|Weapon', [num('bladeLength', 'Largo de hoja en palmos|Blade length in spans', 2, 12)]],
         ['Detalles|Details', [area('storyBehind', 'Historia que debe contar la pieza|Story the piece should tell', 300)]],
       ],
@@ -331,7 +331,7 @@ const specs = [
       title: 'Preparar tu audiencia|Prepare your audience',
       steps: [
         ['Naturaleza|Nature', [rad('seekerKind', 'Quién consulta|Who is asking', ['Una persona|One person', 'Un reino|A realm'])]],
-        ['Fecha y urgencia|Date and urgency', [date('audienceDay', 'Día de la audiencia|Audience day'), num('urgency', 'Urgencia (1 a 5)|Urgency (1 to 5)', 1, 5)]],
+        ['Fecha y urgencia|Date and urgency', [date('audienceDay', 'Día de la audiencia|Audience day', 'noPast'), num('urgency', 'Urgencia (1 a 5)|Urgency (1 to 5)', 1, 5)]],
         ['Reino|Realm', [text('realmName', 'Nombre del reino|Realm name', { minLength: 3, maxLength: 60 })]],
         ['Pregunta|Question', [area('mainQuestion', 'Tu pregunta principal|Your main question', 200, true)]],
       ],
@@ -387,7 +387,7 @@ const specs = [
       title: 'Solicitud de síntesis|Synthesis request',
       steps: [
         ['Objetivo|Goal', [sel('goal', 'Qué querés lograr|What you want to achieve', ['Transmutar metal|Transmute metal', 'Purificar una sal|Purify a salt', 'Probar una fórmula nueva|Test a new formula'])]],
-        ['Cantidad y fecha|Amount and date', [num('grams', 'Cantidad en gramos|Amount in grams', 10, 5000), date('startAt', 'Inicio del proceso|Process start')]],
+        ['Cantidad y fecha|Amount and date', [num('grams', 'Cantidad en gramos|Amount in grams', 10, 5000), date('startAt', 'Inicio del proceso|Process start', 'noPast')]],
         ['Fórmula|Formula', [area('formulaText', 'Escribí la fórmula completa|Write the full formula', 300, true)]],
         ['Seguridad|Safety', [chk('gloves', 'Cuento con guantes y mascarilla|I have gloves and a mask', true)]],
       ],
@@ -443,7 +443,7 @@ const specs = [
       title: 'Reservá una noche|Book a night',
       steps: [
         ['Cómo llegás|How you arrive', [rad('arrival', 'Cómo llegás|How you arrive', ['A pie|On foot', 'A caballo|On horseback'])]],
-        ['Fecha y noches|Date and nights', [date('night', 'Fecha de llegada|Arrival date'), num('nightsStay', 'Noches|Nights', 1, 14)]],
+        ['Fecha y noches|Date and nights', [date('night', 'Fecha de llegada|Arrival date', 'noPast'), num('nightsStay', 'Noches|Nights', 1, 14)]],
         ['Monturas|Mounts', [num('horses', 'Cantidad de caballos|Number of horses', 1, 8)]],
         ['Cena|Dinner', [chk('dinner', 'Incluir cena de bienvenida|Include a welcome dinner')]],
       ],
@@ -499,7 +499,7 @@ const specs = [
       title: 'Solicitar acceso a la sala restringida|Request restricted-room access',
       steps: [
         ['Estudio|Study', [rad('studyKind', 'Tipo de estudio|Study type', ['Historia|History', 'Conjuros|Incantations'])]],
-        ['Duración|Duration', [date('startDay', 'Inicio de consulta|Consultation start'), num('weeks', 'Semanas de trabajo|Weeks of work', 1, 26)]],
+        ['Duración|Duration', [date('startDay', 'Inicio de consulta|Consultation start', 'noPast'), num('weeks', 'Semanas de trabajo|Weeks of work', 1, 26)]],
         ['Aval|Endorsement', [text('mentor', 'Maestro que te avala|Endorsing master', { minLength: 3, maxLength: 60 })]],
         ['Compromiso|Pledge', [chk('pledge', 'Prometo no leer en voz alta|I promise not to read aloud', true)]],
       ],
@@ -554,7 +554,7 @@ const specs = [
       title: 'Planificá tu primer paseo|Plan your first ride',
       steps: [
         ['Experiencia|Experience', [rad('rideLevel', 'Tu experiencia|Your experience', ['Primera vez|First time', 'Ya monté antes|Rode before'])]],
-        ['Día y duración|Day and length', [date('rideDay', 'Día del paseo|Ride day'), num('minutes', 'Minutos de paseo|Ride minutes', 20, 120)]],
+        ['Día y duración|Day and length', [date('rideDay', 'Día del paseo|Ride day', 'noPast'), num('minutes', 'Minutos de paseo|Ride minutes', 20, 120)]],
         ['Antecedentes|Background', [area('rideHistory', 'Dónde y con qué caballo montaste|Where and on which horse you rode', 200)]],
         ['Acompañantes|Companions', [chk('photo', 'Quiero foto de recuerdo|I want a souvenir photo')]],
       ],
@@ -610,7 +610,7 @@ const specs = [
       title: 'Encargá un mapa|Commission a map',
       steps: [
         ['Tipo de terreno|Terrain type', [sel('mapTerrain', 'Terreno a cartografiar|Terrain to map', ['Tierra firme|Land', 'Mar|Sea', 'Ruinas|Ruins'])]],
-        ['Fecha y escala|Date and scale', [date('mapDeadline', 'Plazo|Deadline'), num('km', 'Kilómetros de lado|Kilometers across', 1, 500)]],
+        ['Fecha y escala|Date and scale', [date('mapDeadline', 'Plazo|Deadline', 'noPast'), num('km', 'Kilómetros de lado|Kilometers across', 1, 500)]],
         ['Ruinas|Ruins', [area('ruinNotes', 'Qué sabés de las ruinas|What you know about the ruins', 250)]],
         ['Entrega|Delivery', [chk('parchment', 'Prefiero pergamino|I prefer parchment')]],
       ],
@@ -665,7 +665,7 @@ const specs = [
       title: 'Reservar para una caravana|Book for a caravan',
       steps: [
         ['Grupo|Group', [rad('groupType', 'Tipo de grupo|Group type', ['Viajero suelto|Lone traveler', 'Caravana de mercaderes|Merchant caravan'])]],
-        ['Fecha y personas|Date and people', [date('arrivalDay', 'Día de llegada|Arrival day'), num('people', 'Personas|People', 1, 40)]],
+        ['Fecha y personas|Date and people', [date('arrivalDay', 'Día de llegada|Arrival day', 'noPast'), num('people', 'Personas|People', 1, 40)]],
         ['Carretas|Wagons', [num('wagons', 'Cantidad de carretas|Number of wagons', 1, 15)]],
         ['Comida|Meals', [chk('mealsIncluded', 'Incluir cena y desayuno|Include supper and breakfast')]],
       ],
@@ -721,7 +721,7 @@ const specs = [
       title: 'Contratar una actuación|Book a performance',
       steps: [
         ['Ocasión|Occasion', [sel('eventKind', 'Tipo de evento|Event type', ['Boda|Wedding', 'Fiesta de pueblo|Village festival', 'Reunión privada|Private gathering'])]],
-        ['Fecha y duración|Date and length', [date('gigDay', 'Día del evento|Event day'), num('hours', 'Horas de música|Hours of music', 1, 8)]],
+        ['Fecha y duración|Date and length', [date('gigDay', 'Día del evento|Event day', 'noPast'), num('hours', 'Horas de música|Hours of music', 1, 8)]],
         ['Boda|Wedding', [text('couple', 'Nombres de los novios|Couple\'s names', { minLength: 3, maxLength: 80 })]],
         ['Repertorio|Repertoire', [area('requests', 'Canciones que querés escuchar|Songs you want to hear', 250)]],
       ],
@@ -777,7 +777,7 @@ const specs = [
       title: 'Diseñá tu rincón verde|Design your green nook',
       steps: [
         ['Lugar|Place', [rad('placeKind', 'Dónde va a vivir la planta|Where the plant will live', ['Interior|Indoors', 'Jardín|Garden'])]],
-        ['Presupuesto y fecha|Budget and date', [num('plantBudget', 'Presupuesto|Budget', 5, 500), date('plantDay', 'Entrega deseada|Desired delivery')]],
+        ['Presupuesto y fecha|Budget and date', [num('plantBudget', 'Presupuesto|Budget', 5, 500), date('plantDay', 'Entrega deseada|Desired delivery', 'noPast')]],
         ['Jardín|Garden', [num('plotSize', 'Metros cuadrados disponibles|Available square meters', 1, 2000)]],
         ['Hada|Fairy', [chk('wantFairy', 'Quiero una planta con hada residente|I want a plant with a resident fairy')]],
       ],
@@ -833,7 +833,7 @@ const specs = [
       title: 'Consignar una reliquia|Consign a relic',
       steps: [
         ['Tipo de objeto|Object type', [sel('relicKind', 'Qué querés consignar|What you want to consign', ['Un arma|A weapon', 'Una joya|A jewel', 'Un manuscrito|A manuscript'])]],
-        ['Fecha y reserva|Date and reserve', [date('hearingDay', 'Fecha de peritaje|Appraisal date'), num('reserve', 'Precio de reserva|Reserve price', 50, 100000)]],
+        ['Fecha y reserva|Date and reserve', [date('hearingDay', 'Fecha de peritaje|Appraisal date', 'noPast'), num('reserve', 'Precio de reserva|Reserve price', 50, 100000)]],
         ['Manuscrito|Manuscript', [text('language', 'Idioma del manuscrito|Manuscript language', { minLength: 3, maxLength: 40 })]],
         ['Historia|History', [area('relicStory', 'Cómo llegó a tus manos|How it came into your hands', 300)]],
       ],

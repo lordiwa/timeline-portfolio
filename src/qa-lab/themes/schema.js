@@ -1,6 +1,6 @@
 // Esquema de los content packs de temas del QA Lab (TASK-048).
 //
-// Un tema es DATO puro: no importa nada del motor y no esta cableado al generador.
+// Un tema es DATO puro: no importa nada del motor (el generador lo elige y content/index.js lo lee).
 // Forma completa (todo texto visible es {es, en}):
 //
 // {
@@ -26,7 +26,8 @@
 //
 // Field = { key, type:'text'|'email'|'password'|'number'|'date'|'select'|'radio'|'checkbox'|'textarea',
 //           label:{es,en}, required:bool,
-//           rules:{ min?, max?, minLength?, maxLength?, pattern?:string, patternHint?:{es,en} },
+//           rules:{ min?, max?, minLength?, maxLength?, pattern?:string, patternHint?:{es,en},
+//                   noFuture?:true | noPast?:true  // OBLIGATORIO en date: exactamente una (nacimiento/hechos vs plazos) },
 //           options?:[{value, es, en}]   // obligatorio en select y radio }
 //
 // AJUSTES respecto del pedido original (documentados a proposito):
@@ -51,7 +52,7 @@ export const COLUMN_TYPES = ['text', 'number', 'date', 'money']
 export const NAV_KEYS = ['home', 'catalog', 'detail', 'cart', 'checkout', 'account', 'contact', 'faq', 'dashboard', 'blog', 'signup']
 export const NOUN_KEYS = ['item', 'customer', 'order', 'category']
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/
-const RULE_KEYS = ['min', 'max', 'minLength', 'maxLength', 'pattern', 'patternHint']
+const RULE_KEYS = ['min', 'max', 'minLength', 'maxLength', 'pattern', 'patternHint', 'noFuture', 'noPast']
 
 const isStr = (v) => typeof v === 'string' && v.trim().length > 0
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
@@ -81,6 +82,9 @@ export function validateField(f, path, errs) {
   for (const k of ['min', 'max', 'minLength', 'maxLength']) {
     if (k in r && typeof r[k] !== 'number') errs.push(`${path}.rules.${k} debe ser numero`)
   }
+  for (const k of ['noFuture', 'noPast']) if (k in r && r[k] !== true) errs.push(`${path}.rules.${k} debe ser true`)
+  if (f.type === 'date' && ('noFuture' in r) === ('noPast' in r)) errs.push(`${path}: un campo date necesita exactamente una de noFuture / noPast`)
+  if (f.type !== 'date' && ('noFuture' in r || 'noPast' in r)) errs.push(`${path}: noFuture/noPast solo aplican a date`)
   if ('min' in r && 'max' in r && r.min > r.max) errs.push(`${path}.rules min > max`)
   if ('minLength' in r && 'maxLength' in r && r.minLength > r.maxLength) errs.push(`${path}.rules minLength > maxLength`)
   if (f.type === 'number' && !('min' in r && 'max' in r)) errs.push(`${path}: un campo number necesita min y max`)
