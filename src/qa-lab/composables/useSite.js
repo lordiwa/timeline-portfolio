@@ -22,7 +22,7 @@ export function useSite() {
    * Bugs intermitentes (nth-*): true en la N-esima accion hecha en la pagina del bug, con N = site.bugParams[id].n.
    * El contador vive en memoria (store.actions): se reinicia al recargar, no al navegar. Solo cuenta con el flag activo.
    */
-  const nthHit = (id) => has(id) && ctx.store.bump(`nth:${id}`) ===ctx.site.bugParams[id].n
+  const nthHit = (id) => has(id) && ctx.store.bump(`nth:${id}`) === ctx.site.bugParams[id].n
   /** t() que, con el bug 'untranslated', devuelve el texto en el OTRO idioma. */
   const tBug = (key, params = {}) =>
     has('untranslated') ? t(key, params, { locale: locale.value === 'es' ? 'en' : 'es' }) : t(key, params)
