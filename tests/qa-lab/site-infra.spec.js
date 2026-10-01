@@ -218,13 +218,13 @@ describe('contadores de acciones', () => {
 })
 
 describe('skip-link', () => {
-  it('es un boton que mueve el foco al contenido principal y no cambia el hash (no choca con el router)', async () => {
+  it('es un boton que mueve el foco al titulo del contenido principal y no cambia el hash (no choca con el router)', async () => {
     const { w } = await mountSite(forceSite({ pages: ALL_PAGES }), { hash: '#/faq' })
     const skip = w.find('[data-testid="skip-link"]')
     expect(skip.element.tagName).toBe('BUTTON')
     expect(w.find('a[href="#main"], a[href="#content"]').exists()).toBe(false)
     await skip.trigger('click')
-    expect(document.activeElement).toBe(w.find('main').element)
+    expect(document.activeElement).toBe(w.find('main h1').element) // el skip-link enfoca el h1 de la pagina (fallback: main)
     expect(window.location.hash).toBe('#/faq')
     expect(w.find('main [data-page]').attributes('data-page')).toBe('faq')
   })

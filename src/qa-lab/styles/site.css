@@ -154,11 +154,12 @@
   .site-header { padding-inline: 14px; }
 }
 
-/* Skip-link: oculto hasta recibir foco; el handler mueve el foco a <main> (sin #ancla). */
+/* Skip-link: oculto hasta recibir foco; el handler mueve el foco al <h1> (o <main>), sin #ancla. */
 .skip-link { position: absolute; left: 8px; top: -48px; z-index: 70; padding: 8px 14px; background: #fff; color: #1f2933; border: 2px solid var(--accent); border-radius: var(--radius); cursor: pointer; }
 .skip-link:focus { top: 8px; }
 .site-main:focus { outline: none; }
 .site { position: relative; }
 .site-page > h1:focus { outline: none; }
+.site-main .skip-focus, .site-page > h1.skip-focus { outline: 3px solid var(--accent); outline-offset: 4px; }
 .lab-where { display: block; color: #52606d; font-size: .8rem; margin: 2px 0; }
 .qa-dd-menu button.active { font-weight: 700; }

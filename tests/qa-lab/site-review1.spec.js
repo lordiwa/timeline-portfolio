@@ -186,6 +186,23 @@ describe('R-4 / R-5 / R-6 / R-7: navbar, solucionario, login y foco', () => {
     expect(s.w.find('#qa-password').attributes('autocomplete')).toBe('new-password')
   })
 
+  it('skip-link: lleva el foco al h1 con indicador visible y scrollea al contenido (antes solo enfocaba <main> sin efecto perceptible)', async () => {
+    const calls = []
+    const orig = HTMLElement.prototype.scrollIntoView
+    HTMLElement.prototype.scrollIntoView = function (o) { calls.push([this, o]) }
+    try {
+      const { w } = await mountSite(forceSite({ pages: ALL_PAGES }), { hash: '#/faq' })
+      document.activeElement?.blur()
+      await w.get('[data-testid=skip-link]').trigger('click')
+      const h1 = w.get('main h1').element
+      expect(document.activeElement).toBe(h1)
+      expect(h1.classList.contains('skip-focus')).toBe(true)
+      expect(calls.some(([el, o]) => el === h1 && o && o.block === 'start')).toBe(true)
+      h1.blur()
+      expect(h1.classList.contains('skip-focus')).toBe(false)
+    } finally { HTMLElement.prototype.scrollIntoView = orig }
+  })
+
   it('R-7: al cambiar de ruta el foco va al h1 y document.title refleja la pagina (y el idioma)', async () => {
     const site = forceSite({ pages: ALL_PAGES })
     const { w } = await mountSite(site, { hash: '#/' })

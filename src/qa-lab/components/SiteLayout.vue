@@ -28,8 +28,16 @@ const PAGES = {
 const { site, content, route, router, store, has, t, toast, locale } = useSite()
 const helpOpen = ref(false)
 const mainEl = ref(null)
-// Skip-link: un handler que mueve el foco (NO un #ancla: chocaria con el router por hash).
-const skipToContent = () => mainEl.value?.focus()
+// Skip-link: un handler que mueve el foco (NO un #ancla: chocaria con el router por hash). Foco al <h1> de la pagina
+// (fallback: <main>), scroll al destino y una clase temporal para el indicador (focus() programatico no siempre dispara :focus-visible).
+const skipToContent = () => {
+  const target = mainEl.value?.querySelector('h1') || mainEl.value
+  if (!target) return
+  target.classList.add('skip-focus')
+  target.addEventListener('blur', () => target.classList.remove('skip-focus'), { once: true })
+  target.focus({ preventScroll: true })
+  target.scrollIntoView({ block: 'start' })
+}
 const menuOpen = ref(false)
 const toggleEl = ref(null)
 let helpFromMenu = false
