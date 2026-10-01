@@ -1,7 +1,11 @@
-# QA Lab: registro de la prueba (TASK-050, fase A)
+# QA Lab: registro de la prueba (TASK-050)
 
-Piezas autonomas, **sin cablear** en `App.vue` todavia: `scorer.js`, `schema.js`, `firebase.js`, `useAttempt.js`,
-`StartAttempt.vue`, `ReportPanel.vue`.
+Fase B: cableado en `App.vue`. Boton "Tomar la prueba" (barra) -> `StartAttempt` -> drawer `ReportPanel`. `labVersion` = `LAB_VERSION` (`'v2'`, schema.js).
+- `bugOptions` = los 36 del catalogo (orden fijo, texto generico), nunca solo los activos. El solucionario solo aparece en el resultado.
+- "Revelar bugs" con la prueba en curso pide confirmacion (`ConfirmDialog.vue`, sin `window.confirm`) y marca `solutionViewed`.
+- Cambiar semilla/nivel (o atras/adelante) con la prueba en curso pide confirmacion y, si se acepta, **descarta** el intento.
+- Sin `VITE_FIREBASE_*` el resultado se muestra igual con aviso; el doc queda en sessionStorage y "Reintentar envio" lo reenvia.
+- `level` es `junior|semi|senior` en schema.js y en firestore.rules.
 
 ## Puntaje (`scoreReport`)
 

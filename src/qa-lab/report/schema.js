@@ -1,6 +1,8 @@
 // Documento que se guarda en Firestore (coleccion qa_lab_attempts). Debe mantenerse alineado con
 // /firestore.rules. Sin IP ni nada fuera de estos campos. Tiempos en ms epoch (enteros).
-export const LAB_VERSION = '0.1.0'
+import { LEVELS } from '../generator/levels.js'
+
+export const LAB_VERSION = 'v2'
 export const LIMITS = {
   seed: 100, level: 20, lang: 2, name: 80, email: 120, labVersion: 20, userAgent: 200,
   findings: 50, page: 100, description: 1000, id: 40, bugId: 60, category: 30,
@@ -40,7 +42,7 @@ export function validateSubmission(doc) {
   const bad = (m) => errors.push(m)
   if (!sameKeys(doc, DOC_KEYS)) return { ok: false, errors: ['keys'] }
   if (!str(doc.seed, LIMITS.seed)) bad('seed')
-  if (!str(doc.level, LIMITS.level)) bad('level')
+  if (!LEVELS.includes(doc.level)) bad('level') // enum cerrado: tambien en firestore.rules
   if (!LANGS.includes(doc.lang)) bad('lang')
   if (!sameKeys(doc.candidate, ['name', 'email'])) bad('candidate')
   else {

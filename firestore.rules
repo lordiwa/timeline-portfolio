@@ -29,7 +29,7 @@ service cloud.firestore {
       return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
         && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
         && d.seed is string && d.seed.size() > 0 && d.seed.size() <= 100
-        && d.level is string && d.level.size() > 0 && d.level.size() <= 20
+        && d.level in ['junior', 'semi', 'senior']
         && d.lang in ['es', 'en']
         && validCandidate(d.candidate)
         && d.startedAt is int && d.startedAt > 0
