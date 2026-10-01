@@ -91,8 +91,10 @@ async function send() {
 
       <form data-testid="finding-form" novalidate @submit.prevent="add">
         <label for="qa-f-page">{{ t('report.page') }}</label>
-        <input id="qa-f-page" v-model="page" type="text" list="qa-f-pages" :maxlength="LIMITS.page" />
-        <datalist id="qa-f-pages"><option v-for="p in pages" :key="p" :value="p" /></datalist>
+        <select id="qa-f-page" v-model="page">
+          <option value="">{{ t('report.none') }}</option>
+          <option v-for="p in pages" :key="p" :value="p">{{ p }}</option>
+        </select>
 
         <label for="qa-f-desc">{{ t('report.description') }}</label>
         <textarea id="qa-f-desc" ref="descEl" v-model="description" rows="3" :maxlength="LIMITS.description" required />

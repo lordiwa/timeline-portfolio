@@ -199,6 +199,27 @@ describe('componentes', () => {
     await w.get('[data-testid=finding-list] button').trigger('click')
     expect(w.findAll('[data-testid=finding-list] li')).toHaveLength(0)
   })
+  it('la pagina del hallazgo es un select con todas las paginas y se puede cambiar tras agregar (el datalist filtraba las opciones)', async () => {
+    const attempt = useAttempt('s9', 'junior', { storage: { getItem: () => null, setItem() {} } })
+    attempt.start({ name: 'Ana', email: 'ana@x.io' })
+    const pages = ['Inicio', 'Carrito', 'FAQ']
+    const w = mount(ReportPanel, {
+      props: { attempt, scoreContext: { activeBugIds: [], categoryOf, lang: 'es' }, pages },
+      global: { plugins: [i18n] },
+    })
+    const sel = w.get('#qa-f-page')
+    expect(sel.element.tagName).toBe('SELECT')
+    expect(w.get('label[for=qa-f-page]').exists()).toBe(true)
+    expect(sel.findAll('option').map((o) => o.element.value)).toEqual(['', ...pages])
+    await sel.setValue('Carrito')
+    await w.get('#qa-f-desc').setValue('uno')
+    await w.get('form').trigger('submit')
+    expect(attempt.findings.value[0].page).toBe('Carrito')
+    await w.get('#qa-f-page').setValue('FAQ')
+    await w.get('#qa-f-desc').setValue('dos')
+    await w.get('form').trigger('submit')
+    expect(attempt.findings.value[1].page).toBe('FAQ')
+  })
 })
 
 describe('firestore.rules (estatico; el test con emulador queda PENDIENTE, ver README)', () => {
