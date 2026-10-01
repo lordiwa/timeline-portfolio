@@ -2,8 +2,12 @@ rules_version = '2';
 
 // QA Lab: el cliente solo puede CREAR intentos. Lectura, update y delete denegados (los resultados se
 // ven en la consola de Firebase). Alineado con src/qa-lab/report/schema.js.
-// Las reglas no iteran listas: `findings` se acota a 30 y cada indice 0..29 se valida con validFinding
+// Las reglas no iteran listas: `findings` se acota a 20 y cada indice 0..19 se valida con validFinding
 // (generado; si cambia el tope, cambiar tambien LIMITS.findings en schema.js).
+// Presupuesto: Firestore Rules corta en 1000 expresiones por evaluacion. validFinding son ~35 nodos con un finding
+// completo (hasOnly ~9, id/page/description/severity ~20, 2 optStr ~6) y la guarda `size() < i+1 ||` suma ~3:
+// 20 x ~38 = ~760, mas ~80 del resto del documento = ~840 (< 1000, margen chico). NO subir el tope sin probar el caso
+// de src/qa-lab/report/playground-20.json en el Rules Playground (20 findings completos, el peor caso).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -19,22 +23,26 @@ service cloud.firestore {
       return s is map
         && s.keys().hasOnly(['value', 'hits', 'halfHits', 'falsePositives', 'missed'])
         && s.value is int && s.value >= 0 && s.value <= 100
-        && s.hits is int && s.hits >= 0 && s.hits <= 30
-        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 30
-        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 30
+        && s.hits is int && s.hits >= 0 && s.hits <= 20
+        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 20
+        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 20
         && s.missed is int && s.missed >= 0 && s.missed <= 36;
+    }
+
+    // string acotado u omitido/null (f.get(clave, null): una clave ausente cuenta como null)
+    function optStr(v, max) {
+      return v == null || (v is string && v.size() > 0 && v.size() <= max);
     }
 
     function validFinding(f) {
       return f is map
         && f.keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
-        && f.keys().hasAll(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
         && f.id is string && f.id.size() > 0 && f.id.size() <= 40
         && f.page is string && f.page.size() <= 100
         && f.description is string && f.description.size() > 0 && f.description.size() <= 1000
         && f.severity in ['low', 'medium', 'high', 'critical']
-        && (f.guessedBugId == null || (f.guessedBugId is string && f.guessedBugId.size() > 0 && f.guessedBugId.size() <= 60))
-        && (f.guessedCategory == null || (f.guessedCategory is string && f.guessedCategory.size() > 0 && f.guessedCategory.size() <= 30));
+        && optStr(f.get('guessedBugId', null), 60)
+        && optStr(f.get('guessedCategory', null), 30);
     }
 
     function validAttempt(d) {
@@ -45,10 +53,9 @@ service cloud.firestore {
         && d.lang in ['es', 'en']
         && validCandidate(d.candidate)
         && d.startedAt is int && d.startedAt > 0
-        && d.finishedAt is int && d.finishedAt >= d.startedAt && d.finishedAt <= request.time.toMillis() + 60000
+        && d.finishedAt is int && d.finishedAt >= d.startedAt && d.finishedAt <= request.time.toMillis() + 300000
         && d.durationMs is int && d.durationMs == d.finishedAt - d.startedAt
-        && d.createdAt == request.time
-        && d.findings is list && d.findings.size() <= 30
+        && d.findings is list && d.findings.size() <= 20
         && (d.findings.size() < 1 || validFinding(d.findings[0]))
         && (d.findings.size() < 2 || validFinding(d.findings[1]))
         && (d.findings.size() < 3 || validFinding(d.findings[2]))
@@ -69,17 +76,8 @@ service cloud.firestore {
         && (d.findings.size() < 18 || validFinding(d.findings[17]))
         && (d.findings.size() < 19 || validFinding(d.findings[18]))
         && (d.findings.size() < 20 || validFinding(d.findings[19]))
-        && (d.findings.size() < 21 || validFinding(d.findings[20]))
-        && (d.findings.size() < 22 || validFinding(d.findings[21]))
-        && (d.findings.size() < 23 || validFinding(d.findings[22]))
-        && (d.findings.size() < 24 || validFinding(d.findings[23]))
-        && (d.findings.size() < 25 || validFinding(d.findings[24]))
-        && (d.findings.size() < 26 || validFinding(d.findings[25]))
-        && (d.findings.size() < 27 || validFinding(d.findings[26]))
-        && (d.findings.size() < 28 || validFinding(d.findings[27]))
-        && (d.findings.size() < 29 || validFinding(d.findings[28]))
-        && (d.findings.size() < 30 || validFinding(d.findings[29]))
         && validScore(d.score)
+        && d.createdAt == request.time // al final: asi el Playground evalua antes todos los findings
         && d.solutionViewed is bool
         && d.labVersion is string && d.labVersion.size() > 0 && d.labVersion.size() <= 20
         && d.userAgent is string && d.userAgent.size() <= 200;

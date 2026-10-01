@@ -114,6 +114,7 @@ async function send() {
           <option v-for="b in bugOptions" :key="b.id" :value="b.id">{{ b.label }}</option>
         </select>
 
+        <p v-if="full" role="status" data-testid="findings-full">{{ t('report.errMax', { max: LIMITS.findings }) }}</p>
         <p role="alert" aria-live="assertive" class="report-error" data-testid="finding-error">{{ error }}</p>
         <button type="submit" :disabled="full">{{ t('report.add') }}</button>
       </form>

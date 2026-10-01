@@ -5,7 +5,7 @@ import { LEVELS } from '../generator/levels.js'
 export const LAB_VERSION = 'v2'
 export const LIMITS = {
   seed: 100, level: 20, lang: 2, name: 80, email: 120, labVersion: 20, userAgent: 200,
-  findings: 30, page: 100, description: 1000, id: 40, bugId: 60, category: 30,
+  findings: 20, page: 100, description: 1000, id: 40, bugId: 60, category: 30,
 }
 export const SEVERITIES = ['low', 'medium', 'high', 'critical']
 export const LANGS = ['es', 'en']
@@ -65,7 +65,7 @@ export function validateSubmission(doc) {
     })
   }
   if (!sameKeys(doc.score, SCORE_KEYS) || !int(doc.score.value, 0, 100) ||
-      !['hits', 'halfHits', 'falsePositives'].every((k) => int(doc.score[k], 0, 30)) || !int(doc.score.missed, 0, 36)) bad('score')
+      !['hits', 'halfHits', 'falsePositives'].every((k) => int(doc.score[k], 0, 20)) || !int(doc.score.missed, 0, 36)) bad('score')
   if (typeof doc.solutionViewed !== 'boolean') bad('solutionViewed')
   if (!str(doc.labVersion, LIMITS.labVersion)) bad('labVersion')
   if (!str(doc.userAgent, LIMITS.userAgent, 0)) bad('userAgent')

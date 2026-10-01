@@ -9,7 +9,22 @@ const KEYS = {
   appId: 'VITE_FIREBASE_APP_ID',
 }
 
-export function getFirebaseConfig(env = import.meta.env) {
+// Accesos ESTATICOS, uno por variable: Vite reemplaza cada import.meta.env.VITE_X por su valor y NO serializa el objeto
+// entero (pasar `import.meta.env` completo metia en el bundle TODAS las VITE_*, token de debug incluido). El token de
+// debug solo existe en dev: en build el ternario con import.meta.env.DEV se pliega y el valor se descarta.
+export function readEnv() {
+  return {
+    VITE_FIREBASE_API_KEY: import.meta.env.VITE_FIREBASE_API_KEY,
+    VITE_FIREBASE_AUTH_DOMAIN: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    VITE_FIREBASE_PROJECT_ID: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    VITE_FIREBASE_APP_ID: import.meta.env.VITE_FIREBASE_APP_ID,
+    VITE_RECAPTCHA_SITE_KEY: import.meta.env.VITE_RECAPTCHA_SITE_KEY,
+    DEV: import.meta.env.DEV,
+    VITE_APPCHECK_DEBUG_TOKEN: import.meta.env.DEV ? import.meta.env.VITE_APPCHECK_DEBUG_TOKEN : undefined,
+  }
+}
+
+export function getFirebaseConfig(env = readEnv()) {
   const cfg = {}
   for (const [k, envKey] of Object.entries(KEYS)) {
     if (!env?.[envKey]) return null
@@ -32,7 +47,7 @@ async function initAppCheck(app, env) {
 }
 
 /** Nunca lanza: devuelve {ok:true,id} o {ok:false,error:'invalid'|'not-configured'|'network',message}. */
-export async function submitReport(doc, env = import.meta.env) {
+export async function submitReport(doc, env = readEnv()) {
   const v = validateSubmission(doc)
   if (!v.ok) return { ok: false, error: 'invalid', message: v.errors.join(', ') }
   const cfg = getFirebaseConfig(env)

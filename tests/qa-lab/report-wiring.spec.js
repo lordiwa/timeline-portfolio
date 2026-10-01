@@ -166,17 +166,19 @@ describe('review de TASK-050', () => {
     const c = okDoc(); c.durationMs = 999
     expect([a, b, c].map((d) => validateSubmission(d).ok)).toEqual([false, false, false])
   })
-  it('firestore.rules valida cada finding (validFinding en los 30 indices), createdAt y la ventana de tiempo (evita findings sin validar en el servidor)', () => {
+  it('firestore.rules valida cada finding (validFinding en los 20 indices), createdAt y la ventana de tiempo (evita findings sin validar en el servidor)', () => {
     const code = readFileSync(join(process.cwd(), 'firestore.rules'), 'utf8').replace(/\/\/.*$/gm, '')
     expect(code).toMatch(/function validFinding\(f\)/)
-    for (let i = 0; i < 30; i++) expect(code).toContain(`(d.findings.size() < ${i + 1} || validFinding(d.findings[${i}]))`)
-    expect(code).not.toContain('validFinding(d.findings[30])')
-    expect(code).toContain('d.findings.size() <= 30')
+    for (let i = 0; i < 20; i++) expect(code).toContain(`(d.findings.size() < ${i + 1} || validFinding(d.findings[${i}]))`)
+    expect(code).not.toContain('validFinding(d.findings[20])')
+    expect(code).toContain('d.findings.size() <= 20')
     expect(code).toContain('d.createdAt == request.time')
     expect(code).toContain('d.durationMs == d.finishedAt - d.startedAt')
-    expect(code).toContain('request.time.toMillis() + 60000')
-    for (const k of ['hits', 'halfHits', 'falsePositives']) expect(code).toContain(`s.${k} <= 30`)
+    expect(code).toContain('request.time.toMillis() + 300000')
+    for (const k of ['hits', 'halfHits', 'falsePositives']) expect(code).toContain(`s.${k} <= 20`)
     expect(code).toContain('s.missed <= 36')
+    expect(code).not.toContain('hasAll([\'id\'') // validFinding sin hasAll (menos nodos)
+    expect(code).toContain("f.get('guessedBugId', null)")
   })
   it('revelar antes de empezar, aunque se oculte de nuevo, marca el intento al empezar (evita un intento limpio que vio la respuesta)', async () => {
     const w = mountApp({ initialSeed: 'ev-1', initialLevel: 'junior' })

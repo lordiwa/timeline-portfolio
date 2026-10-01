@@ -66,7 +66,7 @@ describe('schema', () => {
     ['clave extra (IP)', (d) => { d.ip = '1.1.1.1' }],
     ['nombre > 80', (d) => { d.candidate.name = 'x'.repeat(81) }],
     ['email invalido', (d) => { d.candidate.email = 'sin-arroba' }],
-    ['31 findings', (d) => { d.findings = Array.from({ length: 31 }, (_, i) => F(String(i))) }],
+    ['21 findings', (d) => { d.findings = Array.from({ length: 21 }, (_, i) => F(String(i))) }],
     ['description > 1000', (d) => { d.findings[0].description = 'x'.repeat(1001) }],
     ['severidad invalida', (d) => { d.findings[0].severity = 'x' }],
     ['score fuera de rango', (d) => { d.score.value = 101 }],
