@@ -18,6 +18,19 @@ export function getFirebaseConfig(env = import.meta.env) {
   return cfg
 }
 
+let warned = false
+/** App Check (reCAPTCHA v3), solo si hay VITE_RECAPTCHA_SITE_KEY; sin clave avisa UNA vez y sigue (dev/tests). */
+async function initAppCheck(app, env) {
+  const siteKey = env?.VITE_RECAPTCHA_SITE_KEY
+  if (!siteKey) {
+    if (!warned) { warned = true; console.warn('[qa-lab] App Check desactivado: falta VITE_RECAPTCHA_SITE_KEY.') }
+    return
+  }
+  if (env.DEV && env.VITE_APPCHECK_DEBUG_TOKEN) self.FIREBASE_APPCHECK_DEBUG_TOKEN = env.VITE_APPCHECK_DEBUG_TOKEN
+  const { initializeAppCheck, ReCaptchaV3Provider } = await import('firebase/app-check')
+  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(siteKey), isTokenAutoRefreshEnabled: true })
+}
+
 /** Nunca lanza: devuelve {ok:true,id} o {ok:false,error:'invalid'|'not-configured'|'network',message}. */
 export async function submitReport(doc, env = import.meta.env) {
   const v = validateSubmission(doc)
@@ -31,7 +44,8 @@ export async function submitReport(doc, env = import.meta.env) {
       import('firebase/app'),
       import('firebase/firestore'),
     ])
-    const app = getApps().length ? getApps()[0] : initializeApp(cfg)
+    let app = getApps()[0]
+    if (!app) { app = initializeApp(cfg); await initAppCheck(app, env) }
     const ref = await addDoc(collection(getFirestore(app), COLLECTION), { ...doc, createdAt: serverTimestamp() })
     return { ok: true, id: ref.id }
   } catch (e) {

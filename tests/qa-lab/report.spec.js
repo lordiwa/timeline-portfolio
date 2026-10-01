@@ -130,6 +130,7 @@ describe('componentes', () => {
   it('StartAttempt valida email y muestra el aviso de privacidad (evita empezar sin datos validos)', async () => {
     const w = mount(StartAttempt, { global: { plugins: [i18n] } })
     expect(w.get('[data-testid=privacy]').text()).toContain('No se comparte con terceros')
+    expect(w.get('[data-testid=privacy] a').attributes('href')).toBe('mailto:srparca@gmail.com')
     await w.get('#qa-start-name').setValue('Ana')
     await w.get('#qa-start-email').setValue('mal')
     await w.get('form').trigger('submit')

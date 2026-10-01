@@ -45,3 +45,15 @@ npx firebase emulators:exec --only firestore --project demo-qa-lab "npx vitest r
 ## Deploy (NO ejecutado)
 
 Requiere que Rafael active Firestore en `multiverse-portfolio` y apruebe: `firebase deploy --only firestore:rules,firestore:indexes`.
+
+## App Check (reCAPTCHA v3) — pasos de consola para Rafael
+
+El codigo ya inicializa App Check en `firebase.js` cuando existe `VITE_RECAPTCHA_SITE_KEY` (import dinamico, solo en el chunk del lab).
+Las reglas no cambian: el **enforcement es de consola**.
+
+1. reCAPTCHA admin: crear una clave **v3** con los dominios `m4to.com` y `localhost`. La clave del sitio va en `VITE_RECAPTCHA_SITE_KEY`; la secreta, en la consola de App Check (nunca en el repo).
+2. Firebase console > App Check > Apps: registrar la app web con proveedor reCAPTCHA v3 y esa clave secreta.
+3. En dev, crear un token de depuracion (App Check > Administrar tokens de depuracion) y ponerlo en `VITE_APPCHECK_DEBUG_TOKEN`.
+4. Desplegar el sitio con la clave, enviar un reporte y mirar App Check > Firestore > Metricas: deben llegar requests **verificadas**.
+5. Recien despues activar el **Enforcement** en Firestore (antes, se rechazarian los envios reales).
+6. GCP Billing > Budgets & alerts: crear una alerta de presupuesto de **5 USD**.

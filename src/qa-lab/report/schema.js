@@ -65,7 +65,7 @@ export function validateSubmission(doc) {
     })
   }
   if (!sameKeys(doc.score, SCORE_KEYS) || !int(doc.score.value, 0, 100) ||
-      !['hits', 'halfHits', 'falsePositives', 'missed'].every((k) => int(doc.score[k], 0, 1000))) bad('score')
+      !['hits', 'halfHits', 'falsePositives'].every((k) => int(doc.score[k], 0, 30)) || !int(doc.score.missed, 0, 36)) bad('score')
   if (typeof doc.solutionViewed !== 'boolean') bad('solutionViewed')
   if (!str(doc.labVersion, LIMITS.labVersion)) bad('labVersion')
   if (!str(doc.userAgent, LIMITS.userAgent, 0)) bad('userAgent')

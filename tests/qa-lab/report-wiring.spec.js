@@ -175,6 +175,8 @@ describe('review de TASK-050', () => {
     expect(code).toContain('d.createdAt == request.time')
     expect(code).toContain('d.durationMs == d.finishedAt - d.startedAt')
     expect(code).toContain('request.time.toMillis() + 60000')
+    for (const k of ['hits', 'halfHits', 'falsePositives']) expect(code).toContain(`s.${k} <= 30`)
+    expect(code).toContain('s.missed <= 36')
   })
   it('revelar antes de empezar, aunque se oculte de nuevo, marca el intento al empezar (evita un intento limpio que vio la respuesta)', async () => {
     const w = mountApp({ initialSeed: 'ev-1', initialLevel: 'junior' })

@@ -19,10 +19,10 @@ service cloud.firestore {
       return s is map
         && s.keys().hasOnly(['value', 'hits', 'halfHits', 'falsePositives', 'missed'])
         && s.value is int && s.value >= 0 && s.value <= 100
-        && s.hits is int && s.hits >= 0 && s.hits <= 1000
-        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 1000
-        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 1000
-        && s.missed is int && s.missed >= 0 && s.missed <= 1000;
+        && s.hits is int && s.hits >= 0 && s.hits <= 30
+        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 30
+        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 30
+        && s.missed is int && s.missed >= 0 && s.missed <= 36;
     }
 
     function validFinding(f) {
