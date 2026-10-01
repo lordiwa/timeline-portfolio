@@ -2,7 +2,7 @@
 import { nextTick, ref, watch } from 'vue'
 import { useSite } from '../composables/useSite.js'
 
-const props = defineProps({ open: Boolean, title: { type: String, default: '' } })
+const props = defineProps({ open: Boolean, title: { type: String, default: '' }, returnTo: { type: Function, default: null } }) // returnTo: elemento alternativo para devolver el foco
 const emit = defineEmits(['close'])
 const { has, t, env } = useSite()
 const dialog = ref(null)
@@ -35,7 +35,8 @@ watch(
       dialog.value?.focus()
     } else if (wasOpen) {
       // Correcto: devolver el foco a quien abrio el modal. BUG modal-focus-lost: no se devuelve.
-      if (!has('modal-focus-lost') && opener && opener.focus) opener.focus()
+      const target = (props.returnTo && props.returnTo()) || opener
+      if (!has('modal-focus-lost') && target && target.focus) target.focus()
       opener = null
     }
   },

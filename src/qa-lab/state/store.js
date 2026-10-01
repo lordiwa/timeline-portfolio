@@ -46,7 +46,8 @@ const defaults = () => ({
 const num = (n) => typeof n === 'number' && Number.isFinite(n)
 const validOrder = (o) =>
   o && typeof o.id === 'string' && Array.isArray(o.lines) && o.lines.every((l) => l && num(l.id) && num(l.qty) && num(l.price)) &&
-  o.totals && num(o.totals.total) && num(o.totals.decimals) && o.customer && typeof o.customer.email === 'string' && typeof o.customer.name === 'string'
+  o.totals && num(o.totals.total) && num(o.totals.decimals) && o.customer && typeof o.customer.email === 'string' && typeof o.customer.name === 'string' &&
+  (o.userEmail === null || typeof o.userEmail === 'string')
 const validComment = (c) => c && typeof c.text === 'string' && num(c.minutes) && (c.author === null || typeof c.author === 'string')
 
 /** Lee del storage validando el shape: un JSON viejo o corrupto no rompe el sitio. */
@@ -77,7 +78,8 @@ export function createStore(site, storage = safeStorage()) {
     try { storage.setItem(key, JSON.stringify(state)) } catch { /* sin cuota: sigue en memoria */ }
   }, { deep: true, flush: 'sync' })
 
-  const ui = reactive({ list: { search: '', cat: '', price: '', sort: 'default', page: 1 } }) // solo memoria
+  const filters = () => ({ search: '', cat: '', price: '', sort: 'default', page: 1 })
+  const ui = reactive({ list: filters(), dashboard: filters() }) // solo memoria
   const actions = reactive({})
   const bump = (type) => (actions[type] = (actions[type] || 0) + 1)
   const catalogIds = new Set(site.data.catalog.map((r) => r.id))
@@ -170,6 +172,7 @@ export function createStore(site, storage = safeStorage()) {
         shipping,
         coupon: state.coupon,
         customer: { ...customer },
+        userEmail: state.user?.email ?? null, // quien confirmo (sesion), no el email editable del checkout
       }
       state.orders.push(order)
       state.cart = []

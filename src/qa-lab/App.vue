@@ -55,6 +55,15 @@ function pushSite(nextSeed, nextLevel) {
   level.value = nextLevel
   revealed.value = false
 }
+/** El idioma tambien es historial: cambiarlo apila una entrada (conserva la ruta); atras lo restaura. */
+function setLang(e) {
+  const next = e.target.value
+  if (!LOCALES.includes(next) || next === locale.value) return
+  const url = new URL(window.location.href)
+  url.searchParams.set('lang', next)
+  window.history.pushState(null, '', url)
+  locale.value = next
+}
 const regenerate = () => pushSite(newSeed(), level.value)
 const setLevel = (e) => pushSite(seed.value, normalizeLevel(e.target.value))
 
@@ -62,6 +71,8 @@ const setLevel = (e) => pushSite(seed.value, normalizeLevel(e.target.value))
 function syncFromUrl() {
   const p = readParams(window.location.search)
   const lv = normalizeLevel(p.level)
+  const lang = new URLSearchParams(window.location.search).get('lang')
+  if (LOCALES.includes(lang) && lang !== locale.value) locale.value = lang
   if ((p.seed && p.seed !== seed.value) || lv !== level.value) {
     if (p.seed) seed.value = p.seed
     level.value = lv
@@ -88,7 +99,7 @@ onBeforeUnmount(() => {
       </label>
       <button type="button" data-testid="new-page" @click="regenerate">{{ t('lab.newPage') }}</button>
       <label class="lab-lang">{{ t('lab.language') }}
-        <select v-model="locale" data-testid="lang">
+        <select :value="locale" data-testid="lang" @change="setLang">
           <option v-for="l in LOCALES" :key="l" :value="l">{{ l }}</option>
         </select>
       </label>

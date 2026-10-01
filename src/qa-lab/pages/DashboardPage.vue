@@ -6,12 +6,13 @@ import PageShell from '../ui/PageShell.vue'
 import Pager from '../ui/Pager.vue'
 import Tabs from '../components/Tabs.vue'
 
-const { site, content, has, t, labelTarget } = useSite()
+const { site, content, has, t, labelTarget, store } = useSite()
 const D = computed(() => content.value.dashboard)
 const L = useListing(
   () => D.value.rows,
   { pageSize: site.data.dashboard.pageSize, match: (r, q) => !q || r.subject.toLowerCase().includes(q), catOf: (r) => r.status, priceOf: (r) => r.amount },
   has,
+  store.ui.dashboard, // los filtros persisten al navegar y se reinician al recargar (igual que el catalogo)
 )
 const view = ref('table')
 const tabs = computed(() => [{ id: 'table', label: t('list.viewTable') }, { id: 'summary', label: t('list.viewSummary') }])

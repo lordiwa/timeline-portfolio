@@ -46,7 +46,7 @@ function add(item) {
         <option value="">{{ t('list.anyPrice') }}</option>
         <option v-for="p in PRICE_BANDS" :key="p" :value="String(p)">{{ t('list.upTo', { n: p }) }}</option>
       </select>
-      <Dropdown :label="t('list.sortBy')" :items="sortItems" class="on-light" @select="(id) => L.set('sort', id)" />
+      <Dropdown :label="t('list.sortBy')" :items="sortItems" :active="L.state.sort" class="on-light" @select="(id) => L.set('sort', id)" />
       <button type="button" class="qa-btn secondary" @click="L.clear()">{{ t('list.clear') }}</button>
     </div>
     <p class="qa-hint" data-testid="result-count">{{ t('list.results', { n: L.filtered().length }) }}</p>

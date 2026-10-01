@@ -96,7 +96,7 @@ describe('R-2 / R-3: persistencia', () => {
   it('R-3: pedidos y comentarios corruptos se descartan sin romper el sitio y lo valido se conserva', async () => {
     const storage = memoryStorage()
     const site = forceSite({ pages: ALL_PAGES })
-    const good = { id: 'ORD-1001', lines: [{ id: 1, qty: 1, price: 5 }], totals: { total: 500, decimals: 2 }, shipping: 'standard', customer: { name: 'Ana', email: 'ana@example.com' } }
+    const good = { id: 'ORD-1001', lines: [{ id: 1, qty: 1, price: 5 }], totals: { total: 500, decimals: 2 }, shipping: 'standard', customer: { name: 'Ana', email: 'ana@example.com' }, userEmail: 'ana@example.com' }
     storage.setItem(storageKey(site.seed, site.level), JSON.stringify({
       user: { name: 'Ana', email: 'ana@example.com' },
       orders: [good, { id: 'ORD-9' }, { id: 'ORD-8', lines: 'x', totals: {}, customer: null }, 5, null, { ...good, id: 'ORD-7', customer: { email: 3 } }],

@@ -3,6 +3,7 @@
 import { computed } from 'vue'
 import { useSite } from '../composables/useSite.js'
 import { useForm } from '../composables/useForm.js'
+import { emailKey } from '../state/store.js'
 import { fromMinor } from '../state/pricing.js'
 import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
@@ -15,7 +16,8 @@ const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 values.name = store.state.user?.name ?? ''
 values.newsletter = store.state.prefs.newsletter
-const orders = computed(() => store.state.orders.filter((o) => o.customer.email === user.value?.email))
+// Los pedidos se listan por la SESION con la que se confirmaron, no por el email que se escribio en el checkout.
+const orders = computed(() => store.state.orders.filter((o) => o.userEmail && user.value && emailKey(o.userEmail) === emailKey(user.value.email)))
 
 function save() {
   if (!validate(fields.value)) return

@@ -31,6 +31,14 @@ const mainEl = ref(null)
 // Skip-link: un handler que mueve el foco (NO un #ancla: chocaria con el router por hash).
 const skipToContent = () => mainEl.value?.focus()
 const menuOpen = ref(false)
+const toggleEl = ref(null)
+let helpFromMenu = false
+// Ayuda abierta desde el menu mobile: el menu se cierra, asi que el foco vuelve al boton Menu (el de Ayuda queda oculto).
+const helpReturn = () => (helpFromMenu ? toggleEl.value : null)
+function openHelp() {
+  helpFromMenu = menuOpen.value
+  helpOpen.value = true
+}
 
 const navTypes = computed(() => NAV_TYPES.filter((p) => site.pages.includes(p)))
 // El detalle cuelga del listado; el checkout, del carrito.
@@ -41,7 +49,7 @@ const vars = computed(() => ({ '--hue': site.style.hue, '--radius': `${site.styl
 
 // Al cambiar de ruta el foco va al <h1> de la pagina nueva y el titulo del documento la refleja (comportamiento correcto por defecto).
 const pageName = computed(() => t(`pageName.${route.value.type}`))
-watch([pageName, () => content.value.brand, locale], () => { document.title = `${pageName.value} · ${content.value.brand}` }, { immediate: true })
+watch([pageName, () => content.value.brand, locale], () => { document.title = `${pageName.value} · ${content.value.brand} · QA Lab` }, { immediate: true })
 watch(() => route.value.path, async () => {
   await nextTick()
   mainEl.value?.querySelector('h1')?.focus()
@@ -60,7 +68,7 @@ function logout() {
     <header class="site-header">
       <a class="brand" :href="`#${routePath('home')}`">{{ content.brand }}</a>
       <span v-if="site.style.header === 'banner'" class="tagline">{{ content.tagline }}</span>
-      <button type="button" class="nav-toggle" :aria-expanded="menuOpen" aria-controls="qa-nav" data-testid="nav-toggle" @click="menuOpen = !menuOpen">{{ t('site.menu') }}</button>
+      <button ref="toggleEl" type="button" class="nav-toggle" :aria-expanded="menuOpen" aria-controls="qa-nav" data-testid="nav-toggle" @click="menuOpen = !menuOpen">{{ t('site.menu') }}</button>
       <nav id="qa-nav" class="site-nav" :class="{ open: menuOpen }" :aria-label="t('site.menu')" @click="menuOpen = false">
         <a v-for="p in navTypes" :key="p" :href="`#${routePath(p)}`" :class="{ active: activeOf(p) }" :aria-current="activeOf(p) ? 'page' : undefined" :data-nav="p">
           {{ content.nav[p] }}<span v-if="p === 'cart'" class="cart-count" data-testid="cart-count"> ({{ store.cartCount.value }})</span>
@@ -69,14 +77,14 @@ function logout() {
           <template v-if="user">
             <a v-if="has_('account')" :href="`#${routePath('account')}`" :class="{ active: activeOf('account') }" data-nav="account" data-testid="session-user">{{ user.name || content.nav.account }}</a>
             <span v-else data-testid="session-user">{{ user.name }}</span>
-            <button type="button" data-testid="nav-logout" @click.stop="logout">{{ t('nav.logout') }}</button>
+            <button type="button" data-testid="nav-logout" @click="logout">{{ t('nav.logout') }}</button>
           </template>
           <template v-else>
             <a v-if="has_('account')" :href="`#${routePath('account')}`" :class="{ active: activeOf('account') }" data-nav="account" data-testid="account-link">{{ content.nav.account }}</a>
             <a v-if="has_('login')" :href="`#${routePath('login')}`" :class="{ active: activeOf('login') }" data-nav="login">{{ content.nav.login }}</a>
             <a v-if="has_('signup')" :href="`#${routePath('signup')}`" :class="{ active: activeOf('signup') }" data-nav="signup">{{ content.nav.signup }}</a>
           </template>
-          <button type="button" class="site-help" @click.stop="helpOpen = true">{{ t('site.help') }}</button>
+          <button type="button" class="site-help" @click="openHelp">{{ t('site.help') }}</button>
         </span>
       </nav>
     </header>
@@ -84,7 +92,7 @@ function logout() {
       <component :is="PAGES[route.type]" :key="route.path" />
     </main>
     <footer class="site-footer">{{ t('site.footer', { brand: content.brand }) }}</footer>
-    <Modal :open="helpOpen" :title="t('site.helpTitle')" @close="helpOpen = false">
+    <Modal :open="helpOpen" :return-to="helpReturn" :title="t('site.helpTitle')" @close="helpOpen = false">
       <p>{{ t('site.helpBody') }} <a href="#" @click.prevent="toast(t('site.aboutText', { brand: content.brand }))">{{ t('site.about') }}</a></p>
     </Modal>
   </div>
