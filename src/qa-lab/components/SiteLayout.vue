@@ -1,6 +1,6 @@
 <script setup>
 // Navbar + pagina actual + footer + ayuda. El sitio parece un sitio web corriente a proposito.
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useSite } from '../composables/useSite.js'
 import { NAV_TYPES, PROTECTED, routePath } from '../generator/pages.js'
 import Modal from '../ui/Modal.vue'
@@ -25,7 +25,7 @@ const PAGES = {
   dashboard: DashboardPage, blog: BlogPage, wizard: WizardPage, notfound: NotFoundPage,
 }
 
-const { site, content, route, router, store, has, t, toast } = useSite()
+const { site, content, route, router, store, has, t, toast, locale } = useSite()
 const helpOpen = ref(false)
 const mainEl = ref(null)
 // Skip-link: un handler que mueve el foco (NO un #ancla: chocaria con el router por hash).
@@ -38,6 +38,14 @@ const activeOf = (type) => route.value.type === type || (type === 'list' && rout
 const user = computed(() => store.state.user)
 const has_ = (p) => site.pages.includes(p)
 const vars = computed(() => ({ '--hue': site.style.hue, '--radius': `${site.style.radius}px`, '--width': `${site.style.width}px` }))
+
+// Al cambiar de ruta el foco va al <h1> de la pagina nueva y el titulo del documento la refleja (comportamiento correcto por defecto).
+const pageName = computed(() => t(`pageName.${route.value.type}`))
+watch([pageName, () => content.value.brand, locale], () => { document.title = `${pageName.value} · ${content.value.brand}` }, { immediate: true })
+watch(() => route.value.path, async () => {
+  await nextTick()
+  mainEl.value?.querySelector('h1')?.focus()
+})
 
 function logout() {
   store.logout()
@@ -64,6 +72,7 @@ function logout() {
             <button type="button" data-testid="nav-logout" @click.stop="logout">{{ t('nav.logout') }}</button>
           </template>
           <template v-else>
+            <a v-if="has_('account')" :href="`#${routePath('account')}`" :class="{ active: activeOf('account') }" data-nav="account" data-testid="account-link">{{ content.nav.account }}</a>
             <a v-if="has_('login')" :href="`#${routePath('login')}`" :class="{ active: activeOf('login') }" data-nav="login">{{ content.nav.login }}</a>
             <a v-if="has_('signup')" :href="`#${routePath('signup')}`" :class="{ active: activeOf('signup') }" data-nav="signup">{{ content.nav.signup }}</a>
           </template>

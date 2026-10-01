@@ -130,7 +130,9 @@ describe('reloj, zona horaria y latencia inyectables', () => {
     expect(seq).toEqual([1, 2, 3, 4].map((n) => b.latencyMs('search', n)))
     for (const ms of seq) { expect(ms).toBeGreaterThanOrEqual(80); expect(ms).toBeLessThanOrEqual(600) }
     expect(new Set(seq).size).toBeGreaterThan(1)
-    expect(createLatency({ seed: 'otra' }).latencyMs('search', 1)).not.toBe(seq[0] + 1e9)
+    const other = [1, 2, 3, 4].map((n) => createLatency({ seed: 'otra' }).latencyMs('search', n))
+    expect(other).not.toEqual(seq) // otra semilla, otra secuencia de latencias
+    expect([1, 2, 3, 4].map((n) => a.latencyMs('login', n))).not.toEqual(seq) // otra key, otra secuencia
 
     vi.useFakeTimers()
     let done = false

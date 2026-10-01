@@ -17,7 +17,9 @@
     "pages": "Pages",
     "page": "Page",
     "pageList": "Site pages ({n})",
-    "noBugs": "This site has no active bugs."
+    "noBugs": "This site has no active bugs.",
+    "cartNote": "The cart is a guest cart: it survives signing out.",
+    "where": {"blogComments": "Location: Blog → open a post → Comments tab", "checkoutStep": "Location: Checkout, step {n} ({step})", "wizardStep": "Location: Wizard, step \"{step}\"", "helpButton": "Location: the navbar \"Help\" button (opens the modal)", "pageEnd": "Location: at the bottom of the page (visible on mobile)", "dashboardFooter": "Location: Dashboard, total row at the table foot", "checkoutSummary": "Location: Checkout, order summary (with quantity greater than 1 on the first line)"}
   },
   "themeName": {
     "store": "Store",

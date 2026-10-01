@@ -17,7 +17,9 @@
     "pages": "Páginas",
     "page": "Página",
     "pageList": "Páginas del sitio ({n})",
-    "noBugs": "Este sitio no tiene bugs activos."
+    "noBugs": "Este sitio no tiene bugs activos.",
+    "cartNote": "El carrito es de invitado: sobrevive al cerrar sesión.",
+    "where": {"blogComments": "Ubicación: Blog → abrir un post → pestaña Comentarios", "checkoutStep": "Ubicación: Checkout, paso {n} ({step})", "wizardStep": "Ubicación: Asistente, paso «{step}»", "helpButton": "Ubicación: botón «Ayuda» del navbar (abre el modal)", "pageEnd": "Ubicación: al final de la página (se ve en mobile)", "dashboardFooter": "Ubicación: Panel, fila de total al pie de la tabla", "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)"}
   },
   "themeName": {
     "store": "Tienda",

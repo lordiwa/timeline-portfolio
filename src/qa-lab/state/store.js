@@ -1,5 +1,7 @@
 // Estado compartido del sitio: sesion simulada, carrito, cupon, pedidos, comentarios y filtros del listado.
 // Persiste en sessionStorage con clave por (seed, level) y arranca SIEMPRE vacio: reproducible por semilla.
+// Carrito de invitado: cerrar sesion NO lo vacia (sobrevive al logout; se documenta tambien en la ayuda del lab).
+// Los filtros del listado (store.ui.list) viven SOLO en memoria: persisten al navegar y se reinician al recargar.
 // Contadores de acciones (store.actions): addToCart, removeFromCart, setQty, login (todos los intentos),
 // loginOk (intentos con credenciales validas), register, submit (formularios enviados), coupon, comment, order.
 // Viven en MEMORIA: se reinician al recargar la pagina, no al navegar. Los bugs intermitentes los consultan
@@ -39,8 +41,13 @@ const defaults = () => ({
   orderSeq: 0,
   comments: {}, // postId -> [{ author, text, minutes }]
   prefs: { newsletter: false },
-  listUi: { search: '', cat: '', price: '', sort: 'default', page: 1 },
 })
+
+const num = (n) => typeof n === 'number' && Number.isFinite(n)
+const validOrder = (o) =>
+  o && typeof o.id === 'string' && Array.isArray(o.lines) && o.lines.every((l) => l && num(l.id) && num(l.qty) && num(l.price)) &&
+  o.totals && num(o.totals.total) && num(o.totals.decimals) && o.customer && typeof o.customer.email === 'string' && typeof o.customer.name === 'string'
+const validComment = (c) => c && typeof c.text === 'string' && num(c.minutes) && (c.author === null || typeof c.author === 'string')
 
 /** Lee del storage validando el shape: un JSON viejo o corrupto no rompe el sitio. */
 function load(site, storage) {
@@ -54,11 +61,12 @@ function load(site, storage) {
   const person = (u) => u && typeof u.name === 'string' && typeof u.email === 'string'
   if (person(raw.user)) s.user = { name: raw.user.name, email: raw.user.email }
   if (Array.isArray(raw.users)) s.users = raw.users.filter((u) => person(u) && typeof u.password === 'string')
-  if (Array.isArray(raw.orders)) s.orders = raw.orders.filter((o) => o && typeof o.id === 'string')
+  if (Array.isArray(raw.orders)) s.orders = raw.orders.filter(validOrder)
   if (Number.isInteger(raw.orderSeq)) s.orderSeq = raw.orderSeq
-  if (raw.comments && typeof raw.comments === 'object') s.comments = raw.comments
+  if (raw.comments && typeof raw.comments === 'object' && !Array.isArray(raw.comments)) {
+    for (const [k, list] of Object.entries(raw.comments)) if (Array.isArray(list)) s.comments[k] = list.filter(validComment)
+  }
   if (raw.prefs && typeof raw.prefs.newsletter === 'boolean') s.prefs.newsletter = raw.prefs.newsletter
-  if (raw.listUi && typeof raw.listUi === 'object') Object.assign(s.listUi, raw.listUi)
   return s
 }
 
@@ -69,6 +77,7 @@ export function createStore(site, storage = safeStorage()) {
     try { storage.setItem(key, JSON.stringify(state)) } catch { /* sin cuota: sigue en memoria */ }
   }, { deep: true, flush: 'sync' })
 
+  const ui = reactive({ list: { search: '', cat: '', price: '', sort: 'default', page: 1 } }) // solo memoria
   const actions = reactive({})
   const bump = (type) => (actions[type] = (actions[type] || 0) + 1)
   const catalogIds = new Set(site.data.catalog.map((r) => r.id))
@@ -78,6 +87,7 @@ export function createStore(site, storage = safeStorage()) {
   return {
     state,
     cartCount,
+    ui,
     actions,
     bump,
 

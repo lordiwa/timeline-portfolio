@@ -43,9 +43,10 @@ export async function mountSite(site, { hash = '', locale = 'es', storage = memo
 /** Espera al proximo hashchange (con tope) y deja que Vue re-renderice. */
 function afterHashChange(trigger) {
   return new Promise((resolve) => {
-    const done = () => { window.removeEventListener('hashchange', done); clearTimeout(cap); setTimeout(resolve, 8) }
+    const done = () => { window.removeEventListener('hashchange', done); window.removeEventListener('popstate', done); clearTimeout(cap); setTimeout(resolve, 8) }
     const cap = setTimeout(done, 500)
     window.addEventListener('hashchange', done)
+    window.addEventListener('popstate', done)
     trigger()
   })
 }

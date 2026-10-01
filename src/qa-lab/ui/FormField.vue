@@ -53,7 +53,7 @@ const on = (e) => emit('update:modelValue', props.field.type === 'checkbox' ? e.
         :value="modelValue"
         :placeholder="unlabeled ? label : ''"
         :tabindex="tabindex"
-        :autocomplete="field.type === 'password' ? 'new-password' : 'off'"
+        :autocomplete="field.autocomplete || (field.type === 'password' ? 'new-password' : 'off')"
         @input="on"
         @blur="emit('blur')"
       />

@@ -15,7 +15,7 @@ const L = useListing(
   () => c.value.items,
   { pageSize: site.data.list.pageSize, match: (r, q) => !q || r.name.toLowerCase().includes(q) },
   has,
-  store.state.listUi,
+  store.ui.list,
 )
 const rows = computed(() => L.pageRows())
 const sortItems = computed(() => [

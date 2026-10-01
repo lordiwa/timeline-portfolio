@@ -3,6 +3,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { parseHash, resolveRoute, safeNext } from '../../src/qa-lab/router/index.js'
 import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
+import { mountLab } from '../../src/qa-lab/boot.js'
 import { forceSite, ALL_PAGES, mountSite, go, tick, fill, here, cleanup, back, forward } from './helpers.js'
 
 afterEach(() => { cleanup() })
@@ -47,15 +48,27 @@ describe('router: funciones puras', () => {
 })
 
 describe('router: navegacion en el navegador', () => {
-  it('deep link ?seed&level#/ruta: la misma URL da exactamente la misma pagina (caso 2)', async () => {
+  it('deep link ?seed&level#/ruta por el parseo real de la URL (boot.js): la misma URL da exactamente la misma pagina (caso 2)', async () => {
+    const url = '/qa-lab/?seed=deep-9&level=senior&lang=es#/faq'
+    const render = async () => {
+      window.history.replaceState(null, '', url)
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const app = mountLab(el)
+      await tick(20)
+      const html = el.querySelector('main').outerHTML
+      const nav = [...el.querySelectorAll('[data-nav]')].map((a) => a.dataset.nav)
+      const level = el.querySelector('[data-testid="level"]').value
+      app.unmount()
+      return { html, nav, level, seed: el.textContent }
+    }
+    const a = await render()
+    const b = await render()
+    expect(a.level).toBe('senior') // el nivel salio de la URL, no de un default
+    expect(a.html).toBe(b.html)
+    expect(a.html).toContain('data-page="faq"') // la ruta interna salio del hash
     const site = generateSite('deep-9', 'senior')
-    const target = site.pages.includes('faq') ? '/faq' : '/'
-    const a = await mountSite(site, { hash: `#${target}` })
-    const htmlA = a.w.find('main').html()
-    a.w.unmount()
-    const b = await mountSite(site, { hash: `#${target}` })
-    expect(b.w.find('main').html()).toBe(htmlA)
-    b.w.unmount()
+    expect(a.nav.filter((n) => n !== 'account' && n !== 'login' && n !== 'signup').sort()).toEqual(site.pages.filter((p) => ['home', 'list', 'blog', 'faq', 'contact', 'dashboard', 'wizard', 'cart'].includes(p)).sort())
   })
 
   it('atras y adelante del navegador recorren las paginas (caso 1)', async () => {

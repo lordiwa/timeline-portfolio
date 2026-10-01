@@ -14,7 +14,7 @@ const lead = computed(() => tBug(`tpl.${props.type}.lead`, { brand: content.valu
 
 <template>
   <section class="site-page" :data-page="type">
-    <h1 :class="{ 'bug-misaligned': has('misaligned') }">{{ title }}</h1>
+    <h1 tabindex="-1" :class="{ 'bug-misaligned': has('misaligned') }">{{ title }}</h1>
     <p class="site-lead">{{ lead }}</p>
     <p class="site-note" :class="{ 'bug-truncated': has('text-truncated') }">{{ t(`tpl.${type}.note`) }}</p>
     <slot />
