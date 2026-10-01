@@ -58,11 +58,8 @@ function next() {
   step.value += 1
 }
 
-/** Dia del pedido (YYYY-MM-DD) en la zona horaria simulada del sitio. */
-function orderDate() {
-  const d = env.clock.local()
-  return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
-}
+/** Dia del pedido (YYYY-MM-DD): el dia civil del USUARIO (la zona simulada del sitio solo la usan los bugs de fecha). */
+const orderDate = () => env.clock.viewerToday()
 
 function place() {
   if (!validate(stepFields.value) || placing.value || !lines.value.length) return

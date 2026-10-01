@@ -64,7 +64,7 @@ export function createLatency({ seed, clock = systemClock }) {
   }
 }
 
-export function createEnv({ seed, tzOffsetMinutes = 0, now } = {}) {
-  const clock = createClock({ now, tzOffsetMinutes })
+export function createEnv({ seed, tzOffsetMinutes = 0, now, viewerOffsetMinutes } = {}) {
+  const clock = createClock({ now, tzOffsetMinutes, viewerOffsetMinutes })
   return { clock, latency: createLatency({ seed, clock }) }
 }

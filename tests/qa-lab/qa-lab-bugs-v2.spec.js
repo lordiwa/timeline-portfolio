@@ -133,6 +133,28 @@ describe('estado y entre paginas', () => {
     expect(bug).toBe(1)
   })
 
+  it('cart-loses-item-on-back: un enlace al detalle anterior NO arma el rollback; el boton atras (popstate) si', async () => {
+    const mk = () => mountSite(forceSite({ pages: ALL_PAGES, bugs: { 'cart-loses-item-on-back': 'detail' } }), { hash: '#/catalog/1' })
+    const add = (w) => w.find('[data-testid="add-to-cart"]').trigger('click')
+    const viaLink = await mk()
+    await add(viaLink.w)
+    await go('/catalog')
+    await viaLink.w.find('a[href="#/catalog/1"]').trigger('click') // enlace al detalle anterior (mismo path que "atras")
+    await tick(20)
+    expect(here()).toBe('#/catalog/1')
+    await add(viaLink.w)
+    expect(cartCount(viaLink.w)).toBe('(2)') // nada se pierde
+    viaLink.w.unmount()
+    const viaBack = await mk()
+    await add(viaBack.w)
+    await go('/catalog')
+    await back()
+    await add(viaBack.w)
+    expect(cartCount(viaBack.w)).toBe('(1)') // atras armo el rollback: se pierde el primero al agregar
+    await add(viaBack.w)
+    expect(cartCount(viaBack.w)).toBe('(2)') // se desarma tras la primera alta
+  })
+
   it('protected-deeplink: abrir /account directo sin sesion muestra la cuenta solo con el flag; navegando desde el menu siempre redirige', async () => {
     const [clean, bug] = await bothWays(
       (flag) => mountSite(forceSite({ pages: ALL_PAGES, bugs: flag ? { 'protected-deeplink': 'account' } : {} }), { hash: '#/account' }),
@@ -299,7 +321,9 @@ describe('calculo y fechas', () => {
     expect(formatDate('2000-05-10', { tz: -300, shift: false })).toBe('10/05/2000')
     expect(formatDate('2000-05-10', { tz: -300, shift: true })).toBe('09/05/2000')
     expect(formatDate('2000-01-01', { tz: -480, shift: true })).toBe('31/12/1999') // cruza de anio
-    expect(formatDate('2000-05-10', { tz: 0, shift: true })).toBe('10/05/2000') // control: sin offset no hay corrimiento
+    expect(formatDate('2000-05-10', { tz: 0, shift: true })).toBe('09/05/2000') // sin corrimiento de zona se fuerza un dia antes
+    expect(formatDate('2000-05-10', { tz: 540, shift: true })).toBe('09/05/2000')
+    expect(formatDate('2000-03-01', { tz: 540, shift: true })).toBe('29/02/2000') // cruza de mes
   })
 
   it('date-timezone-shift en la cuenta: la fecha de nacimiento aparece un dia antes solo con el flag', async () => {
@@ -314,18 +338,29 @@ describe('calculo y fechas', () => {
     expect(bug).toBe('Fecha de nacimiento: 09/05/2000')
   })
 
-  it('date-timezone-shift tambien en la fecha del pedido: "Mis pedidos" la muestra un dia antes solo con el flag (reloj y zona simulados)', async () => {
+  it.each([
+    ['sitio +540, usuario -300 a las 22:00 del 10/05', 540, -300, Date.UTC(2026, 4, 11, 3), '10/05/2026'],
+    ['sitio -480, usuario +540 a la 01:00 del 11/05', -480, 540, Date.UTC(2026, 4, 10, 16), '11/05/2026'],
+  ])('fecha del pedido por el checkout real (%s): sin flag es el dia del USUARIO; con flag SIEMPRE distinta de ese dia', async (_n, siteTz, viewerTz, now, viewerDay) => {
     const [clean, bug] = await bothWays(
       async (flag) => {
-        const site = forceSite({ pages: ALL_PAGES, bugs: flag ? { 'date-timezone-shift': 'account' } : {}, params: { 'date-timezone-shift': { tz: -300 } } })
-        const env = createEnv({ seed: site.seed, tzOffsetMinutes: -300, now: () => Date.UTC(2026, 4, 11, 12) }) // 2026-05-11 07:00 en la zona simulada
-        const order = { id: 'ORD-1001', lines: [{ id: 1, qty: 1, price: 5 }], totals: { total: 500, decimals: 2 }, customer: { name: 'Ana', email: 'ana@example.com' }, userEmail: 'ana@example.com', date: '2026-05-11' }
-        return mountSite(site, { hash: '#/account', env, storage: seedStorage(site, { user: SESSION, orders: [order], orderSeq: 1 }) })
+        const site = { ...forceSite({ pages: ALL_PAGES, bugs: flag ? { 'date-timezone-shift': 'account' } : {}, params: { 'date-timezone-shift': { tz: siteTz } } }), tzOffsetMinutes: siteTz }
+        const env = createEnv({ seed: site.seed, tzOffsetMinutes: siteTz, viewerOffsetMinutes: viewerTz, now: () => now })
+        return mountSite(site, { hash: '#/checkout', env, storage: seedStorage(site, { cart: [{ id: 1, qty: 1 }], user: SESSION }) })
       },
-      async ({ w }) => w.find('[data-testid="order-date"]').text(),
+      async ({ w }) => {
+        await fill(w, { name: 'Ana Perez', email: SESSION.email, address: 'Calle 1', city: 'Lima' })
+        await w.find('form').trigger('submit')
+        await w.find('form').trigger('submit')
+        await fill(w, { card: '4111111111111111' })
+        await w.find('form').trigger('submit')
+        await tick(10)
+        await go('/account')
+        return w.find('[data-testid="order-date"]').text()
+      },
     )
-    expect(clean).toBe('11/05/2026')
-    expect(bug).toBe('10/05/2026')
+    expect(clean).toBe(viewerDay)
+    expect(bug).not.toBe(viewerDay)
   })
 
   it('el registro guarda la fecha de nacimiento tal cual se escribio y la cuenta la muestra igual (sin flag, con zona simulada distinta de 0)', async () => {

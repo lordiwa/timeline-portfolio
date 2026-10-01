@@ -6,12 +6,16 @@ const pad = (n) => String(n).padStart(2, '0')
 /**
  * 'YYYY-MM-DD' -> 'DD/MM/YYYY' leyendo las partes tal cual (correcto: no hay conversion de zona).
  * shift (bug 'date-timezone-shift'): toma la fecha como medianoche UTC y la muestra en la zona simulada `tz`
- * (minutos, p. ej. -300): con offsets negativos queda un dia antes.
+ * (minutos, p. ej. -300): con offsets negativos queda un dia antes; si no cae en otro dia, se fuerza un dia antes.
+ * Con tz=0 sigue la regla: ya no devuelve la misma fecha.
  */
 export function formatDate(iso, { tz = 0, shift = false } = {}) {
   const [y, m, d] = String(iso).split('-').map(Number)
   if (!shift) return `${pad(d)}/${pad(m)}/${y}`
-  const l = createClock({ tzOffsetMinutes: tz }).local(Date.UTC(y, m - 1, d))
+  const clock = createClock({ tzOffsetMinutes: tz })
+  let l = clock.local(Date.UTC(y, m - 1, d))
+  // Garantia del bug: la fecha mostrada NUNCA es la guardada; si la zona no la corre (offset >= 0), se fuerza un dia antes.
+  if (l.year === y && l.month === m && l.day === d) l = clock.local(Date.UTC(y, m - 1, d - 1))
   return `${pad(l.day)}/${pad(l.month)}/${l.year}`
 }
 

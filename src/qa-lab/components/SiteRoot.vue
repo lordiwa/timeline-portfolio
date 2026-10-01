@@ -36,17 +36,26 @@ const content = computed(() => resolveContent(props.site, t))
 // Un click en un enlace interno (#/...) tambien dispara popstate en el navegador: no es "atras". Solo la navegacion
 // por el historial (boton atras del navegador) cuenta como 'back'.
 const nav = { last: 'push', armed: false }
-let linkClick = false
+// Se guarda el path DESTINO del enlace clickeado (o de router.push/replace) y el watch de ruta lo compara: si coincide
+// es navegacion por enlace o por codigo, no 'atras'. Se descarta en cada cambio de ruta (sin timers).
+let linkTarget = null
+const pathOf = (href) => parseHash(href).path
 const onLinkClick = (e) => {
-  if (e.target.closest?.('a[href^="#"]')) { linkClick = true; env.clock.setTimeout(() => { linkClick = false }, 0) }
+  const a = e.target.closest?.('a[href^="#"]')
+  if (a) linkTarget = pathOf(a.getAttribute('href'))
+}
+for (const m of ['push', 'replace']) {
+  const orig = router[m]
+  router[m] = (p) => { linkTarget = pathOf(`#${p}`); return orig(p) }
 }
 document.addEventListener('click', onLinkClick, true)
 onBeforeUnmount(() => document.removeEventListener('click', onLinkClick, true))
 const visited = [router.route.value.path]
 watch(router.route, (r) => {
   if (r.path === visited.at(-1)) return
-  if (r.path === visited.at(-2) && !linkClick) { visited.pop(); nav.last = 'back' } else { visited.push(r.path); nav.last = 'push' }
-  linkClick = false
+  const byLink = linkTarget === r.path
+  linkTarget = null
+  if (r.path === visited.at(-2) && !byLink) { visited.pop(); nav.last = 'back' } else { visited.push(r.path); nav.last = 'push' }
 }, { flush: 'sync' })
 
 const messages = ref([])
