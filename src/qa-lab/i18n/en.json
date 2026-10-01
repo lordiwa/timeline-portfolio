@@ -200,5 +200,46 @@
     "q7": "Can I edit my details?", "a7": "You can update them at any time from your account.",
     "q8": "How do I close my account?", "a8": "Write to us from the contact form and we will handle it.",
     "q9": "Where can I see the status of my request?", "a9": "In the activity section of your account."
+  },
+  "report": {
+    "startTitle": "Start the test",
+    "name": "Name",
+    "email": "Email",
+    "start": "Start test",
+    "privacy": "We store your name, email, findings and score to review the exercise; it is not shared with third parties.",
+    "errName": "Enter your name (up to 80 characters).",
+    "errEmail": "Enter a valid email.",
+    "title": "Findings report",
+    "time": "Time: {t}",
+    "page": "Page",
+    "description": "Bug description",
+    "severity": "Severity",
+    "category": "Category (optional)",
+    "bug": "Catalog bug (optional)",
+    "none": "Unspecified",
+    "add": "Add finding",
+    "remove": "Remove finding",
+    "findings": "Findings so far: {n}",
+    "submit": "Submit report",
+    "sending": "Sending…",
+    "errDescription": "Describe the bug (up to {max} characters).",
+    "errMax": "Maximum {max} findings.",
+    "sev": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "submitError": {
+      "not-configured": "Saving is not configured in this environment.",
+      "network": "Could not send. Check your connection and retry.",
+      "invalid": "The report is not valid. Check the data."
+    },
+    "resultTitle": "Result",
+    "score": "Score: {n}/100",
+    "hits": "Hits: {n}",
+    "halfHits": "Half hits (category only): {n}",
+    "falsePositives": "False positives: {n}",
+    "missed": "Missed bugs: {n}"
   }
 }

@@ -200,5 +200,46 @@
     "q7": "¿Puedo modificar mis datos?", "a7": "Podés actualizarlos en cualquier momento desde tu cuenta.",
     "q8": "¿Cómo doy de baja mi cuenta?", "a8": "Escribinos desde el formulario de contacto y lo gestionamos.",
     "q9": "¿Dónde veo el estado de mi solicitud?", "a9": "En la sección de actividad de tu cuenta."
+  },
+  "report": {
+    "startTitle": "Empezar la prueba",
+    "name": "Nombre",
+    "email": "Email",
+    "start": "Empezar prueba",
+    "privacy": "Guardamos tu nombre, email, hallazgos y puntaje para revisar la práctica; no se comparte con terceros.",
+    "errName": "Ingresá tu nombre (hasta 80 caracteres).",
+    "errEmail": "Ingresá un email válido.",
+    "title": "Reporte de hallazgos",
+    "time": "Tiempo: {t}",
+    "page": "Página",
+    "description": "Descripción del bug",
+    "severity": "Severidad",
+    "category": "Categoría (opcional)",
+    "bug": "Bug del catálogo (opcional)",
+    "none": "Sin especificar",
+    "add": "Agregar hallazgo",
+    "remove": "Quitar hallazgo",
+    "findings": "Hallazgos cargados: {n}",
+    "submit": "Enviar reporte",
+    "sending": "Enviando…",
+    "errDescription": "Describí el bug (hasta {max} caracteres).",
+    "errMax": "Máximo {max} hallazgos.",
+    "sev": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "critical": "Crítica"
+    },
+    "submitError": {
+      "not-configured": "El guardado no está configurado en este entorno.",
+      "network": "No se pudo enviar. Revisá tu conexión y reintentá.",
+      "invalid": "El reporte no es válido. Revisá los datos."
+    },
+    "resultTitle": "Resultado",
+    "score": "Puntaje: {n}/100",
+    "hits": "Aciertos: {n}",
+    "halfHits": "Medios aciertos (solo categoría): {n}",
+    "falsePositives": "Falsos positivos: {n}",
+    "missed": "Bugs no encontrados: {n}"
   }
 }

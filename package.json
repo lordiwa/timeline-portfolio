@@ -19,6 +19,7 @@
     "@fontsource/vt323": "^5.2.7",
     "@unhead/vue": "^1.11.20",
     "@vueuse/core": "^14.3.0",
+    "firebase": "^12.19.0",
     "phaser": "^3.86.0",
     "vue": "^3.5.0",
     "vue-i18n": "^11.4.2"
