@@ -109,6 +109,7 @@
     "maxLength": "Must be at most {n} characters.",
     "pattern": "The format is not valid.",
     "number": "Enter a value between {min} and {max}.",
+    "datePast": "The date cannot be in the past.",
     "server500": "Error 500: the server could not process the submission. Please try again."
   },
   "tpl": {

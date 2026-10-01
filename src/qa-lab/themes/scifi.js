@@ -50,7 +50,7 @@ const specs = [
       title: 'Solicitud de residencia|Residency application',
       steps: [
         ['Tipo de solicitante|Applicant type', [rad('applicant', 'Tipo de solicitante|Applicant type', ['Persona|Individual', 'Familia con menores|Family with minors'])]],
-        ['Fecha y duración|Date and duration', [date('arrivalDate', 'Llegada prevista|Expected arrival'), num('stayCycles', 'Ciclos de residencia solicitados|Requested residency cycles', 1, 200)]],
+        ['Fecha y duración|Date and duration', [date('arrivalDate', 'Llegada prevista|Expected arrival', 'noPast'), num('stayCycles', 'Ciclos de residencia solicitados|Requested residency cycles', 1, 200)]],
         ['Menores|Minors', [num('minors', 'Cantidad de menores|Number of minors', 1, 12)]],
         ['Antecedentes|Background', [chk('cleanRecord', 'Declaro no tener sanciones previas|I declare no previous sanctions', true)]],
       ],
@@ -106,7 +106,7 @@ const specs = [
       title: 'Declaración de carga|Cargo declaration',
       steps: [
         ['Tipo de carga|Cargo type', [sel('cargoKind', 'Tipo de carga|Cargo type', ['Mercancía común|General goods', 'Seres vivos|Living beings', 'Material regulado|Regulated material'])]],
-        ['Cantidad y fecha|Quantity and date', [num('units', 'Unidades|Units', 1, 5000), date('arrivalAt', 'Llegada estimada|Estimated arrival')]],
+        ['Cantidad y fecha|Quantity and date', [num('units', 'Unidades|Units', 1, 5000), date('arrivalAt', 'Llegada estimada|Estimated arrival', 'noPast')]],
         ['Seres vivos|Living beings', [text('speciesName', 'Especie transportada|Species carried', { minLength: 3, maxLength: 60 })]],
         ['Responsable|Responsible party', [text('carrier', 'Transportista|Carrier', { minLength: 3, maxLength: 60 })]],
       ],
@@ -162,7 +162,7 @@ const specs = [
       title: 'Cotizá tu nave|Quote your ship',
       steps: [
         ['Tipo de proyecto|Project type', [rad('project', 'Qué querés hacer|What you want to do', ['Nave nueva|New ship', 'Reparación|Repair'])]],
-        ['Presupuesto y plazo|Budget and deadline', [num('budgetK', 'Presupuesto en miles|Budget in thousands', 10, 2000), date('deliverBy', 'Entrega deseada|Desired delivery')]],
+        ['Presupuesto y plazo|Budget and deadline', [num('budgetK', 'Presupuesto en miles|Budget in thousands', 10, 2000), date('deliverBy', 'Entrega deseada|Desired delivery', 'noPast')]],
         ['Nave actual|Current ship', [pat('currentHull', 'Matrícula de tu nave actual|Current ship registration', '^CB-\\d{4}-[A-Z]$', 'CB-, cuatro dígitos, guion y una letra, ej. CB-2087-K|CB-, four digits, a dash and a letter, e.g. CB-2087-K')]],
         ['Observaciones|Remarks', [area('shipNotes', 'Requisitos especiales|Special requirements', 300)]],
       ],
@@ -218,7 +218,7 @@ const specs = [
       title: 'Solicitud de traslado a la colonia|Colony relocation request',
       steps: [
         ['Perfil|Profile', [rad('profile', 'Tu perfil|Your profile', ['Trabajador|Worker', 'Estudiante|Student'])]],
-        ['Fecha y duración|Date and length', [date('flightDate', 'Fecha del viaje|Flight date'), num('contractYears', 'Años de contrato|Contract years', 1, 10)]],
+        ['Fecha y duración|Date and length', [date('flightDate', 'Fecha del viaje|Flight date', 'noPast'), num('contractYears', 'Años de contrato|Contract years', 1, 10)]],
         ['Estudios|Studies', [text('university', 'Institución de estudios|Study institution', { minLength: 3, maxLength: 80 })]],
         ['Salud|Health', [chk('medicalExam', 'Presento examen médico vigente|I submit a valid medical exam', true)]],
       ],
@@ -274,7 +274,7 @@ const specs = [
       title: 'Turno de diagnóstico|Diagnostic appointment',
       steps: [
         ['Motivo|Reason', [sel('why', 'Motivo de la visita|Reason for the visit', ['Revisión general|General check', 'Falla específica|Specific fault', 'Apoyo emocional|Emotional support'])]],
-        ['Fecha y urgencia|Date and urgency', [date('slot', 'Fecha del turno|Appointment date'), num('severity', 'Gravedad (1 a 10)|Severity (1 to 10)', 1, 10)]],
+        ['Fecha y urgencia|Date and urgency', [date('slot', 'Fecha del turno|Appointment date', 'noPast'), num('severity', 'Gravedad (1 a 10)|Severity (1 to 10)', 1, 10)]],
         ['Falla|Fault', [area('faultDetails', 'Describí la falla|Describe the fault', 250)]],
         ['Confirmación|Confirmation', [chk('consentDiag', 'Autorizo el diagnóstico completo|I authorize a full diagnostic', true)]],
       ],
@@ -330,7 +330,7 @@ const specs = [
       title: 'Plan de carga anticipada|Advance fueling plan',
       steps: [
         ['Combustible|Fuel', [sel('planFuel', 'Combustible necesario|Fuel needed', ['Hidrógeno líquido|Liquid hydrogen', 'Helio-3|Helium-3', 'Iones de xenón|Xenon ions'])]],
-        ['Cantidad y fecha|Quantity and date', [num('planUnits', 'Unidades a cargar|Units to load', 1, 800), date('dockDay', 'Día de atraque|Docking day')]],
+        ['Cantidad y fecha|Quantity and date', [num('planUnits', 'Unidades a cargar|Units to load', 1, 800), date('dockDay', 'Día de atraque|Docking day', 'noPast')]],
         ['Helio|Helium', [chk('coolant', 'Necesito refrigerante criogénico|I need cryogenic coolant')]],
         ['Servicios extra|Extras', [chk('wash', 'Agregar limpieza de escudo|Add shield cleaning')]],
       ],
@@ -363,7 +363,7 @@ const specs = [
     ],
     fields: [
       text('touristName', 'Nombre del turista|Tourist name', { minLength: 2, maxLength: 70 }),
-      date('birthDate', 'Fecha de nacimiento|Date of birth'),
+      date('birthDate', 'Fecha de nacimiento|Date of birth', 'noFuture'),
       num('weightKg', 'Peso en kilos (traje y salto)|Weight in kilos (suit and jump)', 20, 150),
       pat('shuttlePass', 'Código de lanzadera|Shuttle code', '^LZ-\\d{3}-[A-Z]{2}$', 'LZ-, tres dígitos, guion y dos letras, ej. LZ-208-MC|LZ-, three digits, a dash and two letters, e.g. LZ-208-MC'),
       sel('fitness', 'Condición física|Fitness level', ['Alta|High', 'Media|Medium', 'Baja|Low']),
@@ -386,7 +386,7 @@ const specs = [
       title: 'Armá tu viaje lunar|Plan your lunar trip',
       steps: [
         ['Estilo de viaje|Trip style', [rad('style', 'Estilo de viaje|Trip style', ['Tranquilo|Relaxed', 'De aventura|Adventurous'])]],
-        ['Fecha y noches|Date and nights', [date('departure', 'Salida|Departure'), num('lunarNights', 'Noches en la Luna|Nights on the Moon', 1, 14)]],
+        ['Fecha y noches|Date and nights', [date('departure', 'Salida|Departure', 'noPast'), num('lunarNights', 'Noches en la Luna|Nights on the Moon', 1, 14)]],
         ['Aventura|Adventure', [sel('activity', 'Actividad principal|Main activity', ['Salto|Jump', 'Golf lunar|Lunar golf', 'Carrera de rovers|Rover race'])]],
         ['Alojamiento|Lodging', [chk('craterHotel', 'Prefiero hotel cráter|I prefer the crater hotel')]],
       ],
@@ -444,7 +444,7 @@ const specs = [
         ['Destino|Purpose', [sel('purpose', 'Para qué es el crédito|What the loan is for', ['Comprar una nave|Buy a ship', 'Mantenimiento|Maintenance', 'Refinanciar deuda|Refinance debt'])]],
         ['Monto y plazo|Amount and term', [num('loanAmount', 'Monto solicitado|Amount requested', 500, 900000), num('loanCycles', 'Plazo en ciclos|Term in cycles', 1, 40)]],
         ['Deuda actual|Existing debt', [num('currentDebt', 'Deuda actual a refinanciar|Current debt to refinance', 100, 500000)]],
-        ['Fecha|Date', [date('startPay', 'Primer pago|First payment')]],
+        ['Fecha|Date', [date('startPay', 'Primer pago|First payment', 'noPast')]],
       ],
       cond: ['purpose', 'refinance-debt', ['currentDebt']],
     },
@@ -498,7 +498,7 @@ const specs = [
       title: 'Inscripción al curso de piloto|Pilot course enrollment',
       steps: [
         ['Experiencia|Experience', [rad('xp', 'Experiencia en vuelo|Flight experience', ['Ninguna|None', 'Con horas previas|Some prior hours'])]],
-        ['Fecha y dedicación|Date and commitment', [date('startTerm', 'Inicio del curso|Course start'), num('hoursWeek', 'Horas por semana|Hours per week', 4, 60)]],
+        ['Fecha y dedicación|Date and commitment', [date('startTerm', 'Inicio del curso|Course start', 'noPast'), num('hoursWeek', 'Horas por semana|Hours per week', 4, 60)]],
         ['Horas previas|Prior hours', [num('priorHours', 'Horas acreditadas|Logged hours', 1, 20000)]],
         ['Beca|Scholarship', [chk('scholarship', 'Solicito beca parcial|I request a partial scholarship')]],
       ],
@@ -554,7 +554,7 @@ const specs = [
       title: 'Armá tu kit de reparación|Build your repair kit',
       steps: [
         ['Tipo de reparación|Repair type', [sel('repair', 'Qué querés reparar|What you want to repair', ['Movimiento|Movement', 'Visión y sonido|Vision and sound', 'Energía|Power'])]],
-        ['Cantidad y fecha|Quantity and date', [num('kitQty', 'Cantidad de kits|Number of kits', 1, 50), date('needDate', 'Necesito antes de|Needed by')]],
+        ['Cantidad y fecha|Quantity and date', [num('kitQty', 'Cantidad de kits|Number of kits', 1, 50), date('needDate', 'Necesito antes de|Needed by', 'noPast')]],
         ['Energía|Power', [num('wattage', 'Potencia necesaria en vatios|Power required in watts', 5, 5000)]],
         ['Instalación|Installation', [chk('install', 'Quiero que lo instalen|I want it installed')]],
       ],
@@ -610,13 +610,13 @@ const specs = [
       title: 'Propuesta de proyecto|Project proposal',
       steps: [
         ['Objetivo|Goal', [sel('aim', 'Objetivo principal|Main goal', ['Atmósfera respirable|Breathable atmosphere', 'Suelo fértil|Fertile soil', 'Agua líquida|Liquid water'])]],
-        ['Plazo y presupuesto|Timeline and budget', [date('proposalStart', 'Inicio propuesto|Proposed start'), num('proposalBudget', 'Presupuesto en millones|Budget in millions', 1, 5000)]],
+        ['Plazo y presupuesto|Timeline and budget', [date('proposalStart', 'Inicio propuesto|Proposed start', 'noPast'), num('proposalBudget', 'Presupuesto en millones|Budget in millions', 1, 5000)]],
         ['Agua|Water', [num('waterTons', 'Toneladas de agua a movilizar|Tons of water to move', 1, 100000)]],
         ['Equipo|Team', [text('lead', 'Investigador responsable|Lead researcher', { minLength: 3, maxLength: 70 })]],
       ],
       cond: ['aim', 'liquid-water', ['waterTons']],
     },
-    dash: { cols: ['Proyecto|Project', 'Muestras analizadas|Samples analyzed', 'Fecha de informe|Report date', 'Presupuesto ejecutado|Budget spent'], pool: ['Atmósfera|Atmosphere', 'Permafrost|Permafrost', 'Líquenes|Lichens', 'Banco de semillas|Seed bank', 'Invernadero cerrado|Closed greenhouse', 'Estación meteorológica|Weather station'], n: [5, 800], m: [100, 50000] },
+    dash: { cols: ['Proyecto|Project', 'Muestras analizadas|Samples analyzed', 'Fecha de informe|Report date', 'Presupuesto ejecutado|Budget spent'], pool: ['Atmósfera|Atmosphere', 'Pergelisol|Permafrost', 'Líquenes|Lichens', 'Banco de semillas|Seed bank', 'Invernadero cerrado|Closed greenhouse', 'Estación meteorológica|Weather station'], n: [5, 800], m: [100, 50000] },
   },
   {
     id: 'archivo-datos-cuanticos-memoria-azul',
@@ -666,7 +666,7 @@ const specs = [
       title: 'Solicitar acceso a un fondo|Request access to a collection',
       steps: [
         ['Naturaleza|Nature', [rad('requester', 'Quién solicita|Who is requesting', ['Persona|Individual', 'Institución|Institution'])]],
-        ['Fecha y volumen|Date and volume', [date('accessFrom', 'Acceso desde|Access from'), num('requestedGb', 'GB solicitados|GB requested', 1, 50000)]],
+        ['Fecha y volumen|Date and volume', [date('accessFrom', 'Acceso desde|Access from', 'noPast'), num('requestedGb', 'GB solicitados|GB requested', 1, 50000)]],
         ['Institución|Institution', [text('institution', 'Nombre de la institución|Institution name', { minLength: 3, maxLength: 80 })]],
         ['Justificación|Justification', [area('reason', 'Motivo de la solicitud|Reason for the request', 300)]],
       ],
@@ -721,7 +721,7 @@ const specs = [
       title: 'Menú personalizado|Personalized menu',
       steps: [
         ['Dieta|Diet', [rad('dietType', 'Tipo de dieta|Diet type', ['Libre|Unrestricted', 'Con restricciones|With restrictions'])]],
-        ['Comidas y fecha|Meals and date', [num('mealsPerDay', 'Comidas por día|Meals per day', 1, 6), date('startMenu', 'Inicio del menú|Menu start')]],
+        ['Comidas y fecha|Meals and date', [num('mealsPerDay', 'Comidas por día|Meals per day', 1, 6), date('startMenu', 'Inicio del menú|Menu start', 'noPast')]],
         ['Restricciones|Restrictions', [area('restrictions', 'Qué alimentos debemos evitar|Foods to avoid', 250)]],
         ['Extras|Extras', [chk('dessert', 'Incluir postre impreso|Include a printed dessert')]],
       ],
@@ -777,7 +777,7 @@ const specs = [
       title: 'Pedir presupuesto de traducción|Request a translation quote',
       steps: [
         ['Tipo de material|Material type', [sel('materialKind', 'Tipo de material|Material type', ['Documento escrito|Written document', 'Audio o video|Audio or video', 'Evento en vivo|Live event'])]],
-        ['Volumen y fecha|Volume and deadline', [num('pages', 'Páginas o minutos|Pages or minutes', 1, 3000), date('dueDate', 'Fecha de entrega|Due date')]],
+        ['Volumen y fecha|Volume and deadline', [num('pages', 'Páginas o minutos|Pages or minutes', 1, 3000), date('dueDate', 'Fecha de entrega|Due date', 'noPast')]],
         ['Evento|Event', [num('attendees', 'Asistentes estimados|Estimated attendees', 2, 5000)]],
         ['Notas|Notes', [area('briefing', 'Contexto del texto o evento|Context of the text or event', 300)]],
       ],
@@ -833,7 +833,7 @@ const specs = [
       title: 'Contratar tu póliza|Buy your policy',
       steps: [
         ['Qué asegurás|What you insure', [sel('insured', 'Bien a asegurar|Asset to insure', ['Nave|Ship', 'Carga|Cargo'])]],
-        ['Valor y vigencia|Value and term', [num('sumInsured', 'Suma asegurada|Sum insured', 500, 20000000), date('coverFrom', 'Vigencia desde|Coverage start')]],
+        ['Valor y vigencia|Value and term', [num('sumInsured', 'Suma asegurada|Sum insured', 500, 20000000), date('coverFrom', 'Vigencia desde|Coverage start', 'noPast')]],
         ['Nave|Ship', [pat('hullId', 'Matrícula de la nave|Ship registration', '^[A-Z]{2}-\\d{4}$', 'Dos letras, guion y cuatro dígitos, ej. AX-2087|Two letters, a dash and four digits, e.g. AX-2087')]],
         ['Aceptación|Acceptance', [chk('read', 'Leí las condiciones generales|I read the general conditions', true)]],
       ],
@@ -866,7 +866,7 @@ const specs = [
     ],
     fields: [
       text('guestName', 'Nombre del huésped|Guest name', { minLength: 2, maxLength: 60 }),
-      date('checkIn', 'Fecha de llegada|Check-in date'),
+      date('checkIn', 'Fecha de llegada|Check-in date', 'noPast'),
       num('nights', 'Noches|Nights', 1, 30),
       pat('capsuleId', 'Preferencia de cápsula|Capsule preference', '^C-[1-9]\\d{0,2}$', 'C- y un número del 1 al 999, ej. C-42|C- and a number from 1 to 999, e.g. C-42', false),
       sel('sleepType', 'Tipo de descanso|Sleep type', ['Sueño profundo|Deep sleep', 'Siestas cortas|Short naps', 'Trabajo en la cápsula|Working in the capsule']),
@@ -889,7 +889,7 @@ const specs = [
       title: 'Planificá tu estadía|Plan your stay',
       steps: [
         ['Motivo|Purpose', [rad('visit', 'Motivo de la visita|Purpose of the visit', ['Descanso|Rest', 'Evento o reunión|Event or meeting'])]],
-        ['Fechas y huéspedes|Dates and guests', [date('arrive', 'Fecha de llegada|Arrival date'), num('guestCount', 'Cantidad de huéspedes|Number of guests', 1, 60)]],
+        ['Fechas y huéspedes|Dates and guests', [date('arrive', 'Fecha de llegada|Arrival date', 'noPast'), num('guestCount', 'Cantidad de huéspedes|Number of guests', 1, 60)]],
         ['Evento|Event', [text('eventName', 'Nombre del evento|Event name', { minLength: 3, maxLength: 80 })]],
         ['Extras|Extras', [chk('spacewalk', 'Sumar un paseo espacial|Add a spacewalk')]],
       ],

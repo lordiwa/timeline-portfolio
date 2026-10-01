@@ -20,7 +20,11 @@ const field = (key, type, label, required, rules = {}, options) => {
 export const text = (key, label, rules = {}, required = true) => field(key, 'text', label, required, rules)
 export const area = (key, label, maxLength = 300, required = false) => field(key, 'textarea', label, required, { maxLength })
 export const num = (key, label, min, max, required = true) => field(key, 'number', label, required, { min, max })
-export const date = (key, label, required = true) => field(key, 'date', label, required)
+// mode OBLIGATORIO y explicito: 'noFuture' (nacimiento, hechos pasados) o 'noPast' (plazos, turnos, llegadas)
+export const date = (key, label, mode, required = true) => {
+  if (mode !== 'noFuture' && mode !== 'noPast') throw new Error(`date(${key}): falta el modo noFuture|noPast`)
+  return field(key, 'date', label, required, { [mode]: true })
+}
 export const chk = (key, label, required = false) => field(key, 'checkbox', label, required)
 export const sel = (key, label, options, required = true) => field(key, 'select', label, required, {}, options)
 export const rad = (key, label, options, required = true) => field(key, 'radio', label, required, {}, options)

@@ -8,10 +8,14 @@ import { THEMES } from '../../src/qa-lab/generator/themes.js'
 import { BUG_BY_ID } from '../../src/qa-lab/bugs/catalog.js'
 import { concretePath } from '../../src/qa-lab/generator/pages.js'
 import { nameLikeKey } from '../../src/qa-lab/generator/fields.js'
-import { getThemePack } from '../../src/qa-lab/themes/index.js'
+import { getThemePack, THEME_PACKS } from '../../src/qa-lab/themes/index.js'
 import { computeTotals } from '../../src/qa-lab/state/pricing.js'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
-import { ALL_PAGES, themeSite, mountSite, go, fill, fillVisible, advanceWizardTo, cleanup } from './helpers.js'
+import { resolveContent } from '../../src/qa-lab/content/index.js'
+import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
+import { checkField } from '../../src/qa-lab/composables/useForm.js'
+import { createClock } from '../../src/qa-lab/services/clock.js'
+import { ALL_PAGES, themeSite, seedForTheme, mountSite, go, fill, fillVisible, advanceWizardTo, cleanup } from './helpers.js'
 
 vi.setConfig({ testTimeout: 120000 }) // monta decenas de sitios (temas x paginas x con/sin flag)
 
@@ -171,5 +175,68 @@ describe('reglas y moneda del pack en los formularios y el checkout', () => {
     expect(w.find('[data-testid="sum-shipping"]').text()).toBe(show(shipping.standard))
     expect(w.find('[data-testid="grand-total"]').text()).toBe(show(t.total))
     w.unmount()
+  })
+})
+
+describe('revision del cableado (C-1, L-1, L-2)', () => {
+  it('todo campo date de los 63 packs declara noFuture o noPast y el lado prohibido se rechaza sin flags (evita aceptar un nacimiento futuro o un turno pasado)', () => {
+    let dates = 0
+    for (const pack of THEME_PACKS) {
+      const site = generateSite(seedForTheme(pack.id), 'semi')
+      const c = resolveContent(site, createLabI18n('es').global.t)
+      for (const f of [...pack.signupFields, ...pack.wizardFields].filter((x) => x.type === 'date')) {
+        dates++
+        expect(Object.keys(f.rules).filter((k) => k === 'noFuture' || k === 'noPast'), `${pack.id}.${f.key}`).toHaveLength(1)
+        const field = c.field(f.key)
+        const forbidden = f.rules.noFuture ? '2099-01-01' : '2000-01-01'
+        const allowed = f.rules.noFuture ? '2000-01-01' : '2099-01-01'
+        expect(checkField(field, forbidden, () => false), `${pack.id}.${f.key} prohibido`).not.toBeNull()
+        expect(checkField(field, allowed, () => false), `${pack.id}.${f.key} permitido`).toBeNull()
+      }
+    }
+    expect(dates).toBeGreaterThan(60)
+  })
+
+  it.each([[-300, 23, 30], [540, 0, 30]])('las fechas se comparan por dia civil local (offset %i, %i:%i): hoy vale en noPast y noFuture; ayer y manana segun el modo (evita rechazar "hoy" o aceptar "manana" cerca de medianoche)', (offset, hour, minute) => {
+    const fixed = createClock({ viewerOffsetMinutes: offset, now: () => Date.UTC(2026, 2, 5, hour, minute) - offset * 60000 })
+    const has = () => false
+    const noPast = { type: 'date', noPast: true }
+    const noFuture = { type: 'date', noFuture: true }
+    expect(checkField(noPast, '2026-03-05', has, fixed)).toBeNull()
+    expect(checkField(noPast, '2026-03-06', has, fixed)).toBeNull()
+    expect(checkField(noPast, '2026-03-04', has, fixed)).not.toBeNull()
+    expect(checkField(noFuture, '2026-03-05', has, fixed)).toBeNull()
+    expect(checkField(noFuture, '2026-03-04', has, fixed)).toBeNull()
+    expect(checkField(noFuture, '2026-03-06', has, fixed)).not.toBeNull()
+  })
+
+  it('la validacion usa el dia del usuario aunque la zona simulada del sitio difiera (sitio +540, usuario -300 a las 22:00: su hoy vale y su manana/ayer no)', () => {
+    const fixed = createClock({ tzOffsetMinutes: 540, viewerOffsetMinutes: -300, now: () => Date.UTC(2026, 2, 5, 22, 0) + 300 * 60000 })
+    expect(fixed.local().day).toBe(6) // en la zona simulada ya es el 6
+    const has = () => false
+    for (const mode of ['noPast', 'noFuture']) expect(checkField({ type: 'date', [mode]: true }, '2026-03-05', has, fixed), mode).toBeNull()
+    expect(checkField({ type: 'date', noFuture: true }, '2026-03-06', has, fixed)).not.toBeNull()
+    expect(checkField({ type: 'date', noPast: true }, '2026-03-04', has, fixed)).not.toBeNull()
+  })
+
+  it('el checkout y el contacto usan sus campos fijos aunque el pack tenga un campo con la misma clave (evita que el checkout herede un campo del registro)', () => {
+    const pack = THEME_PACKS.find((p) => p.signupFields.some((f) => f.key === 'phone'))
+    const site = generateSite(seedForTheme(pack.id), 'semi')
+    const c = resolveContent(site, createLabI18n('es').global.t)
+    expect(c.field('phone').label).toBe(pack.signupFields.find((f) => f.key === 'phone').label.es)
+    expect(c.generic('phone').label).toBe('Teléfono')
+  })
+
+  it('textos es === en solo en la allowlist de nombres propios, prestamos y cognados (evita contenido sin traducir)', () => {
+    const ALLOW = new Set(['spinning', 'suites', 'extras', 'sector', 'industrial', 'instructor', 'material', 'metal', 'social', 'picnic', 'vhs', 'dvd', 'snacks', 'altitudes'])
+    const same = []
+    const walk = (v) => {
+      if (!v || typeof v !== 'object') return
+      if (typeof v.es === 'string' && typeof v.en === 'string' && v.es.trim().toLowerCase() === v.en.trim().toLowerCase()) same.push(v.es.trim().toLowerCase())
+      if (typeof v.esPlural === 'string' && v.esPlural === v.enPlural) same.push(v.esPlural.toLowerCase())
+      Object.values(v).forEach(walk)
+    }
+    THEME_PACKS.forEach(walk)
+    expect([...new Set(same)].filter((s) => !ALLOW.has(s))).toEqual([])
   })
 })

@@ -1,5 +1,4 @@
-// Registro de content packs de temas del QA Lab (TASK-048). Dato puro: NO esta cableado al generador;
-// el cableado se hace despues de TASK-047.
+// Registro de content packs de temas del QA Lab (TASK-048). Dato puro: lo elige generator/themes.js y lo lee content/index.js.
 import { everyday } from './everyday.js'
 import { fantasy } from './fantasy.js'
 import { scifi } from './scifi.js'

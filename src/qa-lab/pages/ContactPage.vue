@@ -8,7 +8,7 @@ import PrimaryButton from '../ui/PrimaryButton.vue'
 import ErrorBanner from '../ui/ErrorBanner.vue'
 
 const { site, content, has, nthHit, t, toast, env, store } = useSite()
-const fields = computed(() => site.data.contactFields.map((k) => content.value.field(k)))
+const fields = computed(() => site.data.contactFields.map((k) => content.value.generic(k)))
 const { values, errors, validateField, validate } = useForm(fields.value, has, env.clock)
 const { count, busy, record } = useSubmissions(has, env.clock)
 

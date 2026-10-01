@@ -5,15 +5,28 @@
 //   clock.now()                  ms epoch (inyectable en tests)
 //   clock.tzOffsetMinutes        offset simulado del sitio (p. ej. -300); NO es el de la maquina
 //   clock.local(ms?)             { year, month, day, hour, minute, second } en la zona simulada
+//   clock.viewerToday(ms?)       'YYYY-MM-DD' del dia civil del USUARIO (zona de la maquina del navegador). Es lo que usa la
+//                                validacion de fechas de los formularios (noPast / noFuture): la zona SIMULADA del sitio queda
+//                                solo para los bugs de fecha, nunca para validar bien. viewerOffsetMinutes (inyectable, como
+//                                tzOffsetMinutes) reemplaza la zona de la maquina en los tests.
 //   clock.setTimeout / clearTimeout   timers que resuelven el global en cada llamada (vi.useFakeTimers los controla)
 //   latency.latencyMs(key, n)    latencia determinista de la n-esima request de `key` (80..600 ms)
 //   latency.request(key, fn)     Promise que resuelve fn() tras latencyMs(key, n); n cuenta por `key`
 import { hashString } from '../generator/prng.js'
 
-export function createClock({ now = () => Date.now(), tzOffsetMinutes = 0 } = {}) {
+export function createClock({ now = () => Date.now(), tzOffsetMinutes = 0, viewerOffsetMinutes } = {}) {
+  const pad = (n) => String(n).padStart(2, '0')
   return {
     now,
     tzOffsetMinutes,
+    viewerToday(ms = now()) {
+      if (viewerOffsetMinutes != null) {
+        const u = new Date(ms + viewerOffsetMinutes * 60000)
+        return `${u.getUTCFullYear()}-${pad(u.getUTCMonth() + 1)}-${pad(u.getUTCDate())}`
+      }
+      const d = new Date(ms)
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    },
     /** Partes de calendario en la zona horaria simulada (no la de la maquina). */
     local(ms = now()) {
       const d = new Date(ms + tzOffsetMinutes * 60000)

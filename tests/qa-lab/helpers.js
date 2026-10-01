@@ -150,7 +150,7 @@ export function validValue(f) {
   if (f.type === 'email') return 'ana@example.com'
   if (f.type === 'password') return 'x'.repeat(Math.max(f.min ?? 8, 8))
   if (f.type === 'number') return String(Math.ceil((f.min + f.max) / 2))
-  if (f.type === 'date') return '2000-01-01'
+  if (f.type === 'date') return f.noPast ? '2099-01-01' : '2000-01-01'
   if (f.pattern) return sampleFromPattern(f.pattern)
   const text = 'Ana Perez Lopez'.padEnd(f.minLength ?? 0, 'x')
   return f.maxLength ? text.slice(0, f.maxLength) : text

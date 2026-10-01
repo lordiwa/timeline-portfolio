@@ -17,7 +17,7 @@ const unguarded = has('protected-deeplink')
 // Fecha de nacimiento tal cual se escribio. BUG date-timezone-shift: se lee como medianoche UTC y se muestra en la
 // zona simulada del bug (negativa), un dia antes.
 const birthText = computed(() => (user.value?.birth ? formatDate(user.value.birth, { tz: site.bugParams['date-timezone-shift']?.tz ?? 0, shift: has('date-timezone-shift') }) : ''))
-const fieldsOf = () => [content.value.field('name'), { ...content.value.field('newsletter'), required: false }]
+const fieldsOf = () => [content.value.generic('name'), { ...content.value.generic('newsletter'), required: false }]
 const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 values.name = store.state.user?.name ?? ''

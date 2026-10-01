@@ -17,12 +17,12 @@ const STEPS = ['data', 'shipping', 'payment', 'done']
 const stepKeys = { data: ['name', 'email', 'address', 'city'], shipping: site.data.checkoutExtras, payment: ['card'] }
 const allKeys = Object.values(stepKeys).flat()
 
-const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has, env.clock)
+const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.generic(k)), has, env.clock)
 if (store.state.user) { values.name = store.state.user.name; values.email = store.state.user.email } // datos de la sesion
 
 const step = ref(0)
 const stepId = computed(() => STEPS[step.value])
-const stepFields = computed(() => (stepKeys[stepId.value] || []).map((k) => content.value.field(k)))
+const stepFields = computed(() => (stepKeys[stepId.value] || []).map((k) => content.value.generic(k)))
 const method = ref('standard')
 const couponInput = ref('')
 const couponError = ref('')

@@ -2,8 +2,6 @@
 // `state` es reactivo y puede vivir en el store (el listado conserva sus filtros al navegar).
 import { reactive } from 'vue'
 
-export const PRICE_BANDS = [50, 150, 300] // "hasta" del filtro de precio
-
 /**
  * rows: array o getter () => array (el contenido cambia con el idioma) de [{ ..., category|status, price|amount }]; opts: { pageSize, match(row, q), catOf(row), priceOf(row), searchOf() }.
  * searchOf: texto que se usa para filtrar (por defecto state.search; el bug stale-response-overwrites lo desacopla del input).

@@ -109,6 +109,7 @@
     "maxLength": "Debe tener como máximo {n} caracteres.",
     "pattern": "El formato no es válido.",
     "number": "Ingresá un valor entre {min} y {max}.",
+    "datePast": "La fecha no puede ser pasada.",
     "server500": "Error 500: el servidor no pudo procesar el envío. Probá de nuevo."
   },
   "tpl": {

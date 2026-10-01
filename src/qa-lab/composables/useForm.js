@@ -26,8 +26,11 @@ export function checkField(f, value, has, clock = systemClock) {
     return Number.isNaN(n) || tooYoung || n > f.max ? { key: 'err.number', params: { min: f.min, max: f.max } } : null
   }
   if (f.type === 'date') {
-    if (f.noFuture === false) return null // fecha de plazo/turno (campos de los packs): una fecha futura es valida
-    return Date.parse(value) > clock.now() ? { key: 'err.date' } : null
+    // Dia civil del USUARIO (no la zona simulada del sitio): 'hoy' vale en ambos modos.
+    const today = clock.viewerToday()
+    const day = String(value).slice(0, 10)
+    if (f.noPast) return day < today ? { key: 'err.datePast' } : null // plazo/turno: no puede ser pasada
+    return day > today ? { key: 'err.date' } : null // noFuture (o campo sin regla explicita: comportamiento clasico)
   }
   // Reglas de los content packs (rules.minLength / maxLength / pattern como string con la fuente de la regex).
   const s = String(value)
