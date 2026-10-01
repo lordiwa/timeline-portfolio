@@ -377,7 +377,7 @@
     "name": "Name",
     "email": "Email",
     "start": "Start test",
-    "privacy": "We store your name, email, findings and score to review the exercise; it is not shared with third parties.",
+    "privacy": "We store your name, email, findings and score in Google Firebase (Firestore) to review the exercise. It is not shared with third parties. You can ask for it to be deleted by writing to {contact}.",
     "errName": "Enter your name (up to 80 characters).",
     "errEmail": "Enter a valid email.",
     "title": "Findings report",
@@ -430,6 +430,7 @@
     "switchTitle": "Discard the test in progress?",
     "switchMsg": "Changing the seed or level discards your findings and the timer of the test in progress. This cannot be undone.",
     "switchOk": "Discard and change",
-    "keep": "Keep testing"
+    "keep": "Keep testing",
+    "contact": "TODO: contact (Rafael fills this in)"
   }
 }

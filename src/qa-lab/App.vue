@@ -33,6 +33,7 @@ const revealed = ref(false)
 
 // --- Registro de la prueba (TASK-050) ---
 let scope = null
+let histIdx = window.history.state?.qaIdx ?? 0
 function makeAttempt() {
   scope?.stop()
   scope = effectScope(true) // el cronometro se libera al reemplazar el intento (los handlers no tienen scope propio)
@@ -67,20 +68,33 @@ async function onTakeTest() {
   await nextTick()
   document.getElementById('qa-start-name')?.focus()
 }
+// everRevealed por (semilla, nivel): si el solucionario se abrio alguna vez, aunque se haya vuelto a ocultar, al empezar queda marcado.
+const revKey = () => `qa-lab:everRevealed:${seed.value}:${level.value}`
+const markEver = () => { try { sessionStorage.setItem(revKey(), '1') } catch { /* storage bloqueado */ } }
+const wasEver = () => { try { return sessionStorage.getItem(revKey()) === '1' } catch { return false } }
+const focusTake = async () => { await nextTick(); document.querySelector('[data-testid="take-test"]')?.focus() }
+function closePanel() { panel.value = 'closed'; focusTake() }
+function onDrawerEsc(e) {
+  // Escape dentro de un select o textarea (lista abierta / edicion) no cierra el drawer
+  if (['SELECT', 'TEXTAREA'].includes(e.target?.tagName)) return
+  closePanel()
+}
 function onStart(data) {
   attempt.value.start(data)
-  if (revealed.value) attempt.value.markSolutionViewed() // ya vio el solucionario antes de empezar: queda marcado
+  if (revealed.value || wasEver()) attempt.value.markSolutionViewed()
   panel.value = 'drawer'
 }
 function toggleReveal() {
   if (revealed.value) { revealed.value = false; return }
   if (inProgress.value && !attempt.value.solutionViewed.value) { confirmReveal.value = true; return }
   revealed.value = true
+  markEver()
 }
 function doReveal() {
   attempt.value.markSolutionViewed()
   confirmReveal.value = false
   revealed.value = true
+  markEver()
 }
 // Solucionario: los bugs activos (misma fuente que los flags) + la pagina donde se manifiesta cada uno.
 const solution = computed(() =>
@@ -110,7 +124,7 @@ function applySite(nextSeed, nextLevel, { push = false } = {}) {
     url.searchParams.set('level', nextLevel)
     url.searchParams.set('lang', locale.value)
     url.hash = '#/'
-    window.history.pushState(null, '', url)
+    window.history.pushState({ qaIdx: ++histIdx }, '', url)
   }
   seed.value = nextSeed
   level.value = nextLevel
@@ -138,7 +152,9 @@ function confirmSwitch() {
 function cancelSwitch() {
   const p = pendingSwitch.value
   pendingSwitch.value = null
-  if (p?.fromUrl) syncUrl() // atras/adelante ya habia cambiado la URL: se restaura la del intento
+  // atras/adelante ya habia cambiado la URL: se vuelve a la entrada original con history.go (sin duplicar entradas);
+  // si la entrada no trae indice (navegacion por hash), se restaura la URL con replaceState.
+  if (p?.fromUrl) { if (p.delta) window.history.go(p.delta); else syncUrl() }
 }
 /** El idioma tambien es historial: cambiarlo apila una entrada (conserva la ruta); atras lo restaura. */
 function setLang(e) {
@@ -158,9 +174,11 @@ const setLevel = (e) => {
 function syncFromUrl() {
   const p = readParams(window.location.search)
   const lv = normalizeLevel(p.level)
+  const idx = window.history.state?.qaIdx
+  const delta = Number.isInteger(idx) ? histIdx - idx : 0 // >0: se fue hacia atras; <0: hacia adelante
   const lang = new URLSearchParams(window.location.search).get('lang')
   if (LOCALES.includes(lang) && lang !== locale.value) locale.value = lang
-  if ((p.seed && p.seed !== seed.value) || lv !== level.value) requestSite(p.seed || seed.value, lv, { fromUrl: true })
+  if ((p.seed && p.seed !== seed.value) || lv !== level.value) requestSite(p.seed || seed.value, lv, { fromUrl: true, delta })
 }
 window.addEventListener('popstate', syncFromUrl)
 window.addEventListener('hashchange', syncFromUrl)
@@ -208,13 +226,13 @@ onBeforeUnmount(() => {
     </section>
 
     <div v-if="panel === 'start'" class="qa-modal-backdrop">
-      <div class="qa-modal" role="dialog" aria-modal="true" :aria-label="t('report.startTitle')" data-testid="start-dialog" @keydown.esc="panel = 'closed'">
+      <div class="qa-modal" role="dialog" aria-modal="true" :aria-label="t('report.startTitle')" data-testid="start-dialog" @keydown.esc="closePanel">
         <StartAttempt @start="onStart" />
-        <button type="button" data-testid="start-cancel" @click="panel = 'closed'">{{ t('report.cancel') }}</button>
+        <button type="button" data-testid="start-cancel" @click="closePanel">{{ t('report.cancel') }}</button>
       </div>
     </div>
-    <div v-if="panel === 'drawer' && attempt.started.value" class="lab-drawer" data-testid="drawer" @keydown.esc="panel = 'closed'">
-      <button type="button" class="lab-drawer-close" data-testid="drawer-close" @click="panel = 'closed'">{{ t('report.closeReport') }}</button>
+    <div v-if="panel === 'drawer' && attempt.started.value" class="lab-drawer" data-testid="drawer" @keydown.esc="onDrawerEsc">
+      <button type="button" class="lab-drawer-close" data-testid="drawer-close" @click="closePanel">{{ t('report.closeReport') }}</button>
       <ReportPanel :key="`${seed}|${level}`" :attempt="attempt" :score-context="scoreContext" :categories="CATEGORIES"
                    :bug-options="bugOptions" :pages="pageNames" :solution="resultSolution" />
     </div>

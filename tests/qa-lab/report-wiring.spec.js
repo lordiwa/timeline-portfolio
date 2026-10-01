@@ -153,3 +153,35 @@ describe('level cerrado a junior/semi/senior', () => {
     expect([...m[1].matchAll(/'([a-z]+)'/g)].map((x) => x[1])).toEqual(LEVELS)
   })
 })
+
+describe('review de TASK-050', () => {
+  const okDoc = () => buildSubmission({
+    seed: 's', level: 'junior', lang: 'es', candidate: { name: 'Ana', email: 'ana@x.io' }, startedAt: 1, finishedAt: 2,
+    findings: [{ id: 'f1', page: 'p', description: 'd', severity: 'low' }], scoreResult: scoreReport({ activeBugIds: [], findings: [] }), solutionViewed: false,
+  })
+  it('validateSubmission rechaza un finding con clave extra o string demasiado largo (evita guardar basura dentro de un hallazgo)', () => {
+    expect(validateSubmission(okDoc()).ok).toBe(true)
+    const a = okDoc(); a.findings[0].extra = 'x'
+    const b = okDoc(); b.findings[0].page = 'x'.repeat(101)
+    const c = okDoc(); c.durationMs = 999
+    expect([a, b, c].map((d) => validateSubmission(d).ok)).toEqual([false, false, false])
+  })
+  it('firestore.rules valida cada finding (validFinding en los 30 indices), createdAt y la ventana de tiempo (evita findings sin validar en el servidor)', () => {
+    const code = readFileSync(join(process.cwd(), 'firestore.rules'), 'utf8').replace(/\/\/.*$/gm, '')
+    expect(code).toMatch(/function validFinding\(f\)/)
+    for (let i = 0; i < 30; i++) expect(code).toContain(`(d.findings.size() < ${i + 1} || validFinding(d.findings[${i}]))`)
+    expect(code).not.toContain('validFinding(d.findings[30])')
+    expect(code).toContain('d.findings.size() <= 30')
+    expect(code).toContain('d.createdAt == request.time')
+    expect(code).toContain('d.durationMs == d.finishedAt - d.startedAt')
+    expect(code).toContain('request.time.toMillis() + 60000')
+  })
+  it('revelar antes de empezar, aunque se oculte de nuevo, marca el intento al empezar (evita un intento limpio que vio la respuesta)', async () => {
+    const w = mountApp({ initialSeed: 'ev-1', initialLevel: 'junior' })
+    await $(w, 'reveal').trigger('click')
+    await $(w, 'reveal').trigger('click') // oculta
+    await begin(w)
+    expect($(w, 'marked').exists()).toBe(true)
+  })
+})
+

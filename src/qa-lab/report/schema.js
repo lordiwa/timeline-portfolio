@@ -5,11 +5,12 @@ import { LEVELS } from '../generator/levels.js'
 export const LAB_VERSION = 'v2'
 export const LIMITS = {
   seed: 100, level: 20, lang: 2, name: 80, email: 120, labVersion: 20, userAgent: 200,
-  findings: 50, page: 100, description: 1000, id: 40, bugId: 60, category: 30,
+  findings: 30, page: 100, description: 1000, id: 40, bugId: 60, category: 30,
 }
 export const SEVERITIES = ['low', 'medium', 'high', 'critical']
 export const LANGS = ['es', 'en']
 export const DOC_KEYS = ['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent']
+// Las reglas agregan createdAt (serverTimestamp() lo pone firebase.js al enviar; no forma parte del documento validado aqui).
 export const SCORE_KEYS = ['value', 'hits', 'halfHits', 'falsePositives', 'missed']
 export const COLLECTION = 'qa_lab_attempts'
 
@@ -51,7 +52,7 @@ export function validateSubmission(doc) {
   }
   if (!int(doc.startedAt, 1)) bad('startedAt')
   if (!int(doc.finishedAt, 1) || doc.finishedAt < doc.startedAt) bad('finishedAt')
-  if (!int(doc.durationMs, 0)) bad('durationMs')
+  if (!int(doc.durationMs, 0) || doc.durationMs !== doc.finishedAt - doc.startedAt) bad('durationMs')
   if (!Array.isArray(doc.findings) || doc.findings.length > LIMITS.findings) bad('findings')
   else {
     doc.findings.forEach((f, i) => {

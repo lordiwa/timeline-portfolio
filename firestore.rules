@@ -2,8 +2,8 @@ rules_version = '2';
 
 // QA Lab: el cliente solo puede CREAR intentos. Lectura, update y delete denegados (los resultados se
 // ven en la consola de Firebase). Alineado con src/qa-lab/report/schema.js.
-// Limitacion: las reglas no iteran listas, asi que cada elemento de `findings` se valida solo en el
-// cliente; en el servidor se acota la cantidad (<= 50) y el tamano total lo limita Firestore (1 MiB).
+// Las reglas no iteran listas: `findings` se acota a 30 y cada indice 0..29 se valida con validFinding
+// (generado; si cambia el tope, cambiar tambien LIMITS.findings en schema.js).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -25,17 +25,60 @@ service cloud.firestore {
         && s.missed is int && s.missed >= 0 && s.missed <= 1000;
     }
 
+    function validFinding(f) {
+      return f is map
+        && f.keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
+        && f.keys().hasAll(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
+        && f.id is string && f.id.size() > 0 && f.id.size() <= 40
+        && f.page is string && f.page.size() <= 100
+        && f.description is string && f.description.size() > 0 && f.description.size() <= 1000
+        && f.severity in ['low', 'medium', 'high', 'critical']
+        && (f.guessedBugId == null || (f.guessedBugId is string && f.guessedBugId.size() > 0 && f.guessedBugId.size() <= 60))
+        && (f.guessedCategory == null || (f.guessedCategory is string && f.guessedCategory.size() > 0 && f.guessedCategory.size() <= 30));
+    }
+
     function validAttempt(d) {
-      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
-        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
+      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
+        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
         && d.seed is string && d.seed.size() > 0 && d.seed.size() <= 100
         && d.level in ['junior', 'semi', 'senior']
         && d.lang in ['es', 'en']
         && validCandidate(d.candidate)
         && d.startedAt is int && d.startedAt > 0
-        && d.finishedAt is int && d.finishedAt >= d.startedAt
-        && d.durationMs is int && d.durationMs >= 0
-        && d.findings is list && d.findings.size() <= 50
+        && d.finishedAt is int && d.finishedAt >= d.startedAt && d.finishedAt <= request.time.toMillis() + 60000
+        && d.durationMs is int && d.durationMs == d.finishedAt - d.startedAt
+        && d.createdAt == request.time
+        && d.findings is list && d.findings.size() <= 30
+        && (d.findings.size() < 1 || validFinding(d.findings[0]))
+        && (d.findings.size() < 2 || validFinding(d.findings[1]))
+        && (d.findings.size() < 3 || validFinding(d.findings[2]))
+        && (d.findings.size() < 4 || validFinding(d.findings[3]))
+        && (d.findings.size() < 5 || validFinding(d.findings[4]))
+        && (d.findings.size() < 6 || validFinding(d.findings[5]))
+        && (d.findings.size() < 7 || validFinding(d.findings[6]))
+        && (d.findings.size() < 8 || validFinding(d.findings[7]))
+        && (d.findings.size() < 9 || validFinding(d.findings[8]))
+        && (d.findings.size() < 10 || validFinding(d.findings[9]))
+        && (d.findings.size() < 11 || validFinding(d.findings[10]))
+        && (d.findings.size() < 12 || validFinding(d.findings[11]))
+        && (d.findings.size() < 13 || validFinding(d.findings[12]))
+        && (d.findings.size() < 14 || validFinding(d.findings[13]))
+        && (d.findings.size() < 15 || validFinding(d.findings[14]))
+        && (d.findings.size() < 16 || validFinding(d.findings[15]))
+        && (d.findings.size() < 17 || validFinding(d.findings[16]))
+        && (d.findings.size() < 18 || validFinding(d.findings[17]))
+        && (d.findings.size() < 19 || validFinding(d.findings[18]))
+        && (d.findings.size() < 20 || validFinding(d.findings[19]))
+        && (d.findings.size() < 21 || validFinding(d.findings[20]))
+        && (d.findings.size() < 22 || validFinding(d.findings[21]))
+        && (d.findings.size() < 23 || validFinding(d.findings[22]))
+        && (d.findings.size() < 24 || validFinding(d.findings[23]))
+        && (d.findings.size() < 25 || validFinding(d.findings[24]))
+        && (d.findings.size() < 26 || validFinding(d.findings[25]))
+        && (d.findings.size() < 27 || validFinding(d.findings[26]))
+        && (d.findings.size() < 28 || validFinding(d.findings[27]))
+        && (d.findings.size() < 29 || validFinding(d.findings[28]))
+        && (d.findings.size() < 30 || validFinding(d.findings[29]))
         && validScore(d.score)
         && d.solutionViewed is bool
         && d.labVersion is string && d.labVersion.size() > 0 && d.labVersion.size() <= 20

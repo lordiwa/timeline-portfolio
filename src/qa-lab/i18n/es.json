@@ -377,7 +377,7 @@
     "name": "Nombre",
     "email": "Email",
     "start": "Empezar prueba",
-    "privacy": "Guardamos tu nombre, email, hallazgos y puntaje para revisar la práctica; no se comparte con terceros.",
+    "privacy": "Guardamos tu nombre, email, hallazgos y puntaje en Google Firebase (Firestore) para revisar la práctica. No se comparte con terceros. Podés pedir que se borre escribiendo a {contact}.",
     "errName": "Ingresá tu nombre (hasta 80 caracteres).",
     "errEmail": "Ingresá un email válido.",
     "title": "Reporte de hallazgos",
@@ -430,6 +430,7 @@
     "switchTitle": "¿Descartar la prueba en curso?",
     "switchMsg": "Cambiar la semilla o el nivel descarta tus hallazgos y el cronómetro de la prueba en curso. Esto no se puede deshacer.",
     "switchOk": "Descartar y cambiar",
-    "keep": "Seguir con la prueba"
+    "keep": "Seguir con la prueba",
+    "contact": "TODO: contacto (Rafael lo completa)"
   }
 }

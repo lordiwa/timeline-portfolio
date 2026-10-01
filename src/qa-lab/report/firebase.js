@@ -27,12 +27,12 @@ export async function submitReport(doc, env = import.meta.env) {
     return { ok: false, error: 'not-configured', message: 'Faltan las variables VITE_FIREBASE_* (ver src/qa-lab/report/README.md).' }
   }
   try {
-    const [{ initializeApp, getApps }, { getFirestore, collection, addDoc }] = await Promise.all([
+    const [{ initializeApp, getApps }, { getFirestore, collection, addDoc, serverTimestamp }] = await Promise.all([
       import('firebase/app'),
       import('firebase/firestore'),
     ])
     const app = getApps().length ? getApps()[0] : initializeApp(cfg)
-    const ref = await addDoc(collection(getFirestore(app), COLLECTION), doc)
+    const ref = await addDoc(collection(getFirestore(app), COLLECTION), { ...doc, createdAt: serverTimestamp() })
     return { ok: true, id: ref.id }
   } catch (e) {
     return { ok: false, error: 'network', message: String(e?.message || e) }

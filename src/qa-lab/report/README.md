@@ -15,7 +15,7 @@ Fase B: cableado en `App.vue`. Boton "Tomar la prueba" (barra) -> `StartAttempt`
 - `score = round(100 * clamp((hits + 0.5*halfHits - 0.5*falsePositives) / activos, 0, 1))`; sin activos, 0.
 - **Limitacion:** se calcula en el cliente y puede manipularse. Un puntaje confiable requiere una Cloud Function (otro ticket).
 
-## Variables de entorno (`.env.example`)
+## Variables de entorno (`.env.example` en esta carpeta)
 
 Config web **publica** (no es secreta; no poner claves de servidor). Copiar a `.env.local` (esta en `.gitignore`):
 
@@ -31,7 +31,7 @@ Sin ellas `submitReport` devuelve `{ ok: false, error: 'not-configured' }` y no 
 ## Reglas de Firestore
 
 `/firestore.rules`: solo `create` en `qa_lab_attempts/{id}` con claves exactas, tipos y tamanos; todo lo demas denegado.
-Limitacion: las reglas no iteran listas; cada elemento de `findings` solo se valida en el cliente (en reglas: `size() <= 50`).
+Las reglas no iteran listas: `findings` se acota a 30 y cada indice 0..29 se valida con `validFinding`. Ademas: `createdAt == request.time` (el cliente manda `serverTimestamp()`), `durationMs == finishedAt - startedAt` y `finishedAt <= request.time + 60 s`.
 
 **Test de reglas con emulador: PENDIENTE** (requiere Java; no disponible donde se desarrollo). Comando exacto, en una
 maquina con Java 11+ y `npm i -D @firebase/rules-unit-testing firebase-tools`:
@@ -40,7 +40,7 @@ maquina con Java 11+ y `npm i -D @firebase/rules-unit-testing firebase-tools`:
 npx firebase emulators:exec --only firestore --project demo-qa-lab "npx vitest run tests/qa-lab/report-rules-emulator.spec.js"
 ```
 
-(el spec de emulador aun no existe; el test estatico bloque estatico de `tests/qa-lab/report.spec.js` si corre siempre.)
+(el spec de emulador aun no existe; los tests estaticos de `tests/qa-lab/report.spec.js` y `report-wiring.spec.js` si corren siempre.)
 
 ## Deploy (NO ejecutado)
 

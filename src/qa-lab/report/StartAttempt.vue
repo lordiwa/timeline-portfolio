@@ -30,7 +30,7 @@ async function onSubmit() {
     <input id="qa-start-name" ref="nameEl" v-model="name" type="text" autocomplete="name" :maxlength="LIMITS.name" required />
     <label for="qa-start-email">{{ t('report.email') }}</label>
     <input id="qa-start-email" ref="emailEl" v-model="email" type="email" autocomplete="email" :maxlength="LIMITS.email" required />
-    <p class="report-privacy" data-testid="privacy">{{ t('report.privacy') }}</p>
+    <p class="report-privacy" data-testid="privacy">{{ t('report.privacy', { contact: t('report.contact') }) }}</p>
     <p role="alert" aria-live="assertive" class="report-error" data-testid="start-error">{{ error }}</p>
     <button type="submit">{{ t('report.start') }}</button>
   </form>
