@@ -46,7 +46,8 @@
     "promo": "¡Oferta!",
     "strip": "Envío gratis en compras superiores a 50 — solo por esta semana — consultá condiciones en tienda",
     "footer": "© {brand}. Todos los derechos reservados.",
-    "loggedOut": "Sesión cerrada."
+    "loggedOut": "Sesión cerrada.",
+    "skip": "Saltar al contenido"
   },
   "fields": {
     "name": "Nombre completo",
@@ -101,7 +102,10 @@
     "date": "La fecha no puede ser futura.",
     "card": "Ingresá un número de tarjeta de 13 a 19 dígitos.",
     "credentials": "Correo o contraseña incorrectos.",
-    "exists": "Ya existe una cuenta con ese correo."
+    "exists": "Ya existe una cuenta con ese correo.",
+    "minLength": "Debe tener al menos {n} caracteres.",
+    "maxLength": "Debe tener como máximo {n} caracteres.",
+    "pattern": "El formato no es válido."
   },
   "tpl": {
     "signup": {"title": "Creá tu cuenta en {brand}", "lead": "Unite en un minuto y empezá a disfrutar de {brand}.", "note": "Al registrarte recibirás un correo de bienvenida con los próximos pasos para completar tu perfil y configurar tus preferencias."},
@@ -149,7 +153,10 @@
     "status_2": "Cerrado",
     "results": "{n} resultados",
     "anyPrice": "Cualquier precio",
-    "upTo": "Hasta {n}"
+    "upTo": "Hasta {n}",
+    "colSubject": "Concepto",
+    "colQuantity": "Cantidad",
+    "colDate": "Fecha"
   },
   "cart": {
     "item": "Producto",
@@ -264,7 +271,11 @@
     "item": "producto",
     "customer": "cliente",
     "order": "pedido",
-    "category": "categoría"
+    "category": "categoría",
+    "itemPlural": "productos",
+    "customerPlural": "clientes",
+    "orderPlural": "pedidos",
+    "categoryPlural": "categorías"
   },
   "home": {
     "explore": "Explorá el sitio"

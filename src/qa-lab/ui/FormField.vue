@@ -59,6 +59,6 @@ const on = (e) => emit('update:modelValue', props.field.type === 'checkbox' ? e.
       />
     </template>
     <p v-if="field.hint && !error" class="qa-hint">{{ field.hint }}</p>
-    <p v-if="error" class="qa-error" role="alert">{{ t(error.key) }}</p>
+    <p v-if="error" class="qa-error" role="alert">{{ error.text || t(error.key, error.params || {}) }}</p>
   </div>
 </template>

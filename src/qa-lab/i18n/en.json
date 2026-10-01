@@ -46,7 +46,8 @@
     "promo": "Sale!",
     "strip": "Free shipping on orders over 50 — this week only — see in-store terms and conditions",
     "footer": "© {brand}. All rights reserved.",
-    "loggedOut": "Signed out."
+    "loggedOut": "Signed out.",
+    "skip": "Skip to content"
   },
   "fields": {
     "name": "Full name",
@@ -101,7 +102,10 @@
     "date": "The date cannot be in the future.",
     "card": "Enter a card number of 13 to 19 digits.",
     "credentials": "Wrong email or password.",
-    "exists": "An account with that email already exists."
+    "exists": "An account with that email already exists.",
+    "minLength": "Must be at least {n} characters.",
+    "maxLength": "Must be at most {n} characters.",
+    "pattern": "The format is not valid."
   },
   "tpl": {
     "signup": {"title": "Create your {brand} account", "lead": "Join in a minute and start enjoying {brand}.", "note": "After signing up you will get a welcome email with the next steps to complete your profile and set your preferences."},
@@ -149,7 +153,10 @@
     "status_2": "Closed",
     "results": "{n} results",
     "anyPrice": "Any price",
-    "upTo": "Up to {n}"
+    "upTo": "Up to {n}",
+    "colSubject": "Subject",
+    "colQuantity": "Quantity",
+    "colDate": "Date"
   },
   "cart": {
     "item": "Product",
@@ -264,7 +271,11 @@
     "item": "product",
     "customer": "customer",
     "order": "order",
-    "category": "category"
+    "category": "category",
+    "itemPlural": "products",
+    "customerPlural": "customers",
+    "orderPlural": "orders",
+    "categoryPlural": "categories"
   },
   "home": {
     "explore": "Explore the site"

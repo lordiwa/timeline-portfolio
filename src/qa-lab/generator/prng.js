@@ -40,6 +40,8 @@ export function createRng(seed) {
       return a
     },
     sample: (arr, n) => rng.shuffle(arr).slice(0, n),
+    /** Sub-stream independiente y determinista: consumirlo NO altera este stream (ni el contenido que sale de el). */
+    fork: (label) => createRng(`${seed}#${label}`),
   }
   return rng
 }

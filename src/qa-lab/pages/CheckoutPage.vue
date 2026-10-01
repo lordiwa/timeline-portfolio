@@ -10,12 +10,12 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, has, t, store, toast } = useSite()
+const { site, content, has, t, store, toast, env } = useSite()
 const STEPS = ['data', 'shipping', 'payment', 'done']
 const stepKeys = { data: ['name', 'email', 'address', 'city'], shipping: site.data.checkoutExtras, payment: ['card'] }
 const allKeys = Object.values(stepKeys).flat()
 
-const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has)
+const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has, env.clock)
 if (store.state.user) { values.name = store.state.user.name; values.email = store.state.user.email } // datos de la sesion
 
 const step = ref(0)
@@ -58,6 +58,7 @@ function next() {
 function place() {
   if (!validate(stepFields.value) || placing.value || !lines.value.length) return
   placing.value = true
+  store.bump('submit')
   order.value = store.placeOrder({
     lines: lines.value,
     totals: totals.value,

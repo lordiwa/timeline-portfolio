@@ -10,7 +10,7 @@ const { site, content, has, t, labelTarget } = useSite()
 const D = computed(() => content.value.dashboard)
 const L = useListing(
   () => D.value.rows,
-  { pageSize: site.data.dashboard.pageSize, match: (r, q) => !q || r.person.toLowerCase().includes(q), catOf: (r) => r.status, priceOf: (r) => r.amount },
+  { pageSize: site.data.dashboard.pageSize, match: (r, q) => !q || r.subject.toLowerCase().includes(q), catOf: (r) => r.status, priceOf: (r) => r.amount },
   has,
 )
 const view = ref('table')
@@ -45,17 +45,21 @@ const all = computed(() => D.value.rows)
           <div class="qa-table-wrap">
             <table class="qa-table">
               <thead>
-                <tr><th>{{ t('list.colId') }}</th><th>{{ t('list.colName') }}</th><th>{{ t('list.colItem') }}</th><th>{{ t('list.colStatus') }}</th><th class="num">{{ t('list.colAmount') }}</th></tr>
+                <tr>
+                  <th>{{ t('list.colId') }}</th>
+                  <th v-for="col in D.columns" :key="col.key" :class="{ num: col.type === 'money' || col.type === 'number' }">{{ col.label }}</th>
+                  <th>{{ t('list.colStatus') }}</th>
+                </tr>
               </thead>
               <tbody>
                 <tr v-for="r in rows" :key="r.id">
-                  <td>{{ r.id }}</td><td>{{ r.person }}</td><td>{{ r.concept }}</td>
+                  <td>{{ r.id }}</td>
+                  <td v-for="col in D.columns" :key="col.key" :class="{ num: col.type === 'money' || col.type === 'number' }">{{ r[col.key] }}</td>
                   <td><span class="qa-badge">{{ D.statuses[r.status] }}</span></td>
-                  <td class="num">{{ r.amount }}</td>
                 </tr>
               </tbody>
               <tfoot>
-                <tr><td colspan="4">{{ t('list.total') }}</td><td class="num" data-testid="page-total">{{ pageTotal }}</td></tr>
+                <tr><td :colspan="D.columns.length + 1">{{ t('list.total') }}</td><td class="num" data-testid="page-total">{{ pageTotal }}</td></tr>
               </tfoot>
             </table>
           </div>

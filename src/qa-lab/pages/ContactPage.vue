@@ -6,13 +6,14 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, has, t, toast } = useSite()
+const { site, content, has, t, toast, env, store } = useSite()
 const fields = computed(() => site.data.contactFields.map((k) => content.value.field(k)))
-const { values, errors, validateField, validate } = useForm(fields.value, has)
-const { count, busy, record } = useSubmissions(has)
+const { values, errors, validateField, validate } = useForm(fields.value, has, env.clock)
+const { count, busy, record } = useSubmissions(has, env.clock)
 
 function submit() {
   if (!validate(fields.value)) return
+  store.bump('submit')
   if (record()) toast(t('site.sent'))
 }
 </script>

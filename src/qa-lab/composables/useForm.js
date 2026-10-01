@@ -1,9 +1,11 @@
 // Estado + validacion de formularios. Los bugs de validacion viven aca (consultando flags).
 import { reactive, ref } from 'vue'
+import { systemClock } from '../services/clock.js'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
-export function checkField(f, value, has) {
+/** clock: fuente de la hora para validar fechas (nunca el reloj de la maquina directo). */
+export function checkField(f, value, has, clock = systemClock) {
   const empty = f.type === 'checkbox' ? !value : String(value ?? '').trim() === ''
   if (f.required && empty) {
     if (has('required-not-validated') && f.key === 'name') return null // BUG
@@ -24,19 +26,24 @@ export function checkField(f, value, has) {
     return Number.isNaN(n) || tooYoung || n > f.max ? { key: 'err.age' } : null
   }
   if (f.type === 'date') {
-    return new Date(value) > new Date() ? { key: 'err.date' } : null
+    return Date.parse(value) > clock.now() ? { key: 'err.date' } : null
   }
+  // Reglas de los content packs (rules.minLength / maxLength / pattern como string con la fuente de la regex).
+  const s = String(value)
+  if (f.minLength != null && s.length < f.minLength) return { key: 'err.minLength', params: { n: f.minLength } }
+  if (f.maxLength != null && s.length > f.maxLength) return { key: 'err.maxLength', params: { n: f.maxLength } }
+  if (f.pattern && !new RegExp(f.pattern).test(s)) return f.patternHint ? { text: f.patternHint } : { key: 'err.pattern' }
   if (f.key === 'card') {
     return /^\d{13,19}$/.test(String(value).replace(/\s/g, '')) ? null : { key: 'err.card' }
   }
   return null
 }
 
-export function useForm(allFields, has) {
+export function useForm(allFields, has, clock = systemClock) {
   const values = reactive(Object.fromEntries(allFields.map((f) => [f.key, f.type === 'checkbox' ? false : ''])))
   const errors = reactive({})
   const validateField = (f) => {
-    const e = checkField(f, values[f.key], has)
+    const e = checkField(f, values[f.key], has, clock)
     if (e) errors[f.key] = e
     else delete errors[f.key]
     return !e
@@ -46,14 +53,14 @@ export function useForm(allFields, has) {
 }
 
 /** Envios registrados. Correcto: bloquea reenvios ~1s. Con 'double-submit' no hay guarda. */
-export function useSubmissions(has) {
+export function useSubmissions(has, clock = systemClock) {
   const count = ref(0)
   const busy = ref(false)
   function record() {
     if (!has('double-submit')) {
       if (busy.value) return false
       busy.value = true
-      setTimeout(() => { busy.value = false }, 1000)
+      clock.setTimeout(() => { busy.value = false }, 1000)
     }
     count.value += 1
     return true

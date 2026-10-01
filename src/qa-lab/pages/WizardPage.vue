@@ -11,11 +11,11 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, has, t, toast } = useSite()
+const { site, content, has, t, toast, env, store } = useSite()
 const spec = site.data.wizard
 const allKeys = [...new Set(spec.steps.flatMap((s) => s.fields))]
-const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has)
-const { count, busy, record } = useSubmissions(has)
+const { values, errors, validateField, validate } = useForm(allKeys.map((k) => content.value.field(k)), has, env.clock)
+const { count, busy, record } = useSubmissions(has, env.clock)
 
 const steps = computed(() => visibleSteps(spec, values))
 const stepId = ref(spec.steps[0].id)
@@ -47,6 +47,7 @@ function next() {
   // Envio final: se valida TODO lo visible; si algo falla, se vuelve al primer paso con error.
   const bad = steps.value.find((s) => !validate(fieldsOf(s)))
   if (bad) { stepId.value = bad.id; return }
+  store.bump('submit')
   if (record()) toast(t('site.sent'))
 }
 </script>

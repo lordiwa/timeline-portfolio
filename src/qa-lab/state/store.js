@@ -1,5 +1,9 @@
 // Estado compartido del sitio: sesion simulada, carrito, cupon, pedidos, comentarios y filtros del listado.
 // Persiste en sessionStorage con clave por (seed, level) y arranca SIEMPRE vacio: reproducible por semilla.
+// Contadores de acciones (store.actions): addToCart, removeFromCart, setQty, login (todos los intentos),
+// loginOk (intentos con credenciales validas), register, submit (formularios enviados), coupon, comment, order.
+// Viven en MEMORIA: se reinician al recargar la pagina, no al navegar. Los bugs intermitentes los consultan
+// (falla en la N-esima accion). store.bump(tipo) incrementa y devuelve el n actual.
 // El storage se inyecta (tests); si sessionStorage no esta disponible cae a memoria.
 import { reactive, watch, computed } from 'vue'
 import { normalizeLevel } from '../generator/levels.js'
@@ -65,6 +69,8 @@ export function createStore(site, storage = safeStorage()) {
     try { storage.setItem(key, JSON.stringify(state)) } catch { /* sin cuota: sigue en memoria */ }
   }, { deep: true, flush: 'sync' })
 
+  const actions = reactive({})
+  const bump = (type) => (actions[type] = (actions[type] || 0) + 1)
   const catalogIds = new Set(site.data.catalog.map((r) => r.id))
   const accounts = () => [{ ...site.data.demoUser }, ...state.users]
   const cartCount = computed(() => state.cart.reduce((s, l) => s + l.qty, 0))
@@ -72,20 +78,25 @@ export function createStore(site, storage = safeStorage()) {
   return {
     state,
     cartCount,
+    actions,
+    bump,
 
     // --- carrito ---
     addToCart(id, qty = 1) {
       if (!catalogIds.has(id)) return false
+      bump('addToCart')
       const line = state.cart.find((l) => l.id === id)
       if (line) line.qty = clampQty(line.qty + clampQty(qty))
       else state.cart.push({ id, qty: clampQty(qty) })
       return true
     },
     setQty(id, qty) {
+      bump('setQty')
       const line = state.cart.find((l) => l.id === id)
       if (line) line.qty = clampQty(qty)
     },
     removeFromCart(id) {
+      bump('removeFromCart')
       state.cart = state.cart.filter((l) => l.id !== id)
     },
     clearCart() {
@@ -94,6 +105,7 @@ export function createStore(site, storage = safeStorage()) {
 
     // --- cupon ---
     applyCoupon(code) {
+      bump('coupon')
       const c = String(code ?? '').trim().toUpperCase()
       if (!c) return { ok: false, error: 'empty' }
       if (c !== site.data.coupon.code) return { ok: false, error: 'invalid' }
@@ -106,8 +118,10 @@ export function createStore(site, storage = safeStorage()) {
 
     // --- sesion ---
     login(email, password) {
+      bump('login')
       const acc = accounts().find((u) => emailKey(u.email) === emailKey(email))
       if (!acc || acc.password !== password) return { ok: false, error: 'credentials' }
+      bump('loginOk')
       state.user = { name: acc.name, email: acc.email }
       return { ok: true }
     },
@@ -116,6 +130,7 @@ export function createStore(site, storage = safeStorage()) {
     },
     emailTaken: (email) => accounts().some((u) => emailKey(u.email) === emailKey(email)),
     register({ name, email, password }) {
+      bump('register')
       if (accounts().some((u) => emailKey(u.email) === emailKey(email))) return { ok: false, error: 'exists' }
       state.users.push({ name: String(name).trim(), email: String(email).trim(), password })
       state.user = { name: String(name).trim(), email: String(email).trim() }
@@ -137,6 +152,7 @@ export function createStore(site, storage = safeStorage()) {
     placeOrder({ lines, totals, shipping, customer }) {
       if (!lines.length) return null
       state.orderSeq += 1
+      bump('order')
       const order = {
         id: `ORD-${1000 + state.orderSeq}`,
         lines: lines.map((l) => ({ id: l.id, qty: l.qty, price: l.price })),
@@ -155,6 +171,7 @@ export function createStore(site, storage = safeStorage()) {
     addComment(postId, text) {
       const t = String(text ?? '').trim()
       if (!t) return false
+      bump('comment')
       const list = state.comments[postId] || (state.comments[postId] = [])
       list.unshift({ author: state.user?.name || null, text: t, minutes: 0 })
       return true

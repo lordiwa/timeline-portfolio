@@ -10,6 +10,7 @@ import { NAMES } from './fields.js'
 import { LEVEL_CONFIG, normalizeLevel } from './levels.js'
 import { PAGE_TYPES, closureOf } from './pages.js'
 import { BUGS } from '../bugs/catalog.js'
+import { capabilitiesOf, requiresMet } from './capabilities.js'
 
 function genData(rng) {
   // --- catalogo (listado + detalle + carrito) ---
@@ -29,12 +30,13 @@ function genData(rng) {
 
   // --- dashboard (tabla paginada) ---
   const dPageSize = rng.pick([4, 5, 6])
+  const dx = rng.fork('dashboard') // cantidad y fecha salen de un sub-stream: no mueven el resto del contenido
   const dashboard = {
     pageSize: dPageSize,
     skipAt: rng.int(1, 2),
     rows: Array.from({ length: dPageSize * rng.int(4, 6) }, (_, i) => ({
       id: i + 1, itemIdx: rng.int(0, 5), person: rng.pick(NAMES), price: rng.int(5, 480), cat: rng.int(0, 2),
-    })),
+    })).map((r) => ({ ...r, quantity: dx.int(1, 20), dayOffset: dx.int(0, 364) })),
   }
 
   // --- blog ---
@@ -94,11 +96,20 @@ function genData(rng) {
   return { catalog, list, dashboard, posts, faq, coupon, shipping, taxRate, checkoutExtras, demoUser, signupFields, contactFields, wizard, labelTargets }
 }
 
-/** Elige el set de paginas: home siempre; las dependencias entran juntas; exactamente n paginas. */
-function pickPages(rng, [min, max]) {
+/** Paginas obligatorias: home y un listado siempre; al menos una con formulario (todos los niveles);
+ *  en senior ademas el nucleo de comercio (listado, detalle, carrito y checkout, que ya es un formulario). */
+function mustHave(rng, level) {
+  const must = ['home', 'list']
+  if (level === 'senior') return [...must, 'detail', 'cart', 'checkout']
+  return [...must, rng.pick(['contact', 'wizard', 'signup', 'checkout'])]
+}
+
+/** Elige el set de paginas: las obligatorias, las dependencias juntas y exactamente n paginas. */
+function pickPages(rng, [min, max], level) {
   const n = rng.int(min, max)
-  const chosen = new Set(['home'])
-  const order = rng.shuffle(PAGE_TYPES.filter((t) => t !== 'home'))
+  const chosen = new Set()
+  for (const t of mustHave(rng, level)) closureOf(t).forEach((x) => chosen.add(x))
+  const order = rng.shuffle(PAGE_TYPES.filter((t) => !chosen.has(t)))
   let progress = true
   while (chosen.size < n && progress) {
     progress = false
@@ -115,9 +126,20 @@ function pickPages(rng, [min, max]) {
 }
 
 /** Pool de bugs elegibles: tienen al menos una pagina presente y su dificultad no esta excluida por el nivel. */
-export function bugPool(pages, level) {
+export function bugPool(pages, level, capabilities = capabilitiesOf(pages)) {
   const { weights } = LEVEL_CONFIG[normalizeLevel(level)]
-  return BUGS.filter((b) => weights[b.difficulty] > 0 && b.pages.some((p) => pages.includes(p)))
+  return BUGS.filter((b) => weights[b.difficulty] > 0 && b.pages.some((p) => pages.includes(p)) && requiresMet(b, capabilities))
+}
+
+/**
+ * Parametros por bug (N de los intermitentes, offset de zona, palabra prohibida...): cada bug con
+ * `params(rng)` los sortea en su PROPIO sub-stream de la semilla, activo o no. Asi agregar bugs al catalogo
+ * o activar/desactivar flags no cambia el contenido de ninguna semilla existente.
+ */
+export function genBugParams(seed, bugs = BUGS) {
+  const out = {}
+  for (const b of bugs) if (typeof b.params === 'function') out[b.id] = b.params(createRng(seed).fork(`bug:${b.id}`))
+  return out
 }
 
 function weightedSample(rng, items, weightOf, n) {
@@ -154,10 +176,11 @@ export function generateSite(seed, level) {
   const brandIdx = base.int(0, 2)
   const data = genData(base)
 
-  const pages = pickPages(lrng, cfg.pages)
+  const pages = pickPages(lrng, cfg.pages, lvl)
+  const capabilities = capabilitiesOf(pages, data)
 
   // Bugs: cantidad del rango del nivel, acotada al pool compatible (el catalogo tiene bugs unicos por id).
-  const pool = bugPool(pages, lvl)
+  const pool = bugPool(pages, lvl, capabilities)
   const count = Math.min(lrng.int(cfg.bugs[0], cfg.bugs[1]), pool.length)
   const chosen = weightedSample(lrng, pool, (b) => cfg.weights[b.difficulty], count)
   const chosenIds = new Set(chosen.map((b) => b.id))
@@ -168,5 +191,8 @@ export function generateSite(seed, level) {
     bugPages[b.id] = lrng.pick(b.pages.filter((p) => pages.includes(p))) // la pagina donde se manifiesta
   }
 
-  return { seed: String(seed), level: lvl, themeId: theme.id, brandIdx, style, pages, data, bugs, bugPages }
+  // Zona horaria simulada del sitio (la maquina no cuenta): sub-stream propio.
+  const tzOffsetMinutes = base.fork('tz').pick([-480, -300, -180, 0, 60, 330, 540])
+
+  return { seed: String(seed), level: lvl, themeId: theme.id, brandIdx, style, pages, capabilities, tzOffsetMinutes, data, bugs, bugPages, bugParams: genBugParams(seed) }
 }

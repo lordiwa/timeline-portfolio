@@ -8,12 +8,12 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, route, router, has, t, store } = useSite()
+const { site, content, route, router, has, t, store, env } = useSite()
 // En el login la contrasena no tiene largo minimo: se compara contra la cuenta.
 const keys = ['email', 'password']
 const fieldsOf = () => [content.value.field('email'), content.value.field('password', { min: 1, hint: '' })]
 const fields = computed(fieldsOf)
-const { values, errors, validateField, validate } = useForm(fieldsOf(), has)
+const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 const failed = ref(false)
 const hasSignup = site.pages.includes('signup')
 const demo = site.data.demoUser

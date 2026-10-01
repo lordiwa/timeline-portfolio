@@ -7,13 +7,14 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { site, content, router, has, t, store, toast } = useSite()
+const { site, content, router, has, t, store, toast, env } = useSite()
 const fields = computed(() => site.data.signupFields.map((k) => content.value.field(k)))
-const { values, errors, validateField, validate } = useForm(fields.value, has)
+const { values, errors, validateField, validate } = useForm(fields.value, has, env.clock)
 
 function submit() {
   if (!validate(fields.value)) return
   if (store.emailTaken(values.email)) { errors.email = { key: 'err.exists' }; return }
+  store.bump('submit')
   store.register({ name: values.name, email: values.email, password: values.password })
   toast(t('signup.created'))
   router.replace(site.pages.includes('account') ? routePath('account') : '/') // queda con sesion iniciada

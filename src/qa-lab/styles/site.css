@@ -151,3 +151,9 @@
   .site-session { margin-left: 0; padding-left: 0; border-left: 0; }
   .site-header { padding-inline: 14px; }
 }
+
+/* Skip-link: oculto hasta recibir foco; el handler mueve el foco a <main> (sin #ancla). */
+.skip-link { position: absolute; left: 8px; top: -48px; z-index: 70; padding: 8px 14px; background: #fff; color: #1f2933; border: 2px solid var(--accent); border-radius: var(--radius); cursor: pointer; }
+.skip-link:focus { top: 8px; }
+.site-main:focus { outline: none; }
+.site { position: relative; }

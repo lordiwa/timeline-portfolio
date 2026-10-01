@@ -138,7 +138,7 @@ describe('QA Lab: capa de contenido', () => {
       expect(c.categories).toHaveLength(3)
       expect(c.faq).toHaveLength(6)
       expect(c.posts.length).toBeGreaterThanOrEqual(3)
-      expect(c.currency).toEqual({ symbol: '$', code: 'USD', decimals: 2 })
+      expect(c.currency).toEqual({ symbol: '$', code: 'USD', decimals: 2, position: 'before' })
       expect(c.money(12.5)).toBe('$12.50')
       expect(c.field('email')).toMatchObject({ key: 'email', type: 'email', required: true })
       expect(c.field('country').options).toHaveLength(4)

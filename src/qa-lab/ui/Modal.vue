@@ -4,7 +4,7 @@ import { useSite } from '../composables/useSite.js'
 
 const props = defineProps({ open: Boolean, title: { type: String, default: '' } })
 const emit = defineEmits(['close'])
-const { has, t } = useSite()
+const { has, t, env } = useSite()
 const dialog = ref(null)
 let opener = null
 
@@ -29,7 +29,7 @@ watch(
       if (has('console-error')) {
         // BUG: TypeError real y no capturado (window.onerror) al abrir el modal.
         const settings = {}
-        setTimeout(() => { settings.items.length }, 0)
+        env.clock.setTimeout(() => { settings.items.length }, 0)
       }
       await nextTick()
       dialog.value?.focus()

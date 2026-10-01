@@ -27,6 +27,9 @@ const PAGES = {
 
 const { site, content, route, router, store, has, t, toast } = useSite()
 const helpOpen = ref(false)
+const mainEl = ref(null)
+// Skip-link: un handler que mueve el foco (NO un #ancla: chocaria con el router por hash).
+const skipToContent = () => mainEl.value?.focus()
 const menuOpen = ref(false)
 
 const navTypes = computed(() => NAV_TYPES.filter((p) => site.pages.includes(p)))
@@ -45,6 +48,7 @@ function logout() {
 
 <template>
   <div class="site" :class="[`hdr-${site.style.header}`, `font-${site.style.font}`, `den-${site.style.density}`, { lowc: has('low-contrast') }]" :style="vars" :data-page="route.type" :data-theme="site.themeId">
+    <button type="button" class="skip-link" data-testid="skip-link" @click="skipToContent">{{ t('site.skip') }}</button>
     <header class="site-header">
       <a class="brand" :href="`#${routePath('home')}`">{{ content.brand }}</a>
       <span v-if="site.style.header === 'banner'" class="tagline">{{ content.tagline }}</span>
@@ -67,7 +71,7 @@ function logout() {
         </span>
       </nav>
     </header>
-    <main class="site-main">
+    <main ref="mainEl" class="site-main" tabindex="-1">
       <component :is="PAGES[route.type]" :key="route.path" />
     </main>
     <footer class="site-footer">{{ t('site.footer', { brand: content.brand }) }}</footer>

@@ -8,11 +8,11 @@ import PageShell from '../ui/PageShell.vue'
 import FormField from '../ui/FormField.vue'
 import PrimaryButton from '../ui/PrimaryButton.vue'
 
-const { content, router, has, t, store, toast } = useSite()
+const { content, router, has, t, store, toast, env } = useSite()
 const user = computed(() => store.state.user)
 const fieldsOf = () => [content.value.field('name'), { ...content.value.field('newsletter'), required: false }]
 const fields = computed(fieldsOf)
-const { values, errors, validateField, validate } = useForm(fieldsOf(), has)
+const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
 values.name = store.state.user?.name ?? ''
 values.newsletter = store.state.prefs.newsletter
 const orders = computed(() => store.state.orders.filter((o) => o.customer.email === user.value?.email))
