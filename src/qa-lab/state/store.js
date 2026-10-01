@@ -47,7 +47,7 @@ const num = (n) => typeof n === 'number' && Number.isFinite(n)
 const validOrder = (o) =>
   o && typeof o.id === 'string' && Array.isArray(o.lines) && o.lines.every((l) => l && num(l.id) && num(l.qty) && num(l.price)) &&
   o.totals && num(o.totals.total) && num(o.totals.decimals) && o.customer && typeof o.customer.email === 'string' && typeof o.customer.name === 'string' &&
-  (o.userEmail === null || typeof o.userEmail === 'string')
+  (o.userEmail === null || typeof o.userEmail === 'string') && (o.date === undefined || (typeof o.date === 'string' && ISO_DATE.test(o.date)))
 const validComment = (c) => c && typeof c.text === 'string' && num(c.minutes) && (c.author === null || typeof c.author === 'string')
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -179,7 +179,7 @@ export function createStore(site, storage = safeStorage()) {
     },
 
     // --- pedidos ---
-    placeOrder({ lines, totals, shipping, customer }) {
+    placeOrder({ lines, totals, shipping, customer, date }) {
       if (!lines.length) return null
       state.orderSeq += 1
       bump('order')
@@ -191,6 +191,7 @@ export function createStore(site, storage = safeStorage()) {
         coupon: state.coupon,
         customer: { ...customer },
         userEmail: state.user?.email ?? null, // quien confirmo (sesion), no el email editable del checkout
+        ...(typeof date === 'string' && ISO_DATE.test(date) ? { date } : {}), // dia civil del pedido en la zona simulada del sitio
       }
       state.orders.push(order)
       state.cart = []

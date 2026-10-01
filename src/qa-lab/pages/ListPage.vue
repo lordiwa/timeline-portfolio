@@ -11,16 +11,14 @@ import Dropdown from '../components/Dropdown.vue'
 
 const { site, content, has, nthHit, t, store, toast, env, labelTarget } = useSite()
 const c = computed(() => content.value)
-// BUG stale-response-overwrites: con el flag la busqueda es una "request" con latencia y la ULTIMA en llegar gana
-// (no se descartan las respuestas viejas); `shown` es el texto de la ultima respuesta, que puede no ser el del input.
-// Sin el flag se filtra directo por el texto del input (siempre la ultima consulta).
+// `shown` es el texto de la ultima respuesta aceptada de la busqueda (con latencia simulada): puede ir detras del input.
 const shown = ref(store.ui.list.search)
 const L = useListing(
   () => c.value.items,
   {
     pageSize: site.data.list.pageSize,
     match: (r, q) => !q || r.name.toLowerCase().includes(q),
-    searchOf: () => (has('stale-response-overwrites') ? shown.value : store.ui.list.search),
+    searchOf: () => shown.value,
   },
   has,
   store.ui.list,
@@ -36,19 +34,24 @@ const hasCart = site.pages.includes('cart')
 const unlabeled = computed(() => has('missing-label') && labelTarget() === 'search') // BUG missing-label
 const searchTab = computed(() => (has('tab-order') ? 3 : undefined)) // BUG tab-order
 
+let lastReq = 0
 function onSearch(v) {
   L.set('search', v)
-  if (has('stale-response-overwrites')) env.latency.request('search', () => v).then((q) => { shown.value = q })
-  else shown.value = v
+  const id = ++lastReq
+  // La busqueda es una "request" con latencia en TODOS los sitios. Correcto: se descartan las respuestas viejas (requestId).
+  // BUG stale-response-overwrites: no se descartan, la ultima en LLEGAR gana.
+  env.latency.request('search', () => v).then((q) => { if (id === lastReq || has('stale-response-overwrites')) shown.value = q })
 }
 function clear() {
   L.clear()
+  lastReq++ // una respuesta pendiente no debe pisar el estado limpio
   shown.value = L.state.search
 }
 function goPage(n) {
   // BUG filter-lost-on-paginate: al paginar se pierden la busqueda y los filtros (la pagina sigue en n).
   if (has('filter-lost-on-paginate')) {
     Object.assign(L.state, { search: '', cat: '', price: '', sort: 'default' })
+    lastReq++
     shown.value = ''
   }
   L.state.page = n

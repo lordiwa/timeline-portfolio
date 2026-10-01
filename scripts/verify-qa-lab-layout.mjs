@@ -22,7 +22,7 @@
 // ?seed=..&level=..&lang=es#/ruta. Nunca se fuerza un flag por URL (no hay esa via: seria filtrar el solucionario).
 //
 // Uso:
-//   node scripts/verify-qa-lab-layout.mjs                 # build si falta, levanta preview + Chrome, mide, cierra todo
+//   node scripts/verify-qa-lab-layout.mjs                 # buildea siempre, levanta preview + Chrome, mide, cierra todo
 //   opciones: --only=button-covered,mobile-overflow  --chrome="C:\\ruta\\chrome.exe"  --preview-port=4173  --cdp-port=9444
 //             --no-build (usa el dist/ existente)  --keep (deja Chrome y preview abiertos)
 //   env CHROME_PATH tambien fija el ejecutable. Chrome corre HEADED (headless degrada layout/compositor y ignora ventanas chicas;
@@ -170,8 +170,8 @@ let profile = null
 let exitCode = 0
 const rows = []
 try {
-  if (!args['no-build'] && !fs.existsSync(path.join(ROOT, 'dist/qa-lab/index.html'))) {
-    console.log('dist/ no existe: vite build...')
+  if (!args['no-build']) { // SIEMPRE buildea (un dist/ viejo mediria otro codigo); --no-build es la unica forma de saltearlo
+    console.log('vite build (produccion)...')
     const b = spawnSync(process.execPath, [path.join(ROOT, 'node_modules/vite/bin/vite.js'), 'build'], { cwd: ROOT, stdio: 'inherit' })
     if (b.status !== 0) throw new Error('vite build fallo')
   }

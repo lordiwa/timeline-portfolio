@@ -1,6 +1,7 @@
 // Utilidades compartidas de los specs del QA Lab (no es un spec: vitest solo corre *.spec.js).
 import { mount } from '@vue/test-utils'
 import { vi } from 'vitest'
+import { createEnv } from '../../src/qa-lab/services/clock.js'
 import { generateSite } from '../../src/qa-lab/generator/site.js'
 import { capabilitiesOf } from '../../src/qa-lab/generator/capabilities.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
@@ -36,9 +37,14 @@ export function forceSite({ seed = 'force-1', level = 'semi', pages, bugs = {}, 
 export const ALL_PAGES = ['home', 'list', 'detail', 'cart', 'checkout', 'login', 'signup', 'account', 'contact', 'faq', 'dashboard', 'blog', 'wizard']
 
 /** Monta el sitio en la ruta `hash` (p. ej. '#/cart'). */
-export async function mountSite(site, { hash = '', locale = 'es', storage = memoryStorage(), env } = {}) {
+export async function mountSite(site, { hash = '', locale = 'es', storage = memoryStorage(), env, realLatency = false } = {}) {
   window.location.hash = hash
   await tick(5)
+  if (!env && !realLatency) {
+    // Por defecto la latencia simulada es ~0 (los specs no esperan 80-600 ms por busqueda); `realLatency: true` usa la determinista de la semilla.
+    env = createEnv({ seed: site.seed, tzOffsetMinutes: site.tzOffsetMinutes })
+    env.latency.request = (key, fn = () => undefined) => new Promise((resolve) => { env.clock.setTimeout(() => resolve(fn()), 1) })
+  }
   const w = track(mount(SiteRoot, { props: { site, storage, env }, global: { plugins: [createLabI18n(locale)] }, attachTo: document.body }))
   await tick(5)
   return { w, storage, site }

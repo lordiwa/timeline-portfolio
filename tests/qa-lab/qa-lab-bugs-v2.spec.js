@@ -5,7 +5,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import { BUGS, BUG_BY_ID } from '../../src/qa-lab/bugs/catalog.js'
 import { bugLocation } from '../../src/qa-lab/bugs/locations.js'
 import { generateSite } from '../../src/qa-lab/generator/site.js'
-import { createLatency } from '../../src/qa-lab/services/clock.js'
+import { createLatency, createEnv } from '../../src/qa-lab/services/clock.js'
 import { computeTotals } from '../../src/qa-lab/state/pricing.js'
 import { formatDate, relTime } from '../../src/qa-lab/state/dates.js'
 import { createStore, memoryStorage, storageKey } from '../../src/qa-lab/state/store.js'
@@ -314,6 +314,20 @@ describe('calculo y fechas', () => {
     expect(bug).toBe('Fecha de nacimiento: 09/05/2000')
   })
 
+  it('date-timezone-shift tambien en la fecha del pedido: "Mis pedidos" la muestra un dia antes solo con el flag (reloj y zona simulados)', async () => {
+    const [clean, bug] = await bothWays(
+      async (flag) => {
+        const site = forceSite({ pages: ALL_PAGES, bugs: flag ? { 'date-timezone-shift': 'account' } : {}, params: { 'date-timezone-shift': { tz: -300 } } })
+        const env = createEnv({ seed: site.seed, tzOffsetMinutes: -300, now: () => Date.UTC(2026, 4, 11, 12) }) // 2026-05-11 07:00 en la zona simulada
+        const order = { id: 'ORD-1001', lines: [{ id: 1, qty: 1, price: 5 }], totals: { total: 500, decimals: 2 }, customer: { name: 'Ana', email: 'ana@example.com' }, userEmail: 'ana@example.com', date: '2026-05-11' }
+        return mountSite(site, { hash: '#/account', env, storage: seedStorage(site, { user: SESSION, orders: [order], orderSeq: 1 }) })
+      },
+      async ({ w }) => w.find('[data-testid="order-date"]').text(),
+    )
+    expect(clean).toBe('11/05/2026')
+    expect(bug).toBe('10/05/2026')
+  })
+
   it('el registro guarda la fecha de nacimiento tal cual se escribio y la cuenta la muestra igual (sin flag, con zona simulada distinta de 0)', async () => {
     const dateKeyOf = (s) => s.data.signupFields.find((k) => s.data.fieldMeta[k].type === 'date' && /birth/i.test(k)) // fecha de nacimiento del pack
     const seed = seedWith((s) => dateKeyOf(s) && s.tzOffsetMinutes !== 0)
@@ -350,6 +364,7 @@ describe('asincronia', () => {
       async ({ w }) => {
         expect(w.find('.qa-spinner').exists() || w.find('.qa-empty').exists()).toBe(false) // control: con resultados no hay ninguno
         await w.find('input[type=search]').setValue('zzzz')
+        await tick(15) // la busqueda del listado tiene latencia simulada
         return { spinner: w.find('.qa-spinner').exists(), empty: w.find('.qa-empty').exists(), status: w.find('.qa-empty').exists() ? w.find('.qa-empty').attributes('role') : null }
       },
     )
@@ -395,7 +410,7 @@ describe('asincronia', () => {
     const q1 = 'aeiourstnlcmpdb'.split('').find((ch) => countOf(ch) > countOf(q2)) // consulta previa con mas resultados
     expect(q1).toBeTruthy()
     const [clean, bug] = await bothWays(
-      (flag) => mountSite(forceSite({ seed, pages: ALL_PAGES, bugs: flag ? { 'stale-response-overwrites': 'list' } : {} }), { hash: '#/catalog' }),
+      (flag) => mountSite(forceSite({ seed, pages: ALL_PAGES, bugs: flag ? { 'stale-response-overwrites': 'list' } : {} }), { hash: '#/catalog', realLatency: true }),
       async ({ w }) => {
         vi.useFakeTimers()
         const search = w.find('input[type=search]')

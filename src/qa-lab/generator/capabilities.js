@@ -44,6 +44,7 @@ export function capabilitiesOf(pages, data) {
   const has = (p) => pages.includes(p)
   const caps = new Set(['modal', 'mobile-nav']) // el ayuda-modal y el menu mobile estan en todos los sitios
   if (has('list')) ['list', 'list-search', 'list-filter', 'list-sort', 'list-pagination'].forEach((c) => caps.add(c))
+  if (has('dashboard')) caps.add('list-search') // el panel tambien tiene buscador (spinner-on-empty-results vive en ambos)
   if (has('detail')) caps.add('detail')
   if (has('cart')) caps.add('cart')
   if (has('checkout')) ['checkout', 'coupon', 'shipping', 'tax'].forEach((c) => caps.add(c))

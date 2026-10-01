@@ -224,15 +224,15 @@ export const BUGS = [
     id: 'cart-loses-item-on-back', category: 'state', difficulty: 'medium', level: 'semi', pages: ['detail'], requires: ['cart', 'detail'], crossPage: true,
     groups: ['cart-missing-item'],
     description: {
-      es: 'Detalle de producto: agregá un producto desde su detalle, abrí el carrito, volvé atrás con el botón del navegador y agregá otro producto: al abrir el carrito de nuevo falta el primer ítem.',
-      en: 'Product detail: add a product from its detail page, open the cart, go back with the browser button and add another product: when you open the cart again the first item is missing.',
+      es: 'Detalle de producto: agregá un producto desde su detalle, abrí el carrito, volvé atrás con el botón del navegador y agregá otro producto: al abrir el carrito de nuevo falta el primer ítem (el ítem se pierde al agregar el segundo, y solo si volviste con el botón atrás, no con un enlace).',
+      en: 'Product detail: add a product from its detail page, open the cart, go back with the browser button and add another product: when you open the cart again the first item is missing (it is lost when the second one is added, and only if you came back with the back button, not with a link).',
     },
   },
   {
     id: 'protected-deeplink', category: 'state', difficulty: 'medium', level: 'semi', pages: ['account'], requires: ['auth', 'protected-routes'], crossPage: true,
     description: {
-      es: 'Cuenta: sin iniciar sesión, abrí directamente la URL de la cuenta (copiala y pegala en una pestaña nueva, con la semilla y el hash #/account): se muestra la cuenta sin pedir login. Navegando desde el menú sí te redirige al login.',
-      en: 'Account: without logging in, open the account URL directly (copy it into a new tab, with the seed and the #/account hash): the account is shown without asking for login. Navigating from the menu does redirect you to the login.',
+      es: 'Cuenta: sin iniciar sesión, abrí directamente la URL de la cuenta (copiala y pegala en una pestaña nueva, con la semilla y el hash #/account): se muestra la cuenta sin pedir login. Navegando desde el menú sí te redirige al login (cambiar el nivel recarga el sitio y también cuenta como carga inicial). Sin sesión, «Guardar cambios» no hace nada.',
+      en: 'Account: without logging in, open the account URL directly (copy it into a new tab, with the seed and the #/account hash): the account is shown without asking for login. Navigating from the menu does redirect you to the login (changing the level reloads the site and also counts as an initial load). Without a session, «Save changes» does nothing.',
     },
   },
   {
@@ -278,12 +278,13 @@ export const BUGS = [
   },
   // Fechas
   {
-    id: 'date-timezone-shift', category: 'date', difficulty: 'hard', level: 'senior', pages: ['account'], requires: ['register', 'account', 'dates'],
+    id: 'date-timezone-shift', category: 'date', difficulty: 'hard', level: 'senior', pages: ['account'], requires: ['account'],
     params: (rng) => ({ tz: rng.pick([-480, -300, -180]) }),
-    witness: (site) => site.data.signupFields.some((k) => site.data.fieldMeta[k].type === 'date' && /birth/i.test(k)), // el registro pide la fecha de nacimiento
+    // hay una fecha guardada que «Mi cuenta» muestra: la de nacimiento del registro o la fecha de cada pedido (checkout + cuenta)
+    witness: (site) => site.capabilities.includes('orders') || (site.capabilities.includes('register') && site.data.signupFields.some((k) => site.data.fieldMeta[k].type === 'date' && /birth/i.test(k))),
     description: {
-      es: 'Cuenta: registrate cargando la fecha de nacimiento 2000-05-10 y abrí «Mi cuenta»: la fecha de nacimiento aparece un día antes (09/05/2000).',
-      en: 'Account: sign up entering the birth date 2000-05-10 and open «My account»: the birth date shows one day earlier (09/05/2000).',
+      es: 'Cuenta: una fecha guardada se muestra un día antes en «Mi cuenta»: registrate cargando la fecha de nacimiento 2000-05-10 (aparece 09/05/2000) o, si el registro no la pide, hacé un pedido y compará la fecha del pedido en «Mis pedidos» con la de hoy.',
+      en: 'Account: a saved date is shown one day earlier in «My account»: sign up entering the birth date 2000-05-10 (it shows 09/05/2000) or, if the sign-up does not ask for it, place an order and compare the order date in «My orders» with today.',
     },
   },
   {

@@ -58,6 +58,12 @@ function next() {
   step.value += 1
 }
 
+/** Dia del pedido (YYYY-MM-DD) en la zona horaria simulada del sitio. */
+function orderDate() {
+  const d = env.clock.local()
+  return `${d.year}-${String(d.month).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`
+}
+
 function place() {
   if (!validate(stepFields.value) || placing.value || !lines.value.length) return
   // BUG nth-submit-server-error: el N-esimo envio valido responde 500 (los datos y el carrito se conservan).
@@ -69,6 +75,7 @@ function place() {
     totals: { ...totals.value },
     shipping: method.value,
     customer: { name: values.name, email: values.email },
+    date: orderDate(),
   }
   const done = (o) => {
     order.value = o

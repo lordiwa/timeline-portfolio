@@ -20,16 +20,17 @@ const related = computed(() => {
 const qty = ref(1)
 const hasCart = site.pages.includes('cart')
 
-// BUG cart-loses-item-on-back: al volver ATRAS a este detalle se restaura el carrito previo a la ultima alta,
-// asi que el primer item agregado se pierde cuando despues se agrega otro.
+// BUG cart-loses-item-on-back: tras volver ATRAS (boton del navegador) a este detalle queda "armado" un rollback: la
+// proxima alta restaura primero el carrito previo a la ultima alta, asi que el primer item se pierde al agregar otro.
 onMounted(() => {
-  if (has('cart-loses-item-on-back') && nav.last === 'back') store.undoLastAdd()
+  if (has('cart-loses-item-on-back') && nav.last === 'back') nav.armed = true
 })
 
 function add() {
   qty.value = clampQty(qty.value) // cantidad siempre 1..99
   // BUG nth-add-to-cart-fails: la N-esima alta muestra el aviso de exito pero no agrega el producto.
   if (nthHit('nth-add-to-cart-fails')) { toast(t('cart.added', { name: item.value.name })); return }
+  if (nav.armed && has('cart-loses-item-on-back')) { store.undoLastAdd(); nav.armed = false }
   if (store.addToCart(item.value.id, qty.value)) toast(t('cart.added', { name: item.value.name }))
 }
 </script>

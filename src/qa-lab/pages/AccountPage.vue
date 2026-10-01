@@ -16,7 +16,9 @@ const user = computed(() => store.state.user)
 const unguarded = has('protected-deeplink')
 // Fecha de nacimiento tal cual se escribio. BUG date-timezone-shift: se lee como medianoche UTC y se muestra en la
 // zona simulada del bug (negativa), un dia antes.
-const birthText = computed(() => (user.value?.birth ? formatDate(user.value.birth, { tz: site.bugParams['date-timezone-shift']?.tz ?? 0, shift: has('date-timezone-shift') }) : ''))
+// La misma regla vale para la fecha de cada pedido.
+const dateText = (iso) => formatDate(iso, { tz: site.bugParams['date-timezone-shift']?.tz ?? 0, shift: has('date-timezone-shift') })
+const birthText = computed(() => (user.value?.birth ? dateText(user.value.birth) : ''))
 const fieldsOf = () => [content.value.generic('name'), { ...content.value.generic('newsletter'), required: false }]
 const fields = computed(fieldsOf)
 const { values, errors, validateField, validate } = useForm(fieldsOf(), has, env.clock)
@@ -27,6 +29,7 @@ const orders = computed(() => store.state.orders.filter((o) => o.userEmail && us
 
 function save() {
   if (!validate(fields.value)) return
+  if (!user.value) return // sin sesion (deep link sin guard) no hay perfil que guardar: no se anuncia un guardado falso
   store.updateProfile({ name: values.name, newsletter: values.newsletter })
   toast(t('account.saved'))
 }
@@ -51,7 +54,7 @@ const money = (o) => content.value.money(fromMinor(o.totals.total, o.totals.deci
       </form>
       <h2>{{ t('account.orders') }}</h2>
       <ul v-if="orders.length" data-testid="orders">
-        <li v-for="o in orders" :key="o.id">{{ o.id }} — {{ t('account.items', { n: o.lines.reduce((s, l) => s + l.qty, 0) }) }} — {{ money(o) }}</li>
+        <li v-for="o in orders" :key="o.id">{{ o.id }} — {{ t('account.items', { n: o.lines.reduce((s, l) => s + l.qty, 0) }) }} — {{ money(o) }}<template v-if="o.date"> — <span data-testid="order-date">{{ dateText(o.date) }}</span></template></li>
       </ul>
       <p v-else class="qa-hint">{{ t('account.noOrders') }}</p>
     </template>

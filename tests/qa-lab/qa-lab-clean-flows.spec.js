@@ -9,6 +9,9 @@ import { compatible } from '../../src/qa-lab/generator/compat.js'
 import { concretePath } from '../../src/qa-lab/generator/pages.js'
 import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
 import { getThemePack } from '../../src/qa-lab/themes/index.js'
+import { createLatency } from '../../src/qa-lab/services/clock.js'
+import { resolveContent } from '../../src/qa-lab/content/index.js'
+import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { forceSite, ALL_PAGES, mountSite, go, back, forward, tick, fill, fillVisible, click, here, moneyOf, cleanup, watchConsole } from './helpers.js'
 
 vi.setConfig({ testTimeout: 300000 })
@@ -64,9 +67,11 @@ async function exerciseList(w, site) {
 
   const search = w.find('input[type=search]')
   await search.setValue('zzzz')
+  await tick(15) // la busqueda tiene latencia simulada (~0 en los specs)
   expect(w.find('.qa-empty').exists()).toBe(true)
   expect(w.find('.qa-spinner').exists()).toBe(false)
   await search.setValue('')
+  await tick(15)
   expect(w.find('.qa-empty').exists()).toBe(false)
 
   const perCat = (c) => site.data.catalog.filter((r) => r.cat === c).length
@@ -86,15 +91,7 @@ async function exerciseList(w, site) {
   expect(prices).toEqual([...prices].sort((a, b) => a - b))
   await click(w, 'Limpiar filtros').trigger('click')
   expect(text(w, 'result-count')).toBe(`${total} resultados`)
-  // R-1.8: busquedas rapidas seguidas muestran siempre la ultima
-  const name = site.data.catalog.length && w.find('[data-testid="item-card"] h3').text()
-  await search.setValue(name.toLowerCase())
-  const reference = text(w, 'result-count') // resultados de la consulta final tecleada sola
-  await search.setValue('')
-  await search.setValue('a')
-  await search.setValue(name.toLowerCase())
-  expect(text(w, 'result-count')).toBe(reference)
-  await click(w, 'Limpiar filtros').trigger('click')
+  // R-1.8 (busquedas rapidas con latencias invertidas): sensor real en el test "la busqueda descarta respuestas viejas" mas abajo.
 }
 
 /** R-1.3: detalle -> agregar -> carrito -> cantidad -> quitar, con el contador del navbar coherente; relacionado muestra datos nuevos. */
@@ -296,6 +293,34 @@ describe('sin flags: los flujos principales funcionan y la consola queda limpia 
       }
       expect(guard.seen, `${level} ${seed}`).toEqual([])
     }
+  })
+})
+
+describe('R-1.8: la busqueda del listado descarta respuestas viejas (sin flags)', () => {
+  it('con latencias que invierten el orden de llegada gana la ULTIMA consulta, en 12 semillas (sensor del descarte por requestId)', async () => {
+    let checked = 0
+    for (let i = 0; i < 400 && checked < 12; i++) {
+      const seed = `inv-${i}`
+      const lat = createLatency({ seed })
+      if (!(lat.latencyMs('search', 1) > lat.latencyMs('search', 2) + 100)) continue
+      const site = forceSite({ seed, pages: ALL_PAGES, bugs: {} })
+      const names = resolveContent(site, createLabI18n('es').global.t).items.map((x) => x.name.toLowerCase())
+      const count = (q) => names.filter((n) => n.includes(q)).length
+      const q2 = names[0]
+      const q1 = 'aeiourstnlcmpdb'.split('').find((ch) => count(ch) > count(q2))
+      if (!q1) continue
+      const { w } = await mountSite(site, { hash: '#/catalog', realLatency: true })
+      vi.useFakeTimers()
+      const s = w.find('input[type=search]')
+      await s.setValue(q1) // responde tarde
+      await s.setValue(q2) // responde antes
+      await vi.advanceTimersByTimeAsync(700)
+      vi.useRealTimers()
+      expect(w.find('[data-testid="result-count"]').text(), seed).toBe(`${count(q2)} resultados`)
+      w.unmount()
+      checked++
+    }
+    expect(checked).toBe(12)
   })
 })
 

@@ -33,11 +33,20 @@ const router = createRouter(props.site, { isAuthed: () => !!store.state.user || 
 const content = computed(() => resolveContent(props.site, t))
 
 // Direccion de la ultima navegacion: 'back' si la ruta nueva es la anterior del historial recorrido (boton atras).
-const nav = { last: 'push' }
+// Un click en un enlace interno (#/...) tambien dispara popstate en el navegador: no es "atras". Solo la navegacion
+// por el historial (boton atras del navegador) cuenta como 'back'.
+const nav = { last: 'push', armed: false }
+let linkClick = false
+const onLinkClick = (e) => {
+  if (e.target.closest?.('a[href^="#"]')) { linkClick = true; env.clock.setTimeout(() => { linkClick = false }, 0) }
+}
+document.addEventListener('click', onLinkClick, true)
+onBeforeUnmount(() => document.removeEventListener('click', onLinkClick, true))
 const visited = [router.route.value.path]
 watch(router.route, (r) => {
   if (r.path === visited.at(-1)) return
-  if (r.path === visited.at(-2)) { visited.pop(); nav.last = 'back' } else { visited.push(r.path); nav.last = 'push' }
+  if (r.path === visited.at(-2) && !linkClick) { visited.pop(); nav.last = 'back' } else { visited.push(r.path); nav.last = 'push' }
+  linkClick = false
 }, { flush: 'sync' })
 
 const messages = ref([])
