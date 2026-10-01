@@ -1,17 +1,21 @@
 <script setup>
 // Barra del lab (fuera del sitio generado) + sitio multi-pagina por (semilla, nivel).
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, effectScope, nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { generateSite } from './generator/site.js'
 import { LEVELS, normalizeLevel } from './generator/levels.js'
 import { concretePath } from './generator/pages.js'
 import { newSeed } from './generator/prng.js'
-import { BUG_BY_ID } from './bugs/catalog.js'
+import { BUG_BY_ID, BUGS, CATEGORIES } from './bugs/catalog.js'
 import { bugLocation } from './bugs/locations.js'
 import { describeBug } from './bugs/describe.js'
 import { LOCALES } from './i18n/index.js'
 import { readParams } from './boot.js'
 import SiteRoot from './components/SiteRoot.vue'
+import { useAttempt } from './report/useAttempt.js'
+import StartAttempt from './report/StartAttempt.vue'
+import ReportPanel from './report/ReportPanel.vue'
+import ConfirmDialog from './report/ConfirmDialog.vue'
 
 const props = defineProps({ initialSeed: { type: String, default: '' }, initialLevel: { type: String, default: '' } })
 const { t, locale } = useI18n()
@@ -26,6 +30,72 @@ const site = computed(() => generateSite(seed.value, level.value))
 // Descripcion con el campo REAL del sitio (los bugs de validacion afectan campos del pack: bugs/describe.js).
 const describe = (id) => describeBug(site.value, id, locale.value)
 const revealed = ref(false)
+
+// --- Registro de la prueba (TASK-050) ---
+let scope = null
+let histIdx = window.history.state?.qaIdx ?? 0
+function makeAttempt() {
+  scope?.stop()
+  scope = effectScope(true) // el cronometro se libera al reemplazar el intento (los handlers no tienen scope propio)
+  return scope.run(() => useAttempt(seed.value, level.value))
+}
+const attempt = shallowRef(null)
+const panel = ref('closed') // 'closed' | 'start' | 'drawer'
+const pendingSwitch = ref(null)
+const confirmReveal = ref(false)
+attempt.value = makeAttempt()
+const inProgress = computed(() => attempt.value.started.value && !attempt.value.finished.value)
+onBeforeUnmount(() => scope?.stop())
+
+const SHORT = 90
+// Las 36 entradas del catalogo, en el orden del catalogo y con el texto generico (no el del sitio): igual en toda
+// semilla, asi que la lista no delata cuales estan activos.
+const bugOptions = computed(() => BUGS.map((b) => {
+  const d = b.description[locale.value] || b.description.es
+  return { id: b.id, label: d.length > SHORT ? `${d.slice(0, SHORT - 1)}…` : d }
+}))
+const scoreContext = computed(() => ({
+  activeBugIds: site.value.bugs, categoryOf: (id) => BUG_BY_ID[id]?.category ?? null, lang: locale.value,
+}))
+const pageNames = computed(() => site.value.pages.map((p) => t(`pageName.${p}`)))
+const resultSolution = computed(() => site.value.bugs.map((id) => ({
+  id, category: t(`lab.category.${BUG_BY_ID[id].category}`), text: describe(id), where: bugWhere({ id }),
+})))
+
+async function onTakeTest() {
+  if (attempt.value.started.value) { panel.value = panel.value === 'drawer' ? 'closed' : 'drawer'; return }
+  panel.value = 'start'
+  await nextTick()
+  document.getElementById('qa-start-name')?.focus()
+}
+// everRevealed por (semilla, nivel): si el solucionario se abrio alguna vez, aunque se haya vuelto a ocultar, al empezar queda marcado.
+const revKey = () => `qa-lab:everRevealed:${seed.value}:${level.value}`
+const markEver = () => { try { sessionStorage.setItem(revKey(), '1') } catch { /* storage bloqueado */ } }
+const wasEver = () => { try { return sessionStorage.getItem(revKey()) === '1' } catch { return false } }
+const focusTake = async () => { await nextTick(); document.querySelector('[data-testid="take-test"]')?.focus() }
+function closePanel() { panel.value = 'closed'; focusTake() }
+function onDrawerEsc(e) {
+  // Escape dentro de un select o textarea (lista abierta / edicion) no cierra el drawer
+  if (['SELECT', 'TEXTAREA'].includes(e.target?.tagName)) return
+  closePanel()
+}
+function onStart(data) {
+  attempt.value.start(data)
+  if (revealed.value || wasEver()) attempt.value.markSolutionViewed()
+  panel.value = 'drawer'
+}
+function toggleReveal() {
+  if (revealed.value) { revealed.value = false; return }
+  if (inProgress.value && !attempt.value.solutionViewed.value) { confirmReveal.value = true; return }
+  revealed.value = true
+  markEver()
+}
+function doReveal() {
+  attempt.value.markSolutionViewed()
+  confirmReveal.value = false
+  revealed.value = true
+  markEver()
+}
 // Solucionario: los bugs activos (misma fuente que los flags) + la pagina donde se manifiesta cada uno.
 const solution = computed(() =>
   site.value.bugs.map((id) => {
@@ -47,16 +117,44 @@ watch([seed, level, locale], syncUrl, { immediate: true })
  * La URL es la fuente de verdad. Cambiar el nivel o pedir una pagina nueva APILA una entrada (pushState)
  * con la URL completa y el hash en #/: asi 'atras' vuelve exactamente al sitio anterior.
  */
-function pushSite(nextSeed, nextLevel) {
-  const url = new URL(window.location.href)
-  url.searchParams.set('seed', nextSeed)
-  url.searchParams.set('level', nextLevel)
-  url.searchParams.set('lang', locale.value)
-  url.hash = '#/'
-  window.history.pushState(null, '', url)
+function applySite(nextSeed, nextLevel, { push = false } = {}) {
+  if (push) {
+    const url = new URL(window.location.href)
+    url.searchParams.set('seed', nextSeed)
+    url.searchParams.set('level', nextLevel)
+    url.searchParams.set('lang', locale.value)
+    url.hash = '#/'
+    window.history.pushState({ qaIdx: ++histIdx }, '', url)
+  }
   seed.value = nextSeed
   level.value = nextLevel
   revealed.value = false
+  panel.value = 'closed'
+  attempt.value = makeAttempt() // un intento propio por (semilla, nivel): si habia uno guardado, se retoma
+}
+/**
+ * Decision (TASK-050 fase B): cambiar la semilla o el nivel con una prueba EN CURSO (empezada y sin resultado)
+ * pide confirmacion y, si se acepta, DESCARTA el intento (hallazgos y cronometro). No se bloquea el cambio:
+ * el candidato siempre puede salir, pero nunca pierde su trabajo sin decirlo. Un resultado ya mostrado no pide nada.
+ */
+function requestSite(nextSeed, nextLevel, opts = {}) {
+  if (nextSeed === seed.value && nextLevel === level.value) return true
+  if (inProgress.value) { pendingSwitch.value = { nextSeed, nextLevel, ...opts }; return false }
+  applySite(nextSeed, nextLevel, opts)
+  return true
+}
+function confirmSwitch() {
+  const p = pendingSwitch.value
+  pendingSwitch.value = null
+  attempt.value.discard()
+  applySite(p.nextSeed, p.nextLevel, { push: p.push })
+}
+function cancelSwitch() {
+  const p = pendingSwitch.value
+  pendingSwitch.value = null
+  // atras/adelante ya habia cambiado la URL: se vuelve a la entrada original con history.go (sin duplicar entradas);
+  // si la entrada no trae indice (navegacion por hash), se restaura la URL con replaceState.
+  if (p?.fromUrl) { if (p.delta) window.history.go(p.delta); else syncUrl() }
 }
 /** El idioma tambien es historial: cambiarlo apila una entrada (conserva la ruta); atras lo restaura. */
 function setLang(e) {
@@ -67,20 +165,20 @@ function setLang(e) {
   window.history.pushState(null, '', url)
   locale.value = next
 }
-const regenerate = () => pushSite(newSeed(), level.value)
-const setLevel = (e) => pushSite(seed.value, normalizeLevel(e.target.value))
+const regenerate = () => requestSite(newSeed(), level.value, { push: true })
+const setLevel = (e) => {
+  if (!requestSite(seed.value, normalizeLevel(e.target.value), { push: true })) e.target.value = level.value // el select vuelve hasta que se confirme
+}
 
 /** Atras / adelante: se re-derivan seed y level de la URL y el sitio se regenera si cambiaron. */
 function syncFromUrl() {
   const p = readParams(window.location.search)
   const lv = normalizeLevel(p.level)
+  const idx = window.history.state?.qaIdx
+  const delta = Number.isInteger(idx) ? histIdx - idx : 0 // >0: se fue hacia atras; <0: hacia adelante
   const lang = new URLSearchParams(window.location.search).get('lang')
   if (LOCALES.includes(lang) && lang !== locale.value) locale.value = lang
-  if ((p.seed && p.seed !== seed.value) || lv !== level.value) {
-    if (p.seed) seed.value = p.seed
-    level.value = lv
-    revealed.value = false
-  }
+  if ((p.seed && p.seed !== seed.value) || lv !== level.value) requestSite(p.seed || seed.value, lv, { fromUrl: true, delta })
 }
 window.addEventListener('popstate', syncFromUrl)
 window.addEventListener('hashchange', syncFromUrl)
@@ -106,7 +204,8 @@ onBeforeUnmount(() => {
           <option v-for="l in LOCALES" :key="l" :value="l">{{ l }}</option>
         </select>
       </label>
-      <button type="button" data-testid="reveal" @click="revealed = !revealed">{{ revealed ? t('lab.hide') : t('lab.reveal') }}</button>
+      <button type="button" data-testid="take-test" :aria-expanded="attempt.started.value ? String(panel === 'drawer') : undefined" @click="onTakeTest">{{ attempt.started.value ? t('report.openReport') : t('report.takeTest') }}</button>
+      <button type="button" data-testid="reveal" @click="toggleReveal">{{ revealed ? t('lab.hide') : t('lab.reveal') }}</button>
     </header>
     <p class="lab-meta">{{ t('lab.tagline') }} {{ t('lab.cartNote') }}</p>
 
@@ -126,6 +225,33 @@ onBeforeUnmount(() => {
       </ul>
     </section>
 
+    <div v-if="panel === 'start'" class="qa-modal-backdrop">
+      <div class="qa-modal" role="dialog" aria-modal="true" :aria-label="t('report.startTitle')" data-testid="start-dialog" @keydown.esc="closePanel">
+        <StartAttempt @start="onStart" />
+        <button type="button" data-testid="start-cancel" @click="closePanel">{{ t('report.cancel') }}</button>
+      </div>
+    </div>
+    <div v-if="panel === 'drawer' && attempt.started.value" class="lab-drawer" data-testid="drawer" @keydown.esc="onDrawerEsc">
+      <button type="button" class="lab-drawer-close" data-testid="drawer-close" @click="closePanel">{{ t('report.closeReport') }}</button>
+      <ReportPanel :key="`${seed}|${level}`" :attempt="attempt" :score-context="scoreContext" :categories="CATEGORIES"
+                   :bug-options="bugOptions" :pages="pageNames" :solution="resultSolution" />
+    </div>
+    <ConfirmDialog v-if="confirmReveal" :title="t('report.revealTitle')" :message="t('report.revealMsg')" :confirm-label="t('report.revealOk')"
+                   :cancel-label="t('report.cancel')" @confirm="doReveal" @cancel="confirmReveal = false" />
+    <ConfirmDialog v-if="pendingSwitch" :title="t('report.switchTitle')" :message="t('report.switchMsg')" :confirm-label="t('report.switchOk')"
+                   :cancel-label="t('report.keep')" @confirm="confirmSwitch" @cancel="cancelSwitch" />
+
     <SiteRoot :key="`${seed}|${level}`" :site="site" />
   </div>
 </template>
+
+<style>
+.qa-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; background: rgba(31, 41, 51, .6); }
+.qa-modal { max-width: 440px; width: calc(100% - 32px); padding: 18px 20px; background: #fff; color: #1f2933; border-radius: 8px; }
+.qa-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.qa-modal button, .lab-drawer button { padding: 6px 12px; border: 1px solid #9aa5b1; border-radius: 4px; background: #fff; color: #1f2933; font: inherit; cursor: pointer; }
+.qa-modal form label, .lab-drawer label { display: block; margin-top: 8px; }
+.lab-drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(380px, 100%); overflow-y: auto; padding: 12px 16px; background: #fff; color: #1f2933; box-shadow: -4px 0 16px rgba(0, 0, 0, .25); }
+.lab-drawer input, .lab-drawer textarea, .lab-drawer select, .qa-modal input { width: 100%; box-sizing: border-box; font: inherit; }
+.report-error { color: #b42318; min-height: 1.2em; }
+</style>

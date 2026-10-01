@@ -66,7 +66,7 @@ describe('schema', () => {
     ['clave extra (IP)', (d) => { d.ip = '1.1.1.1' }],
     ['nombre > 80', (d) => { d.candidate.name = 'x'.repeat(81) }],
     ['email invalido', (d) => { d.candidate.email = 'sin-arroba' }],
-    ['51 findings', (d) => { d.findings = Array.from({ length: 51 }, (_, i) => F(String(i))) }],
+    ['21 findings', (d) => { d.findings = Array.from({ length: 21 }, (_, i) => F(String(i))) }],
     ['description > 1000', (d) => { d.findings[0].description = 'x'.repeat(1001) }],
     ['severidad invalida', (d) => { d.findings[0].severity = 'x' }],
     ['score fuera de rango', (d) => { d.score.value = 101 }],
@@ -129,7 +129,8 @@ describe('componentes', () => {
   const i18n = createLabI18n('es')
   it('StartAttempt valida email y muestra el aviso de privacidad (evita empezar sin datos validos)', async () => {
     const w = mount(StartAttempt, { global: { plugins: [i18n] } })
-    expect(w.get('[data-testid=privacy]').text()).toContain('no se comparte con terceros')
+    expect(w.get('[data-testid=privacy]').text()).toContain('No se comparte con terceros')
+    expect(w.get('[data-testid=privacy] a').attributes('href')).toBe('mailto:srparca@gmail.com')
     await w.get('#qa-start-name').setValue('Ana')
     await w.get('#qa-start-email').setValue('mal')
     await w.get('form').trigger('submit')
@@ -169,7 +170,7 @@ describe('firestore.rules (estatico; el test con emulador queda PENDIENTE, ver R
   it('las claves permitidas en reglas coinciden con schema.js (evita que cliente y reglas diverjan)', () => {
     const list = (m) => [...m.matchAll(/'([A-Za-z]+)'/g)].map((x) => x[1]).sort()
     const top = code.match(/d\.keys\(\)\.hasOnly\(\[([^\]]+)\]/)[1]
-    expect(list(top)).toEqual([...DOC_KEYS].sort())
+    expect(list(top)).toEqual([...DOC_KEYS, 'createdAt'].sort())
     const sc = code.match(/s\.keys\(\)\.hasOnly\(\[([^\]]+)\]/)[1]
     expect(list(sc)).toEqual([...SCORE_KEYS].sort())
   })

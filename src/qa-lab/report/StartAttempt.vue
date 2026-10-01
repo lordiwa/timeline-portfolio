@@ -1,7 +1,7 @@
 <script setup>
 // Formulario para empezar la prueba: nombre + email + aviso de privacidad. Emite start({name,email}).
 import { ref, nextTick } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useI18n, I18nT } from 'vue-i18n'
 import { LIMITS } from './schema.js'
 
 const emit = defineEmits(['start'])
@@ -30,7 +30,9 @@ async function onSubmit() {
     <input id="qa-start-name" ref="nameEl" v-model="name" type="text" autocomplete="name" :maxlength="LIMITS.name" required />
     <label for="qa-start-email">{{ t('report.email') }}</label>
     <input id="qa-start-email" ref="emailEl" v-model="email" type="email" autocomplete="email" :maxlength="LIMITS.email" required />
-    <p class="report-privacy" data-testid="privacy">{{ t('report.privacy') }}</p>
+    <I18nT keypath="report.privacy" tag="p" class="report-privacy" data-testid="privacy">
+      <template #contact><a :href="`mailto:${t('report.contact')}`">{{ t('report.contact') }}</a></template>
+    </I18nT>
     <p role="alert" aria-live="assertive" class="report-error" data-testid="start-error">{{ error }}</p>
     <button type="submit">{{ t('report.start') }}</button>
   </form>

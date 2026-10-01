@@ -11,6 +11,7 @@ const props = defineProps({
   categories: { type: Array, default: () => [] },
   bugOptions: { type: Array, default: () => [] }, // [{ id, label }] del catalogo completo (no solo los activos)
   pages: { type: Array, default: () => [] },
+  solution: { type: Array, default: () => [] },
 })
 const { t } = useI18n()
 
@@ -67,10 +68,26 @@ async function send() {
         <li>{{ t('report.missed', { n: attempt.result.value.score.breakdown.missed }) }}</li>
       </ul>
       <p>{{ t('report.time', { t: elapsed }) }}</p>
+      <template v-if="attempt.result.value.pending">
+        <p role="status" data-testid="pending-notice">{{ t('report.pending') }}</p>
+        <button type="button" data-testid="retry-report" :disabled="attempt.sending.value" @click="send">{{ attempt.sending.value ? t('report.sending') : t('report.retry') }}</button>
+        <p role="alert" class="report-error" data-testid="retry-error">{{ attempt.error.value && attempt.error.value.error !== 'not-configured' ? t(`report.submitError.${attempt.error.value.error}`) : '' }}</p>
+      </template>
+      <p v-else data-testid="sent-notice">{{ t('report.sent') }}</p>
+      <h3>{{ t('report.solutionTitle') }}</h3>
+      <ul data-testid="result-solution">
+        <li v-for="b in solution" :key="b.id" :data-bug-id="b.id">
+          <code>{{ b.id }}</code> <em>{{ b.category }}</em> {{ b.text }} <small v-if="b.where">{{ b.where }}</small>
+          <strong v-if="attempt.result.value.score.hits.some((h) => h.bugId === b.id)">{{ t('report.found') }}</strong>
+          <strong v-else-if="attempt.result.value.score.breakdown.halfHits.some((h) => h.bugId === b.id)">{{ t('report.halfFound') }}</strong>
+          <strong v-else>{{ t('report.notFound') }}</strong>
+        </li>
+      </ul>
     </section>
 
     <template v-else>
       <p class="report-timer" data-testid="timer" role="timer">{{ t('report.time', { t: elapsed }) }}</p>
+      <p v-if="attempt.solutionViewed.value" class="report-marked" role="status" data-testid="marked">{{ t('report.marked') }}</p>
 
       <form data-testid="finding-form" novalidate @submit.prevent="add">
         <label for="qa-f-page">{{ t('report.page') }}</label>
@@ -97,6 +114,7 @@ async function send() {
           <option v-for="b in bugOptions" :key="b.id" :value="b.id">{{ b.label }}</option>
         </select>
 
+        <p v-if="full" role="status" data-testid="findings-full">{{ t('report.errMax', { max: LIMITS.findings }) }}</p>
         <p role="alert" aria-live="assertive" class="report-error" data-testid="finding-error">{{ error }}</p>
         <button type="submit" :disabled="full">{{ t('report.add') }}</button>
       </form>

@@ -2,8 +2,12 @@ rules_version = '2';
 
 // QA Lab: el cliente solo puede CREAR intentos. Lectura, update y delete denegados (los resultados se
 // ven en la consola de Firebase). Alineado con src/qa-lab/report/schema.js.
-// Limitacion: las reglas no iteran listas, asi que cada elemento de `findings` se valida solo en el
-// cliente; en el servidor se acota la cantidad (<= 50) y el tamano total lo limita Firestore (1 MiB).
+// Las reglas no iteran listas: `findings` se acota a 20 y cada indice 0..19 se valida con validFinding
+// (generado; si cambia el tope, cambiar tambien LIMITS.findings en schema.js).
+// Presupuesto: Firestore Rules corta en 1000 expresiones por evaluacion. validFinding son ~35 nodos con un finding
+// completo (hasOnly ~9, id/page/description/severity ~20, 2 optStr ~6) y la guarda `size() < i+1 ||` suma ~3:
+// 20 x ~38 = ~760, mas ~80 del resto del documento = ~840 (< 1000, margen chico). NO subir el tope sin probar el caso
+// de src/qa-lab/report/playground-20.json en el Rules Playground (20 findings completos, el peor caso).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -19,24 +23,61 @@ service cloud.firestore {
       return s is map
         && s.keys().hasOnly(['value', 'hits', 'halfHits', 'falsePositives', 'missed'])
         && s.value is int && s.value >= 0 && s.value <= 100
-        && s.hits is int && s.hits >= 0 && s.hits <= 1000
-        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 1000
-        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 1000
-        && s.missed is int && s.missed >= 0 && s.missed <= 1000;
+        && s.hits is int && s.hits >= 0 && s.hits <= 20
+        && s.halfHits is int && s.halfHits >= 0 && s.halfHits <= 20
+        && s.falsePositives is int && s.falsePositives >= 0 && s.falsePositives <= 20
+        && s.missed is int && s.missed >= 0 && s.missed <= 36;
+    }
+
+    // string acotado u omitido/null (f.get(clave, null): una clave ausente cuenta como null)
+    function optStr(v, max) {
+      return v == null || (v is string && v.size() > 0 && v.size() <= max);
+    }
+
+    function validFinding(f) {
+      return f is map
+        && f.keys().hasOnly(['id', 'page', 'description', 'severity', 'guessedBugId', 'guessedCategory'])
+        && f.id is string && f.id.size() > 0 && f.id.size() <= 40
+        && f.page is string && f.page.size() <= 100
+        && f.description is string && f.description.size() > 0 && f.description.size() <= 1000
+        && f.severity in ['low', 'medium', 'high', 'critical']
+        && optStr(f.get('guessedBugId', null), 60)
+        && optStr(f.get('guessedCategory', null), 30);
     }
 
     function validAttempt(d) {
-      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
-        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent'])
+      return d.keys().hasOnly(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
+        && d.keys().hasAll(['seed', 'level', 'lang', 'candidate', 'startedAt', 'finishedAt', 'durationMs', 'findings', 'score', 'solutionViewed', 'labVersion', 'userAgent', 'createdAt'])
         && d.seed is string && d.seed.size() > 0 && d.seed.size() <= 100
-        && d.level is string && d.level.size() > 0 && d.level.size() <= 20
+        && d.level in ['junior', 'semi', 'senior']
         && d.lang in ['es', 'en']
         && validCandidate(d.candidate)
         && d.startedAt is int && d.startedAt > 0
-        && d.finishedAt is int && d.finishedAt >= d.startedAt
-        && d.durationMs is int && d.durationMs >= 0
-        && d.findings is list && d.findings.size() <= 50
+        && d.finishedAt is int && d.finishedAt >= d.startedAt && d.finishedAt <= request.time.toMillis() + 300000
+        && d.durationMs is int && d.durationMs == d.finishedAt - d.startedAt
+        && d.findings is list && d.findings.size() <= 20
+        && (d.findings.size() < 1 || validFinding(d.findings[0]))
+        && (d.findings.size() < 2 || validFinding(d.findings[1]))
+        && (d.findings.size() < 3 || validFinding(d.findings[2]))
+        && (d.findings.size() < 4 || validFinding(d.findings[3]))
+        && (d.findings.size() < 5 || validFinding(d.findings[4]))
+        && (d.findings.size() < 6 || validFinding(d.findings[5]))
+        && (d.findings.size() < 7 || validFinding(d.findings[6]))
+        && (d.findings.size() < 8 || validFinding(d.findings[7]))
+        && (d.findings.size() < 9 || validFinding(d.findings[8]))
+        && (d.findings.size() < 10 || validFinding(d.findings[9]))
+        && (d.findings.size() < 11 || validFinding(d.findings[10]))
+        && (d.findings.size() < 12 || validFinding(d.findings[11]))
+        && (d.findings.size() < 13 || validFinding(d.findings[12]))
+        && (d.findings.size() < 14 || validFinding(d.findings[13]))
+        && (d.findings.size() < 15 || validFinding(d.findings[14]))
+        && (d.findings.size() < 16 || validFinding(d.findings[15]))
+        && (d.findings.size() < 17 || validFinding(d.findings[16]))
+        && (d.findings.size() < 18 || validFinding(d.findings[17]))
+        && (d.findings.size() < 19 || validFinding(d.findings[18]))
+        && (d.findings.size() < 20 || validFinding(d.findings[19]))
         && validScore(d.score)
+        && d.createdAt == request.time // al final: asi el Playground evalua antes todos los findings
         && d.solutionViewed is bool
         && d.labVersion is string && d.labVersion.size() > 0 && d.labVersion.size() <= 20
         && d.userAgent is string && d.userAgent.size() <= 200;

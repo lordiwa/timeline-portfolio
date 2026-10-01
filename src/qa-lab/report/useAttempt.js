@@ -67,9 +67,28 @@ export function useAttempt(seedSource, levelSource, { send = submitReport, now =
     if (!solutionViewed.value) { solutionViewed.value = true; persist() }
   }
 
-  /** ctx: { activeBugIds, categoryOf, lang }. Reintentable si el guardado falla (no se pierde nada). */
+  /** Descarta el intento (cambio de semilla/nivel confirmado): borra lo guardado y frena el cronometro. */
+  function discard() {
+    stopTimer()
+    try { storage?.removeItem(key()) } catch { /* storage bloqueado */ }
+    candidate.value = null; startedAt.value = null; findings.value = []; solutionViewed.value = false
+    result.value = null; error.value = null; elapsedMs.value = 0
+  }
+
+  /**
+   * ctx: { activeBugIds, categoryOf, lang }. Reintentable si el guardado falla (no se pierde nada).
+   * Sin config de Firebase ('not-configured') el resultado SE MUESTRA igual: queda en result con pending=true y el
+   * documento completo en sessionStorage; volver a llamar submit() lo reenvia tal cual (mismo doc, mismo puntaje).
+   */
   async function submit({ activeBugIds, categoryOf, lang }) {
     if (!started.value || sending.value) return null
+    if (result.value?.pending) {
+      sending.value = true
+      const res = await send(result.value.doc)
+      sending.value = false
+      if (res.ok) { result.value = { ...result.value, pending: false, id: res.id }; error.value = null; persist() } else error.value = res
+      return res
+    }
     sending.value = true
     error.value = null
     const finishedAt = now()
@@ -81,16 +100,17 @@ export function useAttempt(seedSource, levelSource, { send = submitReport, now =
     })
     const res = await send(doc)
     sending.value = false
-    if (!res.ok) { error.value = res; return res }
+    if (!res.ok && res.error !== 'not-configured') { error.value = res; return res }
     stopTimer()
     elapsedMs.value = doc.durationMs
-    result.value = { doc, score: scoreResult, id: res.id }
+    result.value = { doc, score: scoreResult, id: res.ok ? res.id : null, pending: !res.ok }
+    error.value = res.ok ? null : res
     persist()
     return res
   }
 
   return {
     candidate, startedAt, findings, solutionViewed, result, sending, error, elapsedMs, started, finished,
-    start, addFinding, removeFinding, markSolutionViewed, submit,
+    start, addFinding, removeFinding, markSolutionViewed, submit, discard,
   }
 }
