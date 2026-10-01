@@ -162,7 +162,7 @@ const specs = [
       title: 'Afiliación sindical|Union membership',
       steps: [
         ['Situación|Situation', [rad('status', 'Tu situación|Your status', ['Fantasma libre|Free ghost', 'Fantasma con casa|Ghost with a house'])]],
-        ['Antigüedad y alta|Seniority and date', [num('haunted', 'Años de trayectoria|Years of experience', 0, 1500), date('joinDate', 'Fecha de alta|Joining date', 'noFuture')]],
+        ['Antigüedad y alta|Seniority and date', [num('haunted', 'Años de trayectoria|Years of experience', 0, 1500), date('joinDate', 'Fecha de alta|Joining date', 'noPast')]],
         ['Casa|House', [text('houseAddress', 'Dirección de la casa|House address', { minLength: 5, maxLength: 80 })]],
         ['Compromiso|Pledge', [chk('pledgeUnion', 'Prometo no asustar sin ser contratado|I pledge not to haunt unhired', true)]],
       ],
@@ -422,7 +422,7 @@ const specs = [
       num('nightsSlept', 'Noches de sueño acumuladas|Accumulated nights of sleep', 1, 30000),
       sel('dreamMood', 'Tipo de sueño predominante|Predominant dream type', ['Felices|Happy', 'Lúcidos|Lucid', 'Extraños|Strange']),
       pat('dreamAccount', 'Número de cuenta onírica|Dream account number', '^SU-\\d{4}-[0-9]{2}$', 'SU-, cuatro dígitos, guion y dos dígitos, ej. SU-5120-08|SU-, four digits, a dash and two digits, e.g. SU-5120-08'),
-      date('firstDeposit', 'Fecha del primer depósito|First deposit date', 'noPast'),
+      date('firstDeposit', 'Fecha del primer depósito|First deposit date', 'noFuture'),
       chk('nightmareInsurance', 'Quiero seguro contra pesadillas|I want nightmare insurance'),
     ],
     contact: ['Sueño perdido|Lost dream', 'Intereses en pesadillas|Interest on nightmares', 'Sueño duplicado|Duplicate dream', 'Préstamo de sueños|Dream loan'],

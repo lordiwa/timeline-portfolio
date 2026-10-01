@@ -14,6 +14,7 @@ import { storageKey, memoryStorage } from '../../src/qa-lab/state/store.js'
 import { resolveContent } from '../../src/qa-lab/content/index.js'
 import { createLabI18n } from '../../src/qa-lab/i18n/index.js'
 import { checkField } from '../../src/qa-lab/composables/useForm.js'
+import { createClock } from '../../src/qa-lab/services/clock.js'
 import { ALL_PAGES, themeSite, seedForTheme, mountSite, go, fill, fillVisible, advanceWizardTo, cleanup } from './helpers.js'
 
 vi.setConfig({ testTimeout: 120000 }) // monta decenas de sitios (temas x paginas x con/sin flag)
@@ -194,6 +195,20 @@ describe('revision del cableado (C-1, L-1, L-2)', () => {
       }
     }
     expect(dates).toBeGreaterThan(60)
+  })
+
+  it.each([[-300, 23, 30], [540, 0, 30]])('las fechas se comparan por dia civil local (offset %i, %i:%i): hoy vale en noPast y noFuture; ayer y manana segun el modo (evita rechazar "hoy" o aceptar "manana" cerca de medianoche)', (offset, hour, minute) => {
+    const clock = createClock({ tzOffsetMinutes: offset })
+    const fixed = createClock({ tzOffsetMinutes: offset, now: () => clock.fromLocal({ year: 2026, month: 3, day: 5, hour, minute }) })
+    const has = () => false
+    const noPast = { type: 'date', noPast: true }
+    const noFuture = { type: 'date', noFuture: true }
+    expect(checkField(noPast, '2026-03-05', has, fixed)).toBeNull()
+    expect(checkField(noPast, '2026-03-06', has, fixed)).toBeNull()
+    expect(checkField(noPast, '2026-03-04', has, fixed)).not.toBeNull()
+    expect(checkField(noFuture, '2026-03-05', has, fixed)).toBeNull()
+    expect(checkField(noFuture, '2026-03-04', has, fixed)).toBeNull()
+    expect(checkField(noFuture, '2026-03-06', has, fixed)).not.toBeNull()
   })
 
   it('el checkout y el contacto usan sus campos fijos aunque el pack tenga un campo con la misma clave (evita que el checkout herede un campo del registro)', () => {
