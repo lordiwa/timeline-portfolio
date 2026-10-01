@@ -44,6 +44,12 @@ const navTypes = computed(() => NAV_TYPES.filter((p) => site.pages.includes(p)))
 // El detalle cuelga del listado; el checkout, del carrito.
 const activeOf = (type) => route.value.type === type || (type === 'list' && route.value.type === 'detail') || (type === 'cart' && route.value.type === 'checkout')
 const user = computed(() => store.state.user)
+// Contador del carrito en el navbar. BUG navbar-count-desync (en la pagina del carrito): una copia que solo se
+// actualiza al AGREGAR, nunca al quitar ni bajar la cantidad; al salir de la pagina vuelve a sincronizarse.
+const shownCount = ref(store.cartCount.value)
+watch(store.cartCount, (n, o) => { if (n > o || !has('navbar-count-desync')) shownCount.value = n })
+watch(() => route.value.path, () => { if (!has('navbar-count-desync')) shownCount.value = store.cartCount.value })
+const navCount = computed(() => (has('navbar-count-desync') ? shownCount.value : store.cartCount.value))
 const has_ = (p) => site.pages.includes(p)
 const vars = computed(() => ({ '--hue': site.style.hue, '--radius': `${site.style.radius}px`, '--width': `${site.style.width}px` }))
 
@@ -71,7 +77,7 @@ function logout() {
       <button ref="toggleEl" type="button" class="nav-toggle" :aria-expanded="menuOpen" aria-controls="qa-nav" data-testid="nav-toggle" @click="menuOpen = !menuOpen">{{ t('site.menu') }}</button>
       <nav id="qa-nav" class="site-nav" :class="{ open: menuOpen }" :aria-label="t('site.menu')" @click="menuOpen = false">
         <a v-for="p in navTypes" :key="p" :href="`#${routePath(p)}`" :class="{ active: activeOf(p) }" :aria-current="activeOf(p) ? 'page' : undefined" :data-nav="p">
-          {{ content.nav[p] }}<span v-if="p === 'cart'" class="cart-count" data-testid="cart-count"> ({{ store.cartCount.value }})</span>
+          {{ content.nav[p] }}<span v-if="p === 'cart'" class="cart-count" data-testid="cart-count"> ({{ navCount }})</span>
         </a>
         <span class="site-session">
           <template v-if="user">
@@ -89,7 +95,7 @@ function logout() {
       </nav>
     </header>
     <main ref="mainEl" class="site-main" tabindex="-1">
-      <component :is="PAGES[route.type]" :key="route.path" />
+      <component :is="PAGES[route.type]" :key="has('stale-detail-on-param-change') ? route.type : route.path" />
     </main>
     <footer class="site-footer">{{ t('site.footer', { brand: content.brand }) }}</footer>
     <Modal :open="helpOpen" :return-to="helpReturn" :title="t('site.helpTitle')" @close="helpOpen = false">

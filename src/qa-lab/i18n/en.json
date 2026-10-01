@@ -17,7 +17,12 @@
       "a11y": "Accessibility",
       "console": "Console",
       "content": "Content",
-      "responsive": "Responsive"
+      "responsive": "Responsive",
+      "state": "State / cross-page",
+      "async": "Async",
+      "security": "Security",
+      "calc": "Calculation",
+      "date": "Dates"
     },
     "difficulty": {
       "easy": "Easy",
@@ -42,7 +47,10 @@
       "helpButton": "Location: the navbar \"Help\" button (opens the modal)",
       "pageEnd": "Location: at the bottom of the page (visible on mobile)",
       "dashboardFooter": "Location: Dashboard, total row at the table foot",
-      "checkoutSummary": "Location: Checkout, order summary (with quantity greater than 1 on the first line)"
+      "checkoutSummary": "Location: Checkout, order summary (with quantity greater than 1 on the first line)",
+      "nth": "Location: fails on action no. {n} on that page (the counter resets on reload)",
+      "timezone": "Location: My account, birth date (this bug's simulated time zone: {n} min from UTC)",
+      "taxSummary": "Location: Checkout, order summary (with a coupon applied and several lines)"
     }
   },
   "themeName": {
@@ -73,7 +81,8 @@
     "strip": "Free shipping on orders over 50 — this week only — see in-store terms and conditions",
     "footer": "© {brand}. All rights reserved.",
     "loggedOut": "Signed out.",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "loading": "Loading…"
   },
   "fields": {
     "name": "Full name",
@@ -131,7 +140,8 @@
     "exists": "An account with that email already exists.",
     "minLength": "Must be at least {n} characters.",
     "maxLength": "Must be at most {n} characters.",
-    "pattern": "The format is not valid."
+    "pattern": "The format is not valid.",
+    "server500": "Error 500: the server could not process the submission. Please try again."
   },
   "tpl": {
     "signup": {
@@ -264,6 +274,7 @@
     "publish": "Post comment",
     "by": "By the editorial team",
     "minutesAgo": "{n} min ago",
+    "hoursAgo": "{n} h ago",
     "you": "You",
     "commentPosted": "Comment posted."
   },
@@ -494,7 +505,8 @@
     "home": "Go to the home page"
   },
   "detail": {
-    "back": "Back to the catalog"
+    "back": "Back to the catalog",
+    "related": "Related products"
   },
   "desc": {
     "d0": "{item}: a practical choice for every day.",
@@ -552,7 +564,8 @@
     "saved": "Changes saved.",
     "orders": "My orders",
     "noOrders": "You have not placed any orders yet.",
-    "items": "{n} units"
+    "items": "{n} units",
+    "birth": "Birth date"
   },
   "wizard": {
     "step": {

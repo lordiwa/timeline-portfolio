@@ -17,7 +17,12 @@
       "a11y": "Accesibilidad",
       "console": "Consola",
       "content": "Contenido",
-      "responsive": "Responsive"
+      "responsive": "Responsive",
+      "state": "Estado / entre páginas",
+      "async": "Asincronía",
+      "security": "Seguridad",
+      "calc": "Cálculo",
+      "date": "Fechas"
     },
     "difficulty": {
       "easy": "Fácil",
@@ -42,7 +47,10 @@
       "helpButton": "Ubicación: botón «Ayuda» del navbar (abre el modal)",
       "pageEnd": "Ubicación: al final de la página (se ve en mobile)",
       "dashboardFooter": "Ubicación: Panel, fila de total al pie de la tabla",
-      "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)"
+      "checkoutSummary": "Ubicación: Checkout, resumen del pedido (con cantidad mayor que 1 en la primera línea)",
+      "nth": "Ubicación: falla en la acción n.º {n} de esa página (el contador se reinicia al recargar)",
+      "timezone": "Ubicación: Mi cuenta, fecha de nacimiento (zona horaria simulada de este bug: {n} min respecto de UTC)",
+      "taxSummary": "Ubicación: Checkout, resumen del pedido (con cupón aplicado y varias líneas)"
     }
   },
   "themeName": {
@@ -73,7 +81,8 @@
     "strip": "Envío gratis en compras superiores a 50 — solo por esta semana — consultá condiciones en tienda",
     "footer": "© {brand}. Todos los derechos reservados.",
     "loggedOut": "Sesión cerrada.",
-    "skip": "Saltar al contenido"
+    "skip": "Saltar al contenido",
+    "loading": "Cargando…"
   },
   "fields": {
     "name": "Nombre completo",
@@ -131,7 +140,8 @@
     "exists": "Ya existe una cuenta con ese correo.",
     "minLength": "Debe tener al menos {n} caracteres.",
     "maxLength": "Debe tener como máximo {n} caracteres.",
-    "pattern": "El formato no es válido."
+    "pattern": "El formato no es válido.",
+    "server500": "Error 500: el servidor no pudo procesar el envío. Probá de nuevo."
   },
   "tpl": {
     "signup": {
@@ -264,6 +274,7 @@
     "publish": "Publicar comentario",
     "by": "Por la redacción",
     "minutesAgo": "hace {n} min",
+    "hoursAgo": "hace {n} h",
     "you": "Vos",
     "commentPosted": "Comentario publicado."
   },
@@ -494,7 +505,8 @@
     "home": "Ir al inicio"
   },
   "detail": {
-    "back": "Volver al catálogo"
+    "back": "Volver al catálogo",
+    "related": "Productos relacionados"
   },
   "desc": {
     "d0": "{item}: una opción práctica para el día a día.",
@@ -552,7 +564,8 @@
     "saved": "Cambios guardados.",
     "orders": "Mis pedidos",
     "noOrders": "Todavía no hiciste pedidos.",
-    "items": "{n} unidades"
+    "items": "{n} unidades",
+    "birth": "Fecha de nacimiento"
   },
   "wizard": {
     "step": {

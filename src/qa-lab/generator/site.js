@@ -7,7 +7,8 @@
 import { createRng } from './prng.js'
 import { THEMES } from './themes.js'
 import { NAMES } from './fields.js'
-import { LEVEL_CONFIG, normalizeLevel } from './levels.js'
+import { LEVEL_CONFIG, levelRank, normalizeLevel } from './levels.js'
+import { selectBugs } from './compat.js'
 import { PAGE_TYPES, closureOf } from './pages.js'
 import { BUGS } from '../bugs/catalog.js'
 import { capabilitiesOf, requiresMet } from './capabilities.js'
@@ -125,10 +126,19 @@ function pickPages(rng, [min, max], level) {
   return PAGE_TYPES.filter((t) => chosen.has(t))
 }
 
-/** Pool de bugs elegibles: tienen al menos una pagina presente y su dificultad no esta excluida por el nivel. */
-export function bugPool(pages, level, capabilities = capabilitiesOf(pages)) {
-  const { weights } = LEVEL_CONFIG[normalizeLevel(level)]
-  return BUGS.filter((b) => weights[b.difficulty] > 0 && b.pages.some((p) => pages.includes(p)) && requiresMet(b, capabilities))
+/**
+ * Pool de bugs elegibles: su nivel minimo <= nivel del sitio, su dificultad no esta excluida por el nivel, tienen
+ * al menos una pagina presente, el sitio cumple su `requires` y (si se pasa `ctx`) su `witness` da true: el contenido
+ * generado permite manifestarlo. ctx = { seed, level, pages, capabilities, data, bugParams, tzOffsetMinutes }.
+ */
+export function bugPool(pages, level, capabilities = capabilitiesOf(pages), ctx = null) {
+  const lvl = normalizeLevel(level)
+  const { weights } = LEVEL_CONFIG[lvl]
+  return BUGS.filter(
+    (b) =>
+      levelRank(b.level) <= levelRank(lvl) && weights[b.difficulty] > 0 && b.pages.some((p) => pages.includes(p)) &&
+      requiresMet(b, capabilities) && (!ctx || !b.witness || b.witness(ctx)),
+  )
 }
 
 /**
@@ -139,22 +149,6 @@ export function bugPool(pages, level, capabilities = capabilitiesOf(pages)) {
 export function genBugParams(seed, bugs = BUGS) {
   const out = {}
   for (const b of bugs) if (typeof b.params === 'function') out[b.id] = b.params(createRng(seed).fork(`bug:${b.id}`))
-  return out
-}
-
-function weightedSample(rng, items, weightOf, n) {
-  const pool = items.map((it) => ({ it, w: weightOf(it) }))
-  const out = []
-  while (out.length < n && pool.length) {
-    const sum = pool.reduce((s, x) => s + x.w, 0)
-    let r = rng.next() * sum
-    let i = 0
-    for (; i < pool.length - 1; i++) {
-      r -= pool[i].w
-      if (r < 0) break
-    }
-    out.push(pool.splice(i, 1)[0].it)
-  }
   return out
 }
 
@@ -179,10 +173,16 @@ export function generateSite(seed, level) {
   const pages = pickPages(lrng, cfg.pages, lvl)
   const capabilities = capabilitiesOf(pages, data)
 
-  // Bugs: cantidad del rango del nivel, acotada al pool compatible (el catalogo tiene bugs unicos por id).
-  const pool = bugPool(pages, lvl, capabilities)
+  // Zona horaria simulada del sitio (la maquina no cuenta) y parametros de bugs: sub-streams propios.
+  const tzOffsetMinutes = base.fork('tz').pick([-480, -300, -180, 0, 60, 330, 540])
+  const bugParams = genBugParams(seed)
+
+  // Bugs: cantidad del rango del nivel, acotada al pool compatible (el catalogo tiene bugs unicos por id). El pool
+  // filtra por nivel, capacidades y witness; el sorteo respeta cuotas por dificultad e incompatibilidades (compat.js).
+  // Los bugs se eligen DESPUES de las paginas y no tocan `base`: el contenido y el set de paginas no dependen del catalogo.
+  const pool = bugPool(pages, lvl, capabilities, { seed: String(seed), level: lvl, pages, capabilities, data, bugParams, tzOffsetMinutes })
   const count = Math.min(lrng.int(cfg.bugs[0], cfg.bugs[1]), pool.length)
-  const chosen = weightedSample(lrng, pool, (b) => cfg.weights[b.difficulty], count)
+  const chosen = selectBugs(lrng, pool, lvl, count)
   const chosenIds = new Set(chosen.map((b) => b.id))
   const bugs = BUGS.filter((b) => chosenIds.has(b.id)).map((b) => b.id) // orden estable del catalogo
   const bugPages = {}
@@ -191,8 +191,5 @@ export function generateSite(seed, level) {
     bugPages[b.id] = lrng.pick(b.pages.filter((p) => pages.includes(p))) // la pagina donde se manifiesta
   }
 
-  // Zona horaria simulada del sitio (la maquina no cuenta): sub-stream propio.
-  const tzOffsetMinutes = base.fork('tz').pick([-480, -300, -180, 0, 60, 330, 540])
-
-  return { seed: String(seed), level: lvl, themeId: theme.id, brandIdx, style, pages, capabilities, tzOffsetMinutes, data, bugs, bugPages, bugParams: genBugParams(seed) }
+  return { seed: String(seed), level: lvl, themeId: theme.id, brandIdx, style, pages, capabilities, tzOffsetMinutes, data, bugs, bugPages, bugParams }
 }

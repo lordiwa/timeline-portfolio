@@ -49,6 +49,7 @@ const validOrder = (o) =>
   o.totals && num(o.totals.total) && num(o.totals.decimals) && o.customer && typeof o.customer.email === 'string' && typeof o.customer.name === 'string' &&
   (o.userEmail === null || typeof o.userEmail === 'string')
 const validComment = (c) => c && typeof c.text === 'string' && num(c.minutes) && (c.author === null || typeof c.author === 'string')
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /** Lee del storage validando el shape: un JSON viejo o corrupto no rompe el sitio. */
 function load(site, storage) {
@@ -60,12 +61,15 @@ function load(site, storage) {
   if (Array.isArray(raw.cart)) s.cart = raw.cart.filter((l) => l && ids.has(l.id)).map((l) => ({ id: l.id, qty: clampQty(l.qty) }))
   if (raw.coupon === site.data.coupon.code) s.coupon = raw.coupon
   const person = (u) => u && typeof u.name === 'string' && typeof u.email === 'string'
-  if (person(raw.user)) s.user = { name: raw.user.name, email: raw.user.email }
-  if (Array.isArray(raw.users)) s.users = raw.users.filter((u) => person(u) && typeof u.password === 'string')
+  const birth = (u) => (typeof u.birth === 'string' && ISO_DATE.test(u.birth) ? { birth: u.birth } : {})
+  if (person(raw.user)) s.user = { name: raw.user.name, email: raw.user.email, ...birth(raw.user) }
+  if (Array.isArray(raw.users)) {
+    s.users = raw.users.filter((u) => person(u) && typeof u.password === 'string').map((u) => ({ name: u.name, email: u.email, password: u.password, ...birth(u) }))
+  }
   if (Array.isArray(raw.orders)) s.orders = raw.orders.filter(validOrder)
   if (Number.isInteger(raw.orderSeq)) s.orderSeq = raw.orderSeq
   if (raw.comments && typeof raw.comments === 'object' && !Array.isArray(raw.comments)) {
-    for (const [k, list] of Object.entries(raw.comments)) if (Array.isArray(list)) s.comments[k] = list.filter(validComment)
+    for (const [k, list] of Object.entries(raw.comments)) if (Array.isArray(list)) s.comments[k] = list.filter(validComment).map((c) => ({ author: c.author, text: c.text, minutes: c.minutes })) // 'live' no se rehidrata
   }
   if (raw.prefs && typeof raw.prefs.newsletter === 'boolean') s.prefs.newsletter = raw.prefs.newsletter
   return s
@@ -84,6 +88,7 @@ export function createStore(site, storage = safeStorage()) {
   const bump = (type) => (actions[type] = (actions[type] || 0) + 1)
   const catalogIds = new Set(site.data.catalog.map((r) => r.id))
   const accounts = () => [{ ...site.data.demoUser }, ...state.users]
+  const cartBeforeAdds = [] // solo memoria: carritos previos a cada alta
   const cartCount = computed(() => state.cart.reduce((s, l) => s + l.qty, 0))
 
   return {
@@ -97,10 +102,17 @@ export function createStore(site, storage = safeStorage()) {
     addToCart(id, qty = 1) {
       if (!catalogIds.has(id)) return false
       bump('addToCart')
+      cartBeforeAdds.push(state.cart.map((l) => ({ ...l })))
       const line = state.cart.find((l) => l.id === id)
       if (line) line.qty = clampQty(line.qty + clampQty(qty))
       else state.cart.push({ id, qty: clampQty(qty) })
       return true
+    },
+    /** Restaura el carrito previo a la ultima alta (solo lo usa el bug 'cart-loses-item-on-back'). */
+    undoLastAdd() {
+      const prev = cartBeforeAdds.pop()
+      if (prev) state.cart = prev
+      return !!prev
     },
     setQty(id, qty) {
       bump('setQty')
@@ -137,15 +149,21 @@ export function createStore(site, storage = safeStorage()) {
       state.user = { name: acc.name, email: acc.email }
       return { ok: true }
     },
+    /** Las credenciales coinciden con una cuenta (sin iniciar sesion ni contar el intento). */
+    credentialsValid(email, password) {
+      const acc = accounts().find((u) => emailKey(u.email) === emailKey(email))
+      return !!acc && acc.password === password
+    },
     logout() {
       state.user = null
     },
     emailTaken: (email) => accounts().some((u) => emailKey(u.email) === emailKey(email)),
-    register({ name, email, password }) {
+    register({ name, email, password, birth }) {
       bump('register')
       if (accounts().some((u) => emailKey(u.email) === emailKey(email))) return { ok: false, error: 'exists' }
-      state.users.push({ name: String(name).trim(), email: String(email).trim(), password })
-      state.user = { name: String(name).trim(), email: String(email).trim() }
+      const b = typeof birth === 'string' && ISO_DATE.test(birth) ? { birth } : {} // fecha 'YYYY-MM-DD' tal cual se escribio
+      state.users.push({ name: String(name).trim(), email: String(email).trim(), password, ...b })
+      state.user = { name: String(name).trim(), email: String(email).trim(), ...b }
       return { ok: true }
     },
     updateProfile({ name, newsletter }) {
@@ -186,7 +204,8 @@ export function createStore(site, storage = safeStorage()) {
       if (!t) return false
       bump('comment')
       const list = state.comments[postId] || (state.comments[postId] = [])
-      list.unshift({ author: state.user?.name || null, text: t, minutes: 0 })
+      // live: comentario escrito en esta sesion (solo memoria de la pagina; el bug 'unescaped-comment-html' lo usa).
+      list.unshift({ author: state.user?.name || null, text: t, minutes: 0, live: true })
       return true
     },
   }

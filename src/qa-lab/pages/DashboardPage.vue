@@ -64,7 +64,11 @@ const all = computed(() => D.value.rows)
               </tfoot>
             </table>
           </div>
-          <p v-if="!L.filtered().length" class="qa-hint">{{ t('list.empty') }}</p>
+          <template v-if="!L.filtered().length">
+            <!-- BUG spinner-on-empty-results: sin resultados el spinner de carga nunca termina y falta el mensaje vacio. -->
+            <p v-if="has('spinner-on-empty-results')" class="qa-hint qa-spinner" role="progressbar" aria-busy="true">{{ t('site.loading') }}</p>
+            <p v-else class="qa-hint qa-empty" role="status">{{ t('list.empty') }}</p>
+          </template>
           <Pager :page="L.current()" :pages="L.pages()" :skip-at="site.data.dashboard.skipAt" @update:page="(n) => (L.state.page = n)" />
         </template>
         <ul v-else>

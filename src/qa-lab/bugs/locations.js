@@ -4,6 +4,8 @@
 const CHECKOUT_STEPS = ['data', 'shipping', 'payment']
 const CHECKOUT_FIELD_STEP = { name: 'data', email: 'data', address: 'data', city: 'data', card: 'payment' }
 
+import { BUG_BY_ID } from './catalog.js'
+
 export function bugLocation(site, id) {
   const page = site.bugPages[id]
   if (!page) return null
@@ -12,6 +14,10 @@ export function bugLocation(site, id) {
   const wizard = (stepId) => ({ key: 'lab.where.wizardStep', stepKey: `wizard.step.${stepId}` })
   const wizardStepOf = (field) => site.data.wizard.steps.find((s) => s.fields.includes(field))?.id
 
+  if (BUG_BY_ID[id]?.intermittent) return { key: 'lab.where.nth', n: site.bugParams[id].n } // N de ESTE sitio (sub-stream de la semilla)
+  if (id === 'date-timezone-shift') return { key: 'lab.where.timezone', n: site.bugParams[id].tz }
+  if (id === 'tax-rounding-per-line') return { key: 'lab.where.taxSummary' }
+  if (id === 'place-order-twice') return checkout('payment')
   if (id === 'console-error' || id === 'modal-focus-lost') return { key: 'lab.where.helpButton' }
   if (id === 'mobile-overflow') return { key: 'lab.where.pageEnd' }
   if (id === 'total-wrong') return page === 'dashboard' ? { key: 'lab.where.dashboardFooter' } : { key: 'lab.where.checkoutSummary' }
